@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/stripe/stripe-go/plan"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"io/ioutil"
+	"log"
+	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -14,8 +16,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/customer"
-	"github.com/stripe/stripe-go/sub"
+	"github.com/stripe/stripe-go/client"
+	"github.com/stripe/stripe-go/webhook"
 )
 
 const (
@@ -23,21 +25,28 @@ const (
 )
 
 type (
-	PaymentManager struct {
-		apiKey string
-		logger logging.Logger
-		tracer tracing.Tracer
+	WebhookSecret string
+	APIKey        string
+
+	stripePaymentManager struct {
+		client        *client.API
+		successURL    string
+		cancelURL     string
+		webhookSecret string
+		logger        logging.Logger
+		tracer        tracing.Tracer
 	}
 )
 
-// NewStripePaymentManager builds a Stripe-backed PaymentManager
-func NewStripePaymentManager(logger logging.Logger, apiKey string) *PaymentManager {
-	stripe.Key = apiKey
-
-	return &PaymentManager{
-		apiKey: apiKey,
-		logger: logging.EnsureLogger(logger),
-		tracer: tracing.NewTracer(implementationName),
+// NewStripePaymentManager builds a Stripe-backed stripePaymentManager
+func NewStripePaymentManager(logger logging.Logger, cfg *capitalism.StripeConfig) capitalism.PaymentManager {
+	return &stripePaymentManager{
+		client:        client.New(cfg.APIKey, nil),
+		webhookSecret: cfg.WebhookSecret,
+		successURL:    cfg.SuccessURL,
+		cancelURL:     cfg.CancelURL,
+		logger:        logging.EnsureLogger(logger),
+		tracer:        tracing.NewTracer(implementationName),
 	}
 }
 
@@ -45,47 +54,105 @@ func buildCustomerName(account *types.Account) string {
 	return fmt.Sprintf("%s (%d)", account.Name, account.ID)
 }
 
-var errCustomerNotFound = errors.New("customer not found")
-
-func (s *PaymentManager) findCustomerIDForAccount(ctx context.Context, account *types.Account) (string, error) {
-	_, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := s.logger.WithValue(keys.AccountIDKey, account.ID)
-
-	params := &stripe.CustomerListParams{}
-	//params.Filters.AddFilter("created", "gte", strconv.FormatUint(account.CreatedOn, 10))
-
-	customers := customer.List(params)
-	if err := customers.Err(); err != nil {
-		return "", observability.PrepareError(err, logger, span, "listing <>")
-	}
-
-	for customers.Next() {
-		c := customers.Customer()
-		if c.Metadata[keys.AccountIDKey] == account.ExternalID {
-			return c.ID, nil
-		}
-	}
-
-	return "", errCustomerNotFound
-}
-
-func (s *PaymentManager) createCustomer(ctx context.Context, account *types.Account) (string, error) {
-	_, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := s.logger.WithValue(keys.AccountIDKey, account.ID)
-
-	params := &stripe.CustomerParams{
-		Name:    stripe.String(buildCustomerName(account)),
-		Email:   stripe.String(account.ContactEmail),
-		Phone:   stripe.String(account.ContactPhone),
+func buildGetCustomerParams(a *types.Account) *stripe.CustomerParams {
+	p := &stripe.CustomerParams{
+		Name:    stripe.String(buildCustomerName(a)),
+		Email:   stripe.String(a.ContactEmail),
+		Phone:   stripe.String(a.ContactPhone),
 		Address: &stripe.AddressParams{},
 	}
-	params.AddMetadata(keys.AccountIDKey, account.ExternalID)
+	p.AddMetadata(keys.AccountIDKey, a.ExternalID)
 
-	c, err := customer.New(params)
+	return p
+}
+
+func (s *stripePaymentManager) CreateCheckoutSession(ctx context.Context, subscriptionPlanID string) (string, error) {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger.WithValue(keys.AccountSubscriptionPlanIDKey, subscriptionPlanID)
+
+	params := &stripe.CheckoutSessionParams{
+		SuccessURL:         stripe.String(s.successURL),
+		CancelURL:          stripe.String(s.cancelURL),
+		Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+			Items: []*stripe.CheckoutSessionSubscriptionDataItemsParams{
+				{
+					Plan:     stripe.String(subscriptionPlanID),
+					Quantity: stripe.Int64(1), // For metered billing, do not pass quantity
+				},
+			},
+		},
+	}
+
+	sess, err := s.client.CheckoutSessions.New(params)
+	if err != nil {
+		return "", observability.PrepareError(err, logger, span, "creating checkout session")
+	}
+
+	return sess.ID, nil
+}
+
+const (
+	webhookEventTypeCheckoutCompleted    = "checkout.session.completed"
+	webhookEventTypeInvoicePaid          = "invoice.paid"
+	webhookEventTypeInvoicePaymentFailed = "invoice.payment_failed"
+)
+
+func (s *stripePaymentManager) handleWebhook(res http.ResponseWriter, req *http.Request) {
+	_, span := s.tracer.StartSpan(req.Context())
+	defer span.End()
+
+	if req.Method != "POST" {
+		http.Error(res, http.StatusText(http.StatusMethodNotAllowed), http.StatusMethodNotAllowed)
+		return
+	}
+
+	logger := s.logger.WithRequest(req)
+
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		observability.AcknowledgeError(err, logger, span, "parsing received webhook content")
+		return
+	}
+
+	event, err := webhook.ConstructEvent(b, req.Header.Get("Stripe-Signature"), s.webhookSecret)
+
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		log.Printf("webhook.ConstructEvent: %v", err)
+		return
+	}
+
+	switch event.Type {
+	case webhookEventTypeCheckoutCompleted:
+		// Payment is successful, and the subscription is created.
+		// You should provision the subscription and save the customer ID to your database.
+	case webhookEventTypeInvoicePaid:
+		// Continue to provision the subscription as payments continue to be made.
+		// Store the status in your database and check when a user accesses your service.
+		// This approach helps you avoid hitting rate limits.
+	case webhookEventTypeInvoicePaymentFailed:
+		// The payment failed, or the customer does not have a valid payment method.
+		// The subscription becomes past_due. Notify your customer and send them to the
+		// customer portal to update their payment information.
+	default:
+		// unhandled event type
+	}
+}
+
+func (s *stripePaymentManager) CreateCustomerID(ctx context.Context, account *types.Account) (string, error) {
+	_, span := s.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := s.logger.WithValue(keys.AccountIDKey, account.ID)
+
+	params := buildGetCustomerParams(account)
+
+	c, err := s.client.Customers.New(params)
 	if err != nil {
 		return "", observability.PrepareError(err, logger, span, "creating customer")
 	}
@@ -93,39 +160,14 @@ func (s *PaymentManager) createCustomer(ctx context.Context, account *types.Acco
 	return c.ID, nil
 }
 
-func (s *PaymentManager) GetCustomerID(ctx context.Context, account *types.Account) (string, error) {
-	_, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := s.logger.WithValue(keys.AccountIDKey, account.ID)
-
-	customerID, err := s.findCustomerIDForAccount(ctx, account)
-	if err != nil && !errors.Is(err, errCustomerNotFound) {
-		observability.AcknowledgeError(err, logger, span, "ensuring customer")
-		return "", err
-	}
-
-	if customerID != "" {
-		return customerID, nil
-	}
-
-	customerID, err = s.createCustomer(ctx, account)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "ensuring customer")
-		return "", err
-	}
-
-	return customerID, nil
-}
-
-func (s *PaymentManager) ListPlans(ctx context.Context) ([]capitalism.SubscriptionPlan, error) {
+func (s *stripePaymentManager) ListPlans(ctx context.Context) ([]capitalism.SubscriptionPlan, error) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	params := &stripe.PlanListParams{}
 	out := []capitalism.SubscriptionPlan{}
 
-	plans := plan.List(params)
+	plans := s.client.Plans.List(params)
 	if err := plans.Err(); err != nil {
 		return nil, observability.PrepareError(err, s.logger, span, "listing <>")
 	}
@@ -142,32 +184,37 @@ func (s *PaymentManager) ListPlans(ctx context.Context) ([]capitalism.Subscripti
 	return out, nil
 }
 
-func (s *PaymentManager) findSubscriptionID(ctx context.Context, customerID, planID string) (string, error) {
+var errSubscriptionNotFound = errors.New("subscription not found")
+
+func (s *stripePaymentManager) findSubscriptionID(ctx context.Context, customerID, planID string) (string, error) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 
-	cus, err := customer.Get(customerID, nil)
+	cus, err := s.client.Customers.Get(customerID, nil)
 	if err != nil {
 		return "", observability.PrepareError(err, logger, span, "fetching customer")
 	}
 
-	var subscriptionID string
-	if len(cus.Subscriptions.Data) > 0 && cus.Subscriptions.Data[0].Plan.ID == planID {
-		subscriptionID = cus.Subscriptions.Data[0].ID
+	for _, sub := range cus.Subscriptions.Data {
+		if sub.Plan.ID == planID {
+			return sub.ID, nil
+		}
 	}
 
-	return subscriptionID, nil
+	return "", errSubscriptionNotFound
 }
 
-func (s *PaymentManager) SubscribeToPlan(ctx context.Context, customerID, paymentMethodToken, planID string) (string, error) {
+func (s *stripePaymentManager) SubscribeToPlan(ctx context.Context, customerID, paymentMethodToken, planID string) (string, error) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := s.logger.WithValue(keys.AccountSubscriptionPlanIDKey, planID)
 
-	if subscriptionID, err := s.findSubscriptionID(ctx, customerID, planID); err != nil {
+	// check first if the plan is already implemented.
+	subscriptionID, err := s.findSubscriptionID(ctx, customerID, planID)
+	if err != nil && !errors.Is(err, errSubscriptionNotFound) {
 		return "", observability.PrepareError(err, logger, span, "checking subscription status")
 	} else if subscriptionID != "" {
 		return subscriptionID, nil
@@ -179,7 +226,7 @@ func (s *PaymentManager) SubscribeToPlan(ctx context.Context, customerID, paymen
 		DefaultSource: stripe.String(paymentMethodToken),
 	}
 
-	subscription, err := sub.New(params)
+	subscription, err := s.client.Subscriptions.New(params)
 	if err != nil {
 		return "", observability.PrepareError(err, logger, span, "subscribing to plan")
 	}
@@ -187,7 +234,7 @@ func (s *PaymentManager) SubscribeToPlan(ctx context.Context, customerID, paymen
 	return subscription.ID, nil
 }
 
-func (s *PaymentManager) UnsubscribeFromPlan(ctx context.Context, subscriptionID string) error {
+func (s *stripePaymentManager) UnsubscribeFromPlan(ctx context.Context, subscriptionID string) error {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -198,8 +245,7 @@ func (s *PaymentManager) UnsubscribeFromPlan(ctx context.Context, subscriptionID
 		Prorate:    stripe.Bool(true),
 	}
 
-	_, err := sub.Cancel(subscriptionID, params)
-	if err != nil {
+	if _, err := s.client.Subscriptions.Cancel(subscriptionID, params); err != nil {
 		return observability.PrepareError(err, logger, span, "unsubscribing from plan")
 	}
 

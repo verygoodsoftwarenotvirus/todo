@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/wire"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
@@ -28,9 +30,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
 )
 
 // Build builds a server.
@@ -54,6 +56,8 @@ func Build(
 		uploads.Providers,
 		observability.Providers,
 		storage.Providers,
+		capitalism.Providers,
+		stripe.Providers,
 		chi.Providers,
 		authentication.Providers,
 		users.Providers,

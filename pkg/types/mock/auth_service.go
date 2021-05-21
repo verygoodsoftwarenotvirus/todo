@@ -69,7 +69,7 @@ func (m *AuthService) AuthorizationMiddleware(next http.Handler) http.Handler {
 }
 
 // AdminMiddleware satisfies our interface contract.
-func (m *AuthService) AdminMiddleware(next http.Handler) http.Handler {
+func (m *AuthService) ServiceAdminMiddleware(next http.Handler) http.Handler {
 	return m.Called(next).Get(0).(http.Handler)
 }
 

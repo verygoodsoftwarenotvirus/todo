@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"os"
 	"strings"
 	"time"
@@ -59,6 +60,7 @@ type (
 	ServerConfig struct {
 		Search        search.Config         `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Encoding      encoding.Config       `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
+		Capitalism    capitalism.Config     `json:"capitalism" mapstructure:"capitalism" toml:"capitalism"`
 		Uploads       uploads.Config        `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
 		Observability observability.Config  `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Routing       routing.Config        `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
@@ -100,6 +102,10 @@ func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 
 	if err := cfg.Meta.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating Meta portion of config: %w", err)
+	}
+
+	if err := cfg.Capitalism.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Capitalism portion of config: %w", err)
 	}
 
 	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {

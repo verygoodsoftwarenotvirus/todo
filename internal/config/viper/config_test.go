@@ -22,8 +22,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stretchr/testify/assert"

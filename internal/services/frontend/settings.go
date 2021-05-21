@@ -3,6 +3,10 @@ package frontend
 import (
 	// import embed for the side effect.
 	_ "embed"
+	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"html/template"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -56,8 +60,28 @@ func (s *service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 	}
 }
 
+var (
+	validSubscriptionPlans = []capitalism.SubscriptionPlan{
+		{
+			ID:    "price_1ItP8lJ45Mr1esdKtP70clB2",
+			Name:  "Basic Plan",
+			Price: 300,
+		},
+		{
+			ID:    "price_1ItP8wJ45Mr1esdK4KDseAQ8",
+			Name:  "Premium Plan",
+			Price: 1000,
+		},
+	}
+)
+
 //go:embed templates/partials/settings/account_settings.gotpl
 var accountSettingsPageSrc string
+
+type accountSettingsPageContent struct {
+	Account           *types.Account
+	SubscriptionPlans []capitalism.SubscriptionPlan
+}
 
 func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
@@ -82,13 +106,24 @@ func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 			return
 		}
 
+		contentData := &accountSettingsPageContent{
+			Account:           account,
+			SubscriptionPlans: validSubscriptionPlans,
+		}
+
+		funcMap := template.FuncMap{
+			"renderPrice": func(p uint32) string {
+				return fmt.Sprintf("$%.2f", float64(p))
+			},
+		}
+
 		if includeBaseTemplate {
-			tmpl := s.renderTemplateIntoBaseTemplate(accountSettingsPageSrc, nil)
+			tmpl := s.renderTemplateIntoBaseTemplate(accountSettingsPageSrc, funcMap)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
 				Title:       "Account Settings",
-				ContentData: account,
+				ContentData: contentData,
 			}
 			if sessionCtxData != nil {
 				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
@@ -96,9 +131,9 @@ func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate(ctx, "", accountSettingsPageSrc, nil)
+			tmpl := s.parseTemplate(ctx, "", accountSettingsPageSrc, funcMap)
 
-			s.renderTemplateToResponse(ctx, tmpl, account, res)
+			s.renderTemplateToResponse(ctx, tmpl, contentData, res)
 		}
 	}
 }

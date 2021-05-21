@@ -3,7 +3,7 @@ package frontend
 import (
 	"github.com/nleeper/goment"
 
-	panicking "gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 )
 
 var gomentPanicker = panicking.NewProductionPanicker()

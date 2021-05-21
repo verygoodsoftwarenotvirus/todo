@@ -216,7 +216,7 @@ func (s *service) PermissionFilterMiddleware(permissions ...authorization.Permis
 }
 
 // AdminMiddleware restricts requests to admin users only.
-func (s *service) AdminMiddleware(next http.Handler) http.Handler {
+func (s *service) ServiceAdminMiddleware(next http.Handler) http.Handler {
 	const staticError = "admin status required"
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -235,7 +235,7 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 		logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
 
 		if !sessionCtxData.Requester.ServicePermissions.IsServiceAdmin() {
-			logger.Debug("AdminMiddleware called by non-admin user")
+			logger.Debug("ServiceAdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return
 		}

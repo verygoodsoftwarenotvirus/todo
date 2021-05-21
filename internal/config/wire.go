@@ -11,6 +11,7 @@ var (
 			"Auth",
 			"Database",
 			"Observability",
+			"Capitalism",
 			"Meta",
 			"Encoding",
 			"Frontend",

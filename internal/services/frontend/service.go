@@ -2,12 +2,14 @@ package frontend
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"html/template"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	panicking "gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
@@ -24,7 +26,8 @@ type (
 	// AuthService is a subset of the larger types.AuthService interface.
 	AuthService interface {
 		UserAttributionMiddleware(next http.Handler) http.Handler
-		AdminMiddleware(next http.Handler) http.Handler
+		PermissionFilterMiddleware(permissions ...authorization.Permission) func(next http.Handler) http.Handler
+		ServiceAdminMiddleware(next http.Handler) http.Handler
 
 		AuthenticateUser(ctx context.Context, loginData *types.UserLoginInput) (*types.User, *http.Cookie, error)
 		LogoutUser(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request, res http.ResponseWriter) error
@@ -51,6 +54,7 @@ type (
 		dataStore                 database.DataManager
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		localizer                 *i18n.Localizer
+		paymentManager            capitalism.PaymentManager
 		templateFuncMap           template.FuncMap
 		useFakeData               bool
 	}
@@ -64,6 +68,7 @@ func ProvideService(
 	usersService UsersService,
 	dataStore database.DataManager,
 	routeParamManager routing.RouteParamManager,
+	paymentManager capitalism.PaymentManager,
 ) Service {
 	svc := &service{
 		useFakeData:               cfg.UseFakeData,
@@ -75,6 +80,7 @@ func ProvideService(
 		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
 		authService:               authService,
 		usersService:              usersService,
+		paymentManager:            paymentManager,
 		dataStore:                 dataStore,
 		templateFuncMap: map[string]interface{}{
 			"relativeTime":        relativeTime,

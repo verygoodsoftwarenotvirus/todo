@@ -400,7 +400,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 			testutil.HTTPRequestMatcher,
 		).Return()
 
-		helper.service.AdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
+		helper.service.ServiceAdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
@@ -421,7 +421,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
 		mockHandler := &testutil.MockHTTPHandler{}
-		helper.service.AdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
+		helper.service.ServiceAdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
@@ -439,7 +439,7 @@ func TestAuthService_AdminMiddleware(T *testing.T) {
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
 		mockHandler := &testutil.MockHTTPHandler{}
-		helper.service.AdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
+		helper.service.ServiceAdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 

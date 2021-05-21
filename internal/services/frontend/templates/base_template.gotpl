@@ -23,6 +23,7 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     <!-- <link rel="manifest" href="/my.webmanifest">                                       -->
     <!-- <meta name="theme-color" content="#FF00FF">                                        -->
+    <script src="https://js.stripe.com/v3/"></script>
 </head>
     <body>
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark">

@@ -23,7 +23,7 @@ func TestService_SetupRoutes(T *testing.T) {
 
 		authService := &mocktypes.AuthService{}
 		authService.On(
-			"AdminMiddleware",
+			"ServiceAdminMiddleware",
 			mock.IsType(obligatoryHandler),
 		).Return(http.Handler(obligatoryHandler))
 

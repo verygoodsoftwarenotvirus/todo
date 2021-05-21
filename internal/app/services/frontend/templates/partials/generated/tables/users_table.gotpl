@@ -1,0 +1,29 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Users</h1>
+    
+        <div>
+            Search: <input type="text">
+            <button class="btn btn-secondary" hx-target="#content" hx-get="">🔎</button>
+            <button class="btn btn-primary" hx-target="#content" hx-trigger="keyup" hx-push-url="" hx-get="">New</button>
+        </div>
+    
+</div>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Last Updated On</th>
+        <th>Created On</th>
+    </tr>
+    </thead>
+    <tbody>{{ range $i, $x := .Users }}
+    <tr>
+        <td>{{ $x.ID }}</td>
+        <td>{{ $x.Username }}</td>
+        <td>{{ relativeTimeFromPtr $x.LastUpdatedOn }}</td>
+        <td>{{ relativeTime $x.CreatedOn }}</td>
+        
+    </tr>
+    {{ end }}</tbody>
+</table>

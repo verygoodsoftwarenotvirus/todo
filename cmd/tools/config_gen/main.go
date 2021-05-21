@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"log"
+	"os"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
@@ -25,8 +27,8 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -92,6 +94,17 @@ var (
 			ServiceName:       "todo-service",
 		},
 	}
+
+	localCapitalism = capitalism.Config{
+		Enabled:  true,
+		Provider: capitalism.StripeProvider,
+		Stripe: &capitalism.StripeConfig{
+			WebhookSecret: os.Getenv("TODO_SERVICE_STRIPE_WEBHOOK_SECRET"),
+			SuccessURL:    "http://localhost:8888/billing/checkout/success",
+			CancelURL:     "http://localhost:8888/billing/checkout/cancel",
+			APIKey:        os.Getenv("TODO_SERVICE_STRIPE_API_KEY"),
+		},
+	}
 )
 
 type configFunc func(filePath string) error
@@ -155,6 +168,7 @@ func localDevelopmentConfig(filePath string) error {
 			MinimumUsernameLength: 4,
 			MinimumPasswordLength: 8,
 		},
+		Capitalism: localCapitalism,
 		Database: dbconfig.Config{
 			Debug:                     true,
 			RunMigrations:             true,
@@ -240,6 +254,7 @@ func frontendTestsConfig(filePath string) error {
 			MinimumUsernameLength: 4,
 			MinimumPasswordLength: 8,
 		},
+		Capitalism: localCapitalism,
 		Database: dbconfig.Config{
 			Debug:                     true,
 			RunMigrations:             true,
@@ -290,85 +305,6 @@ func frontendTestsConfig(filePath string) error {
 	return nil
 }
 
-func coverageConfig(filePath string) error {
-	cfg := &config.ServerConfig{
-		Meta: config.MetaSettings{
-			Debug:   true,
-			RunMode: testingEnv,
-		},
-		Encoding: encoding.Config{
-			ContentType: contentTypeJSON,
-		},
-		Server:   localServer,
-		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authentication.Config{
-			PASETO: authentication.PASETOConfig{
-				Issuer:       "todo_service",
-				Lifetime:     defaultPASETOLifetime,
-				LocalModeKey: examplePASETOKey,
-			},
-			Cookies:               localCookies,
-			Debug:                 false,
-			EnableUserSignup:      true,
-			MinimumUsernameLength: 4,
-			MinimumPasswordLength: 8,
-		},
-		Database: dbconfig.Config{
-			Debug:                     false,
-			RunMigrations:             true,
-			Provider:                  postgres,
-			ConnectionDetails:         devPostgresDBConnDetails,
-			MetricsCollectionInterval: 2 * time.Second,
-			MaxPingAttempts:           maxAttempts,
-			CreateTestUser: &types.TestUserCreationConfig{
-				Username:       "exampleUser",
-				Password:       "integration-tests-are-cool",
-				HashedPassword: mustHashPass("integration-tests-are-cool"),
-				IsServiceAdmin: false,
-			},
-		},
-		Observability: observability.Config{
-			Metrics: metrics.Config{
-				Provider:                         "",
-				RouteToken:                       "",
-				RuntimeMetricsCollectionInterval: time.Second,
-			},
-			Tracing: noopTracingConfig,
-		},
-		Uploads: uploads.Config{
-			Debug: true,
-			Storage: storage.Config{
-				UploadFilenameKey: "avatar",
-				Provider:          "memory",
-				BucketName:        "avatars",
-			},
-		},
-		Search: search.Config{
-			Provider:       "bleve",
-			ItemsIndexPath: defaultItemsSearchIndexPath,
-		},
-		Webhooks: webhooks.Config{
-			Debug:   false,
-			Enabled: true,
-		},
-		AuditLog: audit.Config{
-			Debug:   false,
-			Enabled: true,
-		},
-	}
-
-	vConfig, err := viper.FromConfig(cfg)
-	if err != nil {
-		return fmt.Errorf("converting config object: %w", err)
-	}
-
-	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
-	}
-
-	return nil
-}
-
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
 	return func(filePath string) error {
 		startupDeadline := time.Minute
@@ -389,7 +325,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				HTTPPort:        defaultPort,
 				StartupDeadline: startupDeadline,
 			},
-			Frontend: buildLocalFrontendServiceConfig(),
+			Capitalism: localCapitalism,
+			Frontend:   buildLocalFrontendServiceConfig(),
 			Auth: authentication.Config{
 				PASETO: authentication.PASETOConfig{
 					Issuer:       "todo_service",

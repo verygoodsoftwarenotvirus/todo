@@ -12,6 +12,7 @@ const (
 )
 
 type (
+	// Config allows for the configuration of this package and its subpackages.
 	Config struct {
 		Stripe   *StripeConfig `json:"stripe" mapstructure:"stripe" toml:"stripe"`
 		Provider string        `json:"provider" mapstructure:"provider" toml:"provider"`

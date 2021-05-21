@@ -311,7 +311,6 @@ func Test_stripePaymentManager_UnsubscribeFromPlan(T *testing.T) {
 		assert.NoError(t, err)
 
 		mock.AssertExpectationsForObjects(t, mockAPIBackend, mockConnectBackend, mockUploadsBackend)
-
 	})
 }
 

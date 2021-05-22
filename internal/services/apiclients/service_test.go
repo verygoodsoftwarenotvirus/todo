@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -12,7 +14,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 
@@ -28,7 +29,7 @@ func buildTestService(t *testing.T) *service {
 		logger:                    logging.NewNonOperationalLogger(),
 		encoderDecoder:            mockencoding.NewMockEncoderDecoder(),
 		authenticator:             &passwords.MockAuthenticator{},
-		sessionContextDataFetcher: chi.NewRouteParamManager().FetchContextFromRequest,
+		sessionContextDataFetcher: authentication.FetchContextFromRequest,
 		urlClientIDExtractor:      func(req *http.Request) uint64 { return 0 },
 		apiClientCounter:          &mockmetrics.UnitCounter{},
 		secretGenerator:           &random.MockGenerator{},

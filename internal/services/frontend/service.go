@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
@@ -78,7 +80,7 @@ func ProvideService(
 		panicker:                  panicking.NewProductionPanicker(),
 		localizer:                 provideLocalizer(),
 		routeParamManager:         routeParamManager,
-		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		sessionContextDataFetcher: authentication.FetchContextFromRequest,
 		authService:               authService,
 		usersService:              usersService,
 		paymentManager:            paymentManager,

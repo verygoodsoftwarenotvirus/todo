@@ -59,8 +59,16 @@ type authServiceHTTPRoutesTestHelper struct {
 func (helper *authServiceHTTPRoutesTestHelper) setContextFetcher(t *testing.T) {
 	t.Helper()
 
-	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
-	require.NoError(t, err)
+	sessionCtxData := &types.SessionContextData{
+		Requester: types.RequesterInfo{
+			UserID:                helper.exampleUser.ID,
+			Reputation:            helper.exampleUser.ServiceAccountStatus,
+			ReputationExplanation: helper.exampleUser.ReputationExplanation,
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+		},
+		ActiveAccountID:    helper.exampleAccount.ID,
+		AccountPermissions: helper.examplePermCheckers,
+	}
 
 	helper.sessionCtxData = sessionCtxData
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {

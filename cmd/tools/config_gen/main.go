@@ -169,7 +169,6 @@ func localDevelopmentConfig(filePath string) error {
 			MinimumUsernameLength: 4,
 			MinimumPasswordLength: 8,
 		},
-		Capitalism: localCapitalism,
 		Database: config2.Config{
 			Debug:                     true,
 			RunMigrations:             true,
@@ -255,7 +254,6 @@ func frontendTestsConfig(filePath string) error {
 			MinimumUsernameLength: 4,
 			MinimumPasswordLength: 8,
 		},
-		Capitalism: localCapitalism,
 		Database: config2.Config{
 			Debug:                     true,
 			RunMigrations:             true,
@@ -326,8 +324,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				HTTPPort:        defaultPort,
 				StartupDeadline: startupDeadline,
 			},
-			Capitalism: localCapitalism,
-			Frontend:   buildLocalFrontendServiceConfig(),
+			Frontend: buildLocalFrontendServiceConfig(),
 			Auth: authentication.Config{
 				PASETO: authentication.PASETOConfig{
 					Issuer:       "todo_service",

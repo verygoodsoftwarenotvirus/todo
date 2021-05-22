@@ -18,43 +18,43 @@
 
     <h3>Billing</h3>
     <div id="billing" class="mb3">
-        <form class="needs-validation" novalidate="">
+        <div>
             <select class="form-select form-select-lg mb-3" name="desiredPlan">
                 <option selected>Please select a plan</option>
                 {{ range $i, $subscription := .SubscriptionPlans }}
                 <option value="{{ .ID }}">{{ .Name }}: {{ renderPrice .Price }}</option>
                 {{ end }}
             </select>
-        <button class="btn btn-primary btn-lg btn-block" type="submit" id="beginCheckoutButton">Checkout</button>
-        </form>
+            <button class="btn btn-primary btn-lg btn-block" type="submit" id="beginCheckoutButton">Checkout</button>
+        </div>
     </div>
 
     <script type="text/javascript">
         // Create an instance of the Stripe object with your publishable API key
-        var stripe = Stripe("pk_test_51IrCfgJ45Mr1esdKdRKAuAAH6U17SJFTeiCSWKqQzN5t8O3rbRBD5o1XjY2h5HG0hh0v4f3NHsaHC6KCp2NJPNm500MOMCpc7f");
-        var checkoutButton = document.getElementById("beginCheckoutButton");
+        let stripe = Stripe("pk_test_51IrCfgJ45Mr1esdKdRKAuAAH6U17SJFTeiCSWKqQzN5t8O3rbRBD5o1XjY2h5HG0hh0v4f3NHsaHC6KCp2NJPNm500MOMCpc7f");
+        let checkoutButton = document.getElementById("beginCheckoutButton");
 
         checkoutButton.addEventListener("click", function () {
             fetch("/billing/checkout/begin", {
                 method: "POST",
             })
-                .then(function (response) {
-                    return response.json();
-                })
-                .then(function (response) {
-                    return stripe.redirectToCheckout({ sessionId: response.sessionID });
-                })
-                .then(function (result) {
-                    // If redirectToCheckout fails due to a browser or network
-                    // error, you should display the localized error message to your
-                    // customer using error.message.
-                    if (result.error) {
-                        alert(result.error.message);
-                    }
-                })
-                .catch(function (error) {
-                    console.error("Error:", error);
-                });
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (response) {
+                return stripe.redirectToCheckout({ sessionId: response.sessionID });
+            })
+            .then(function (result) {
+                // If redirectToCheckout fails due to a browser or network
+                // error, you should display the localized error message to your
+                // customer using error.message.
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            })
+            .catch(function (error) {
+                console.error("Error:", error);
+            });
         });
     </script>
 </div>

@@ -76,7 +76,7 @@ func ProvideService(
 		accountMembershipManager:  accountMembershipManager,
 		authenticator:             authenticator,
 		sessionManager:            sessionManager,
-		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		sessionContextDataFetcher: FetchContextFromRequest,
 		cookieManager:             securecookie.New(hashKey, []byte(cfg.Cookies.SigningKey)),
 		tracer:                    tracing.NewTracer(serviceName),
 	}

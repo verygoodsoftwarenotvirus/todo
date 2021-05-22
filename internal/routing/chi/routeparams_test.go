@@ -5,17 +5,11 @@ import (
 	"strconv"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewRouteParamManager(T *testing.T) {
@@ -25,78 +19,6 @@ func TestNewRouteParamManager(T *testing.T) {
 		t.Parallel()
 
 		assert.NotNil(t, NewRouteParamManager())
-	})
-}
-
-func Test_FetchContextFromRequest(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		r := &chiRouteParamManager{}
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		expected, _ := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
-			exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-		})
-
-		req := testutil.BuildTestRequest(t)
-		req = req.WithContext(
-			context.WithValue(req.Context(), types.SessionContextDataKey, expected),
-		)
-
-		actual, err := r.FetchContextFromRequest(req)
-
-		assert.NoError(t, err)
-		assert.Equal(t, expected, actual)
-	})
-
-	T.Run("without attached value", func(t *testing.T) {
-		t.Parallel()
-
-		r := &chiRouteParamManager{}
-
-		req := testutil.BuildTestRequest(t)
-		actual, err := r.FetchContextFromRequest(req)
-
-		assert.Error(t, err)
-		assert.Zero(t, actual)
-	})
-}
-
-func Test_UserIDFetcherFromSessionContextData(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		r := &chiRouteParamManager{}
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		sessionContextData, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
-			exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-		})
-		require.NoError(t, err)
-
-		req := testutil.BuildTestRequest(t)
-		req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionContextData))
-
-		expected := exampleUser.ID
-		actual := r.UserIDFetcherFromSessionContextData(req)
-		assert.Equal(t, expected, actual)
-	})
-
-	T.Run("without attached value", func(t *testing.T) {
-		t.Parallel()
-
-		r := &chiRouteParamManager{}
-		req := testutil.BuildTestRequest(t)
-
-		actual := r.UserIDFetcherFromSessionContextData(req)
-		assert.Zero(t, actual)
 	})
 }
 

@@ -21,6 +21,11 @@ import (
 
 const (
 	implementationName = "stripe_payment_manager"
+
+	webhookHeaderName                    = "Stripe-Signature"
+	webhookEventTypeCheckoutCompleted    = "checkout.session.completed"
+	webhookEventTypeInvoicePaid          = "invoice.paid"
+	webhookEventTypeInvoicePaymentFailed = "invoice.payment_failed"
 )
 
 type (
@@ -67,6 +72,23 @@ func buildGetCustomerParams(a *types.Account) *stripe.CustomerParams {
 	return p
 }
 
+func (s *stripePaymentManager) buildCheckoutSessionParams(subscriptionPlanID string) *stripe.CheckoutSessionParams {
+	return &stripe.CheckoutSessionParams{
+		SuccessURL:         stripe.String(s.successURL),
+		CancelURL:          stripe.String(s.cancelURL),
+		Mode:               stripe.String(string(stripe.CheckoutSessionModeSubscription)),
+		PaymentMethodTypes: stripe.StringSlice([]string{"card"}),
+		SubscriptionData: &stripe.CheckoutSessionSubscriptionDataParams{
+			Items: []*stripe.CheckoutSessionSubscriptionDataItemsParams{
+				{
+					Plan:     stripe.String(subscriptionPlanID),
+					Quantity: stripe.Int64(1), // For metered billing, do not pass quantity
+				},
+			},
+		},
+	}
+}
+
 func (s *stripePaymentManager) CreateCheckoutSession(ctx context.Context, subscriptionPlanID string) (string, error) {
 	_, span := s.tracer.StartSpan(ctx)
 	defer span.End()
@@ -96,12 +118,6 @@ func (s *stripePaymentManager) CreateCheckoutSession(ctx context.Context, subscr
 	return sess.ID, nil
 }
 
-const (
-	webhookEventTypeCheckoutCompleted    = "checkout.session.completed"
-	webhookEventTypeInvoicePaid          = "invoice.paid"
-	webhookEventTypeInvoicePaymentFailed = "invoice.payment_failed"
-)
-
 func (s *stripePaymentManager) HandleSubscriptionEventWebhook(req *http.Request) error {
 	_, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -113,7 +129,7 @@ func (s *stripePaymentManager) HandleSubscriptionEventWebhook(req *http.Request)
 		return observability.PrepareError(err, logger, span, "parsing received webhook content")
 	}
 
-	event, err := webhook.ConstructEvent(b, req.Header.Get("Stripe-Signature"), s.webhookSecret)
+	event, err := webhook.ConstructEvent(b, req.Header.Get(webhookHeaderName), s.webhookSecret)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "constructing webhook event")
 	}
@@ -151,30 +167,6 @@ func (s *stripePaymentManager) CreateCustomerID(ctx context.Context, account *ty
 	}
 
 	return c.ID, nil
-}
-
-func (s *stripePaymentManager) ListPlans(ctx context.Context) ([]capitalism.SubscriptionPlan, error) {
-	_, span := s.tracer.StartSpan(ctx)
-	defer span.End()
-
-	params := &stripe.PlanListParams{}
-	out := []capitalism.SubscriptionPlan{}
-
-	plans := s.client.Plans.List(params)
-	if err := plans.Err(); err != nil {
-		return nil, observability.PrepareError(err, s.logger, span, "listing <>")
-	}
-
-	for plans.Next() {
-		p := plans.Plan()
-		out = append(out, capitalism.SubscriptionPlan{
-			ID:    p.ID,
-			Name:  p.Nickname,
-			Price: uint32(p.Amount),
-		})
-	}
-
-	return out, nil
 }
 
 var errSubscriptionNotFound = errors.New("subscription not found")

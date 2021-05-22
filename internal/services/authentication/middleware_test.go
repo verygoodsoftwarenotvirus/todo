@@ -175,8 +175,16 @@ func TestAuthenticationService_UserAttributionMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
-		require.NoError(t, err)
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
+		}
 
 		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		mockAccountMembershipManager.On(
@@ -276,8 +284,16 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
-		require.NoError(t, err)
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
+		}
 
 		mockUserDataManager := &mocktypes.UserDataManager{}
 		mockUserDataManager.On(
@@ -311,8 +327,16 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 		helper.exampleUser.ServiceAccountStatus = types.BannedUserAccountStatus
 		helper.setContextFetcher(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
-		require.NoError(t, err)
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
+		}
 
 		mockUserDataManager := &mocktypes.UserDataManager{}
 		mockUserDataManager.On(
@@ -361,8 +385,16 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
-		require.NoError(t, err)
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
+		}
 
 		sessionCtxData.AccountPermissions = map[uint64]authorization.AccountRolePermissionsChecker{}
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
@@ -388,8 +420,16 @@ func TestAuthenticationService_AdminMiddleware(T *testing.T) {
 		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 		helper.setContextFetcher(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
-		require.NoError(t, err)
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
+		}
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
@@ -415,8 +455,16 @@ func TestAuthenticationService_AdminMiddleware(T *testing.T) {
 		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
-		require.NoError(t, err)
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
+		}
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
@@ -433,8 +481,16 @@ func TestAuthenticationService_AdminMiddleware(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, helper.examplePermCheckers)
-		require.NoError(t, err)
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
+		}
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 

@@ -28,15 +28,6 @@ type (
 	}
 )
 
-var _ validation.ValidatableWithContext = (*StripeConfig)(nil)
-
-// ValidateWithContext validates a StripeConfig struct.
-func (cfg *StripeConfig) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.APIKey, validation.Required),
-	)
-}
-
 var _ validation.ValidatableWithContext = (*Config)(nil)
 
 // ValidateWithContext validates a StripeConfig struct.
@@ -46,7 +37,16 @@ func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	}
 
 	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.Provider, validation.Required),
-		validation.Field(&cfg.Stripe, validation.When(cfg.Provider == StripeProvider)),
+		validation.Field(&cfg.Provider, validation.In(StripeProvider)),
+		validation.Field(&cfg.Stripe, validation.When(cfg.Provider == StripeProvider, validation.Required)),
+	)
+}
+
+var _ validation.ValidatableWithContext = (*StripeConfig)(nil)
+
+// ValidateWithContext validates a StripeConfig struct.
+func (cfg *StripeConfig) ValidateWithContext(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, cfg,
+		validation.Field(&cfg.APIKey, validation.Required),
 	)
 }

@@ -19,7 +19,6 @@ type (
 	PaymentManager interface {
 		CreateCustomerID(ctx context.Context, account *types.Account) (string, error)
 		HandleSubscriptionEventWebhook(req *http.Request) error
-		ListPlans(ctx context.Context) ([]SubscriptionPlan, error)
 		SubscribeToPlan(ctx context.Context, customerID, paymentMethodToken, planID string) (string, error)
 		CreateCheckoutSession(ctx context.Context, subscriptionPlanID string) (string, error)
 		UnsubscribeFromPlan(ctx context.Context, subscriptionID string) error

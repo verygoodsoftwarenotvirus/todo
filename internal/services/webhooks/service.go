@@ -3,6 +3,8 @@ package webhooks
 import (
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
@@ -48,7 +50,7 @@ func ProvideWebhooksService(
 		webhookDataManager:        webhookDataManager,
 		encoderDecoder:            encoder,
 		webhookCounter:            metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
-		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		sessionContextDataFetcher: authentication.FetchContextFromRequest,
 		webhookIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
 		tracer:                    tracing.NewTracer(serviceName),
 	}

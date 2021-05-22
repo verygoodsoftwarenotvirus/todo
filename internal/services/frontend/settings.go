@@ -3,7 +3,6 @@ package frontend
 import (
 	// import embed for the side effect.
 	_ "embed"
-	"fmt"
 	"html/template"
 	"net/http"
 
@@ -61,26 +60,6 @@ func (s *service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 	}
 }
 
-const (
-	basicPlanPrice   = 300
-	premiumPlanPrice = 1000
-)
-
-var (
-	validSubscriptionPlans = []capitalism.SubscriptionPlan{
-		{
-			ID:    "price_1ItP8lJ45Mr1esdKtP70clB2",
-			Name:  "Basic Plan",
-			Price: basicPlanPrice,
-		},
-		{
-			ID:    "price_1ItP8wJ45Mr1esdK4KDseAQ8",
-			Name:  "Premium Plan",
-			Price: premiumPlanPrice,
-		},
-	}
-)
-
 //go:embed templates/partials/settings/account_settings.gotpl
 var accountSettingsPageSrc string
 
@@ -114,13 +93,11 @@ func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 
 		contentData := &accountSettingsPageContent{
 			Account:           account,
-			SubscriptionPlans: validSubscriptionPlans,
+			SubscriptionPlans: nil,
 		}
 
 		funcMap := template.FuncMap{
-			"renderPrice": func(p uint32) string {
-				return fmt.Sprintf("$%.2f", float64(p))
-			},
+			"renderPrice": renderPrice,
 		}
 
 		if includeBaseTemplate {

@@ -6,7 +6,24 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 )
+
+var pricePanicker = panicking.NewProductionPanicker()
+
+const (
+	priceDivisor      = 0.01
+	arbitraryPriceMax = 100000
+)
+
+// NOTE: this function panics when it receives a number > 100,000, as it is not meant to handle those kinds of prices.
+func renderPrice(p uint32) string {
+	if p >= arbitraryPriceMax {
+		pricePanicker.Panic("price to be rendered is too large!")
+	}
+
+	return fmt.Sprintf("$%.2f", float64(p)*priceDivisor)
+}
 
 func (s *service) handleCheckoutSessionStart(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
@@ -17,7 +34,11 @@ func (s *service) handleCheckoutSessionStart(res http.ResponseWriter, req *http.
 
 	logger.Debug("checkout session route called")
 
-	selectedPlan := validSubscriptionPlans[0].ID
+	selectedPlan := req.URL.Query().Get("plan")
+	if selectedPlan == "" {
+		res.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	sessionID, err := s.paymentManager.CreateCheckoutSession(ctx, selectedPlan)
 	if err != nil {
@@ -26,11 +47,9 @@ func (s *service) handleCheckoutSessionStart(res http.ResponseWriter, req *http.
 		return
 	}
 
-	logger.WithValue("sessionID", sessionID).Debug("session id fetched")
+	// implementation goes here
 
-	if _, err = res.Write([]byte(fmt.Sprintf(`{ "sessionID": %q }`, sessionID))); err != nil {
-		return
-	}
+	logger.WithValue("sessionID", sessionID).Debug("session id fetched")
 }
 
 func (s *service) handleCheckoutSuccess(res http.ResponseWriter, req *http.Request) {
@@ -43,6 +62,8 @@ func (s *service) handleCheckoutSuccess(res http.ResponseWriter, req *http.Reque
 	// implementation goes here
 
 	logger.Debug("checkout session success route called")
+
+	res.WriteHeader(http.StatusTooEarly)
 }
 
 func (s *service) handleCheckoutCancel(res http.ResponseWriter, req *http.Request) {
@@ -55,6 +76,8 @@ func (s *service) handleCheckoutCancel(res http.ResponseWriter, req *http.Reques
 	// implementation goes here
 
 	logger.Debug("checkout session cancellation route called")
+
+	res.WriteHeader(http.StatusTooEarly)
 }
 
 func (s *service) handleCheckoutFailure(res http.ResponseWriter, req *http.Request) {
@@ -67,4 +90,6 @@ func (s *service) handleCheckoutFailure(res http.ResponseWriter, req *http.Reque
 	// implementation goes here
 
 	logger.Debug("checkout session failure route called")
+
+	res.WriteHeader(http.StatusTooEarly)
 }

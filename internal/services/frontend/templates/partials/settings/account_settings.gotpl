@@ -2,16 +2,59 @@
     <h1 class="h2">Account Settings</h1>
 </div>
 <div class="col-md-8 order-md-1">
-    <form class="needs-validation" novalidate="">
-        <div class="mb3">
-            <label for="Name">Name</label>
-            <div class="input-group">
-                <input class="form-control" type="text" id="Name" placeholder="Name"required="" value="{{ .Name }}" />
-                <div class="invalid-feedback" style="width: 100%;">Name is required.</div>
-            </div>
+    <div class="mb3">
+        <form class="needs-validation" novalidate="">
+        <label for="Name">Name</label>
+        <div class="input-group">
+            <input class="form-control" type="text" id="Name" placeholder="Name"required="" value="{{ .Account.Name }}" />
+            <div class="invalid-feedback" style="width: 100%;">Name is required.</div>
         </div>
 
-        <hr class="mb-4" />
-        <button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
-    </form>
+        <button class="btn btn-primary btn-lg btn-block mt-3" type="submit">Save</button>
+        </form>
+    </div>
+
+    <hr class="mb-4" />
+
+    <h3>Billing</h3>
+    <div id="billing" class="mb3">
+        <div>
+            <select class="form-select form-select-lg mb-3" name="desiredPlan">
+                <option selected>Please select a plan</option>
+                {{ range $i, $subscription := .SubscriptionPlans }}
+                <option value="{{ .ID }}">{{ .Name }}: {{ renderPrice .Price }}</option>
+                {{ end }}
+            </select>
+            <button class="btn btn-primary btn-lg btn-block" type="submit" id="beginCheckoutButton">Checkout</button>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Create an instance of the Stripe object with your publishable API key
+        let stripe = Stripe("pk_test_51IrCfgJ45Mr1esdKdRKAuAAH6U17SJFTeiCSWKqQzN5t8O3rbRBD5o1XjY2h5HG0hh0v4f3NHsaHC6KCp2NJPNm500MOMCpc7f");
+        let checkoutButton = document.getElementById("beginCheckoutButton");
+
+        checkoutButton.addEventListener("click", function () {
+            fetch("/billing/checkout/begin", {
+                method: "POST",
+            })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (response) {
+                return stripe.redirectToCheckout({ sessionId: response.sessionID });
+            })
+            .then(function (result) {
+                // If redirectToCheckout fails due to a browser or network
+                // error, you should display the localized error message to your
+                // customer using error.message.
+                if (result.error) {
+                    alert(result.error.message);
+                }
+            })
+            .catch(function (error) {
+                console.error("Error:", error);
+            });
+        });
+    </script>
 </div>

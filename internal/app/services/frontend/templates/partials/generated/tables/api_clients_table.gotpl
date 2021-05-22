@@ -1,0 +1,32 @@
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">API Clients</h1>
+    
+    <button class="btn btn-primary" hx-target="#content" hx-push-url="/api_clients/new" hx-get="/dashboard_pages/api_clients/new">New</button>
+    
+</div>
+<table class="table table-striped">
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>External ID</th>
+        <th>Client ID</th>
+        <th>Belongs To User</th>
+        <th>Created On</th>
+    </tr>
+    </thead>
+    <tbody>{{ range $i, $x := .Clients }}
+    <tr>
+        <td><button class="btn btn-sm btn-outline-dark" hx-push-url="{{ pushURL . }}" hx-get="{{ individualURL . }}" hx-target="#content">{{ $x.ID }}</button></td>
+        <td>{{ $x.ID }}</td>
+        <td>{{ $x.Name }}</td>
+        <td>{{ $x.ExternalID }}</td>
+        <td>{{ $x.ClientID }}</td>
+        <td>{{ $x.BelongsToUser }}</td>
+        <td>{{ $x.CreatedOn }}</td>
+        
+        <td>{{ relativeTime $x.CreatedOn }}</td>
+        
+    </tr>
+    {{ end }}</tbody>
+</table>

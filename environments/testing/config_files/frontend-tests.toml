@@ -19,7 +19,17 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [168, 144, 10, 187, 239, 108, 210, 93, 236, 211, 192, 167, 84, 245, 198, 102, 112, 198, 187, 229, 148, 123, 196, 199, 207, 49, 243, 98, 161, 210, 201, 71]
+    local_mode_key = [144, 87, 11, 199, 129, 98, 133, 136, 28, 189, 132, 105, 27, 83, 153, 191, 107, 91, 220, 226, 140, 251, 241, 37, 49, 58, 52, 242, 181, 9, 148, 210]
+
+[capitalism]
+  enabled = true
+  provider = "stripe"
+
+  [capitalism.stripe]
+    api_key = "sk_test_51IrCfgJ45Mr1esdKpPc3lI5Si9USkxqBEyebZkc9ypJY5S87F76QeE2Tgg3PvzyPZQVchlDVc7fOsPLOM698e2Dc00wY1BKUdO"
+    cancel_url = "http://localhost:8888/billing/checkout/cancel"
+    success_url = "http://localhost:8888/billing/checkout/success"
+    webhook_secret = "whsec_L9XCRWzqyl8x7mNg4W0VihURRco9wzGK"
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"

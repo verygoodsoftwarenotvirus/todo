@@ -3,9 +3,9 @@ package uploads
 import (
 	"context"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 // Config contains settings regarding search indices.
@@ -16,7 +16,7 @@ type Config struct {
 
 var _ validation.ValidatableWithContext = (*Config)(nil)
 
-// ValidateWithContext validates an Config struct.
+// ValidateWithContext validates a Config struct.
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.Storage),

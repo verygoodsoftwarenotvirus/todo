@@ -14,8 +14,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/require"
 )
 
 type usersServiceHTTPRoutesTestHelper struct {
@@ -30,31 +28,39 @@ type usersServiceHTTPRoutesTestHelper struct {
 func newTestHelper(t *testing.T) *usersServiceHTTPRoutesTestHelper {
 	t.Helper()
 
-	h := &usersServiceHTTPRoutesTestHelper{}
+	helper := &usersServiceHTTPRoutesTestHelper{}
 
-	h.ctx = context.Background()
-	h.service = buildTestService(t)
-	h.exampleUser = fakes.BuildFakeUser()
-	h.exampleAccount = fakes.BuildFakeAccount()
-	h.exampleAccount.BelongsToUser = h.exampleUser.ID
+	helper.ctx = context.Background()
+	helper.service = buildTestService(t)
+	helper.exampleUser = fakes.BuildFakeUser()
+	helper.exampleAccount = fakes.BuildFakeAccount()
+	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 
-	h.service.userIDFetcher = func(*http.Request) uint64 {
-		return h.exampleUser.ID
+	helper.service.userIDFetcher = func(*http.Request) uint64 {
+		return helper.exampleUser.ID
 	}
 
-	sessionCtxData, err := types.SessionContextDataFromUser(h.exampleUser, h.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
-		h.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-	})
-	require.NoError(t, err)
+	sessionCtxData := &types.SessionContextData{
+		Requester: types.RequesterInfo{
+			UserID:                helper.exampleUser.ID,
+			Reputation:            helper.exampleUser.ServiceAccountStatus,
+			ReputationExplanation: helper.exampleUser.ReputationExplanation,
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+		},
+		ActiveAccountID: helper.exampleAccount.ID,
+		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+		},
+	}
 
-	h.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	h.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
+	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
 
 	req := testutil.BuildTestRequest(t)
-	h.req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionCtxData))
-	h.res = httptest.NewRecorder()
+	helper.req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionCtxData))
+	helper.res = httptest.NewRecorder()
 
-	return h
+	return helper
 }

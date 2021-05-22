@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 
 	"github.com/stretchr/testify/assert"
 )

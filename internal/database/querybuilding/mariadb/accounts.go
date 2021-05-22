@@ -143,11 +143,17 @@ func (b *MariaDB) BuildAccountCreationQuery(ctx context.Context, input *types.Ac
 			Columns(
 				querybuilding.ExternalIDColumn,
 				querybuilding.AccountsTableNameColumn,
+				querybuilding.AccountsTableBillingStatusColumn,
+				querybuilding.AccountsTableContactEmailColumn,
+				querybuilding.AccountsTableContactPhoneColumn,
 				querybuilding.AccountsTableUserOwnershipColumn,
 			).
 			Values(
 				b.externalIDGenerator.NewExternalID(),
 				input.Name,
+				types.UnpaidAccountBillingStatus,
+				input.ContactEmail,
+				input.ContactPhone,
 				input.BelongsToUser,
 			),
 	)
@@ -164,6 +170,8 @@ func (b *MariaDB) BuildUpdateAccountQuery(ctx context.Context, input *types.Acco
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsTableName).
 			Set(querybuilding.AccountsTableNameColumn, input.Name).
+			Set(querybuilding.AccountsTableContactEmailColumn, input.ContactEmail).
+			Set(querybuilding.AccountsTableContactPhoneColumn, input.ContactPhone).
 			Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 			Where(squirrel.Eq{
 				querybuilding.IDColumn:                         input.ID,

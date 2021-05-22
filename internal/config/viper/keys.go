@@ -46,6 +46,22 @@ const (
 	// ConfigKeyAuthSecureCookiesOnly is the key viper will use to refer to the AuthSettings.SecureCookiesOnly setting.
 	ConfigKeyAuthSecureCookiesOnly = authKey + x + cookiesKey + x + "secure_only"
 
+	capitalismKey = "capitalism"
+	providerKey   = "provider"
+	stripeKey     = "stripe"
+	// ConfigKeyCapitalismEnabled is the key viper will use to refer to the Capitalism.Enabled setting.
+	ConfigKeyCapitalismEnabled = capitalismKey + x + enabledKey
+	// ConfigKeyCapitalismProvider is the key viper will use to refer to the Capitalism.Provider setting.
+	ConfigKeyCapitalismProvider = capitalismKey + x + providerKey
+	// ConfigKeyCapitalismStripeAPIKey is the key viper will use to refer to the Capitalism.StripeAPIKey setting.
+	ConfigKeyCapitalismStripeAPIKey = capitalismKey + x + stripeKey + x + "api_key"
+	// ConfigKeyCapitalismStripeSuccessURL is the key viper will use to refer to the Capitalism.SuccessURL setting.
+	ConfigKeyCapitalismStripeSuccessURL = capitalismKey + x + stripeKey + x + "success_url"
+	// ConfigKeyCapitalismStripeCancelURL is the key viper will use to refer to the Capitalism.CancelURL setting.
+	ConfigKeyCapitalismStripeCancelURL = capitalismKey + x + stripeKey + x + "cancel_url"
+	// ConfigKeyCapitalismStripeWebhookSecret is the key viper will use to refer to the Capitalism.StripeAPIKey setting.
+	ConfigKeyCapitalismStripeWebhookSecret = capitalismKey + x + stripeKey + x + "webhook_secret"
+
 	pasetoKey = "paseto"
 	// ConfigKeyAuthPASETOLifetimeKey is the key for PASETO settings.
 	ConfigKeyAuthPASETOLifetimeKey = authKey + x + pasetoKey + x + "lifetime"

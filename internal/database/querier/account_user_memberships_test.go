@@ -18,7 +18,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func buildMockRowsFromAccountUserMemberships(memberships ...*types.AccountUserMembership) *sqlmock.Rows {
@@ -270,11 +269,6 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, exampleAccountPermissionsMap)
-		require.NoError(t, err)
-		require.NotNil(t, expected)
-		expected.ActiveAccountID = 0
-
 		actual, err := c.BuildSessionContextDataForUser(ctx, exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
@@ -330,11 +324,6 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 			WillReturnRows(buildInvalidMockRowsFromAccountUserMemberships(exampleAccount.Members...))
 
 		c.sqlQueryBuilder = mockQueryBuilder
-
-		expected, err := types.SessionContextDataFromUser(exampleUser, exampleAccount.ID, exampleAccountPermissionsMap)
-		require.NoError(t, err)
-		require.NotNil(t, expected)
-		expected.ActiveAccountID = 0
 
 		actual, err := c.BuildSessionContextDataForUser(ctx, exampleUser.ID)
 		assert.Error(t, err)

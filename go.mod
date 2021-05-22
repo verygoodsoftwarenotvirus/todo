@@ -47,6 +47,7 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/makiuchi-d/gozxing v0.0.0-20210324052758-57132e828831
 	github.com/mattn/go-sqlite3 v1.14.7
+	github.com/mikespook/gorbac v2.1.0+incompatible // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/moul/http2curl v1.0.0
 	github.com/mssola/user_agent v0.5.2
@@ -66,6 +67,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
+	github.com/stripe/stripe-go v70.15.0+incompatible
 	github.com/tkuchiki/go-timezone v0.2.2 // indirect
 	github.com/unrolled/secure v1.0.8
 	github.com/wagslane/go-password-validator v0.3.0

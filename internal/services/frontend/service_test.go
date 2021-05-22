@@ -3,6 +3,8 @@ package frontend
 import (
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -29,6 +31,7 @@ func buildTestService(t *testing.T) *service {
 		usersService,
 		dataManager,
 		rpm,
+		capitalism.NewMockPaymentManager(),
 	)
 
 	mock.AssertExpectationsForObjects(t, authService, usersService, dataManager, rpm)

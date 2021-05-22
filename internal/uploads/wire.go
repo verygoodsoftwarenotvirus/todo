@@ -3,7 +3,7 @@ package uploads
 import (
 	"github.com/google/wire"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 )
 
 var (

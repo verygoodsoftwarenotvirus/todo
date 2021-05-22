@@ -14,8 +14,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/require"
 )
 
 type itemsServiceHTTPRoutesTestHelper struct {
@@ -33,37 +31,45 @@ type itemsServiceHTTPRoutesTestHelper struct {
 func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
 	t.Helper()
 
-	h := &itemsServiceHTTPRoutesTestHelper{}
+	helper := &itemsServiceHTTPRoutesTestHelper{}
 
-	h.ctx = context.Background()
-	h.service = buildTestService()
-	h.exampleUser = fakes.BuildFakeUser()
-	h.exampleAccount = fakes.BuildFakeAccount()
-	h.exampleAccount.BelongsToUser = h.exampleUser.ID
-	h.exampleItem = fakes.BuildFakeItem()
-	h.exampleItem.BelongsToAccount = h.exampleAccount.ID
-	h.exampleCreationInput = fakes.BuildFakeItemCreationInputFromItem(h.exampleItem)
-	h.exampleUpdateInput = fakes.BuildFakeItemUpdateInputFromItem(h.exampleItem)
+	helper.ctx = context.Background()
+	helper.service = buildTestService()
+	helper.exampleUser = fakes.BuildFakeUser()
+	helper.exampleAccount = fakes.BuildFakeAccount()
+	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
+	helper.exampleItem = fakes.BuildFakeItem()
+	helper.exampleItem.BelongsToAccount = helper.exampleAccount.ID
+	helper.exampleCreationInput = fakes.BuildFakeItemCreationInputFromItem(helper.exampleItem)
+	helper.exampleUpdateInput = fakes.BuildFakeItemUpdateInputFromItem(helper.exampleItem)
 
-	h.service.itemIDFetcher = func(*http.Request) uint64 {
-		return h.exampleItem.ID
+	helper.service.itemIDFetcher = func(*http.Request) uint64 {
+		return helper.exampleItem.ID
 	}
 
-	sessionCtxData, err := types.SessionContextDataFromUser(h.exampleUser, h.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
-		h.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-	})
-	require.NoError(t, err)
+	sessionCtxData := &types.SessionContextData{
+		Requester: types.RequesterInfo{
+			UserID:                helper.exampleUser.ID,
+			Reputation:            helper.exampleUser.ServiceAccountStatus,
+			ReputationExplanation: helper.exampleUser.ReputationExplanation,
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+		},
+		ActiveAccountID: helper.exampleAccount.ID,
+		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+		},
+	}
 
-	h.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
-	h.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
+	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
 
 	req := testutil.BuildTestRequest(t)
 
-	h.req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionCtxData))
+	helper.req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionCtxData))
 
-	h.res = httptest.NewRecorder()
+	helper.res = httptest.NewRecorder()
 
-	return h
+	return helper
 }

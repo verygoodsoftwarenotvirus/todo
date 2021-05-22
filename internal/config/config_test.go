@@ -9,13 +9,14 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -70,7 +71,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 			Search: search.Config{
 				ItemsIndexPath: "/items_index_path",
 			},
-			Database: dbconfig.Config{
+			Database: config.Config{
 				Provider:                  "postgres",
 				MetricsCollectionInterval: 2 * time.Second,
 				Debug:                     true,
@@ -110,7 +111,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 
 		for _, provider := range []string{"sqlite", "postgres", "mariadb"} {
 			cfg := &ServerConfig{
-				Database: dbconfig.Config{
+				Database: config.Config{
 					Provider: provider,
 				},
 			}
@@ -140,7 +141,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		logger := logging.NewNonOperationalLogger()
 
 		cfg := &ServerConfig{
-			Database: dbconfig.Config{
+			Database: config.Config{
 				Provider: "provider",
 			},
 		}

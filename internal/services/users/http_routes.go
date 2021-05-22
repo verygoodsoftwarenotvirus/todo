@@ -136,7 +136,7 @@ func (s *service) RegisterUser(ctx context.Context, registrationInput *types.Use
 	// create the user.
 	user, userCreationErr := s.userDataManager.CreateUser(ctx, input)
 	if userCreationErr != nil {
-		return nil, observability.PrepareError(err, logger, span, "creating user")
+		return nil, observability.PrepareError(userCreationErr, logger, span, "creating user")
 	}
 
 	// notify the relevant parties.
@@ -323,9 +323,9 @@ func (s *service) VerifyUserTwoFactorSecret(ctx context.Context, input *types.TO
 
 	logger := s.logger.WithValue(keys.UserIDKey, input.UserID)
 
-	user, err := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "fetching user with unverified two factor secret")
+	user, fetchUserErr := s.userDataManager.GetUserWithUnverifiedTwoFactorSecret(ctx, input.UserID)
+	if fetchUserErr != nil {
+		return observability.PrepareError(fetchUserErr, logger, span, "fetching user with unverified two factor secret")
 	}
 
 	tracing.AttachUserIDToSpan(span, user.ID)
@@ -343,7 +343,7 @@ func (s *service) VerifyUserTwoFactorSecret(ctx context.Context, input *types.TO
 	}
 
 	if updateUserErr := s.userDataManager.MarkUserTwoFactorSecretAsVerified(ctx, user.ID); updateUserErr != nil {
-		return observability.PrepareError(err, logger, span, "marking 2FA secret as validated")
+		return observability.PrepareError(updateUserErr, logger, span, "marking 2FA secret as validated")
 	}
 
 	return nil
@@ -374,16 +374,16 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 
 	logger = logger.WithValue(keys.UserIDKey, input.UserID)
 
-	if err := s.VerifyUserTwoFactorSecret(ctx, input); err != nil {
+	if twoFactorSecretVerificationError := s.VerifyUserTwoFactorSecret(ctx, input); twoFactorSecretVerificationError != nil {
 		switch {
-		case errors.Is(err, passwords.ErrInvalidTOTPToken):
+		case errors.Is(twoFactorSecretVerificationError, passwords.ErrInvalidTOTPToken):
 			s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 			return
-		case errors.Is(err, errSecretAlreadyVerified):
+		case errors.Is(twoFactorSecretVerificationError, errSecretAlreadyVerified):
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, "TOTP secret already verified", http.StatusAlreadyReported)
 			return
 		default:
-			observability.AcknowledgeError(err, logger, span, "verifying user two factor secret")
+			observability.AcknowledgeError(twoFactorSecretVerificationError, logger, span, "verifying user two factor secret")
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			return
 		}

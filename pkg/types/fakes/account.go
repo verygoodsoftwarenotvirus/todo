@@ -9,12 +9,16 @@ import (
 // BuildFakeAccount builds a faked account.
 func BuildFakeAccount() *types.Account {
 	return &types.Account{
-		ID:            uint64(fake.Uint32()),
-		ExternalID:    fake.UUID(),
-		Name:          fake.Word(),
-		CreatedOn:     uint64(uint32(fake.Date().Unix())),
-		BelongsToUser: fake.Uint64(),
-		Members:       BuildFakeAccountUserMembershipList().AccountUserMemberships,
+		ID:                         uint64(fake.Uint32()),
+		ExternalID:                 fake.UUID(),
+		Name:                       fake.Word(),
+		BillingStatus:              types.PaidAccountBillingStatus,
+		ContactEmail:               fake.Email(),
+		ContactPhone:               fake.PhoneFormatted(),
+		PaymentProcessorCustomerID: fake.UUID(),
+		CreatedOn:                  uint64(uint32(fake.Date().Unix())),
+		BelongsToUser:              fake.Uint64(),
+		Members:                    BuildFakeAccountUserMembershipList().AccountUserMemberships,
 	}
 }
 
@@ -74,6 +78,8 @@ func BuildFakeAccountCreationInput() *types.AccountCreationInput {
 func BuildFakeAccountCreationInputFromAccount(account *types.Account) *types.AccountCreationInput {
 	return &types.AccountCreationInput{
 		Name:          account.Name,
+		ContactEmail:  account.ContactEmail,
+		ContactPhone:  account.ContactPhone,
 		BelongsToUser: account.BelongsToUser,
 	}
 }

@@ -7,6 +7,8 @@ import (
 	"math"
 	"time"
 
+	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+
 	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
@@ -14,8 +16,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"github.com/spf13/viper"
-
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 )
 
 const (
@@ -50,7 +50,7 @@ func BuildViperConfig() *viper.Viper {
 
 	// metrics stuff.
 	cfg.SetDefault(ConfigKeyDatabaseMetricsCollectionInterval, metrics.DefaultMetricsCollectionInterval)
-	cfg.SetDefault(ConfigKeyMetricsRuntimeCollectionInterval, dbconfig.DefaultMetricsCollectionInterval)
+	cfg.SetDefault(ConfigKeyMetricsRuntimeCollectionInterval, config2.DefaultMetricsCollectionInterval)
 
 	// tracing stuff.
 	cfg.SetDefault(ConfigKeyObservabilityTracingSpanCollectionProbability, 1)
@@ -106,6 +106,13 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyAuthCookieSigningKey, input.Auth.Cookies.SigningKey)
 	cfg.Set(ConfigKeyAuthCookieLifetime, input.Auth.Cookies.Lifetime)
 	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.Cookies.SecureOnly)
+
+	cfg.Set(ConfigKeyCapitalismEnabled, input.Capitalism.Enabled)
+	cfg.Set(ConfigKeyCapitalismProvider, input.Capitalism.Provider)
+	cfg.Set(ConfigKeyCapitalismStripeAPIKey, input.Capitalism.Stripe.APIKey)
+	cfg.Set(ConfigKeyCapitalismStripeSuccessURL, input.Capitalism.Stripe.SuccessURL)
+	cfg.Set(ConfigKeyCapitalismStripeCancelURL, input.Capitalism.Stripe.CancelURL)
+	cfg.Set(ConfigKeyCapitalismStripeWebhookSecret, input.Capitalism.Stripe.WebhookSecret)
 
 	cfg.Set(ConfigKeyAuthPASETOListener, input.Auth.PASETO.Issuer)
 	cfg.Set(ConfigKeyAuthPASETOLifetimeKey, time.Duration(math.Min(float64(input.Auth.PASETO.Lifetime), float64(maxPASETOLifetime))))

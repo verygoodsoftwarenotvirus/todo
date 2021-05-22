@@ -387,9 +387,9 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 	}
 
 	account := &types.Account{
-		Name:                      input.Username,
-		AccountSubscriptionPlanID: nil,
-		CreatedOn:                 q.currentTime(),
+		Name:               input.Username,
+		SubscriptionPlanID: nil,
+		CreatedOn:          q.currentTime(),
 	}
 
 	if err := q.createUser(ctx, user, account, userCreationQuery, userCreationArgs); err != nil {

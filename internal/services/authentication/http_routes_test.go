@@ -35,7 +35,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAuthService_issueSessionManagedCookie(T *testing.T) {
+func TestAuthenticationService_issueSessionManagedCookie(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -146,7 +146,7 @@ func TestAuthService_issueSessionManagedCookie(T *testing.T) {
 	})
 }
 
-func TestAuthService_LoginHandler(T *testing.T) {
+func TestAuthenticationService_LoginHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -844,7 +844,7 @@ func TestAuthService_LoginHandler(T *testing.T) {
 	})
 }
 
-func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
+func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -1176,7 +1176,7 @@ func TestAuthService_ChangeActiveAccountHandler(T *testing.T) {
 	})
 }
 
-func TestAuthService_LogoutHandler(T *testing.T) {
+func TestAuthenticationService_LogoutHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -1269,7 +1269,7 @@ func TestAuthService_LogoutHandler(T *testing.T) {
 	})
 }
 
-func TestAuthService_StatusHandler(T *testing.T) {
+func TestAuthenticationService_StatusHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -1293,7 +1293,7 @@ func TestAuthService_StatusHandler(T *testing.T) {
 	})
 }
 
-func TestAuthService_CycleSecretHandler(T *testing.T) {
+func TestAuthenticationService_CycleSecretHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -1362,7 +1362,7 @@ func TestAuthService_CycleSecretHandler(T *testing.T) {
 	})
 }
 
-func TestAuthService_PASETOHandler(T *testing.T) {
+func TestAuthenticationService_PASETOHandler(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

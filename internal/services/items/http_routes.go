@@ -44,6 +44,9 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+
 	// check session context data for parsed input struct.
 	input := new(types.ItemCreationInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
@@ -58,8 +61,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
 	// create item in database.
@@ -260,6 +261,9 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+
 	// check for parsed input attached to session context data.
 	input := new(types.ItemUpdateInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
@@ -273,9 +277,6 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
 	// determine item ID.

@@ -68,7 +68,7 @@ func ProvideUsersService(
 		accountDataManager:        accountDataManager,
 		authenticator:             authenticator,
 		userIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
-		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		sessionContextDataFetcher: authentication.FetchContextFromRequest,
 		encoderDecoder:            encoder,
 		authSettings:              authSettings,
 		userCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),

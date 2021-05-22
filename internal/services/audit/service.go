@@ -3,6 +3,8 @@ package audit
 import (
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -42,7 +44,7 @@ func ProvideService(
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		auditLog:                  auditLog,
 		auditLogEntryIDFetcher:    routeParamManager.BuildRouteParamIDFetcher(logger, LogEntryURIParamKey, "audit log entry"),
-		sessionContextDataFetcher: routeParamManager.FetchContextFromRequest,
+		sessionContextDataFetcher: authentication.FetchContextFromRequest,
 		encoderDecoder:            encoder,
 		tracer:                    tracing.NewTracer(serviceName),
 	}

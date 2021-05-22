@@ -2,6 +2,7 @@ package httpclient
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -13,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	panicking "gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 
 	"github.com/moul/http2curl"
@@ -32,6 +33,8 @@ var (
 	cookieAuthMethod   = new(authMethod)
 	pasetoAuthMethod   = new(authMethod)
 	defaultContentType = encoding.ContentTypeJSON
+
+	errInvalidResponseCode = errors.New("invalid response code")
 )
 
 // Client is a client for interacting with v1 of our HTTP API.

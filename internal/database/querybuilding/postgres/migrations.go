@@ -67,7 +67,11 @@ var (
 			CREATE TABLE IF NOT EXISTS accounts (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
 				external_id TEXT NOT NULL,
-				name CHARACTER VARYING NOT NULL,
+				name TEXT NOT NULL,
+				billing_status TEXT NOT NULL DEFAULT 'unpaid',
+				contact_email TEXT NOT NULL DEFAULT '',
+				contact_phone TEXT NOT NULL DEFAULT '',
+				payment_processor_customer_id TEXT NOT NULL DEFAULT '',
 				subscription_plan_id TEXT,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
@@ -137,8 +141,8 @@ var (
 			CREATE TABLE IF NOT EXISTS items (
 				id BIGSERIAL NOT NULL PRIMARY KEY,
 				external_id TEXT NOT NULL,
-				name CHARACTER VARYING NOT NULL,
-				details CHARACTER VARYING NOT NULL DEFAULT '',
+				name TEXT NOT NULL,
+				details TEXT NOT NULL DEFAULT '',
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,

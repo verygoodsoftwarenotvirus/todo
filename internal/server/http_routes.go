@@ -68,7 +68,7 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 	})
 
 	authenticatedRouter.WithMiddleware(s.authService.AuthorizationMiddleware).Route("/api/v1", func(v1Router routing.Router) {
-		adminRouter := v1Router.WithMiddleware(s.authService.AdminMiddleware)
+		adminRouter := v1Router.WithMiddleware(s.authService.ServiceAdminMiddleware)
 
 		// Admin
 		adminRouter.Route("/admin", func(adminRouter routing.Router) {

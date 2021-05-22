@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
@@ -23,9 +25,14 @@ func TestService_SetupRoutes(T *testing.T) {
 
 		authService := &mocktypes.AuthService{}
 		authService.On(
-			"AdminMiddleware",
+			"ServiceAdminMiddleware",
 			mock.IsType(obligatoryHandler),
 		).Return(http.Handler(obligatoryHandler))
+
+		authService.On(
+			"PermissionFilterMiddleware",
+			mock.IsType([]authorization.Permission{}),
+		).Return(func(next http.Handler) http.Handler { return http.Handler(obligatoryHandler) })
 
 		authService.On(
 			"UserAttributionMiddleware",

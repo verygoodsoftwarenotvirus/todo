@@ -3,7 +3,11 @@ package frontend
 import (
 	// import embed for the side effect.
 	_ "embed"
+	"html/template"
 	"net/http"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
@@ -59,6 +63,11 @@ func (s *service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 //go:embed templates/partials/settings/account_settings.gotpl
 var accountSettingsPageSrc string
 
+type accountSettingsPageContent struct {
+	Account           *types.Account
+	SubscriptionPlans []capitalism.SubscriptionPlan
+}
+
 func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
 	return func(res http.ResponseWriter, req *http.Request) {
 		ctx, span := s.tracer.StartSpan(req.Context())
@@ -82,13 +91,22 @@ func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 			return
 		}
 
+		contentData := &accountSettingsPageContent{
+			Account:           account,
+			SubscriptionPlans: nil,
+		}
+
+		funcMap := template.FuncMap{
+			"renderPrice": renderPrice,
+		}
+
 		if includeBaseTemplate {
-			tmpl := s.renderTemplateIntoBaseTemplate(accountSettingsPageSrc, nil)
+			tmpl := s.renderTemplateIntoBaseTemplate(accountSettingsPageSrc, funcMap)
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
 				Title:       "Account Settings",
-				ContentData: account,
+				ContentData: contentData,
 			}
 			if sessionCtxData != nil {
 				page.IsServiceAdmin = sessionCtxData.Requester.ServicePermissions.IsServiceAdmin()
@@ -96,9 +114,9 @@ func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 
 			s.renderTemplateToResponse(ctx, tmpl, page, res)
 		} else {
-			tmpl := s.parseTemplate(ctx, "", accountSettingsPageSrc, nil)
+			tmpl := s.parseTemplate(ctx, "", accountSettingsPageSrc, funcMap)
 
-			s.renderTemplateToResponse(ctx, tmpl, account, res)
+			s.renderTemplateToResponse(ctx, tmpl, contentData, res)
 		}
 	}
 }

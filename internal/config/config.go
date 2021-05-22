@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -21,7 +24,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querier"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
@@ -59,11 +61,12 @@ type (
 	ServerConfig struct {
 		Search        search.Config         `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Encoding      encoding.Config       `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
+		Capitalism    capitalism.Config     `json:"capitalism" mapstructure:"capitalism" toml:"capitalism"`
 		Uploads       uploads.Config        `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
 		Observability observability.Config  `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Routing       routing.Config        `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
 		Meta          MetaSettings          `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Database      dbconfig.Config       `json:"database" mapstructure:"database" toml:"database,omitempty"`
+		Database      config.Config         `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Auth          authentication.Config `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Server        server.Config         `json:"server" mapstructure:"server" toml:"server,omitempty"`
 		AuditLog      audit.Config          `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
@@ -100,6 +103,10 @@ func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 
 	if err := cfg.Meta.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating Meta portion of config: %w", err)
+	}
+
+	if err := cfg.Capitalism.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Capitalism portion of config: %w", err)
 	}
 
 	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {

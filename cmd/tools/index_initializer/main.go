@@ -11,12 +11,12 @@ import (
 	"log"
 	"time"
 
+	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+
 	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	bleve2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
-
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -38,9 +38,9 @@ var (
 	}
 
 	validDatabaseTypes = map[string]struct{}{
-		dbconfig.PostgresProvider: {},
-		dbconfig.MariaDBProvider:  {},
-		dbconfig.SqliteProvider:   {},
+		config2.PostgresProvider: {},
+		config2.MariaDBProvider:  {},
+		config2.SqliteProvider:   {},
 	}
 )
 
@@ -85,7 +85,7 @@ func main() {
 	}
 
 	cfg := &config.ServerConfig{
-		Database: dbconfig.Config{
+		Database: config2.Config{
 			MetricsCollectionInterval: time.Second,
 			Provider:                  databaseType,
 			ConnectionDetails:         database.ConnectionDetails(dbConnectionDetails),

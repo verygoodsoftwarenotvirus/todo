@@ -4,14 +4,14 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// NewMockPanicker produces a production-ready panicker that will actually panic when called.
-func NewMockPanicker() *MockPanicker {
-	return &MockPanicker{}
-}
-
 // MockPanicker implements Panicker for tests.
 type MockPanicker struct {
 	mock.Mock
+}
+
+// NewMockPanicker produces a production-ready panicker that will actually panic when called.
+func NewMockPanicker() *MockPanicker {
+	return &MockPanicker{}
 }
 
 // Panic satisfies our interface.

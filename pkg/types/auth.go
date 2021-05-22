@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
-	"errors"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
@@ -23,12 +22,6 @@ const (
 	UserLoginInputContextKey ContextKey = "user_login_input"
 	// UserRegistrationInputContextKey is the non-string type we use for referencing SessionContextData structs.
 	UserRegistrationInputContextKey ContextKey = "user_registration_input"
-)
-
-var (
-	errNilUser          = errors.New("non-nil user required for session context data")
-	errZeroAccountID    = errors.New("active account ID required for session context data")
-	errNilPermissionMap = errors.New("non-nil permissions map required for session context data")
 )
 
 func init() {
@@ -98,7 +91,7 @@ type (
 		CookieRequirementMiddleware(next http.Handler) http.Handler
 		UserAttributionMiddleware(next http.Handler) http.Handler
 		AuthorizationMiddleware(next http.Handler) http.Handler
-		AdminMiddleware(next http.Handler) http.Handler
+		ServiceAdminMiddleware(next http.Handler) http.Handler
 
 		AuthenticateUser(ctx context.Context, loginData *UserLoginInput) (*User, *http.Cookie, error)
 		LogoutUser(ctx context.Context, sessionCtxData *SessionContextData, req *http.Request, res http.ResponseWriter) error
@@ -153,32 +146,4 @@ func (x *SessionContextData) ToBytes() []byte {
 	}
 
 	return b.Bytes()
-}
-
-// SessionContextDataFromUser produces a SessionContextData object from a User's data.
-func SessionContextDataFromUser(user *User, activeAccountID uint64, accountPermissionsMap map[uint64]authorization.AccountRolePermissionsChecker) (*SessionContextData, error) {
-	if user == nil {
-		return nil, errNilUser
-	}
-
-	if activeAccountID == 0 {
-		return nil, errZeroAccountID
-	}
-
-	if accountPermissionsMap == nil {
-		return nil, errNilPermissionMap
-	}
-
-	sessionCtxData := &SessionContextData{
-		Requester: RequesterInfo{
-			UserID:                user.ID,
-			Reputation:            user.ServiceAccountStatus,
-			ReputationExplanation: user.ReputationExplanation,
-			ServicePermissions:    authorization.NewServiceRolePermissionChecker(user.ServiceRoles...),
-		},
-		AccountPermissions: accountPermissionsMap,
-		ActiveAccountID:    activeAccountID,
-	}
-
-	return sessionCtxData, nil
 }

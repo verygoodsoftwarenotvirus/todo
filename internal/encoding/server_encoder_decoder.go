@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	panicking "gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )

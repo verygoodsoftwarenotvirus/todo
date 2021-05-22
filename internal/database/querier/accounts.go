@@ -39,7 +39,11 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 		&account.ID,
 		&account.ExternalID,
 		&account.Name,
-		&account.AccountSubscriptionPlanID,
+		&account.BillingStatus,
+		&account.ContactEmail,
+		&account.ContactPhone,
+		&account.PaymentProcessorCustomerID,
+		&account.SubscriptionPlanID,
 		&account.CreatedOn,
 		&account.LastUpdatedOn,
 		&account.ArchivedOn,
@@ -317,6 +321,9 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 		ID:            id,
 		Name:          input.Name,
 		BelongsToUser: input.BelongsToUser,
+		BillingStatus: types.UnpaidAccountBillingStatus,
+		ContactEmail:  input.ContactEmail,
+		ContactPhone:  input.ContactPhone,
 		CreatedOn:     q.currentTime(),
 	}
 

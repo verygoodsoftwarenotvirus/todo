@@ -1,10 +1,5 @@
 package querybuilding
 
-var (
-	// DefaultTestUserSalt is the default Salt we give to test users when we initialize them.
-	DefaultTestUserSalt = []byte("aaaaaaaaaaaaaaaa")
-)
-
 const (
 	// DefaultTestUserTwoFactorSecret is the default TwoFactorSecret we give to test users when we initialize them.
 	// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`
@@ -39,10 +34,18 @@ const (
 
 	// AccountsTableName is what the accounts table calls itself.
 	AccountsTableName = "accounts"
-	// AccountsTableNameColumn is what the accounts table calls the name column.
+	// AccountsTableNameColumn is what the accounts table calls the Name column.
 	AccountsTableNameColumn = "name"
-	// AccountsTablePlanIDColumn is what the accounts table calls the <> column.
-	AccountsTablePlanIDColumn = "subscription_plan_id"
+	// AccountsTableBillingStatusColumn is what the accounts table calls the BillingStatus column.
+	AccountsTableBillingStatusColumn = "billing_status"
+	// AccountsTableContactEmailColumn is what the accounts table calls the ContactEmail column.
+	AccountsTableContactEmailColumn = "contact_email"
+	// AccountsTableContactPhoneColumn is what the accounts table calls the ContactPhone column.
+	AccountsTableContactPhoneColumn = "contact_phone"
+	// AccountsTablePaymentProcessorCustomerIDColumn is what the accounts table calls the PaymentProcessorCustomerID column.
+	AccountsTablePaymentProcessorCustomerIDColumn = "payment_processor_customer_id"
+	// AccountsTableSubscriptionPlanIDColumn is what the accounts table calls the SubscriptionPlanID column.
+	AccountsTableSubscriptionPlanIDColumn = "subscription_plan_id"
 	// AccountsTableUserOwnershipColumn is what the accounts table calls the user ownership column.
 	AccountsTableUserOwnershipColumn = userOwnershipColumn
 

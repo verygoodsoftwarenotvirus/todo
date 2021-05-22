@@ -37,10 +37,18 @@ func buildTestHelper(t *testing.T) *auditServiceHTTPRoutesTestHelper {
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 	helper.exampleAuditLogEntry = fakes.BuildFakeAuditLogEntry()
 
-	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
-		helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-	})
-	require.NoError(t, err)
+	sessionCtxData := &types.SessionContextData{
+		Requester: types.RequesterInfo{
+			UserID:                helper.exampleUser.ID,
+			Reputation:            helper.exampleUser.ServiceAccountStatus,
+			ReputationExplanation: helper.exampleUser.ReputationExplanation,
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+		},
+		ActiveAccountID: helper.exampleAccount.ID,
+		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+		},
+	}
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
@@ -50,6 +58,7 @@ func buildTestHelper(t *testing.T) *auditServiceHTTPRoutesTestHelper {
 		return helper.exampleAuditLogEntry.ID
 	}
 
+	var err error
 	helper.res = httptest.NewRecorder()
 	helper.req, err = http.NewRequestWithContext(
 		helper.ctx,

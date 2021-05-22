@@ -9,9 +9,9 @@ import (
 	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
 )
 
 var uploadCount = 0

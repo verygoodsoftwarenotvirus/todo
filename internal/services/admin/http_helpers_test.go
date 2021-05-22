@@ -31,9 +31,18 @@ type adminServiceHTTPRoutesTestHelper struct {
 func (helper *adminServiceHTTPRoutesTestHelper) neuterAdminUser() {
 	helper.exampleUser.ServiceRoles = []string{authorization.ServiceUserRole.String()}
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
-		return types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
-			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-		})
+		return &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID: helper.exampleAccount.ID,
+			AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+				helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+			},
+		}, nil
 	}
 }
 
@@ -59,10 +68,18 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	require.NoError(t, err)
 	require.NotNil(t, helper.req)
 
-	sessionCtxData, err := types.SessionContextDataFromUser(helper.exampleUser, helper.exampleAccount.ID, map[uint64]authorization.AccountRolePermissionsChecker{
-		helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
-	})
-	require.NoError(t, err)
+	sessionCtxData := &types.SessionContextData{
+		Requester: types.RequesterInfo{
+			UserID:                helper.exampleUser.ID,
+			Reputation:            helper.exampleUser.ServiceAccountStatus,
+			ReputationExplanation: helper.exampleUser.ReputationExplanation,
+			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+		},
+		ActiveAccountID: helper.exampleAccount.ID,
+		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
+		},
+	}
 
 	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {

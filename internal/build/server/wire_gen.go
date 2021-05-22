@@ -9,6 +9,7 @@ import (
 	"context"
 	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
@@ -28,9 +29,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/storage"
 )
 
 // Injectors from build.go:
@@ -50,8 +51,8 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	apiClientDataManager := database.ProvideAPIClientDataManager(dbm)
 	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
 	cookieConfig := authenticationConfig.Cookies
-	configConfig := cfg.Database
-	sessionManager, err := config2.ProvideSessionManager(cookieConfig, configConfig, db)
+	databaseConfig := cfg.Database
+	sessionManager, err := config2.ProvideSessionManager(cookieConfig, databaseConfig, db)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,10 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	frontendConfig := &cfg.Frontend
 	frontendAuthService := frontend.ProvideAuthService(authService)
 	usersService := frontend.ProvideUsersService(userDataService)
-	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dbm, routeParamManager)
+	capitalismConfig := &cfg.Capitalism
+	stripeConfig := capitalismConfig.Stripe
+	paymentManager := stripe.NewStripePaymentManager(logger, stripeConfig)
+	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dbm, routeParamManager, paymentManager)
 	router := chi.NewRouter(logger)
 	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	panicking "gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

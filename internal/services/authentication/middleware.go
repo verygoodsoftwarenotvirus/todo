@@ -216,7 +216,7 @@ func (s *service) PermissionFilterMiddleware(permissions ...authorization.Permis
 }
 
 // AdminMiddleware restricts requests to admin users only.
-func (s *service) AdminMiddleware(next http.Handler) http.Handler {
+func (s *service) ServiceAdminMiddleware(next http.Handler) http.Handler {
 	const staticError = "admin status required"
 
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -235,11 +235,25 @@ func (s *service) AdminMiddleware(next http.Handler) http.Handler {
 		logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
 
 		if !sessionCtxData.Requester.ServicePermissions.IsServiceAdmin() {
-			logger.Debug("AdminMiddleware called by non-admin user")
+			logger.Debug("ServiceAdminMiddleware called by non-admin user")
 			s.encoderDecoder.EncodeErrorResponse(ctx, res, staticError, http.StatusUnauthorized)
 			return
 		}
 
 		next.ServeHTTP(res, req)
 	})
+}
+
+var (
+	// ErrNoSessionContextDataAvailable indicates no SessionContextData was attached to the request.
+	ErrNoSessionContextDataAvailable = errors.New("no SessionContextData attached to session context data")
+)
+
+// FetchContextFromRequest fetches a SessionContextData from a request.
+func FetchContextFromRequest(req *http.Request) (*types.SessionContextData, error) {
+	if sessionCtxData, ok := req.Context().Value(types.SessionContextDataKey).(*types.SessionContextData); ok && sessionCtxData != nil {
+		return sessionCtxData, nil
+	}
+
+	return nil, ErrNoSessionContextDataAvailable
 }

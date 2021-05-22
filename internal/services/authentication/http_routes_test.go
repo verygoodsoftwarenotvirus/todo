@@ -197,7 +197,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		)
 		helper.service.auditLog = auditLog
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 		assert.NotEmpty(t, helper.res.Header().Get("Set-Cookie"))
@@ -216,7 +216,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -235,7 +235,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -262,7 +262,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return((*types.User)(nil), sql.ErrNoRows)
 		helper.service.userDataManager = userDataManager
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -291,7 +291,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return((*types.User)(nil), errors.New("blah"))
 		helper.service.userDataManager = userDataManager
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -330,7 +330,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 			helper.exampleUser.ID)
 		helper.service.auditLog = auditLog
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusForbidden, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -377,7 +377,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 			helper.exampleUser.ID)
 		helper.service.auditLog = auditLog
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -417,7 +417,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(true, errors.New("blah"))
 		helper.service.authenticator = authenticator
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -465,7 +465,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		)
 		helper.service.auditLog = auditLog
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -513,7 +513,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		)
 		helper.service.auditLog = auditLog
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -561,7 +561,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(uint64(0), errors.New("blah"))
 		helper.service.accountMembershipManager = membershipDB
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -613,7 +613,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -666,7 +666,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		sm.On("RenewToken", testutil.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -722,7 +722,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		sm.On("Commit", testutil.ContextMatcher).Return("", time.Now(), errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -779,7 +779,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -835,7 +835,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
-		helper.service.LoginHandler(helper.res, helper.req)
+		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
@@ -1193,7 +1193,7 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 
 		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
-		helper.service.LogoutHandler(helper.res, helper.req)
+		helper.service.EndSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusSeeOther, helper.res.Code)
 		actualCookie := helper.res.Header().Get("Set-Cookie")
@@ -1208,7 +1208,7 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
 
-		helper.service.LogoutHandler(helper.res, helper.req)
+		helper.service.EndSessionHandler(helper.res, helper.req)
 
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 	})
@@ -1224,7 +1224,7 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 		sm.On("Load", testutil.ContextMatcher, "").Return(context.Background(), errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		helper.service.LogoutHandler(helper.res, helper.req)
+		helper.service.EndSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		actualCookie := helper.res.Header().Get("Set-Cookie")
@@ -1243,7 +1243,7 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 		sm.On("Destroy", testutil.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
-		helper.service.LogoutHandler(helper.res, helper.req)
+		helper.service.EndSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 		actualCookie := helper.res.Header().Get("Set-Cookie")
@@ -1263,7 +1263,7 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 			[]byte(""),
 		)
 
-		helper.service.LogoutHandler(helper.res, helper.req)
+		helper.service.EndSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 	})

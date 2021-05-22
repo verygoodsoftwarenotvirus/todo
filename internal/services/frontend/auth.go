@@ -39,7 +39,7 @@ func (s *service) buildLoginView(includeBaseTemplate bool) func(http.ResponseWri
 
 			data := pageData{
 				IsLoggedIn:  false,
-				Title:       "Login",
+				Title:       "BeginSession",
 				ContentData: contentData,
 			}
 

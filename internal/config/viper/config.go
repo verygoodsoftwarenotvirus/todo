@@ -109,10 +109,12 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyCapitalismEnabled, input.Capitalism.Enabled)
 	cfg.Set(ConfigKeyCapitalismProvider, input.Capitalism.Provider)
-	cfg.Set(ConfigKeyCapitalismStripeAPIKey, input.Capitalism.Stripe.APIKey)
-	cfg.Set(ConfigKeyCapitalismStripeSuccessURL, input.Capitalism.Stripe.SuccessURL)
-	cfg.Set(ConfigKeyCapitalismStripeCancelURL, input.Capitalism.Stripe.CancelURL)
-	cfg.Set(ConfigKeyCapitalismStripeWebhookSecret, input.Capitalism.Stripe.WebhookSecret)
+	if input.Capitalism.Stripe != nil {
+		cfg.Set(ConfigKeyCapitalismStripeAPIKey, input.Capitalism.Stripe.APIKey)
+		cfg.Set(ConfigKeyCapitalismStripeSuccessURL, input.Capitalism.Stripe.SuccessURL)
+		cfg.Set(ConfigKeyCapitalismStripeCancelURL, input.Capitalism.Stripe.CancelURL)
+		cfg.Set(ConfigKeyCapitalismStripeWebhookSecret, input.Capitalism.Stripe.WebhookSecret)
+	}
 
 	cfg.Set(ConfigKeyAuthPASETOListener, input.Auth.PASETO.Issuer)
 	cfg.Set(ConfigKeyAuthPASETOLifetimeKey, time.Duration(math.Min(float64(input.Auth.PASETO.Lifetime), float64(maxPASETOLifetime))))

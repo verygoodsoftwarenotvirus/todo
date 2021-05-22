@@ -81,8 +81,8 @@ type (
 	// AuthService describes a structure capable of handling passwords and authorization requests.
 	AuthService interface {
 		StatusHandler(res http.ResponseWriter, req *http.Request)
-		LoginHandler(res http.ResponseWriter, req *http.Request)
-		LogoutHandler(res http.ResponseWriter, req *http.Request)
+		BeginSessionHandler(res http.ResponseWriter, req *http.Request)
+		EndSessionHandler(res http.ResponseWriter, req *http.Request)
 		CycleCookieSecretHandler(res http.ResponseWriter, req *http.Request)
 		PASETOHandler(res http.ResponseWriter, req *http.Request)
 		ChangeActiveAccountHandler(res http.ResponseWriter, req *http.Request)

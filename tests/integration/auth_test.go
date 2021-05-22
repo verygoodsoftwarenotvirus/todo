@@ -27,7 +27,7 @@ func (s *TestSuite) TestLogin() {
 		defer span.End()
 
 		testUser, _, testClient, _ := createUserAndClientForTest(ctx, t)
-		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+		cookie, err := testClient.BeginSession(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,
 			TOTPToken: generateTOTPTokenForUser(t, testUser),
@@ -43,7 +43,7 @@ func (s *TestSuite) TestLogin() {
 		assert.Equal(t, "/", cookie.Path)
 		assert.Equal(t, http.SameSiteStrictMode, cookie.SameSite)
 
-		assert.NoError(t, testClient.Logout(ctx))
+		assert.NoError(t, testClient.EndSession(ctx))
 	})
 }
 
@@ -91,7 +91,7 @@ func (s *TestSuite) TestLogin_ShouldNotBeAbleToLoginWithInvalidPassword() {
 			TOTPToken: generateTOTPTokenForUser(t, testUser),
 		}
 
-		cookie, err := testClient.Login(ctx, r)
+		cookie, err := testClient.BeginSession(ctx, r)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
@@ -113,7 +113,7 @@ func (s *TestSuite) TestLogin_ShouldNotBeAbleToLoginAsANonexistentUser() {
 			TOTPToken: "123456",
 		}
 
-		cookie, err := testClient.Login(ctx, r)
+		cookie, err := testClient.BeginSession(ctx, r)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
@@ -143,7 +143,7 @@ func (s *TestSuite) TestLogin_ShouldNotBeAbleToLoginWithoutValidating2FASecret()
 			TOTPToken: token,
 		}
 
-		cookie, err := testClient.Login(ctx, r)
+		cookie, err := testClient.BeginSession(ctx, r)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
@@ -157,7 +157,7 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		defer span.End()
 
 		testUser, _, testClient, _ := createUserAndClientForTest(ctx, t)
-		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+		cookie, err := testClient.BeginSession(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,
 			TOTPToken: generateTOTPTokenForUser(t, testUser),
@@ -174,7 +174,7 @@ func (s *TestSuite) TestCheckingAuthStatus() {
 		assert.Equal(t, "", actual.UserReputationExplanation, "expected UserReputationExplanation to equal %v, but got %v", "", actual.UserReputationExplanation)
 		assert.NotZero(t, actual.ActiveAccount)
 
-		assert.NoError(t, testClient.Logout(ctx))
+		assert.NoError(t, testClient.EndSession(ctx))
 	})
 }
 
@@ -232,7 +232,7 @@ func (s *TestSuite) TestPasswordChanging() {
 		testUser, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
 		// login.
-		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+		cookie, err := testClient.BeginSession(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,
 			TOTPToken: generateTOTPTokenForUser(t, testUser),
@@ -254,10 +254,10 @@ func (s *TestSuite) TestPasswordChanging() {
 		}))
 
 		// logout.
-		assert.NoError(t, testClient.Logout(ctx))
+		assert.NoError(t, testClient.EndSession(ctx))
 
 		// login again with new passwords.
-		cookie, err = testClient.Login(ctx, &types.UserLoginInput{
+		cookie, err = testClient.BeginSession(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  backwardsPass,
 			TOTPToken: generateTOTPTokenForUser(t, testUser),
@@ -277,7 +277,7 @@ func (s *TestSuite) TestTOTPSecretChanging() {
 
 		testUser, _, testClient, _ := createUserAndClientForTest(ctx, t)
 
-		cookie, err := testClient.Login(ctx, &types.UserLoginInput{
+		cookie, err := testClient.BeginSession(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,
 			TOTPToken: generateTOTPTokenForUser(t, testUser),
@@ -296,13 +296,13 @@ func (s *TestSuite) TestTOTPSecretChanging() {
 		assert.NoError(t, testClient.VerifyTOTPSecret(ctx, testUser.ID, secretVerificationToken))
 
 		// logout.
-		assert.NoError(t, testClient.Logout(ctx))
+		assert.NoError(t, testClient.EndSession(ctx))
 
 		// create login request.
 		newToken, err := totp.GenerateCode(r.TwoFactorSecret, time.Now().UTC())
 		requireNotNilAndNoProblems(t, newToken, err)
 
-		secondCookie, err := testClient.Login(ctx, &types.UserLoginInput{
+		secondCookie, err := testClient.BeginSession(ctx, &types.UserLoginInput{
 			Username:  testUser.Username,
 			Password:  testUser.HashedPassword,
 			TOTPToken: newToken,

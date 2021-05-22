@@ -32,8 +32,8 @@ func (c *Client) UserStatus(ctx context.Context) (*types.UserStatusResponse, err
 	return output, nil
 }
 
-// Login fetches a login cookie.
-func (c *Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.Cookie, error) {
+// BeginSession fetches a login cookie.
+func (c *Client) BeginSession(ctx context.Context, input *types.UserLoginInput) (*http.Cookie, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -64,8 +64,8 @@ func (c *Client) Login(ctx context.Context, input *types.UserLoginInput) (*http.
 	return nil, ErrNoCookiesReturned
 }
 
-// Logout logs a user out.
-func (c *Client) Logout(ctx context.Context) error {
+// EndSession logs a user out.
+func (c *Client) EndSession(ctx context.Context) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

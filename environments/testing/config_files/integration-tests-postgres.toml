@@ -19,17 +19,11 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [144, 87, 11, 199, 129, 98, 133, 136, 28, 189, 132, 105, 27, 83, 153, 191, 107, 91, 220, 226, 140, 251, 241, 37, 49, 58, 52, 242, 181, 9, 148, 210]
+    local_mode_key = [251, 157, 57, 146, 116, 79, 83, 142, 117, 198, 252, 131, 167, 19, 213, 197, 219, 159, 145, 186, 164, 222, 5, 251, 55, 151, 25, 118, 116, 66, 54, 173]
 
 [capitalism]
-  enabled = true
-  provider = "stripe"
-
-  [capitalism.stripe]
-    api_key = "sk_test_51IrCfgJ45Mr1esdKpPc3lI5Si9USkxqBEyebZkc9ypJY5S87F76QeE2Tgg3PvzyPZQVchlDVc7fOsPLOM698e2Dc00wY1BKUdO"
-    cancel_url = "http://localhost:8888/billing/checkout/cancel"
-    success_url = "http://localhost:8888/billing/checkout/success"
-    webhook_secret = "whsec_L9XCRWzqyl8x7mNg4W0VihURRco9wzGK"
+  enabled = false
+  provider = ""
 
 [database]
   connection_details = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
@@ -40,7 +34,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$argon2id$v=19$m=65536,t=1,p=2$nOMePHC7tmJJ0P7c5VRCpQ$/LXtRzwTOjmfz6XcWfZzZ2h+E9TW6gHtbaw3b9jdehY"
+    hashed_password = "$argon2id$v=19$m=65536,t=1,p=2$4K/xa2E3/U+XgSuMrJCKjw$e7P6CqfLJRMXPwEbPYyf/QcqIVnyS74MOl9BN50hbT4"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

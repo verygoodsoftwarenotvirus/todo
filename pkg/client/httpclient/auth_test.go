@@ -105,7 +105,7 @@ func (s *authTestSuite) TestClient_Login() {
 		))
 		c := buildTestClient(t, ts)
 
-		cookie, err := c.Login(s.ctx, exampleInput)
+		cookie, err := c.BeginSession(s.ctx, exampleInput)
 		require.NotNil(t, cookie)
 		assert.NoError(t, err)
 	})
@@ -115,7 +115,7 @@ func (s *authTestSuite) TestClient_Login() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		cookie, err := c.Login(s.ctx, nil)
+		cookie, err := c.BeginSession(s.ctx, nil)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
@@ -127,7 +127,7 @@ func (s *authTestSuite) TestClient_Login() {
 
 		c := buildTestClientWithInvalidURL(t)
 
-		cookie, err := c.Login(s.ctx, exampleInput)
+		cookie, err := c.BeginSession(s.ctx, exampleInput)
 		assert.Nil(t, cookie)
 		assert.Error(t, err)
 	})
@@ -138,7 +138,7 @@ func (s *authTestSuite) TestClient_Login() {
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
-		cookie, err := c.Login(s.ctx, exampleInput)
+		cookie, err := c.BeginSession(s.ctx, exampleInput)
 		require.Nil(t, cookie)
 		assert.Error(t, err)
 	})
@@ -149,7 +149,7 @@ func (s *authTestSuite) TestClient_Login() {
 		exampleInput := fakes.BuildFakeUserLoginInputFromUser(s.exampleUser)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
-		cookie, err := c.Login(s.ctx, exampleInput)
+		cookie, err := c.BeginSession(s.ctx, exampleInput)
 		require.Nil(t, cookie)
 		assert.Error(t, err)
 	})
@@ -164,7 +164,7 @@ func (s *authTestSuite) TestClient_Logout() {
 		spec := newRequestSpec(true, http.MethodPost, "", expectedPath)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusAccepted)
 
-		err := c.Logout(s.ctx)
+		err := c.EndSession(s.ctx)
 		assert.NoError(t, err)
 	})
 
@@ -173,7 +173,7 @@ func (s *authTestSuite) TestClient_Logout() {
 
 		c := buildTestClientWithInvalidURL(t)
 
-		err := c.Logout(s.ctx)
+		err := c.EndSession(s.ctx)
 		assert.Error(t, err)
 	})
 
@@ -182,7 +182,7 @@ func (s *authTestSuite) TestClient_Logout() {
 
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
-		err := c.Logout(s.ctx)
+		err := c.EndSession(s.ctx)
 		assert.Error(t, err)
 	})
 }

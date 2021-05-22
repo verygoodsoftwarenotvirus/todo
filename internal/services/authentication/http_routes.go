@@ -130,7 +130,7 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 }
 
 // LoginHandler is our login route.
-func (s *service) LoginHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) BeginSessionHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -273,7 +273,7 @@ func (s *service) LogoutUser(ctx context.Context, sessionCtxData *types.SessionC
 }
 
 // LogoutHandler is our logout route.
-func (s *service) LogoutHandler(res http.ResponseWriter, req *http.Request) {
+func (s *service) EndSessionHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 

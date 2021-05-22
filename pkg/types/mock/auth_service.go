@@ -28,13 +28,13 @@ func (m *AuthService) PermissionFilterMiddleware(perms ...authorization.Permissi
 	return m.Called(perms).Get(0).(func(http.Handler) http.Handler)
 }
 
-// LoginHandler satisfies our interface contract.
-func (m *AuthService) LoginHandler(res http.ResponseWriter, req *http.Request) {
+// BeginSessionHandler satisfies our interface contract.
+func (m *AuthService) BeginSessionHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(req, res)
 }
 
-// LogoutHandler satisfies our interface contract.
-func (m *AuthService) LogoutHandler(res http.ResponseWriter, req *http.Request) {
+// EndSessionHandler satisfies our interface contract.
+func (m *AuthService) EndSessionHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(req, res)
 }
 

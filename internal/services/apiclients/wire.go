@@ -3,7 +3,7 @@ package apiclients
 import (
 	"github.com/google/wire"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 )
 
 var (
@@ -15,7 +15,7 @@ var (
 )
 
 // ProvideConfig converts an auth config to a local config.
-func ProvideConfig(cfg *authentication.Config) *config {
+func ProvideConfig(cfg *authservice.Config) *config {
 	return &config{
 		minimumUsernameLength: cfg.MinimumUsernameLength,
 		minimumPasswordLength: cfg.MinimumPasswordLength,

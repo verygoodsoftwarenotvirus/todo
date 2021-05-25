@@ -136,6 +136,7 @@ func main() {
 					if accountCreationError != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("creating account #%d: %w", j, accountCreationError))
 					}
+
 					iterationLogger.WithValue(keys.AccountIDKey, createdAccount.ID).Debug("created account")
 				}
 				wg.Done()
@@ -164,6 +165,7 @@ func main() {
 					if apiClientCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("API Client webhook #%d: %w", j, apiClientCreationErr))
 					}
+
 					iterationLogger.WithValue(keys.APIClientDatabaseIDKey, createdAPIClient.ID).Debug("created API Client")
 				}
 				wg.Done()
@@ -178,6 +180,7 @@ func main() {
 					if webhookCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("creating webhook #%d: %w", j, webhookCreationErr))
 					}
+
 					iterationLogger.WithValue(keys.WebhookIDKey, createdWebhook.ID).Debug("created webhook")
 				}
 				wg.Done()
@@ -193,6 +196,7 @@ func main() {
 					if itemCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("creating item #%d: %w", j, itemCreationErr))
 					}
+
 					iterationLogger.WithValue(keys.WebhookIDKey, createdItem.ID).Debug("created item")
 				}
 				wg.Done()

@@ -11,7 +11,7 @@ require (
 	github.com/DATA-DOG/go-sqlmock v1.5.0
 	github.com/GuiaBolso/darwin v0.0.0-20191218124601-fd6d2aa3d244
 	github.com/Masterminds/squirrel v1.5.0
-	github.com/PuerkitoBio/goquery v1.6.1
+	github.com/PuerkitoBio/goquery v1.6.1 // indirect
 	github.com/RoaringBitmap/roaring v0.6.0 // indirect
 	github.com/RussellLuo/validating/v2 v2.1.0
 	github.com/aead/chacha20poly1305 v0.0.0-20201124145622-1a5aba2a8b29 // indirect
@@ -67,7 +67,7 @@ require (
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/stripe/stripe-go v70.15.0+incompatible
+	github.com/stripe/stripe-go/v72 v72.45.0
 	github.com/tkuchiki/go-timezone v0.2.2 // indirect
 	github.com/unrolled/secure v1.0.8
 	github.com/wagslane/go-password-validator v0.3.0

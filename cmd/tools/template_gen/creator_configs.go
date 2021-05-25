@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+
 	_ "embed"
 )
 
@@ -25,7 +26,7 @@ type basicCreatorTemplateConfig struct {
 }
 
 var creatorConfigs = map[string]*basicCreatorTemplateConfig{
-	"internal/app/services/frontend/templates/partials/generated/creators/account_creator.gotpl": {
+	"internal/services/frontend/templates/partials/generated/creators/account_creator.gotpl": {
 		Title:         "New Account",
 		SubmissionURL: "/accounts/new/submit",
 		Fields: []formField{
@@ -38,7 +39,7 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/generated/creators/api_client_creator.gotpl": {
+	"internal/services/frontend/templates/partials/generated/creators/api_client_creator.gotpl": {
 		Title:         "New API Client",
 		SubmissionURL: "/api_clients/new/submit",
 		Fields: []formField{
@@ -65,7 +66,7 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/generated/creators/webhook_creator.gotpl": {
+	"internal/services/frontend/templates/partials/generated/creators/webhook_creator.gotpl": {
 		Title:         "New Webhook",
 		SubmissionURL: "/webhooks/new/submit",
 		Fields: []formField{
@@ -95,7 +96,7 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/generated/creators/item_creator.gotpl": {
+	"internal/services/frontend/templates/partials/generated/creators/item_creator.gotpl": {
 		Title:         "New Item",
 		SubmissionURL: "/items/new/submit",
 		Fields: []formField{
@@ -111,7 +112,7 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 				FormName:        "details",
 				StructFieldName: "Details",
 				InputType:       "text",
-				Required:        false,
+				Required:        true,
 			},
 		},
 	},

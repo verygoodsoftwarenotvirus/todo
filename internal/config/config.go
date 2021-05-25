@@ -10,26 +10,23 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querier"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -50,6 +47,7 @@ const (
 
 var (
 	errNilDatabaseConnection   = errors.New("nil DB connection provided")
+	errNilConfig               = errors.New("nil config provided")
 	errInvalidDatabaseProvider = errors.New("invalid database provider")
 )
 
@@ -59,19 +57,19 @@ type (
 
 	// ServerConfig is our server configuration struct. It is composed of all the other setting structs.
 	ServerConfig struct {
-		Search        search.Config         `json:"search" mapstructure:"search" toml:"search,omitempty"`
-		Encoding      encoding.Config       `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
-		Capitalism    capitalism.Config     `json:"capitalism" mapstructure:"capitalism" toml:"capitalism"`
-		Uploads       uploads.Config        `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
-		Observability observability.Config  `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
-		Routing       routing.Config        `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
-		Meta          MetaSettings          `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Database      config.Config         `json:"database" mapstructure:"database" toml:"database,omitempty"`
-		Auth          authentication.Config `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Server        server.Config         `json:"server" mapstructure:"server" toml:"server,omitempty"`
-		AuditLog      audit.Config          `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
-		Webhooks      webhooks.Config       `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		Frontend      frontend.Config       `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
+		Search        search.Config        `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Encoding      encoding.Config      `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
+		Capitalism    capitalism.Config    `json:"capitalism" mapstructure:"capitalism" toml:"capitalism"`
+		Uploads       uploads.Config       `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
+		Observability observability.Config `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
+		Routing       routing.Config       `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
+		Meta          MetaSettings         `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
+		Database      dbconfig.Config      `json:"database" mapstructure:"database" toml:"database,omitempty"`
+		Auth          authservice.Config   `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
+		Server        server.Config        `json:"server" mapstructure:"server" toml:"server,omitempty"`
+		AuditLog      audit.Config         `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
+		Webhooks      webhooks.Config      `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		Frontend      frontend.Config      `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 )
 
@@ -146,9 +144,13 @@ func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 // NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
-func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB) (database.DataManager, error) {
+func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *ServerConfig) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
+	}
+
+	if cfg == nil {
+		return nil, errNilConfig
 	}
 
 	var qb querybuilding.SQLQueryBuilder

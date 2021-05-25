@@ -5,14 +5,13 @@ import (
 	"crypto/rand"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	viper "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -20,10 +19,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 
@@ -40,7 +38,7 @@ const (
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	devSqliteConnDetails     = "/tmp/db"
 	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
-	defaultCookieName        = authentication.DefaultCookieName
+	defaultCookieName        = authservice.DefaultCookieName
 
 	// run modes.
 	developmentEnv = "development"
@@ -78,12 +76,12 @@ var (
 		StartupDeadline: time.Minute,
 	}
 
-	localCookies = authentication.CookieConfig{
+	localCookies = authservice.CookieConfig{
 		Name:       defaultCookieName,
 		Domain:     defaultCookieDomain,
 		HashKey:    debugCookieSecret,
 		SigningKey: debugCookieSecret,
-		Lifetime:   authentication.DefaultCookieLifetime,
+		Lifetime:   authservice.DefaultCookieLifetime,
 		SecureOnly: false,
 	}
 
@@ -93,17 +91,6 @@ var (
 		Jaeger: &tracing.JaegerConfig{
 			CollectorEndpoint: "http://tracing-server:14268/api/traces",
 			ServiceName:       "todo-service",
-		},
-	}
-
-	localCapitalism = capitalism.Config{
-		Enabled:  true,
-		Provider: capitalism.StripeProvider,
-		Stripe: &capitalism.StripeConfig{
-			WebhookSecret: os.Getenv("TODO_SERVICE_STRIPE_WEBHOOK_SECRET"),
-			SuccessURL:    "http://localhost:8888/billing/checkout/success",
-			CancelURL:     "http://localhost:8888/billing/checkout/cancel",
-			APIKey:        os.Getenv("TODO_SERVICE_STRIPE_API_KEY"),
 		},
 	}
 )
@@ -125,7 +112,7 @@ func buildLocalFrontendServiceConfig() frontend.Config {
 }
 
 func mustHashPass(password string) string {
-	hashed, err := passwords.ProvideArgon2Authenticator(logging.NewNonOperationalLogger()).
+	hashed, err := authentication.ProvideArgon2Authenticator(logging.NewNonOperationalLogger()).
 		HashPassword(context.Background(), password)
 
 	if err != nil {
@@ -157,8 +144,8 @@ func localDevelopmentConfig(filePath string) error {
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authentication.Config{
-			PASETO: authentication.PASETOConfig{
+		Auth: authservice.Config{
+			PASETO: authservice.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
@@ -242,8 +229,8 @@ func frontendTestsConfig(filePath string) error {
 		},
 		Server:   localServer,
 		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authentication.Config{
-			PASETO: authentication.PASETOConfig{
+		Auth: authservice.Config{
+			PASETO: authservice.PASETOConfig{
 				Issuer:       "todo_service",
 				Lifetime:     defaultPASETOLifetime,
 				LocalModeKey: examplePASETOKey,
@@ -325,17 +312,17 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				StartupDeadline: startupDeadline,
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
-			Auth: authentication.Config{
-				PASETO: authentication.PASETOConfig{
+			Auth: authservice.Config{
+				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
 					Lifetime:     defaultPASETOLifetime,
 					LocalModeKey: examplePASETOKey,
 				},
-				Cookies: authentication.CookieConfig{
+				Cookies: authservice.CookieConfig{
 					Name:       defaultCookieName,
 					Domain:     defaultCookieDomain,
 					SigningKey: debugCookieSecret,
-					Lifetime:   authentication.DefaultCookieLifetime,
+					Lifetime:   authservice.DefaultCookieLifetime,
 					SecureOnly: false,
 				},
 				Debug:                 false,

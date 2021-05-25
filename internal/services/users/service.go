@@ -3,13 +3,13 @@ package users
 import (
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
@@ -35,8 +35,8 @@ type (
 	service struct {
 		userDataManager           types.UserDataManager
 		accountDataManager        types.AccountDataManager
-		authSettings              *authentication.Config
-		authenticator             passwords.Authenticator
+		authSettings              *authservice.Config
+		authenticator             authentication.Authenticator
 		logger                    logging.Logger
 		encoderDecoder            encoding.ServerEncoderDecoder
 		userIDFetcher             func(*http.Request) uint64
@@ -51,11 +51,11 @@ type (
 
 // ProvideUsersService builds a new UsersService.
 func ProvideUsersService(
-	authSettings *authentication.Config,
+	authSettings *authservice.Config,
 	logger logging.Logger,
 	userDataManager types.UserDataManager,
 	accountDataManager types.AccountDataManager,
-	authenticator passwords.Authenticator,
+	authenticator authentication.Authenticator,
 	encoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	imageUploadProcessor images.ImageUploadProcessor,
@@ -68,7 +68,7 @@ func ProvideUsersService(
 		accountDataManager:        accountDataManager,
 		authenticator:             authenticator,
 		userIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
-		sessionContextDataFetcher: authentication.FetchContextFromRequest,
+		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		encoderDecoder:            encoder,
 		authSettings:              authSettings,
 		userCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),

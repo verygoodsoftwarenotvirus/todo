@@ -9,14 +9,13 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func (s *TestSuite) TestLogin() {
@@ -36,7 +35,7 @@ func (s *TestSuite) TestLogin() {
 		assert.NotNil(t, cookie)
 		assert.NoError(t, err)
 
-		assert.Equal(t, authentication.DefaultCookieName, cookie.Name)
+		assert.Equal(t, authservice.DefaultCookieName, cookie.Name)
 		assert.NotEmpty(t, cookie.Value)
 		assert.NotZero(t, cookie.MaxAge)
 		assert.True(t, cookie.HttpOnly)

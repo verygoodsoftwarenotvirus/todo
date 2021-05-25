@@ -13,7 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
 	flag "github.com/spf13/pflag"
@@ -68,7 +67,7 @@ func main() {
 		logger.Error(initializeTracerErr, "initializing tracer")
 	}
 
-	// it's possible that tracing is disabled
+	// if tracing is disabled, this will be nil
 	if flushFunc != nil {
 		defer flushFunc()
 	}
@@ -77,32 +76,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(ctx, cfg.Server.StartupDeadline)
 	ctx, initSpan := tracing.StartSpan(ctx)
 
-	logger.Debug("connecting to database")
-
-	// connect to database
-	ctx, databaseConnectionSpan := tracing.StartSpan(ctx)
-
-	rawDB, err := cfg.Database.ProvideDatabaseConnection(logger)
-	if err != nil {
-		logger.Fatal(fmt.Errorf("connecting to database: %w", err))
-	}
-
-	databaseConnectionSpan.End()
-	logger.Debug("setting up database client")
-
-	// setup DB client
-	ctx, databaseClientSetupSpan := tracing.StartSpan(ctx)
-	authenticator := passwords.ProvideArgon2Authenticator(logger)
-
-	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB)
-	if err != nil {
-		logger.Fatal(fmt.Errorf("initializing database client: %w", err))
-	}
-
-	databaseClientSetupSpan.End()
-
 	// build our server struct.
-	srv, err := server.Build(ctx, cfg, logger, dbClient, rawDB, authenticator)
+	srv, err := server.Build(ctx, cfg, logger)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("initializing HTTP server: %w", err))
 	}

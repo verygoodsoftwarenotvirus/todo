@@ -23,9 +23,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/client"
-	"github.com/stripe/stripe-go/webhook"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/client"
+	"github.com/stripe/stripe-go/v72/webhook"
 )
 
 const (
@@ -37,7 +37,7 @@ func buildTestPaymentManager(t *testing.T) *stripePaymentManager {
 
 	logger := logging.NewNonOperationalLogger()
 
-	pm := NewStripePaymentManager(logger, &capitalism.StripeConfig{})
+	pm := ProvideStripePaymentManager(logger, &capitalism.StripeConfig{})
 
 	return pm.(*stripePaymentManager)
 }
@@ -49,7 +49,7 @@ func TestNewStripePaymentManager(T *testing.T) {
 		t.Parallel()
 
 		logger := logging.NewNonOperationalLogger()
-		pm := NewStripePaymentManager(logger, &capitalism.StripeConfig{})
+		pm := ProvideStripePaymentManager(logger, &capitalism.StripeConfig{})
 
 		assert.NotNil(t, pm)
 	})

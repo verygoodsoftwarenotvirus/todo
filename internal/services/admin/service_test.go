@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 
 	"github.com/alexedwards/scs/v2"
@@ -29,8 +29,8 @@ func buildTestService(t *testing.T) *service {
 
 	s := ProvideService(
 		logger,
-		&authentication.Config{Cookies: authentication.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
-		&passwords.MockAuthenticator{},
+		&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
+		&authentication.MockAuthenticator{},
 		&mocktypes.AdminUserDataManager{},
 		&mocktypes.AuditLogEntryDataManager{},
 		scs.New(),
@@ -61,8 +61,8 @@ func TestProvideAdminService(T *testing.T) {
 
 		s := ProvideService(
 			logger,
-			&authentication.Config{Cookies: authentication.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
-			&passwords.MockAuthenticator{},
+			&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
+			&authentication.MockAuthenticator{},
 			&mocktypes.AdminUserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			scs.New(),

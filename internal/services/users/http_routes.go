@@ -10,10 +10,10 @@ import (
 	"image/png"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/boombuler/barcode"
@@ -339,7 +339,7 @@ func (s *service) VerifyUserTwoFactorSecret(ctx context.Context, input *types.TO
 
 	totpValid := totp.Validate(input.TOTPToken, user.TwoFactorSecret)
 	if !totpValid {
-		return passwords.ErrInvalidTOTPToken
+		return authentication.ErrInvalidTOTPToken
 	}
 
 	if updateUserErr := s.userDataManager.MarkUserTwoFactorSecretAsVerified(ctx, user.ID); updateUserErr != nil {
@@ -376,7 +376,7 @@ func (s *service) TOTPSecretVerificationHandler(res http.ResponseWriter, req *ht
 
 	if twoFactorSecretVerificationError := s.VerifyUserTwoFactorSecret(ctx, input); twoFactorSecretVerificationError != nil {
 		switch {
-		case errors.Is(twoFactorSecretVerificationError, passwords.ErrInvalidTOTPToken):
+		case errors.Is(twoFactorSecretVerificationError, authentication.ErrInvalidTOTPToken):
 			s.encoderDecoder.EncodeInvalidInputResponse(ctx, res)
 			return
 		case errors.Is(twoFactorSecretVerificationError, errSecretAlreadyVerified):

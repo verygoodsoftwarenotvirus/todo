@@ -3,7 +3,7 @@ package accounts
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -54,7 +54,7 @@ func ProvideService(
 		logger:                       logging.EnsureLogger(logger).WithName(serviceName),
 		accountIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
 		userIDFetcher:                routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
-		sessionContextDataFetcher:    authentication.FetchContextFromRequest,
+		sessionContextDataFetcher:    authservice.FetchContextFromRequest,
 		accountDataManager:           accountDataManager,
 		accountMembershipDataManager: accountMembershipDataManager,
 		encoderDecoder:               encoder,

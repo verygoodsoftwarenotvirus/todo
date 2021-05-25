@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
@@ -102,7 +102,7 @@ func (s *service) validateLogin(ctx context.Context, user *types.User, loginInpu
 		loginInput.TOTPToken,
 	)
 
-	if errors.Is(err, passwords.ErrInvalidTOTPToken) || errors.Is(err, passwords.ErrPasswordDoesNotMatch) {
+	if errors.Is(err, authentication.ErrInvalidTOTPToken) || errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
 		return false, err
 	}
 

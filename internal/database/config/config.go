@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
@@ -67,7 +67,7 @@ func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 }
 
 // ProvideDatabaseConnection provides a database implementation dependent on the configuration.
-func (cfg *Config) ProvideDatabaseConnection(logger logging.Logger) (*sql.DB, error) {
+func ProvideDatabaseConnection(logger logging.Logger, cfg *Config) (*sql.DB, error) {
 	switch cfg.Provider {
 	case PostgresProvider:
 		return postgres.ProvidePostgresDB(logger, cfg.ConnectionDetails)
@@ -123,7 +123,7 @@ func (cfg *Config) ProvideCurrentUnixTimestampQuery() string {
 // ProvideSessionManager provides a session manager based on some settings.
 // There's not a great place to put this function. I don't think it belongs in Auth because it accepts a DB connection,
 // but it obviously doesn't belong in the database package, or maybe it does.
-func ProvideSessionManager(cookieConfig authentication.CookieConfig, dbConf Config, db *sql.DB) (*scs.SessionManager, error) {
+func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config, db *sql.DB) (*scs.SessionManager, error) {
 	sessionManager := scs.New()
 
 	if db == nil {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+
 	_ "embed"
 )
 
@@ -24,7 +25,7 @@ type basicEditorTemplateConfig struct {
 }
 
 var editorConfigs = map[string]*basicEditorTemplateConfig{
-	"internal/app/services/frontend/templates/partials/generated/editors/account_editor.gotpl": {
+	"internal/services/frontend/templates/partials/generated/editors/account_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -35,7 +36,7 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/generated/editors/account_subscription_plan_editor.gotpl": {
+	"internal/services/frontend/templates/partials/generated/editors/account_subscription_plan_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -53,7 +54,7 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/generated/editors/api_client_editor.gotpl": {
+	"internal/services/frontend/templates/partials/generated/editors/api_client_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -78,7 +79,7 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/generated/editors/webhook_editor.gotpl": {
+	"internal/services/frontend/templates/partials/generated/editors/webhook_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -106,7 +107,7 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 			},
 		},
 	},
-	"internal/app/services/frontend/templates/partials/generated/editors/item_editor.gotpl": {
+	"internal/services/frontend/templates/partials/generated/editors/item_editor.gotpl": {
 		Fields: []formField{
 			{
 				LabelName:       "name",
@@ -120,7 +121,7 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 				FormName:        "details",
 				StructFieldName: "Details",
 				InputType:       "text",
-				Required:        false,
+				Required:        true,
 			},
 		},
 	},

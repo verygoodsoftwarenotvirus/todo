@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -35,7 +35,7 @@ func buildTestService(t *testing.T) *service {
 				Lifetime:     time.Hour,
 			},
 		},
-		&passwords.MockAuthenticator{},
+		&authentication.MockAuthenticator{},
 		&mocktypes.UserDataManager{},
 		&mocktypes.AuditLogEntryDataManager{},
 		&mocktypes.APIClientDataManager{},
@@ -65,7 +65,7 @@ func TestProvideService(T *testing.T) {
 					SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!",
 				},
 			},
-			&passwords.MockAuthenticator{},
+			&authentication.MockAuthenticator{},
 			&mocktypes.UserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mocktypes.APIClientDataManager{},
@@ -92,7 +92,7 @@ func TestProvideService(T *testing.T) {
 					SigningKey: "BLAHBLAHBLAH",
 				},
 			},
-			&passwords.MockAuthenticator{},
+			&authentication.MockAuthenticator{},
 			&mocktypes.UserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			&mocktypes.APIClientDataManager{},

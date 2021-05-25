@@ -1,8 +1,9 @@
 package main
 
 import (
-	_ "embed"
 	"text/template"
+
+	_ "embed"
 )
 
 func parseTemplate(name, source string, funcMap template.FuncMap) *template.Template {

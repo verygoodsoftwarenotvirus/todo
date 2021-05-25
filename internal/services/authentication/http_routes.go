@@ -12,10 +12,10 @@ import (
 	"strconv"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 
 	"github.com/google/uuid"
 
@@ -97,10 +97,10 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 	logger.WithValue("login_valid", loginValid)
 
 	if err != nil {
-		if errors.Is(err, passwords.ErrInvalidTOTPToken) {
+		if errors.Is(err, authentication.ErrInvalidTOTPToken) {
 			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
 			return user, nil, ErrInvalidCredentials
-		} else if errors.Is(err, passwords.ErrPasswordDoesNotMatch) {
+		} else if errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
 			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 			return user, nil, ErrInvalidCredentials
 		}

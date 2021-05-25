@@ -22,7 +22,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
@@ -70,8 +70,8 @@ func TestFromConfig(T *testing.T) {
 					WebhookSecret: "whatever",
 				},
 			},
-			Auth: authentication.Config{
-				Cookies: authentication.CookieConfig{
+			Auth: authservice.Config{
+				Cookies: authservice.CookieConfig{
 					Name:     "todocookie",
 					Domain:   "https://verygoodsoftwarenotvirus.ru",
 					Lifetime: time.Second,
@@ -186,8 +186,8 @@ func TestParseConfigFile(T *testing.T) {
 			Encoding: encoding.Config{
 				ContentType: "application/json",
 			},
-			Auth: authentication.Config{
-				Cookies: authentication.CookieConfig{
+			Auth: authservice.Config{
+				Cookies: authservice.CookieConfig{
 					Name:     "todocookie",
 					Domain:   "https://verygoodsoftwarenotvirus.ru",
 					Lifetime: time.Second,
@@ -277,8 +277,8 @@ debug = ":banana:"
 			Encoding: encoding.Config{
 				ContentType: "application/json",
 			},
-			Auth: authentication.Config{
-				Cookies: authentication.CookieConfig{
+			Auth: authservice.Config{
+				Cookies: authservice.CookieConfig{
 					Name:     "todocookie",
 					Domain:   "https://verygoodsoftwarenotvirus.ru",
 					Lifetime: time.Second,

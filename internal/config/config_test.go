@@ -23,7 +23,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 )
 
@@ -48,8 +48,8 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 			Encoding: encoding.Config{
 				ContentType: "application/json",
 			},
-			Auth: authentication.Config{
-				Cookies: authentication.CookieConfig{
+			Auth: authservice.Config{
+				Cookies: authservice.CookieConfig{
 					Name:     "todocookie",
 					Domain:   "https://verygoodsoftwarenotvirus.ru",
 					Lifetime: time.Second,
@@ -116,7 +116,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 				},
 			}
 
-			x, err := cfg.ProvideDatabaseClient(ctx, logger, &sql.DB{})
+			x, err := ProvideDatabaseClient(ctx, logger, &sql.DB{}, cfg)
 			assert.NotNil(t, x)
 			assert.NoError(t, err)
 		}
@@ -129,7 +129,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		logger := logging.NewNonOperationalLogger()
 		cfg := &ServerConfig{}
 
-		x, err := cfg.ProvideDatabaseClient(ctx, logger, nil)
+		x, err := ProvideDatabaseClient(ctx, logger, nil, cfg)
 		assert.Nil(t, x)
 		assert.Error(t, err)
 	})
@@ -146,7 +146,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 			},
 		}
 
-		x, err := cfg.ProvideDatabaseClient(ctx, logger, &sql.DB{})
+		x, err := ProvideDatabaseClient(ctx, logger, &sql.DB{}, cfg)
 		assert.Nil(t, x)
 		assert.Error(t, err)
 	})

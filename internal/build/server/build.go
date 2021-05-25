@@ -4,19 +4,17 @@ package server
 
 import (
 	"context"
-	"database/sql"
 
-	"github.com/google/wire"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
@@ -24,7 +22,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
@@ -32,6 +30,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
+
+	"github.com/google/wire"
 )
 
 // Build builds a server.
@@ -39,14 +39,12 @@ func Build(
 	ctx context.Context,
 	cfg *config.ServerConfig,
 	logger logging.Logger,
-	dbm database.DataManager,
-	db *sql.DB,
-	authenticator passwords.Authenticator,
 ) (*server.HTTPServer, error) {
 	wire.Build(
 		bleve.Providers,
 		config.Providers,
 		database.Providers,
+		dbconfig.Providers,
 		encoding.Providers,
 		server.Providers,
 		metrics.Providers,
@@ -58,6 +56,7 @@ func Build(
 		stripe.Providers,
 		chi.Providers,
 		authentication.Providers,
+		authservice.Providers,
 		users.Providers,
 		accounts.Providers,
 		apiclients.Providers,
@@ -67,5 +66,6 @@ func Build(
 		frontend.Providers,
 		items.Providers,
 	)
+
 	return nil, nil
 }

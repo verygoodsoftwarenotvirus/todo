@@ -7,7 +7,6 @@ import (
 const (
 	// AccountAssignmentKey is the key we use to indicate that an audit log entry is associated with an account.
 	AccountAssignmentKey = "account_id"
-
 	// AccountCreationEvent events indicate a user created an account.
 	AccountCreationEvent = "account_created"
 	// AccountUpdateEvent events indicate a user updated an account.

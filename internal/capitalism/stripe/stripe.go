@@ -14,9 +14,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/client"
-	"github.com/stripe/stripe-go/webhook"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/client"
+	"github.com/stripe/stripe-go/v72/webhook"
 )
 
 const (
@@ -44,9 +44,13 @@ type (
 	}
 )
 
-// NewStripePaymentManager builds a Stripe-backed stripePaymentManager.
-func NewStripePaymentManager(logger logging.Logger, cfg *capitalism.StripeConfig) capitalism.PaymentManager {
-	return &stripePaymentManager{
+// ProvideStripePaymentManager builds a Stripe-backed stripePaymentManager.
+func ProvideStripePaymentManager(logger logging.Logger, cfg *capitalism.StripeConfig) capitalism.PaymentManager {
+	if cfg == nil {
+		return &capitalism.NoopPaymentManager{}
+	}
+
+	spm := &stripePaymentManager{
 		client:        client.New(cfg.APIKey, nil),
 		webhookSecret: cfg.WebhookSecret,
 		successURL:    cfg.SuccessURL,
@@ -54,6 +58,8 @@ func NewStripePaymentManager(logger logging.Logger, cfg *capitalism.StripeConfig
 		logger:        logging.EnsureLogger(logger),
 		tracer:        tracing.NewTracer(implementationName),
 	}
+
+	return spm
 }
 
 func buildCustomerName(account *types.Account) string {

@@ -3,11 +3,11 @@ package admin
 import (
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -22,9 +22,9 @@ const (
 type (
 	// service handles passwords service-wide.
 	service struct {
-		config                    *authentication.Config
+		config                    *authservice.Config
 		logger                    logging.Logger
-		authenticator             passwords.Authenticator
+		authenticator             authentication.Authenticator
 		userDB                    types.AdminUserDataManager
 		auditLog                  types.AdminAuditManager
 		encoderDecoder            encoding.ServerEncoderDecoder
@@ -38,8 +38,8 @@ type (
 // ProvideService builds a new AuthService.
 func ProvideService(
 	logger logging.Logger,
-	cfg *authentication.Config,
-	authenticator passwords.Authenticator,
+	cfg *authservice.Config,
+	authenticator authentication.Authenticator,
 	userDataManager types.AdminUserDataManager,
 	auditLog types.AdminAuditManager,
 	sessionManager *scs.SessionManager,
@@ -54,7 +54,7 @@ func ProvideService(
 		auditLog:                  auditLog,
 		authenticator:             authenticator,
 		sessionManager:            sessionManager,
-		sessionContextDataFetcher: authentication.FetchContextFromRequest,
+		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		userIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
 		tracer:                    tracing.NewTracer(serviceName),
 	}

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -35,7 +35,7 @@ type (
 	service struct {
 		config                    *Config
 		logger                    logging.Logger
-		authenticator             passwords.Authenticator
+		authenticator             authentication.Authenticator
 		userDataManager           types.UserDataManager
 		auditLog                  types.AuthAuditManager
 		apiClientManager          types.APIClientDataManager
@@ -52,7 +52,7 @@ type (
 func ProvideService(
 	logger logging.Logger,
 	cfg *Config,
-	authenticator passwords.Authenticator,
+	authenticator authentication.Authenticator,
 	userDataManager types.UserDataManager,
 	auditLog types.AuthAuditManager,
 	apiClientsService types.APIClientDataManager,

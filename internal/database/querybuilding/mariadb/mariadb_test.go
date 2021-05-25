@@ -24,7 +24,7 @@ func buildTestService(t *testing.T) (*MariaDB, sqlmock.Sqlmock) {
 	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	return ProvideMariaDB(logging.NewNonOperationalLogger()), mock
+	return ProvideMariaDB(logging.NewNoopLogger()), mock
 }
 
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
@@ -69,7 +69,7 @@ func TestProvideMariaDBConnection(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ProvideMariaDBConnection(logging.NewNonOperationalLogger(), "")
+		_, err := ProvideMariaDBConnection(logging.NewNoopLogger(), "")
 		assert.NoError(t, err)
 	})
 }

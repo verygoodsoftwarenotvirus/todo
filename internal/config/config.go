@@ -55,8 +55,8 @@ type (
 	// runMode describes what method of operation the server is under.
 	runMode string
 
-	// ServerConfig is our server configuration struct. It is composed of all the other setting structs.
-	ServerConfig struct {
+	// ServiceConfig is our server configuration struct. It is composed of all the other setting structs.
+	ServiceConfig struct {
 		Search        search.Config        `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Encoding      encoding.Config      `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
 		Capitalism    capitalism.Config    `json:"capitalism" mapstructure:"capitalism" toml:"capitalism"`
@@ -74,7 +74,7 @@ type (
 )
 
 // EncodeToFile renders your config to a file given your favorite encoder.
-func (cfg *ServerConfig) EncodeToFile(path string, marshaller func(v interface{}) ([]byte, error)) error {
+func (cfg *ServiceConfig) EncodeToFile(path string, marshaller func(v interface{}) ([]byte, error)) error {
 	byteSlice, err := marshaller(*cfg)
 	if err != nil {
 		return err
@@ -83,10 +83,10 @@ func (cfg *ServerConfig) EncodeToFile(path string, marshaller func(v interface{}
 	return os.WriteFile(path, byteSlice, 0600)
 }
 
-var _ validation.ValidatableWithContext = (*ServerConfig)(nil)
+var _ validation.ValidatableWithContext = (*ServiceConfig)(nil)
 
-// ValidateWithContext validates a ServerConfig struct.
-func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
+// ValidateWithContext validates a ServiceConfig struct.
+func (cfg *ServiceConfig) ValidateWithContext(ctx context.Context) error {
 	if err := cfg.Search.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating Search portion of config: %w", err)
 	}
@@ -144,7 +144,7 @@ func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 // NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
-func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *ServerConfig) (database.DataManager, error) {
+func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *ServiceConfig) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
 	}

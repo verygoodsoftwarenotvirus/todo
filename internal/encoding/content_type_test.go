@@ -14,7 +14,7 @@ func Test_clientEncoder_ContentType(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeJSON)
 
 		assert.NotEmpty(t, e.ContentType())
 	})

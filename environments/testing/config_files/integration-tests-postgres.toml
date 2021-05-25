@@ -19,7 +19,7 @@
   [auth.paseto]
     issuer = "todo_service"
     lifetime = "1m0s"
-    local_mode_key = [251, 157, 57, 146, 116, 79, 83, 142, 117, 198, 252, 131, 167, 19, 213, 197, 219, 159, 145, 186, 164, 222, 5, 251, 55, 151, 25, 118, 116, 66, 54, 173]
+    local_mode_key = [254, 230, 165, 189, 17, 106, 59, 130, 98, 5, 146, 217, 11, 19, 170, 18, 212, 70, 181, 79, 174, 126, 30, 149, 57, 205, 101, 148, 237, 210, 49, 237]
 
 [capitalism]
   enabled = false
@@ -34,7 +34,7 @@
   run_migrations = true
 
   [database.create_test_user]
-    hashed_password = "$argon2id$v=19$m=65536,t=1,p=2$4K/xa2E3/U+XgSuMrJCKjw$e7P6CqfLJRMXPwEbPYyf/QcqIVnyS74MOl9BN50hbT4"
+    hashed_password = "$argon2id$v=19$m=65536,t=1,p=2$AaFuK8WG/EkYydkS4BV8Bw$dWhc7pwXh9b3wDBKU3IYxnb1O75q2ScL/vdaf5bpcTQ"
     is_site_admin = true
     password = "integration-tests-are-cool"
     username = "exampleUser"

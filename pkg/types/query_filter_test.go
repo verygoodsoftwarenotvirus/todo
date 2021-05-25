@@ -19,7 +19,7 @@ func TestQueryFilter_AttachToLogger(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		qf := &QueryFilter{
 			Page:            100,
 			Limit:           MaxLimit,
@@ -37,7 +37,7 @@ func TestQueryFilter_AttachToLogger(T *testing.T) {
 	T.Run("with nil", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 
 		assert.NotNil(t, (*QueryFilter)(nil).AttachToLogger(logger))
 	})

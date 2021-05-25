@@ -33,7 +33,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		cfg := &ServerConfig{
+		cfg := &ServiceConfig{
 			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
@@ -89,7 +89,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 	T.Run("with error marshaling", func(t *testing.T) {
 		t.Parallel()
 
-		cfg := &ServerConfig{}
+		cfg := &ServiceConfig{}
 
 		f, err := ioutil.TempFile("", "")
 		require.NoError(t, err)
@@ -107,10 +107,10 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 
 		for _, provider := range []string{"sqlite", "postgres", "mariadb"} {
-			cfg := &ServerConfig{
+			cfg := &ServiceConfig{
 				Database: config.Config{
 					Provider: provider,
 				},
@@ -126,8 +126,8 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		logger := logging.NewNonOperationalLogger()
-		cfg := &ServerConfig{}
+		logger := logging.NewNoopLogger()
+		cfg := &ServiceConfig{}
 
 		x, err := ProvideDatabaseClient(ctx, logger, nil, cfg)
 		assert.Nil(t, x)
@@ -138,9 +138,9 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 
-		cfg := &ServerConfig{
+		cfg := &ServiceConfig{
 			Database: config.Config{
 				Provider: "provider",
 			},

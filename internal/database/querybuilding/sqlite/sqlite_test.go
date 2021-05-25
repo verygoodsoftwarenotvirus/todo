@@ -25,7 +25,7 @@ func buildTestService(t *testing.T) (*Sqlite, sqlmock.Sqlmock) {
 	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	q := ProvideSqlite(logging.NewNonOperationalLogger())
+	q := ProvideSqlite(logging.NewNoopLogger())
 
 	return q, mock
 }
@@ -72,7 +72,7 @@ func TestProvideSqliteDB(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ProvideSqliteDB(logging.NewNonOperationalLogger(), "", time.Hour)
+		_, err := ProvideSqliteDB(logging.NewNoopLogger(), "", time.Hour)
 		assert.NoError(t, err)
 	})
 }

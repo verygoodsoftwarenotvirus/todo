@@ -15,7 +15,7 @@ func Test_tracingErrorHandler_Handle(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		errorHandler{logger: logging.NewNonOperationalLogger()}.Handle(errors.New("blah"))
+		errorHandler{logger: logging.NewNoopLogger()}.Handle(errors.New("blah"))
 	})
 }
 

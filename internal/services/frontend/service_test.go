@@ -18,7 +18,7 @@ func buildTestService(t *testing.T) *service {
 	t.Helper()
 
 	cfg := &Config{}
-	logger := logging.NewNonOperationalLogger()
+	logger := logging.NewNoopLogger()
 	authService := &mocktypes.AuthService{}
 	usersService := &mocktypes.UsersService{}
 	dataManager := database.BuildMockDatabase()

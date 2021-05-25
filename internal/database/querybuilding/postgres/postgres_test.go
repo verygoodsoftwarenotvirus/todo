@@ -24,7 +24,7 @@ func buildTestService(t *testing.T) (*Postgres, sqlmock.Sqlmock) {
 	_, mock, err := sqlmock.New()
 	require.NoError(t, err)
 
-	return ProvidePostgres(logging.NewNonOperationalLogger()), mock
+	return ProvidePostgres(logging.NewNoopLogger()), mock
 }
 
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
@@ -83,7 +83,7 @@ func TestProvidePostgresDB(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ProvidePostgresDB(logging.NewNonOperationalLogger(), "")
+		_, err := ProvidePostgresDB(logging.NewNoopLogger(), "")
 		assert.NoError(t, err)
 	})
 }

@@ -17,7 +17,7 @@ func TestProvideClientEncoder(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeJSON))
+		assert.NotNil(t, ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeJSON))
 	})
 }
 
@@ -28,7 +28,7 @@ func Test_clientEncoder_Unmarshal(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeJSON)
 
 		expected := &example{Name: "name"}
 		actual := &example{}
@@ -41,7 +41,7 @@ func Test_clientEncoder_Unmarshal(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeXML)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeXML)
 
 		expected := &example{Name: "name"}
 		actual := &example{}
@@ -54,7 +54,7 @@ func Test_clientEncoder_Unmarshal(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeJSON)
 
 		actual := &example{}
 
@@ -70,7 +70,7 @@ func Test_clientEncoder_Encode(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeJSON)
 
 		res := httptest.NewRecorder()
 
@@ -81,7 +81,7 @@ func Test_clientEncoder_Encode(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeXML)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeXML)
 
 		res := httptest.NewRecorder()
 
@@ -92,7 +92,7 @@ func Test_clientEncoder_Encode(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeJSON)
 
 		assert.Error(t, e.Encode(ctx, nil, &broken{Name: json.Number(t.Name())}))
 	})
@@ -105,7 +105,7 @@ func Test_clientEncoder_EncodeReader(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeJSON)
 
 		actual, err := e.EncodeReader(ctx, &example{Name: t.Name()})
 		assert.NoError(t, err)
@@ -116,7 +116,7 @@ func Test_clientEncoder_EncodeReader(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeXML)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeXML)
 
 		actual, err := e.EncodeReader(ctx, &example{Name: t.Name()})
 		assert.NoError(t, err)
@@ -127,7 +127,7 @@ func Test_clientEncoder_EncodeReader(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		e := ProvideClientEncoder(logging.NewNonOperationalLogger(), ContentTypeJSON)
+		e := ProvideClientEncoder(logging.NewNoopLogger(), ContentTypeJSON)
 
 		actual, err := e.EncodeReader(ctx, &broken{Name: json.Number(t.Name())})
 		assert.Error(t, err)

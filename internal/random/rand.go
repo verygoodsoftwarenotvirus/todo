@@ -19,7 +19,7 @@ const (
 var (
 	_ Generator = (*standardGenerator)(nil)
 
-	defaultGenerator = NewGenerator(logging.NewNonOperationalLogger())
+	defaultGenerator = NewGenerator(logging.NewNoopLogger())
 )
 
 func init() {

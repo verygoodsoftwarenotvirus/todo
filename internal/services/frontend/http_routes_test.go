@@ -40,7 +40,7 @@ func TestService_SetupRoutes(T *testing.T) {
 		).Return(http.Handler(obligatoryHandler))
 		s.authService = authService
 
-		router := chi.NewRouter(logging.NewNonOperationalLogger())
+		router := chi.NewRouter(logging.NewNoopLogger())
 
 		s.SetupRoutes(router)
 	})

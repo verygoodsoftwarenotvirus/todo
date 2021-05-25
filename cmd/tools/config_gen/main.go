@@ -3,29 +3,30 @@ package main
 import (
 	"context"
 	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"log"
+	"os"
+	"strings"
 	"time"
 
-	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
-	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	viper "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -95,7 +96,28 @@ var (
 	}
 )
 
-type configFunc func(filePath string) error
+func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
+	logger := logging.NewNoopLogger()
+
+	cfg := &secrets.Config{
+		Provider: secrets.ProviderLocal,
+		Key:      os.Getenv("TODO_LOCAL_SECRET_STORE_KEY"),
+	}
+
+	k, err := secrets.ProvideSecretKeeper(ctx, cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	sm, err := secrets.ProvideSecretManager(logger, k)
+	if err != nil {
+		panic(err)
+	}
+
+	return sm
+}
+
+type configFunc func(ctx context.Context, filePath string) error
 
 var files = map[string]configFunc{
 	"environments/local/config.toml":                                    localDevelopmentConfig,
@@ -112,7 +134,7 @@ func buildLocalFrontendServiceConfig() frontend.Config {
 }
 
 func mustHashPass(password string) string {
-	hashed, err := authentication.ProvideArgon2Authenticator(logging.NewNonOperationalLogger()).
+	hashed, err := authentication.ProvideArgon2Authenticator(logging.NewNoopLogger()).
 		HashPassword(context.Background(), password)
 
 	if err != nil {
@@ -133,8 +155,8 @@ func generatePASETOKey() []byte {
 	return b
 }
 
-func localDevelopmentConfig(filePath string) error {
-	cfg := &config.ServerConfig{
+func localDevelopmentConfig(ctx context.Context, filePath string) error {
+	cfg := &config.ServiceConfig{
 		Meta: config.MetaSettings{
 			Debug:   true,
 			RunMode: developmentEnv,
@@ -156,7 +178,7 @@ func localDevelopmentConfig(filePath string) error {
 			MinimumUsernameLength: 4,
 			MinimumPasswordLength: 8,
 		},
-		Database: config2.Config{
+		Database: dbconfig.Config{
 			Debug:                     true,
 			RunMigrations:             true,
 			MaxPingAttempts:           maxAttempts,
@@ -215,11 +237,18 @@ func localDevelopmentConfig(filePath string) error {
 		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
 	}
 
-	return nil
+	sm := initializeLocalSecretManager(ctx)
+	outputBytes, err := sm.Encrypt(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("encrypting config: %v", err)
+	}
+
+	outputStr := []byte(base64.StdEncoding.EncodeToString(outputBytes))
+	return os.WriteFile(strings.Replace(filePath, ".toml", ".config", 1), outputStr, 0644)
 }
 
-func frontendTestsConfig(filePath string) error {
-	cfg := &config.ServerConfig{
+func frontendTestsConfig(ctx context.Context, filePath string) error {
+	cfg := &config.ServiceConfig{
 		Meta: config.MetaSettings{
 			Debug:   false,
 			RunMode: developmentEnv,
@@ -241,7 +270,7 @@ func frontendTestsConfig(filePath string) error {
 			MinimumUsernameLength: 4,
 			MinimumPasswordLength: 8,
 		},
-		Database: config2.Config{
+		Database: dbconfig.Config{
 			Debug:                     true,
 			RunMigrations:             true,
 			Provider:                  postgres,
@@ -292,13 +321,13 @@ func frontendTestsConfig(filePath string) error {
 }
 
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
-	return func(filePath string) error {
+	return func(ctx context.Context, filePath string) error {
 		startupDeadline := time.Minute
 		if dbVendor == mariadb {
 			startupDeadline = 5 * time.Minute
 		}
 
-		cfg := &config.ServerConfig{
+		cfg := &config.ServiceConfig{
 			Meta: config.MetaSettings{
 				Debug:   false,
 				RunMode: testingEnv,
@@ -330,7 +359,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				MinimumUsernameLength: 4,
 				MinimumPasswordLength: 8,
 			},
-			Database: config2.Config{
+			Database: dbconfig.Config{
 				Debug:                     false,
 				RunMigrations:             true,
 				Provider:                  dbVendor,
@@ -390,8 +419,10 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 }
 
 func main() {
+	ctx := context.Background()
+
 	for filePath, fun := range files {
-		if err := fun(filePath); err != nil {
+		if err := fun(ctx, filePath); err != nil {
 			log.Fatalf("error rendering %s: %v", filePath, err)
 		}
 	}

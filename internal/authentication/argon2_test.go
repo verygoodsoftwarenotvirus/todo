@@ -19,7 +19,7 @@ const (
 func TestArgon2_HashPassword(T *testing.T) {
 	T.Parallel()
 
-	x := authentication.ProvideArgon2Authenticator(logging.NewNonOperationalLogger())
+	x := authentication.ProvideArgon2Authenticator(logging.NewNoopLogger())
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -35,7 +35,7 @@ func TestArgon2_HashPassword(T *testing.T) {
 func TestArgon2_ValidateLogin(T *testing.T) {
 	T.Parallel()
 
-	x := authentication.ProvideArgon2Authenticator(logging.NewNonOperationalLogger())
+	x := authentication.ProvideArgon2Authenticator(logging.NewNoopLogger())
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -114,6 +114,6 @@ func TestProvideArgon2Authenticator(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		authentication.ProvideArgon2Authenticator(logging.NewNonOperationalLogger())
+		authentication.ProvideArgon2Authenticator(logging.NewNoopLogger())
 	})
 }

@@ -20,12 +20,12 @@ import (
 func buildTestService(t *testing.T) *service {
 	t.Helper()
 
-	logger := logging.NewNonOperationalLogger()
+	logger := logging.NewNoopLogger()
 
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On(
 		"BuildRouteParamIDFetcher",
-		mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+		mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 	s := ProvideService(
 		logger,
@@ -52,12 +52,12 @@ func TestProvideAdminService(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+			mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideService(
 			logger,

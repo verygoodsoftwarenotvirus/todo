@@ -8,7 +8,7 @@ var (
 	// Providers represents this package's offering to the dependency manager.
 	Providers = wire.NewSet(
 		ProvideDatabaseClient,
-		wire.FieldsOf(new(*ServerConfig),
+		wire.FieldsOf(new(*ServiceConfig),
 			"Auth",
 			"Database",
 			"Observability",

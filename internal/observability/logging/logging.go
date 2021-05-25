@@ -63,7 +63,7 @@ func EnsureLogger(logger Logger) Logger {
 		return logger
 	}
 
-	return NewNonOperationalLogger()
+	return NewNoopLogger()
 }
 
 var doNotLog = map[string]struct{}{

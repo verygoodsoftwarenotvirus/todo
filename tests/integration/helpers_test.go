@@ -98,7 +98,7 @@ func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, err
 }
 func initializePASETOPoweredClient(clientID string, secretKey []byte) (*httpclient.Client, error) {
 	c, err := httpclient.NewClient(parsedURLToUse,
-		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
+		httpclient.UsingLogger(logging.NewNoopLogger()),
 		httpclient.UsingPASETO(clientID, secretKey),
 	)
 	if err != nil {

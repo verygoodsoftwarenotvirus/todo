@@ -112,7 +112,7 @@ func buildTestClient(t *testing.T, ts *httptest.Server) *Client {
 
 	client, err := NewClient(
 		mustParseURL("https://todo.verygoodsoftwarenotvirus.ru"),
-		UsingLogger(logging.NewNonOperationalLogger()),
+		UsingLogger(logging.NewNoopLogger()),
 		UsingJSON(),
 	)
 	require.NoError(t, err)
@@ -136,7 +136,7 @@ func buildSimpleTestClient(t *testing.T) (*Client, *httptest.Server) {
 func buildTestClientWithInvalidURL(t *testing.T) *Client {
 	t.Helper()
 
-	l := logging.NewNonOperationalLogger()
+	l := logging.NewNoopLogger()
 	u := mustParseURL("https://todo.verygoodsoftwarenotvirus.ru")
 	u.Scheme = fmt.Sprintf(`%s://`, asciiControlChar)
 

@@ -46,7 +46,7 @@ func TestNewClient(T *testing.T) {
 
 		c, err := NewClient(
 			mustParseURL(exampleURI),
-			UsingLogger(logging.NewNonOperationalLogger()),
+			UsingLogger(logging.NewNoopLogger()),
 		)
 
 		require.NotNil(t, c)
@@ -58,7 +58,7 @@ func TestNewClient(T *testing.T) {
 
 		c, err := NewClient(
 			nil,
-			UsingLogger(logging.NewNonOperationalLogger()),
+			UsingLogger(logging.NewNoopLogger()),
 		)
 
 		require.Nil(t, c)

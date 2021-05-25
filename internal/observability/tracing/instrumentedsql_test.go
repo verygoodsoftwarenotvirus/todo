@@ -38,7 +38,7 @@ func TestNewInstrumentedSQLLogger(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, NewInstrumentedSQLLogger(logging.NewNonOperationalLogger()))
+		assert.NotNil(t, NewInstrumentedSQLLogger(logging.NewNoopLogger()))
 	})
 }
 
@@ -49,7 +49,7 @@ func Test_instrumentedSQLLoggerWrapper_Log(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		w := NewInstrumentedSQLLogger(logging.NewNonOperationalLogger())
+		w := NewInstrumentedSQLLogger(logging.NewNoopLogger())
 
 		w.Log(ctx, t.Name())
 	})

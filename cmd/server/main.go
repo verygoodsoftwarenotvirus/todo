@@ -46,7 +46,7 @@ func main() {
 	})
 
 	if x, err := strconv.ParseBool(os.Getenv(useNoOpLoggerEnvVar)); x && err == nil {
-		logger = logging.NewNonOperationalLogger()
+		logger = logging.NewNoopLogger()
 	}
 
 	// find and validate our configuration filepath.

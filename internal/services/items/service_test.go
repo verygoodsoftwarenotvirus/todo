@@ -21,7 +21,7 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:          logging.NewNonOperationalLogger(),
+		logger:          logging.NewNoopLogger(),
 		itemCounter:     &mockmetrics.UnitCounter{},
 		itemDataManager: &mocktypes.ItemDataManager{},
 		itemIDFetcher:   func(req *http.Request) uint64 { return 0 },
@@ -44,13 +44,13 @@ func TestProvideItemsService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()),
+			mock.IsType(logging.NewNoopLogger()),
 			ItemIDURIParamKey,
 			"item",
 		).Return(func(*http.Request) uint64 { return 0 })
 
 		s, err := ProvideService(
-			logging.NewNonOperationalLogger(),
+			logging.NewNoopLogger(),
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,
@@ -75,7 +75,7 @@ func TestProvideItemsService(T *testing.T) {
 		}
 
 		s, err := ProvideService(
-			logging.NewNonOperationalLogger(),
+			logging.NewNoopLogger(),
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,

@@ -19,7 +19,7 @@ import (
 func buildTestService(t *testing.T) *service {
 	t.Helper()
 
-	logger := logging.NewNonOperationalLogger()
+	logger := logging.NewNoopLogger()
 	encoderDecoder := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
 	s, err := ProvideService(
@@ -54,7 +54,7 @@ func TestProvideService(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		encoderDecoder := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
 		s, err := ProvideService(
@@ -81,7 +81,7 @@ func TestProvideService(T *testing.T) {
 
 	T.Run("with invalid cookie key", func(t *testing.T) {
 		t.Parallel()
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		encoderDecoder := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
 		s, err := ProvideService(

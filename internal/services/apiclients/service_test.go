@@ -26,7 +26,7 @@ func buildTestService(t *testing.T) *service {
 
 	return &service{
 		apiClientDataManager:      database.BuildMockDatabase(),
-		logger:                    logging.NewNonOperationalLogger(),
+		logger:                    logging.NewNoopLogger(),
 		encoderDecoder:            mockencoding.NewMockEncoderDecoder(),
 		authenticator:             &authentication.MockAuthenticator{},
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
@@ -48,13 +48,13 @@ func TestProvideAPIClientsService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()),
+			mock.IsType(logging.NewNoopLogger()),
 			APIClientIDURIParamKey,
 			"api client",
 		).Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideAPIClientsService(
-			logging.NewNonOperationalLogger(),
+			logging.NewNoopLogger(),
 			mockAPIClientDataManager,
 			&mocktypes.UserDataManager{},
 			&authentication.MockAuthenticator{},

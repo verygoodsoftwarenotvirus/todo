@@ -74,7 +74,7 @@ func (c *Client) RequestBuilder() *requests.Builder {
 
 // NewClient builds a new API client for us.
 func NewClient(u *url.URL, options ...option) (*Client, error) {
-	l := logging.NewNonOperationalLogger()
+	l := logging.NewNoopLogger()
 
 	if u == nil {
 		return nil, ErrNoURLProvided

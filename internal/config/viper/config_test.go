@@ -45,7 +45,7 @@ func TestFromConfig(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		exampleConfig := &config.ServerConfig{
+		exampleConfig := &config.ServiceConfig{
 			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
@@ -150,7 +150,7 @@ func TestFromConfig(T *testing.T) {
 	T.Run("with invalid config", func(t *testing.T) {
 		t.Parallel()
 
-		exampleConfig := &config.ServerConfig{}
+		exampleConfig := &config.ServiceConfig{}
 
 		actual, err := FromConfig(exampleConfig)
 		assert.Nil(t, actual)
@@ -162,7 +162,7 @@ func TestParseConfigFile(T *testing.T) {
 	T.Parallel()
 
 	ctx := context.Background()
-	logger := logging.NewNonOperationalLogger()
+	logger := logging.NewNoopLogger()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -171,7 +171,7 @@ func TestParseConfigFile(T *testing.T) {
 		require.NoError(t, err)
 		filename := tf.Name()
 
-		exampleConfig := &config.ServerConfig{
+		exampleConfig := &config.ServiceConfig{
 			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
@@ -262,7 +262,7 @@ debug = ":banana:"
 		require.NoError(t, err)
 		filename := tf.Name()
 
-		exampleConfig := &config.ServerConfig{
+		exampleConfig := &config.ServiceConfig{
 			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,

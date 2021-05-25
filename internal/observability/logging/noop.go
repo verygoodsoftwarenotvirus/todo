@@ -9,8 +9,8 @@ type noopLogger struct{}
 
 var logger = new(noopLogger)
 
-// NewNonOperationalLogger provides our noop logger to dependency managers.
-func NewNonOperationalLogger() Logger { return logger }
+// NewNoopLogger provides our noop logger to dependency managers.
+func NewNoopLogger() Logger { return logger }
 
 // Info satisfies our interface.
 func (l *noopLogger) Info(string) {}

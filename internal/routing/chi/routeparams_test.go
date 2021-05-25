@@ -32,7 +32,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 
 		ctx := context.Background()
 		exampleKey := "blah"
-		fn := r.BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
+		fn := r.BuildRouteParamIDFetcher(logging.NewNoopLogger(), exampleKey, "thing")
 		expected := uint64(123)
 		req := testutil.BuildTestRequest(t).WithContext(
 			context.WithValue(
@@ -59,7 +59,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 
 		ctx := context.Background()
 		exampleKey := "blah"
-		fn := r.BuildRouteParamIDFetcher(logging.NewNonOperationalLogger(), exampleKey, "thing")
+		fn := r.BuildRouteParamIDFetcher(logging.NewNoopLogger(), exampleKey, "thing")
 		expected := uint64(0)
 
 		req := testutil.BuildTestRequest(t)

@@ -14,7 +14,7 @@ func TestEnsureLogger(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, EnsureLogger(NewNonOperationalLogger()))
+		assert.NotNil(t, EnsureLogger(NewNoopLogger()))
 	})
 
 	T.Run("with nil", func(t *testing.T) {
@@ -30,7 +30,7 @@ func TestBuildLoggingMiddleware(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		middleware := BuildLoggingMiddleware(NewNonOperationalLogger())
+		middleware := BuildLoggingMiddleware(NewNoopLogger())
 
 		assert.NotNil(t, middleware)
 
@@ -44,7 +44,7 @@ func TestBuildLoggingMiddleware(T *testing.T) {
 	T.Run("with non-logged route", func(t *testing.T) {
 		t.Parallel()
 
-		middleware := BuildLoggingMiddleware(NewNonOperationalLogger())
+		middleware := BuildLoggingMiddleware(NewNoopLogger())
 
 		assert.NotNil(t, middleware)
 

@@ -18,7 +18,7 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:                       logging.NewNonOperationalLogger(),
+		logger:                       logging.NewNoopLogger(),
 		accountCounter:               &mockmetrics.UnitCounter{},
 		accountDataManager:           &mocktypes.AccountDataManager{},
 		accountMembershipDataManager: &mocktypes.AccountUserMembershipDataManager{},
@@ -35,7 +35,7 @@ func TestProvideAccountsService(t *testing.T) {
 		return &mockmetrics.UnitCounter{}
 	}
 
-	l := logging.NewNonOperationalLogger()
+	l := logging.NewNoopLogger()
 
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On(
@@ -46,7 +46,7 @@ func TestProvideAccountsService(t *testing.T) {
 		mock.IsType(l), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 	s := ProvideService(
-		logging.NewNonOperationalLogger(),
+		logging.NewNoopLogger(),
 		&mocktypes.AccountDataManager{},
 		&mocktypes.AccountUserMembershipDataManager{},
 		mockencoding.NewMockEncoderDecoder(),

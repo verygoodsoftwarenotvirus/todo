@@ -36,7 +36,7 @@ func buildTestService(t *testing.T) *service {
 
 	s := ProvideUsersService(
 		&authservice.Config{},
-		logging.NewNonOperationalLogger(),
+		logging.NewNoopLogger(),
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
 		&authentication.MockAuthenticator{},
@@ -63,11 +63,11 @@ func TestProvideUsersService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+			mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideUsersService(
 			&authservice.Config{},
-			logging.NewNonOperationalLogger(),
+			logging.NewNoopLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
 			&authentication.MockAuthenticator{},

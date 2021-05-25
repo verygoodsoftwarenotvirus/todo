@@ -20,7 +20,7 @@ func TestPrepareError(T *testing.T) {
 		ctx := context.Background()
 		descriptionFmt, descriptionArgs := "things and %s", "stuff"
 		err := errors.New("blah")
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		_, span := tracing.StartSpan(ctx)
 
 		assert.Error(t, PrepareError(err, logger, span, descriptionFmt, descriptionArgs))
@@ -36,7 +36,7 @@ func TestAcknowledgeError(T *testing.T) {
 		ctx := context.Background()
 		descriptionFmt, descriptionArgs := "things and %s", "stuff"
 		err := errors.New("blah")
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		_, span := tracing.StartSpan(ctx)
 
 		AcknowledgeError(err, logger, span, descriptionFmt, descriptionArgs)
@@ -51,7 +51,7 @@ func TestNoteEvent(T *testing.T) {
 
 		ctx := context.Background()
 		descriptionFmt, descriptionArgs := "things and %s", "stuff"
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		_, span := tracing.StartSpan(ctx)
 
 		NoteEvent(logger, span, descriptionFmt, descriptionArgs)

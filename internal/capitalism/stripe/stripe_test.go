@@ -35,7 +35,7 @@ const (
 func buildTestPaymentManager(t *testing.T) *stripePaymentManager {
 	t.Helper()
 
-	logger := logging.NewNonOperationalLogger()
+	logger := logging.NewNoopLogger()
 
 	pm := ProvideStripePaymentManager(logger, &capitalism.StripeConfig{})
 
@@ -48,7 +48,7 @@ func TestNewStripePaymentManager(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		pm := ProvideStripePaymentManager(logger, &capitalism.StripeConfig{})
 
 		assert.NotNil(t, pm)

@@ -33,7 +33,7 @@ func TestUploader_ReadFile(T *testing.T) {
 
 		u := &Uploader{
 			bucket: b,
-			logger: logging.NewNonOperationalLogger(),
+			logger: logging.NewNoopLogger(),
 			tracer: tracing.NewTracer(t.Name()),
 			filenameFetcher: func(*http.Request) string {
 				return t.Name()
@@ -53,7 +53,7 @@ func TestUploader_ReadFile(T *testing.T) {
 
 		u := &Uploader{
 			bucket: memblob.OpenBucket(&memblob.Options{}),
-			logger: logging.NewNonOperationalLogger(),
+			logger: logging.NewNoopLogger(),
 			tracer: tracing.NewTracer(t.Name()),
 			filenameFetcher: func(*http.Request) string {
 				return t.Name()
@@ -78,7 +78,7 @@ func TestUploader_SaveFile(T *testing.T) {
 		ctx := context.Background()
 		u := &Uploader{
 			bucket: memblob.OpenBucket(&memblob.Options{}),
-			logger: logging.NewNonOperationalLogger(),
+			logger: logging.NewNoopLogger(),
 			tracer: tracing.NewTracer(t.Name()),
 			filenameFetcher: func(*http.Request) string {
 				return t.Name()
@@ -103,7 +103,7 @@ func TestUploader_ServeFiles(T *testing.T) {
 
 		u := &Uploader{
 			bucket: b,
-			logger: logging.NewNonOperationalLogger(),
+			logger: logging.NewNoopLogger(),
 			tracer: tracing.NewTracer(t.Name()),
 			filenameFetcher: func(*http.Request) string {
 				return exampleFilename
@@ -125,7 +125,7 @@ func TestUploader_ServeFiles(T *testing.T) {
 
 		u := &Uploader{
 			bucket: memblob.OpenBucket(&memblob.Options{}),
-			logger: logging.NewNonOperationalLogger(),
+			logger: logging.NewNoopLogger(),
 			tracer: tracing.NewTracer(t.Name()),
 			filenameFetcher: func(*http.Request) string {
 				return exampleFilename
@@ -151,7 +151,7 @@ func TestUploader_ServeFiles(T *testing.T) {
 
 		u := &Uploader{
 			bucket: b,
-			logger: logging.NewNonOperationalLogger(),
+			logger: logging.NewNoopLogger(),
 			tracer: tracing.NewTracer(t.Name()),
 			filenameFetcher: func(*http.Request) string {
 				return exampleFilename

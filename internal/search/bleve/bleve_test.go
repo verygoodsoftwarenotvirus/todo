@@ -79,7 +79,7 @@ func (s *bleveIndexManagerTestSuite) TestNewBleveIndexManagerWithTestIndex() {
 
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "constructor_test_happy_path_test.bleve"))
 
-	_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	_, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 }
 
@@ -88,7 +88,7 @@ func (s *bleveIndexManagerTestSuite) TestNewBleveIndexManagerWithItemsIndex() {
 
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "constructor_test_happy_path_items.bleve"))
 
-	_, err := NewBleveIndexManager(exampleIndexPath, types.ItemsSearchIndexName, logging.NewNonOperationalLogger())
+	_, err := NewBleveIndexManager(exampleIndexPath, types.ItemsSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 }
 
@@ -97,7 +97,7 @@ func (s *bleveIndexManagerTestSuite) TestNewBleveIndexManagerWithInvalidName() {
 
 	exampleIndexPath := search.IndexPath("constructor_test_invalid_name.bleve")
 
-	_, err := NewBleveIndexManager(exampleIndexPath, "invalid", logging.NewNonOperationalLogger())
+	_, err := NewBleveIndexManager(exampleIndexPath, "invalid", logging.NewNoopLogger())
 	assert.Error(t, err)
 }
 
@@ -107,7 +107,7 @@ func (s *bleveIndexManagerTestSuite) TestIndex() {
 	const exampleQuery = "_test"
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "_test_obligatory.bleve"))
 
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 
@@ -126,7 +126,7 @@ func (s *bleveIndexManagerTestSuite) TestSearch() {
 	const exampleQuery = "search_test"
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_obligatory.bleve"))
 
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 
@@ -147,7 +147,7 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithInvalidQuery() {
 
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_invalid_query.bleve"))
 
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 
@@ -161,7 +161,7 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithEmptyIndexAndSearch() {
 
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_empty_index.bleve"))
 
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 
@@ -176,7 +176,7 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithClosedIndex() {
 	const exampleQuery = "search_test"
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_closed_index.bleve"))
 
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 
@@ -200,7 +200,7 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithInvalidID() {
 	const exampleQuery = "search_test"
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_invalid_id.bleve"))
 
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 
@@ -222,7 +222,7 @@ func (s *bleveIndexManagerTestSuite) TestSearchForAdmin() {
 	const exampleQuery = "search_test"
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_obligatory.bleve"))
 
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 
@@ -244,7 +244,7 @@ func (s *bleveIndexManagerTestSuite) TestDelete() {
 	const exampleQuery = "delete_test"
 	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "delete_test.bleve"))
 
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNonOperationalLogger())
+	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
 	assert.NoError(t, err)
 	require.NotNil(t, im)
 

@@ -83,7 +83,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg := &config.ServerConfig{
+	cfg := &config.ServiceConfig{
 		Database: dbconfig.Config{
 			MetricsCollectionInterval: time.Second,
 			Provider:                  databaseType,

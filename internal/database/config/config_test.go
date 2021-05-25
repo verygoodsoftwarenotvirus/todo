@@ -39,7 +39,7 @@ func TestConfig_ProvideDatabaseConnection(T *testing.T) {
 	T.Run("standard for postgres", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		cfg := &Config{
 			Provider:          PostgresProvider,
 			ConnectionDetails: "example_connection_string",
@@ -53,7 +53,7 @@ func TestConfig_ProvideDatabaseConnection(T *testing.T) {
 	T.Run("standard for sqlite", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		cfg := &Config{
 			Provider:          SqliteProvider,
 			ConnectionDetails: "example_connection_string",
@@ -67,7 +67,7 @@ func TestConfig_ProvideDatabaseConnection(T *testing.T) {
 	T.Run("standard for mariadb", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		cfg := &Config{
 			Provider:          MariaDBProvider,
 			ConnectionDetails: "dbuser:hunter2@tcp(database:3306)/todo",
@@ -81,7 +81,7 @@ func TestConfig_ProvideDatabaseConnection(T *testing.T) {
 	T.Run("with invalid provider", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		cfg := &Config{
 			Provider:          invalidProvider,
 			ConnectionDetails: "example_connection_string",

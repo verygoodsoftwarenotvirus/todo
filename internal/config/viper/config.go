@@ -71,7 +71,7 @@ func BuildViperConfig() *viper.Viper {
 }
 
 // FromConfig returns a viper instance from a config struct.
-func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
+func FromConfig(input *config.ServiceConfig) (*viper.Viper, error) {
 	if input == nil {
 		return nil, errNilInput
 	}
@@ -196,7 +196,7 @@ func FromConfig(input *config.ServerConfig) (*viper.Viper, error) {
 }
 
 // ParseConfigFile parses a configuration file.
-func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string) (*config.ServerConfig, error) {
+func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string) (*config.ServiceConfig, error) {
 	logger = logger.WithValue("filepath", filePath)
 	logger.Debug("parsing config file")
 
@@ -207,7 +207,7 @@ func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string
 		return nil, fmt.Errorf("trying to read the config file: %w", err)
 	}
 
-	var serverConfig *config.ServerConfig
+	var serverConfig *config.ServiceConfig
 	if err := cfg.Unmarshal(&serverConfig); err != nil {
 		return nil, fmt.Errorf("trying to unmarshal the config: %w", err)
 	}

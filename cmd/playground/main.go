@@ -34,7 +34,7 @@ func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
 func main() {
 	ctx := context.Background()
 
-	content, err := os.ReadFile("environments/local/config.config")
+	content, err := os.ReadFile("environments/local/todo.config")
 	if err != nil {
 		panic(err)
 	}
@@ -42,7 +42,8 @@ func main() {
 	sm := initializeLocalSecretManager(ctx)
 
 	var cfg *config.ServiceConfig
-	if err = sm.Decrypt(ctx, content, &cfg); err != nil {
+	err = sm.Decrypt(ctx, string(content), &cfg)
+	if err != nil {
 		panic(err)
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/hashicorp/vault/api"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -16,10 +17,15 @@ import (
 )
 
 const (
-	ProviderLocal          = "local"
-	ProviderGCP            = "gcp_kms"
-	ProviderAWS            = "aws_kms"
-	ProviderAzureKeyVault  = "azure_keyvault"
+	// ProviderLocal is the thing to use to indicate you want the Local provider for secret management.
+	ProviderLocal = "local"
+	// ProviderGCP is the thing to use to indicate you want the GCP provider for secret management.
+	ProviderGCP = "gcp_kms"
+	// ProviderAWS is the thing to use to indicate you want the AWS provider for secret management.
+	ProviderAWS = "aws_kms"
+	// ProviderAzureKeyVault is the thing to use to indicate you want the Azure KeyVault provider for secret management.
+	ProviderAzureKeyVault = "azure_keyvault"
+	// ProviderHashicorpVault is the thing to use to indicate you want the Hashicorp Vault provider for secret management.
 	ProviderHashicorpVault = "vault"
 
 	expectedLocalKeyLength = 32

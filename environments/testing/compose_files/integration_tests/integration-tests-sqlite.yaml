@@ -2,9 +2,10 @@ version: '3.3'
 services:
     todo-server:
         environment:
+            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
             USE_NOOP_LOGGER: 'nope'
         volumes:
-            - source: '../../../../environments/testing/config_files/integration-tests-sqlite.toml'
+            - source: '../../../../environments/testing/config_files/integration-tests-sqlite.config'
               target: '/etc/config.toml'
               type: 'bind'
     test:

@@ -16,9 +16,10 @@ services:
         links:
             - database
         environment:
+            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
             USE_NOOP_LOGGER: 'nope'
         volumes:
-            - source: '../../../../environments/testing/config_files/integration-tests-mariadb.toml'
+            - source: '../../../../environments/testing/config_files/integration-tests-mariadb.config'
               target: '/etc/config.toml'
               type: 'bind'
     test:

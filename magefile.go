@@ -78,7 +78,6 @@ func init() {
 		panic(err)
 	}
 
-	logger = logger.WithValue("current_working_directory", cwd)
 	logger.Debug("cwd determined")
 
 	if !strings.HasSuffix(cwd, thisRepo) {

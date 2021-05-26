@@ -8,8 +8,10 @@ import (
 	"os"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/build/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -25,10 +27,32 @@ const (
 
 var (
 	configFilepath string
+	errNoConfig    = errors.New("no configuration file provided")
 )
 
 func init() {
 	flag.StringVarP(&configFilepath, "config", "c", "", "the config filepath")
+}
+
+func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
+	logger := logging.NewNoopLogger()
+
+	cfg := &secrets.Config{
+		Provider: secrets.ProviderLocal,
+		Key:      os.Getenv("TODO_SERVICE_LOCAL_SECRET_STORE_KEY"),
+	}
+
+	k, err := secrets.ProvideSecretKeeper(ctx, cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	sm, err := secrets.ProvideSecretManager(logger, k)
+	if err != nil {
+		panic(err)
+	}
+
+	return sm
 }
 
 func main() {
@@ -52,14 +76,20 @@ func main() {
 	// find and validate our configuration filepath.
 	if configFilepath == "" {
 		if configFilepath = os.Getenv(configFilepathEnvVar); configFilepath == "" {
-			logger.Fatal(errors.New("no configuration file provided"))
+			logger.Fatal(errNoConfig)
 		}
 	}
 
-	// parse our config file.
-	cfg, err := viper.ParseConfigFile(ctx, logger, configFilepath)
-	if err != nil || cfg == nil {
-		logger.WithValue("config_filepath", configFilepath).Fatal(fmt.Errorf("parsing configuration file: %w", err))
+	configBytes, err := os.ReadFile(configFilepath)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	sm := initializeLocalSecretManager(ctx)
+
+	var cfg *config.ServiceConfig
+	if err = sm.Decrypt(ctx, string(configBytes), &cfg); err != nil || cfg == nil {
+		logger.Fatal(err)
 	}
 
 	flushFunc, initializeTracerErr := cfg.Observability.Tracing.Initialize(logger)

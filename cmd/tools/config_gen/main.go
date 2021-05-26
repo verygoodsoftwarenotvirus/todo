@@ -3,10 +3,10 @@ package main
 import (
 	"context"
 	"crypto/rand"
-	"encoding/base64"
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -101,7 +101,7 @@ func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
 
 	cfg := &secrets.Config{
 		Provider: secrets.ProviderLocal,
-		Key:      os.Getenv("TODO_LOCAL_SECRET_STORE_KEY"),
+		Key:      "SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU=",
 	}
 
 	k, err := secrets.ProvideSecretKeeper(ctx, cfg)
@@ -115,6 +115,16 @@ func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
 	}
 
 	return sm
+}
+
+func encryptAndSaveConfig(ctx context.Context, outputPath string, cfg *config.ServiceConfig) error {
+	sm := initializeLocalSecretManager(ctx)
+	output, err := sm.Encrypt(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("encrypting config: %v", err)
+	}
+
+	return os.WriteFile(outputPath, []byte(output), 0644)
 }
 
 type configFunc func(ctx context.Context, filePath string) error
@@ -237,14 +247,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
 	}
 
-	sm := initializeLocalSecretManager(ctx)
-	outputBytes, err := sm.Encrypt(ctx, cfg)
-	if err != nil {
-		return fmt.Errorf("encrypting config: %v", err)
-	}
-
-	outputStr := []byte(base64.StdEncoding.EncodeToString(outputBytes))
-	return os.WriteFile(strings.Replace(filePath, ".toml", ".config", 1), outputStr, 0644)
+	return encryptAndSaveConfig(ctx, filepath.Join(filepath.Dir(filePath), "service.config"), cfg)
 }
 
 func frontendTestsConfig(ctx context.Context, filePath string) error {
@@ -317,7 +320,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
 	}
 
-	return nil
+	return encryptAndSaveConfig(ctx, strings.Replace(filePath, ".toml", ".config", 1), cfg)
 }
 
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
@@ -414,7 +417,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			return fmt.Errorf("writing developmentEnv config: %w", writeErr)
 		}
 
-		return nil
+		return encryptAndSaveConfig(ctx, strings.Replace(filePath, ".toml", ".config", 1), cfg)
 	}
 }
 

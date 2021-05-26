@@ -46,5 +46,5 @@ internal/services/frontend/_vendor_/*
 # bleve indices
 *.bleve
 
-# immudb things
-.root-*
+# configs
+environments/**/*.config

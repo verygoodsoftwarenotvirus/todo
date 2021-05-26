@@ -61,7 +61,7 @@ output:
 linters-settings:
   cyclop:
     # the maximal code complexity to report
-    max-complexity: 16
+    max-complexity: 25
     # the maximal average package complexity. If it's higher than 0.0 (float) the check is enabled (default 0.0)
     package-average: 0.0
     # should ignore tests (default false)

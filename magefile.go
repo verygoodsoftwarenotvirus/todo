@@ -65,7 +65,7 @@ type containerRunSpec struct {
 }
 
 func init() {
-	logger = logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
+	logger = logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog, Level: logging.InfoLevel})
 
 	if debug {
 		logger.SetLevel(logging.DebugLevel)
@@ -76,8 +76,6 @@ func init() {
 		logger.Error(err, "determining current working directory")
 		panic(err)
 	}
-
-	logger.Debug("cwd determined")
 
 	if !strings.HasSuffix(cwd, thisRepo) {
 		panic("location invalid!")
@@ -653,9 +651,9 @@ func backendCoverage() error {
 	}
 
 	// byte array jesus please forgive me
-	rawCoveragePercentage := string([]byte(results)[len(results)-6 : len(results)])
+	rawCoveragePercentage := strings.TrimSpace(string([]byte(results)[len(results)-6 : len(results)]))
 
-	logger.Info(strings.TrimSpace(rawCoveragePercentage))
+	fmt.Printf("\n\nCOVERAGE: %s\n\n", rawCoveragePercentage)
 
 	return nil
 }

@@ -18,7 +18,7 @@ coverage:
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
     - go run mage.go ensureMage
-    - mage coverage
+    - mage vendor coverage
 
 golang-format-check:
   stage: quality

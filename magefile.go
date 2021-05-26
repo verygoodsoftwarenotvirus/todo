@@ -637,7 +637,7 @@ func backendCoverage() error {
 		"-race",
 	}, packagesToTest...)
 
-	if err = runGoCommand(false, testCommand...); err != nil {
+	if err = runGoCommand(true, testCommand...); err != nil {
 		return err
 	}
 

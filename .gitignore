@@ -45,6 +45,3 @@ internal/services/frontend/_vendor_/*
 
 # bleve indices
 *.bleve
-
-# configs
-environments/**/*.config

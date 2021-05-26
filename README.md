@@ -19,8 +19,6 @@ You can run `mage -l` to see a list of available targets and their descriptions.
 
 ## dev setup
 
-After cloning, you should run `mage configs frontendTemplates`. `configs` will generate, well, configs, which are not committed, despite the code to generate them being committed. There are reasons for that, I simply ask that you trust me on this.
-
 It's a good idea to run `mage quicktest lintegrationTests` before commits. You won't catch every error, but you'll catch the simplest ones that waste CI (and consequently your) time.
 
 ## running the server

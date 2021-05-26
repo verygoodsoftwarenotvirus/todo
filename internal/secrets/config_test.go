@@ -39,21 +39,6 @@ func TestProvideSecretKeeper(T *testing.T) {
 		assert.NotNil(t, actual)
 	})
 
-	T.Run("standard_gcp", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-
-		cfg := &Config{
-			Provider: ProviderGCP,
-			Key:      buildExampleKey(ctx, t),
-		}
-
-		actual, err := ProvideSecretKeeper(ctx, cfg)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-	})
-
 	T.Run("standard_aws", func(t *testing.T) {
 		t.Parallel()
 
@@ -67,21 +52,6 @@ func TestProvideSecretKeeper(T *testing.T) {
 		actual, err := ProvideSecretKeeper(ctx, cfg)
 		assert.NoError(t, err)
 		assert.NotNil(t, actual)
-	})
-
-	T.Run("standard_azure", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-
-		cfg := &Config{
-			Provider: ProviderAzureKeyVault,
-			Key:      buildExampleKey(ctx, t),
-		}
-
-		actual, err := ProvideSecretKeeper(ctx, cfg)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
 	})
 
 	T.Run("standard_vault", func(t *testing.T) {

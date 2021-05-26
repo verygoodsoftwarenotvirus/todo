@@ -63,23 +63,6 @@ func TestProvidePublishTopic(T *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	T.Run("standard_gcp", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		cfg := &Config{
-			Provider:               ProviderGoogleCloudPubSub,
-			Topic:                  t.Name(),
-			SubscriptionIdentifier: t.Name(),
-			ConnectionURL:          t.Name(),
-			Enabled:                true,
-		}
-
-		actual, err := ProvidePublishTopic(ctx, cfg)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
 	T.Run("standard_aws", func(t *testing.T) {
 		t.Parallel()
 
@@ -137,23 +120,6 @@ func TestProvidePublishTopic(T *testing.T) {
 		ctx := context.Background()
 		cfg := &Config{
 			Provider:               ProviderNATS,
-			Topic:                  t.Name(),
-			SubscriptionIdentifier: t.Name(),
-			ConnectionURL:          t.Name(),
-			Enabled:                true,
-		}
-
-		actual, err := ProvidePublishTopic(ctx, cfg)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	T.Run("standard_azure", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		cfg := &Config{
-			Provider:               ProviderAzureServiceBus,
 			Topic:                  t.Name(),
 			SubscriptionIdentifier: t.Name(),
 			ConnectionURL:          t.Name(),

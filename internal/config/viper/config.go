@@ -3,14 +3,12 @@ package viper
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math"
 	"time"
 
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 
 	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
@@ -23,8 +21,7 @@ const (
 )
 
 var (
-	errNilInput                            = errors.New("nil input provided")
-	errInvalidTestUserRunModeConfiguration = errors.New("requested test user in production run mode")
+	errNilInput = errors.New("nil input provided")
 )
 
 // BuildViperConfig is a constructor function that initializes a viper config.
@@ -196,32 +193,4 @@ func FromConfig(input *config.InstanceConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyItemsSearchIndexPath, input.Services.Items.SearchIndexPath)
 
 	return cfg, nil
-}
-
-// ParseConfigFile parses a configuration file.
-func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string) (*config.InstanceConfig, error) {
-	logger = logger.WithValue("filepath", filePath)
-	logger.Debug("parsing config file")
-
-	cfg := BuildViperConfig()
-	cfg.SetConfigFile(filePath)
-
-	if err := cfg.ReadInConfig(); err != nil {
-		return nil, fmt.Errorf("trying to read the config file: %w", err)
-	}
-
-	var serverConfig *config.InstanceConfig
-	if err := cfg.Unmarshal(&serverConfig); err != nil {
-		return nil, fmt.Errorf("trying to unmarshal the config: %w", err)
-	}
-
-	if serverConfig.Database.CreateTestUser != nil && serverConfig.Meta.RunMode == config.ProductionRunMode {
-		return nil, errInvalidTestUserRunModeConfiguration
-	}
-
-	if validationErr := serverConfig.ValidateWithContext(ctx); validationErr != nil {
-		return nil, validationErr
-	}
-
-	return serverConfig, nil
 }

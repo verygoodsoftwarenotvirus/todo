@@ -1,10 +1,6 @@
 package viper
 
 import (
-	"context"
-	"encoding/json"
-	"io/ioutil"
-	"os"
 	"testing"
 	"time"
 
@@ -19,7 +15,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
@@ -29,7 +24,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuildViperConfig(t *testing.T) {
@@ -154,187 +148,5 @@ func TestFromConfig(T *testing.T) {
 		actual, err := FromConfig(exampleConfig)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
-	})
-}
-
-func TestParseConfigFile(T *testing.T) {
-	T.Parallel()
-
-	ctx := context.Background()
-	logger := logging.NewNoopLogger()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		tf, err := ioutil.TempFile(os.TempDir(), "*.json")
-		require.NoError(t, err)
-		filename := tf.Name()
-
-		exampleConfig := &config.InstanceConfig{
-			Server: server.Config{
-				HTTPPort:        1234,
-				Debug:           false,
-				StartupDeadline: time.Minute,
-			},
-			AuditLog: audit.Config{
-				Enabled: true,
-			},
-			Meta: config.MetaSettings{
-				RunMode: config.DevelopmentRunMode,
-			},
-			Encoding: encoding.Config{
-				ContentType: "application/json",
-			},
-			Observability: observability.Config{
-				Metrics: metrics.Config{
-					Provider:                         "",
-					RouteToken:                       "",
-					RuntimeMetricsCollectionInterval: 2 * time.Second,
-				},
-			},
-			Services: config.ServicesConfigurations{
-				Auth: authservice.Config{
-					Cookies: authservice.CookieConfig{
-						Name:     "todocookie",
-						Domain:   "https://verygoodsoftwarenotvirus.ru",
-						Lifetime: time.Second,
-					},
-					MinimumUsernameLength: 4,
-					MinimumPasswordLength: 8,
-					EnableUserSignup:      true,
-				},
-				Items: items.Config{
-					SearchIndexPath: "/items_index_path",
-				},
-			},
-			Database: config2.Config{
-				Provider:                  "postgres",
-				MetricsCollectionInterval: 2 * time.Second,
-				Debug:                     true,
-				RunMigrations:             true,
-				ConnectionDetails:         database.ConnectionDetails("postgres://username:passwords@host/table"),
-			},
-		}
-
-		require.NoError(t, exampleConfig.EncodeToFile(filename, json.Marshal))
-
-		cfg, err := ParseConfigFile(ctx, logger, filename)
-		require.NoError(t, err)
-
-		assert.Equal(t, exampleConfig, cfg)
-
-		assert.NoError(t, os.Remove(tf.Name()))
-	})
-
-	T.Run("unparseable garbage", func(t *testing.T) {
-		t.Parallel()
-
-		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
-		require.NoError(t, err)
-
-		_, err = tf.Write([]byte(`
-[server]
-http_port = "blah"
-debug = ":banana:"
-`))
-		require.NoError(t, err)
-
-		cfg, err := ParseConfigFile(ctx, logger, tf.Name())
-		assert.Error(t, err)
-		assert.Nil(t, cfg)
-
-		assert.NoError(t, os.Remove(tf.Name()))
-	})
-
-	T.Run("with nonexistent file", func(t *testing.T) {
-		t.Parallel()
-		cfg, err := ParseConfigFile(ctx, logger, "/this/doesn't/even/exist/lol")
-		assert.Error(t, err)
-		assert.Nil(t, cfg)
-	})
-
-	T.Run("with test user creation on production error", func(t *testing.T) {
-		t.Parallel()
-
-		tf, err := ioutil.TempFile(os.TempDir(), "*.json")
-		require.NoError(t, err)
-		filename := tf.Name()
-
-		exampleConfig := &config.InstanceConfig{
-			Server: server.Config{
-				HTTPPort:        1234,
-				Debug:           false,
-				StartupDeadline: time.Minute,
-			},
-			AuditLog: audit.Config{
-				Enabled: true,
-			},
-			Meta: config.MetaSettings{
-				RunMode: config.ProductionRunMode,
-			},
-			Encoding: encoding.Config{
-				ContentType: "application/json",
-			},
-			Observability: observability.Config{
-				Metrics: metrics.Config{
-					Provider:                         "",
-					RouteToken:                       "",
-					RuntimeMetricsCollectionInterval: 2 * time.Second,
-				},
-			},
-			Services: config.ServicesConfigurations{
-				Auth: authservice.Config{
-					Cookies: authservice.CookieConfig{
-						Name:     "todocookie",
-						Domain:   "https://verygoodsoftwarenotvirus.ru",
-						Lifetime: time.Second,
-					},
-					MinimumUsernameLength: 4,
-					MinimumPasswordLength: 8,
-					EnableUserSignup:      true,
-				},
-				Items: items.Config{
-					SearchIndexPath: "/items_index_path",
-				},
-			},
-			Database: config2.Config{
-				Provider:                  "postgres",
-				MetricsCollectionInterval: 2 * time.Second,
-				Debug:                     true,
-				RunMigrations:             true,
-				ConnectionDetails:         database.ConnectionDetails("postgres://username:passwords@host/table"),
-				CreateTestUser: &types.TestUserCreationConfig{
-					Username:       "username",
-					Password:       "password",
-					HashedPassword: "blahblahblah",
-					IsServiceAdmin: false,
-				},
-			},
-		}
-
-		require.NoError(t, exampleConfig.EncodeToFile(filename, json.Marshal))
-
-		cfg, err := ParseConfigFile(ctx, logger, filename)
-		assert.Error(t, err)
-		assert.Nil(t, cfg)
-	})
-
-	T.Run("with validation error", func(t *testing.T) {
-		t.Parallel()
-
-		tf, err := ioutil.TempFile(os.TempDir(), "*.toml")
-		require.NoError(t, err)
-
-		_, err = tf.Write([]byte(`
-[server]
-http_port = 8888
-`))
-		require.NoError(t, err)
-
-		cfg, err := ParseConfigFile(ctx, logger, tf.Name())
-		assert.Error(t, err)
-		assert.Nil(t, cfg)
-
-		assert.NoError(t, os.Remove(tf.Name()))
 	})
 }

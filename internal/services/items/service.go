@@ -33,7 +33,7 @@ type (
 	// Config configures the service.
 	Config struct {
 		Logger          logging.Config `json:"logging" mapstructure:"logging" toml:"logging,omitempty"`
-		SearchIndexPath string         `json:"search_index_path" mapstructure:"search_index_path" toml:"search_index_path,omitempty"`
+		SearchIndexPath string         `json:"searchIndexPath" mapstructure:"search_index_path" toml:"search_index_path,omitempty"`
 	}
 
 	// service handles to-do list items.

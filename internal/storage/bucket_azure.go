@@ -23,21 +23,21 @@ const (
 type (
 	// AzureRetryConfig configures storage retries.
 	AzureRetryConfig struct {
-		RetryReadsFromSecondaryHost string        `json:"retry_reads_from_secondary_host" mapstructure:"retry_reads_from_secondary_host" toml:"retry_reads_from_secondary_host,omitempty"`
-		TryTimeout                  time.Duration `json:"try_timeout" mapstructure:"try_timeout" toml:"try_timeout,omitempty"`
-		RetryDelay                  time.Duration `json:"retry_delay" mapstructure:"retry_delay" toml:"retry_delay,omitempty"`
-		MaxRetryDelay               time.Duration `json:"max_retry_delay" mapstructure:"max_retry_delay" toml:"max_retry_delay,omitempty"`
-		MaxTries                    int32         `json:"max_tries" mapstructure:"max_tries" toml:"max_tries,omitempty"`
+		RetryReadsFromSecondaryHost string        `json:"retryReadsFromSecondaryHost" mapstructure:"retry_reads_from_secondary_host" toml:"retry_reads_from_secondary_host,omitempty"`
+		TryTimeout                  time.Duration `json:"tryTimeout" mapstructure:"try_timeout" toml:"try_timeout,omitempty"`
+		RetryDelay                  time.Duration `json:"retryDelay" mapstructure:"retry_delay" toml:"retry_delay,omitempty"`
+		MaxRetryDelay               time.Duration `json:"maxRetryDelay" mapstructure:"max_retry_delay" toml:"max_retry_delay,omitempty"`
+		MaxTries                    int32         `json:"maxTries" mapstructure:"max_tries" toml:"max_tries,omitempty"`
 	}
 
 	// AzureConfig configures an azure instance of an UploadManager.
 	AzureConfig struct {
-		AuthMethod                   string            `json:"auth_method" mapstructure:"auth_method" toml:"auth_method,omitempty"`
-		AccountName                  string            `json:"account_name" mapstructure:"account_name" toml:"account_name,omitempty"`
-		BucketName                   string            `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
+		AuthMethod                   string            `json:"authMethod" mapstructure:"auth_method" toml:"auth_method,omitempty"`
+		AccountName                  string            `json:"accountName" mapstructure:"account_name" toml:"account_name,omitempty"`
+		BucketName                   string            `json:"bucketName" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
 		Retrying                     *AzureRetryConfig `json:"retrying" mapstructure:"retrying" toml:"retrying,omitempty"`
-		TokenCredentialsInitialToken string            `json:"token_creds_initial_token" mapstructure:"token_creds_initial_token" toml:"token_creds_initial_token,omitempty"`
-		SharedKeyAccountKey          string            `json:"shared_key_account_key" mapstructure:"shared_key_aaccount_key" toml:"shared_key_account_key,omitempty"`
+		TokenCredentialsInitialToken string            `json:"tokenCredsInitialToken" mapstructure:"token_creds_initial_token" toml:"token_creds_initial_token,omitempty"`
+		SharedKeyAccountKey          string            `json:"sharedKeyAccountKey" mapstructure:"shared_key_aaccount_key" toml:"shared_key_account_key,omitempty"`
 	}
 )
 

@@ -22,14 +22,14 @@ type (
 	// Account represents an account.
 	Account struct {
 		ArchivedOn                 *uint64                  `json:"archivedOn"`
-		SubscriptionPlanID         *uint64                  `json:"subscriptionPlanID"`
+		SubscriptionPlanID         *uint64                  `json:"subscriptionPlanId"`
 		LastUpdatedOn              *uint64                  `json:"lastUpdatedOn"`
 		Name                       string                   `json:"name"`
 		BillingStatus              AccountBillingStatus     `json:"billingStatus"`
 		ContactEmail               string                   `json:"contactEmail"`
 		ContactPhone               string                   `json:"contactPhone"`
 		PaymentProcessorCustomerID string                   `json:"paymentProcessorCustomer"`
-		ExternalID                 string                   `json:"externalID"`
+		ExternalID                 string                   `json:"externalId"`
 		Members                    []*AccountUserMembership `json:"members"`
 		CreatedOn                  uint64                   `json:"createdOn"`
 		ID                         uint64                   `json:"id"`

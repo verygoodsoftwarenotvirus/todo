@@ -8,7 +8,7 @@ import (
 
 // Config configures the frontend service.
 type Config struct {
-	UseFakeData bool `json:"use_fake_data" mapstructure:"use_fake_data" toml:"use_fake_data"`
+	UseFakeData bool `json:"useFakeData" mapstructure:"use_fake_data" toml:"use_fake_data"`
 }
 
 var _ validation.ValidatableWithContext = (*Config)(nil)

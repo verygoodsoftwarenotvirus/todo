@@ -14,8 +14,8 @@ const (
 // Config configures our router.
 type Config struct {
 	Provider       string   `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-	AllowedOrigins []string `json:"allowed_origins" mapstructure:"allowed_origins" toml:"allowed_origins,omitempty"`
-	AllowedHeaders []string `json:"allowed_heade" mapstructure:"allowed_headers" toml:"allowed_headers,omitempty"`
+	AllowedOrigins []string `json:"allowedOrigins" mapstructure:"allowed_origins" toml:"allowed_origins,omitempty"`
+	AllowedHeaders []string `json:"allowedHeaders" mapstructure:"allowed_headers" toml:"allowed_headers,omitempty"`
 }
 
 var _ validation.ValidatableWithContext = (*Config)(nil)

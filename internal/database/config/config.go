@@ -45,13 +45,13 @@ var (
 type (
 	// Config represents our database configuration.
 	Config struct {
-		CreateTestUser            *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
+		CreateTestUser            *types.TestUserCreationConfig `json:"createTestUser" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
 		Provider                  string                        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-		ConnectionDetails         database.ConnectionDetails    `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`
-		MetricsCollectionInterval time.Duration                 `json:"metrics_collection_interval" mapstructure:"metrics_collection_interval" toml:"metrics_collection_interval,omitempty"`
+		ConnectionDetails         database.ConnectionDetails    `json:"connectionDetails" mapstructure:"connection_details" toml:"connection_details,omitempty"`
+		MetricsCollectionInterval time.Duration                 `json:"metricsCollectionInterval" mapstructure:"metrics_collection_interval" toml:"metrics_collection_interval,omitempty"`
 		Debug                     bool                          `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
-		RunMigrations             bool                          `json:"run_migrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
-		MaxPingAttempts           uint8                         `json:"max_ping_attempts" mapstructure:"max_ping_attempts" toml:"max_ping_attempts,omitempty"`
+		RunMigrations             bool                          `json:"runMigrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
+		MaxPingAttempts           uint8                         `json:"maxPingAttempts" mapstructure:"max_ping_attempts" toml:"max_ping_attempts,omitempty"`
 	}
 )
 

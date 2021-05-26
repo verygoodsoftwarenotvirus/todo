@@ -51,10 +51,10 @@ type (
 	Config struct {
 		Provider               string        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		Topic                  string        `json:"topic" mapstructure:"topic" toml:"topic,omitempty"`
-		SubscriptionIdentifier string        `json:"subscription_identifier" mapstructure:"subscription_identifier" toml:"subscription_identifier,omitempty"`
-		ConnectionURL          string        `json:"connection_url" mapstructure:"connection_url" toml:"connection_url,omitempty"`
+		SubscriptionIdentifier string        `json:"subscriptionIdentifier" mapstructure:"subscription_identifier" toml:"subscription_identifier,omitempty"`
+		ConnectionURL          string        `json:"connectionUrl" mapstructure:"connection_url" toml:"connection_url,omitempty"`
 		GCPPubSub              GCPPubSub     `json:"gcp" mapstructure:"gcp" toml:"gcp,omitempty"`
-		AckDeadline            time.Duration `json:"ack_deadline" mapstructure:"ack_deadline" toml:"ack_deadline,omitempty"`
+		AckDeadline            time.Duration `json:"ackDeadline" mapstructure:"ack_deadline" toml:"ack_deadline,omitempty"`
 		Enabled                bool          `json:"scopes" mapstructure:"scopes" toml:"scopes,omitempty"`
 	}
 

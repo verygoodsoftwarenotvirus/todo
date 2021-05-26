@@ -8,7 +8,7 @@ import (
 
 // MetaSettings is primarily used for development.
 type MetaSettings struct {
-	RunMode runMode `json:"run_mode" mapstructure:"run_mode" toml:"run_mode,omitempty"`
+	RunMode runMode `json:"runMode" mapstructure:"run_mode" toml:"run_mode,omitempty"`
 	Debug   bool    `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 }
 

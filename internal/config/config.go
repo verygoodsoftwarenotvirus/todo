@@ -77,7 +77,7 @@ type (
 		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Services      ServicesConfigurations `json:"services" mapstructure:"services" toml:"services,omitempty"`
 		Server        server.Config          `json:"server" mapstructure:"server" toml:"server,omitempty"`
-		AuditLog      audit.Config           `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
+		AuditLog      audit.Config           `json:"auditLog" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 	}
 )
 

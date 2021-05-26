@@ -21,13 +21,13 @@ type (
 		Jaeger   *JaegerConfig `json:"jaeger" mapstructure:"jaeger" toml:"jaeger,omitempty"`
 		Provider string        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		// SpanCollectionProbability indicates the probability that a collected span will be reported.
-		SpanCollectionProbability float64 `json:"span_collection_probability" mapstructure:"span_collection_probability" toml:"span_collection_probability,omitempty"`
+		SpanCollectionProbability float64 `json:"spanCollectionProbability" mapstructure:"span_collection_probability" toml:"span_collection_probability,omitempty"`
 	}
 
 	// JaegerConfig contains settings related to tracing with Jaeger.
 	JaegerConfig struct {
-		CollectorEndpoint string `json:"collector_endpoint" mapstructure:"collector_endpoint" toml:"collector_endpoint,omitempty"`
-		ServiceName       string `json:"service_name" mapstructure:"service_name" toml:"service_name,omitempty"`
+		CollectorEndpoint string `json:"collectorEndpoint" mapstructure:"collector_endpoint" toml:"collector_endpoint,omitempty"`
+		ServiceName       string `json:"serviceName" mapstructure:"service_name" toml:"service_name,omitempty"`
 	}
 )
 

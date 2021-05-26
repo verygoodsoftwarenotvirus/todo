@@ -22,7 +22,7 @@ type (
 	// AuditLogEntry represents an event we might want to log for audit purposes.
 	AuditLogEntry struct {
 		Context    AuditLogContext `json:"context"`
-		ExternalID string          `json:"externalID"`
+		ExternalID string          `json:"externalId"`
 		EventType  string          `json:"eventType"`
 		ID         uint64          `json:"id"`
 		CreatedOn  uint64          `json:"createdOn"`

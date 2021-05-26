@@ -18,8 +18,8 @@ type (
 		LastUpdatedOn *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn    *uint64 `json:"archivedOn"`
 		Name          string  `json:"name"`
-		ClientID      string  `json:"clientID"`
-		ExternalID    string  `json:"externalID"`
+		ClientID      string  `json:"clientId"`
+		ExternalID    string  `json:"externalId"`
 		ClientSecret  []byte  `json:"-"`
 		CreatedOn     uint64  `json:"createdOn"`
 		ID            uint64  `json:"id"`
@@ -43,7 +43,7 @@ type (
 
 	// APIClientCreationResponse is a struct for informing users of what their API client's secret key is.
 	APIClientCreationResponse struct {
-		ClientID     string `json:"clientID"`
+		ClientID     string `json:"clientId"`
 		ClientSecret string `json:"clientSecret"`
 		ID           uint64 `json:"id"`
 	}

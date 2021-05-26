@@ -19,11 +19,13 @@ func TestBuildWebhookCreationEventEntry(t *testing.T) {
 
 	assert.NotNil(t, audit.BuildWebhookCreationEventEntry(&types.Webhook{}, exampleUserID))
 }
+
 func TestBuildWebhookUpdateEventEntry(t *testing.T) {
 	t.Parallel()
 
 	assert.NotNil(t, audit.BuildWebhookUpdateEventEntry(exampleUserID, exampleAccountID, exampleWebhookID, nil))
 }
+
 func TestBuildWebhookArchiveEventEntry(t *testing.T) {
 	t.Parallel()
 

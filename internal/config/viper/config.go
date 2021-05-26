@@ -71,7 +71,7 @@ func BuildViperConfig() *viper.Viper {
 }
 
 // FromConfig returns a viper instance from a config struct.
-func FromConfig(input *config.ServiceConfig) (*viper.Viper, error) {
+func FromConfig(input *config.InstanceConfig) (*viper.Viper, error) {
 	if input == nil {
 		return nil, errNilInput
 	}
@@ -93,19 +93,19 @@ func FromConfig(input *config.ServiceConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyEncodingContentType, input.Encoding.ContentType)
 
-	cfg.Set(ConfigKeyFrontendUseFakeData, input.Frontend.UseFakeData)
+	cfg.Set(ConfigKeyFrontendUseFakeData, input.Services.Frontend.UseFakeData)
 
-	cfg.Set(ConfigKeyAuthDebug, input.Auth.Debug)
-	cfg.Set(ConfigKeyAuthEnableUserSignup, input.Auth.EnableUserSignup)
-	cfg.Set(ConfigKeyAuthMinimumUsernameLength, input.Auth.MinimumUsernameLength)
-	cfg.Set(ConfigKeyAuthMinimumPasswordLength, input.Auth.MinimumPasswordLength)
+	cfg.Set(ConfigKeyAuthDebug, input.Services.Auth.Debug)
+	cfg.Set(ConfigKeyAuthEnableUserSignup, input.Services.Auth.EnableUserSignup)
+	cfg.Set(ConfigKeyAuthMinimumUsernameLength, input.Services.Auth.MinimumUsernameLength)
+	cfg.Set(ConfigKeyAuthMinimumPasswordLength, input.Services.Auth.MinimumPasswordLength)
 
-	cfg.Set(ConfigKeyAuthCookieName, input.Auth.Cookies.Name)
-	cfg.Set(ConfigKeyAuthCookieDomain, input.Auth.Cookies.Domain)
-	cfg.Set(ConfigKeyAuthCookieHashKey, input.Auth.Cookies.HashKey)
-	cfg.Set(ConfigKeyAuthCookieSigningKey, input.Auth.Cookies.SigningKey)
-	cfg.Set(ConfigKeyAuthCookieLifetime, input.Auth.Cookies.Lifetime)
-	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Auth.Cookies.SecureOnly)
+	cfg.Set(ConfigKeyAuthCookieName, input.Services.Auth.Cookies.Name)
+	cfg.Set(ConfigKeyAuthCookieDomain, input.Services.Auth.Cookies.Domain)
+	cfg.Set(ConfigKeyAuthCookieHashKey, input.Services.Auth.Cookies.HashKey)
+	cfg.Set(ConfigKeyAuthCookieSigningKey, input.Services.Auth.Cookies.SigningKey)
+	cfg.Set(ConfigKeyAuthCookieLifetime, input.Services.Auth.Cookies.Lifetime)
+	cfg.Set(ConfigKeyAuthSecureCookiesOnly, input.Services.Auth.Cookies.SecureOnly)
 
 	cfg.Set(ConfigKeyCapitalismEnabled, input.Capitalism.Enabled)
 	cfg.Set(ConfigKeyCapitalismProvider, input.Capitalism.Provider)
@@ -116,9 +116,9 @@ func FromConfig(input *config.ServiceConfig) (*viper.Viper, error) {
 		cfg.Set(ConfigKeyCapitalismStripeWebhookSecret, input.Capitalism.Stripe.WebhookSecret)
 	}
 
-	cfg.Set(ConfigKeyAuthPASETOListener, input.Auth.PASETO.Issuer)
-	cfg.Set(ConfigKeyAuthPASETOLifetimeKey, time.Duration(math.Min(float64(input.Auth.PASETO.Lifetime), float64(maxPASETOLifetime))))
-	cfg.Set(ConfigKeyAuthPASETOLocalModeKey, input.Auth.PASETO.LocalModeKey)
+	cfg.Set(ConfigKeyAuthPASETOListener, input.Services.Auth.PASETO.Issuer)
+	cfg.Set(ConfigKeyAuthPASETOLifetimeKey, time.Duration(math.Min(float64(input.Services.Auth.PASETO.Lifetime), float64(maxPASETOLifetime))))
+	cfg.Set(ConfigKeyAuthPASETOLocalModeKey, input.Services.Auth.PASETO.LocalModeKey)
 
 	cfg.Set(ConfigKeyMetricsProvider, input.Observability.Metrics.Provider)
 
@@ -145,8 +145,8 @@ func FromConfig(input *config.ServiceConfig) (*viper.Viper, error) {
 
 	cfg.Set(ConfigKeyDatabaseRunMigrations, input.Database.RunMigrations)
 	cfg.Set(ConfigKeyDatabaseMetricsCollectionInterval, input.Database.MetricsCollectionInterval)
+
 	cfg.Set(ConfigKeySearchProvider, input.Search.Provider)
-	cfg.Set(ConfigKeyItemsSearchIndexPath, string(input.Search.ItemsIndexPath))
 
 	cfg.Set(ConfigKeyUploaderProvider, input.Uploads.Storage.Provider)
 	cfg.Set(ConfigKeyUploaderDebug, input.Uploads.Debug)
@@ -155,7 +155,8 @@ func FromConfig(input *config.ServiceConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyUploaderUploadFilename, input.Uploads.Storage.UploadFilenameKey)
 
 	cfg.Set(ConfigKeyAuditLogEnabled, input.AuditLog.Enabled)
-	cfg.Set(ConfigKeyWebhooksEnabled, input.Webhooks.Enabled)
+
+	cfg.Set(ConfigKeyWebhooksEnabled, input.Services.Webhooks.Enabled)
 
 	switch {
 	case input.Uploads.Storage.AzureConfig != nil:
@@ -192,11 +193,13 @@ func FromConfig(input *config.ServiceConfig) (*viper.Viper, error) {
 		cfg.Set(ConfigKeyUploaderFilesystemRootDirectory, input.Uploads.Storage.FilesystemConfig.RootDirectory)
 	}
 
+	cfg.Set(ConfigKeyItemsSearchIndexPath, input.Services.Items.SearchIndexPath)
+
 	return cfg, nil
 }
 
 // ParseConfigFile parses a configuration file.
-func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string) (*config.ServiceConfig, error) {
+func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string) (*config.InstanceConfig, error) {
 	logger = logger.WithValue("filepath", filePath)
 	logger.Debug("parsing config file")
 
@@ -207,7 +210,7 @@ func ParseConfigFile(ctx context.Context, logger logging.Logger, filePath string
 		return nil, fmt.Errorf("trying to read the config file: %w", err)
 	}
 
-	var serverConfig *config.ServiceConfig
+	var serverConfig *config.InstanceConfig
 	if err := cfg.Unmarshal(&serverConfig); err != nil {
 		return nil, fmt.Errorf("trying to unmarshal the config: %w", err)
 	}

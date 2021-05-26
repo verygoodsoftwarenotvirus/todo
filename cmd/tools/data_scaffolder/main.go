@@ -10,7 +10,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -64,7 +63,7 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	logger := zerolog.NewLogger()
+	logger := logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 
 	if debug {
 		logger.SetLevel(logging.DebugLevel)

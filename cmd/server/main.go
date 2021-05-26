@@ -13,7 +13,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/build/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
@@ -60,7 +59,7 @@ func main() {
 
 	var (
 		ctx    = context.Background()
-		logger = zerolog.NewLogger()
+		logger = logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 	)
 
 	logger.SetLevel(logging.DebugLevel)
@@ -87,7 +86,7 @@ func main() {
 
 	sm := initializeLocalSecretManager(ctx)
 
-	var cfg *config.ServiceConfig
+	var cfg *config.InstanceConfig
 	if err = sm.Decrypt(ctx, string(configBytes), &cfg); err != nil || cfg == nil {
 		logger.Fatal(err)
 	}

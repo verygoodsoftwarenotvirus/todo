@@ -37,7 +37,7 @@ import (
 // Build builds a server.
 func Build(
 	ctx context.Context,
-	cfg *config.ServiceConfig,
+	cfg *config.InstanceConfig,
 	logger logging.Logger,
 ) (*server.HTTPServer, error) {
 	wire.Build(

@@ -36,7 +36,7 @@ import (
 // Injectors from build.go:
 
 // Build builds a server.
-func Build(ctx context.Context, cfg *config.ServiceConfig, logger logging.Logger) (*server.HTTPServer, error) {
+func Build(ctx context.Context, cfg *config.InstanceConfig, logger logging.Logger) (*server.HTTPServer, error) {
 	serverConfig := cfg.Server
 	observabilityConfig := &cfg.Observability
 	metricsConfig := &observabilityConfig.Metrics
@@ -44,7 +44,8 @@ func Build(ctx context.Context, cfg *config.ServiceConfig, logger logging.Logger
 	if err != nil {
 		return nil, err
 	}
-	authenticationConfig := &cfg.Auth
+	servicesConfigurations := &cfg.Services
+	authenticationConfig := &servicesConfigurations.Auth
 	authenticator := authentication.ProvideArgon2Authenticator(logger)
 	configConfig := &cfg.Database
 	db, err := config2.ProvideDatabaseConnection(logger, configConfig)
@@ -92,10 +93,10 @@ func Build(ctx context.Context, cfg *config.ServiceConfig, logger logging.Logger
 	accountDataService := accounts.ProvideService(logger, accountDataManager, accountUserMembershipDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
 	apiclientsConfig := apiclients.ProvideConfig(authenticationConfig)
 	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, routeParamManager, apiclientsConfig)
+	itemsConfig := servicesConfigurations.Items
 	itemDataManager := database.ProvideItemDataManager(dataManager)
-	searchConfig := cfg.Search
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	itemDataService, err := items.ProvideService(logger, itemDataManager, serverEncoderDecoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
+	itemDataService, err := items.ProvideService(logger, itemsConfig, itemDataManager, serverEncoderDecoder, unitCounterProvider, indexManagerProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func Build(ctx context.Context, cfg *config.ServiceConfig, logger logging.Logger
 	adminUserDataManager := database.ProvideAdminUserDataManager(dataManager)
 	adminAuditManager := database.ProvideAdminAuditManager(dataManager)
 	adminService := admin.ProvideService(logger, authenticationConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
-	frontendConfig := &cfg.Frontend
+	frontendConfig := &servicesConfigurations.Frontend
 	frontendAuthService := frontend.ProvideAuthService(authService)
 	usersService := frontend.ProvideUsersService(userDataService)
 	capitalismConfig := &cfg.Capitalism

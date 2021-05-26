@@ -11,9 +11,10 @@ import (
 	"log"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+
 	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	bleve2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 
@@ -61,7 +62,10 @@ func init() {
 
 func main() {
 	flag.Parse()
-	logger := zerolog.NewLogger().WithName("search_index_initializer")
+	logger := logging.ProvideLogger(logging.Config{
+		Name:     "search_index_initializer",
+		Provider: logging.ProviderZerolog,
+	})
 	ctx := context.Background()
 
 	if indexOutputPath == "" {
@@ -83,7 +87,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg := &config.ServiceConfig{
+	cfg := &config.InstanceConfig{
 		Database: dbconfig.Config{
 			MetricsCollectionInterval: time.Second,
 			Provider:                  databaseType,

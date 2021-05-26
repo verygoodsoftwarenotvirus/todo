@@ -9,22 +9,19 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestServerConfig_EncodeToFile(T *testing.T) {
@@ -33,7 +30,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		cfg := &ServiceConfig{
+		cfg := &InstanceConfig{
 			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
@@ -48,16 +45,6 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 			Encoding: encoding.Config{
 				ContentType: "application/json",
 			},
-			Auth: authservice.Config{
-				Cookies: authservice.CookieConfig{
-					Name:     "todocookie",
-					Domain:   "https://verygoodsoftwarenotvirus.ru",
-					Lifetime: time.Second,
-				},
-				MinimumUsernameLength: 4,
-				MinimumPasswordLength: 8,
-				EnableUserSignup:      true,
-			},
 			Observability: observability.Config{
 				Metrics: metrics.Config{
 					Provider:                         "",
@@ -65,11 +52,20 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 					RuntimeMetricsCollectionInterval: 2 * time.Second,
 				},
 			},
-			Frontend: frontend.Config{
-				//
-			},
-			Search: search.Config{
-				ItemsIndexPath: "/items_index_path",
+			Services: ServicesConfigurations{
+				Auth: authservice.Config{
+					Cookies: authservice.CookieConfig{
+						Name:     "todocookie",
+						Domain:   "https://verygoodsoftwarenotvirus.ru",
+						Lifetime: time.Second,
+					},
+					MinimumUsernameLength: 4,
+					MinimumPasswordLength: 8,
+					EnableUserSignup:      true,
+				},
+				Items: items.Config{
+					SearchIndexPath: "/items_index_path",
+				},
 			},
 			Database: config.Config{
 				Provider:                  "postgres",
@@ -89,7 +85,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 	T.Run("with error marshaling", func(t *testing.T) {
 		t.Parallel()
 
-		cfg := &ServiceConfig{}
+		cfg := &InstanceConfig{}
 
 		f, err := ioutil.TempFile("", "")
 		require.NoError(t, err)
@@ -110,7 +106,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		logger := logging.NewNoopLogger()
 
 		for _, provider := range []string{"sqlite", "postgres", "mariadb"} {
-			cfg := &ServiceConfig{
+			cfg := &InstanceConfig{
 				Database: config.Config{
 					Provider: provider,
 				},
@@ -127,7 +123,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 
 		ctx := context.Background()
 		logger := logging.NewNoopLogger()
-		cfg := &ServiceConfig{}
+		cfg := &InstanceConfig{}
 
 		x, err := ProvideDatabaseClient(ctx, logger, nil, cfg)
 		assert.Nil(t, x)
@@ -140,7 +136,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		ctx := context.Background()
 		logger := logging.NewNoopLogger()
 
-		cfg := &ServiceConfig{
+		cfg := &InstanceConfig{
 			Database: config.Config{
 				Provider: "provider",
 			},

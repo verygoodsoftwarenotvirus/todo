@@ -1,12 +1,10 @@
-package zerolog
+package logging
 
 import (
 	"errors"
 	"net/http"
 	"net/url"
 	"testing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -28,41 +26,41 @@ func TestNewLogger(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, NewLogger())
+		assert.NotNil(t, NewZerologLogger())
 	})
 }
 
-func Test_logger_WithName(T *testing.T) {
+func Test_zerologLogger_WithName(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		assert.NotNil(t, l.WithName(t.Name()))
 	})
 }
 
-func Test_logger_SetLevel(T *testing.T) {
+func Test_zerologLogger_SetLevel(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
-		l.SetLevel(logging.ErrorLevel)
+		l.SetLevel(ErrorLevel)
 	})
 }
 
-func Test_logger_SetRequestIDFunc(T *testing.T) {
+func Test_zerologLogger_SetRequestIDFunc(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		l.SetRequestIDFunc(func(*http.Request) string {
 			return ""
@@ -70,109 +68,109 @@ func Test_logger_SetRequestIDFunc(T *testing.T) {
 	})
 }
 
-func Test_logger_Info(T *testing.T) {
+func Test_zerologLogger_Info(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		l.Info(t.Name())
 	})
 }
 
-func Test_logger_Debug(T *testing.T) {
+func Test_zerologLogger_Debug(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		l.Debug(t.Name())
 	})
 }
 
-func Test_logger_Error(T *testing.T) {
+func Test_zerologLogger_Error(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		l.Error(errors.New("blah"), t.Name())
 	})
 }
 
-func Test_logger_Printf(T *testing.T) {
+func Test_zerologLogger_Printf(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		l.Printf(t.Name())
 	})
 }
 
-func Test_logger_Clone(T *testing.T) {
+func Test_zerologLogger_Clone(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		assert.NotNil(t, l.Clone())
 	})
 }
 
-func Test_logger_WithValue(T *testing.T) {
+func Test_zerologLogger_WithValue(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		assert.NotNil(t, l.WithValue("name", t.Name()))
 	})
 }
 
-func Test_logger_WithValues(T *testing.T) {
+func Test_zerologLogger_WithValues(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		assert.NotNil(t, l.WithValues(map[string]interface{}{"name": t.Name()}))
 	})
 }
 
-func Test_logger_WithError(T *testing.T) {
+func Test_zerologLogger_WithError(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		assert.NotNil(t, l.WithError(errors.New("blah")))
 	})
 }
 
-func Test_logger_WithRequest(T *testing.T) {
+func Test_zerologLogger_WithRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l, ok := NewLogger().(*logger)
+		l, ok := NewZerologLogger().(*zerologLogger)
 		require.True(t, ok)
 
 		l.requestIDFunc = func(*http.Request) string {
@@ -188,13 +186,13 @@ func Test_logger_WithRequest(T *testing.T) {
 	})
 }
 
-func Test_logger_WithResponse(T *testing.T) {
+func Test_zerologLogger_WithResponse(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewLogger()
+		l := NewZerologLogger()
 
 		assert.NotNil(t, l.WithResponse(&http.Response{}))
 	})

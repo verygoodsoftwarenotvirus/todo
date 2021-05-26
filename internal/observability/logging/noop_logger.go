@@ -4,12 +4,12 @@ import (
 	"net/http"
 )
 
-// noopLogger is a default logger we can provide that does nothing in case of dire emergencies.
+// noopLogger is a default zerologLogger we can provide that does nothing in case of dire emergencies.
 type noopLogger struct{}
 
 var logger = new(noopLogger)
 
-// NewNoopLogger provides our noop logger to dependency managers.
+// NewNoopLogger provides our noop zerologLogger to dependency managers.
 func NewNoopLogger() Logger { return logger }
 
 // Info satisfies our interface.

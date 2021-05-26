@@ -14,10 +14,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
-
 	"github.com/magefile/mage/mg"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	"github.com/carolynvs/magex/pkg"
 	"github.com/magefile/mage/sh"
@@ -66,7 +65,7 @@ type containerRunSpec struct {
 }
 
 func init() {
-	logger = zerolog.NewLogger()
+	logger = logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 
 	if debug {
 		logger.SetLevel(logging.DebugLevel)

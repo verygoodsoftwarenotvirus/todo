@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"strings"
 	"time"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -117,7 +116,7 @@ func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
 	return sm
 }
 
-func encryptAndSaveConfig(ctx context.Context, outputPath string, cfg *config.ServiceConfig) error {
+func encryptAndSaveConfig(ctx context.Context, outputPath string, cfg *config.InstanceConfig) error {
 	sm := initializeLocalSecretManager(ctx)
 	output, err := sm.Encrypt(ctx, cfg)
 	if err != nil {
@@ -130,11 +129,11 @@ func encryptAndSaveConfig(ctx context.Context, outputPath string, cfg *config.Se
 type configFunc func(ctx context.Context, filePath string) error
 
 var files = map[string]configFunc{
-	"environments/local/config.toml":                                    localDevelopmentConfig,
-	"environments/testing/config_files/frontend-tests.toml":             frontendTestsConfig,
-	"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
-	"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
-	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
+	"environments/local/service.config":                                   localDevelopmentConfig,
+	"environments/testing/config_files/frontend-tests.config":             frontendTestsConfig,
+	"environments/testing/config_files/integration-tests-postgres.config": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
+	"environments/testing/config_files/integration-tests-sqlite.config":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
+	"environments/testing/config_files/integration-tests-mariadb.config":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
 }
 
 func buildLocalFrontendServiceConfig() frontend.Config {
@@ -166,7 +165,7 @@ func generatePASETOKey() []byte {
 }
 
 func localDevelopmentConfig(ctx context.Context, filePath string) error {
-	cfg := &config.ServiceConfig{
+	cfg := &config.InstanceConfig{
 		Meta: config.MetaSettings{
 			Debug:   true,
 			RunMode: developmentEnv,
@@ -174,20 +173,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Server:   localServer,
-		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authservice.Config{
-			PASETO: authservice.PASETOConfig{
-				Issuer:       "todo_service",
-				Lifetime:     defaultPASETOLifetime,
-				LocalModeKey: examplePASETOKey,
-			},
-			Cookies:               localCookies,
-			Debug:                 true,
-			EnableUserSignup:      true,
-			MinimumUsernameLength: 4,
-			MinimumPasswordLength: 8,
-		},
+		Server: localServer,
 		Database: dbconfig.Config{
 			Debug:                     true,
 			RunMigrations:             true,
@@ -225,12 +211,27 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			},
 		},
 		Search: search.Config{
-			Provider:       "bleve",
-			ItemsIndexPath: "/search_indices/items.bleve",
+			Provider: "bleve",
 		},
-		Webhooks: webhooks.Config{
-			Debug:   true,
-			Enabled: false,
+		Services: config.ServicesConfigurations{
+			Auth: authservice.Config{
+				PASETO: authservice.PASETOConfig{
+					Issuer:       "todo_service",
+					Lifetime:     defaultPASETOLifetime,
+					LocalModeKey: examplePASETOKey,
+				},
+				Cookies:               localCookies,
+				Debug:                 true,
+				EnableUserSignup:      true,
+				MinimumUsernameLength: 4,
+				MinimumPasswordLength: 8,
+			},
+			Frontend: buildLocalFrontendServiceConfig(),
+			Webhooks: webhooks.Config{
+				Debug:   true,
+				Enabled: false,
+			},
+			Items: items.Config{SearchIndexPath: "/search_indices/items.bleve"},
 		},
 		AuditLog: audit.Config{
 			Debug:   true,
@@ -238,20 +239,11 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		},
 	}
 
-	vConfig, err := viper.FromConfig(cfg)
-	if err != nil {
-		return fmt.Errorf("converting config object: %w", err)
-	}
-
-	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
-	}
-
-	return encryptAndSaveConfig(ctx, filepath.Join(filepath.Dir(filePath), "service.config"), cfg)
+	return encryptAndSaveConfig(ctx, filePath, cfg)
 }
 
 func frontendTestsConfig(ctx context.Context, filePath string) error {
-	cfg := &config.ServiceConfig{
+	cfg := &config.InstanceConfig{
 		Meta: config.MetaSettings{
 			Debug:   false,
 			RunMode: developmentEnv,
@@ -259,20 +251,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Server:   localServer,
-		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authservice.Config{
-			PASETO: authservice.PASETOConfig{
-				Issuer:       "todo_service",
-				Lifetime:     defaultPASETOLifetime,
-				LocalModeKey: examplePASETOKey,
-			},
-			Cookies:               localCookies,
-			Debug:                 true,
-			EnableUserSignup:      true,
-			MinimumUsernameLength: 4,
-			MinimumPasswordLength: 8,
-		},
+		Server: localServer,
 		Database: dbconfig.Config{
 			Debug:                     true,
 			RunMigrations:             true,
@@ -298,12 +277,34 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 		},
 		Search: search.Config{
-			Provider:       "bleve",
-			ItemsIndexPath: defaultItemsSearchIndexPath,
+			Provider: "bleve",
 		},
-		Webhooks: webhooks.Config{
-			Debug:   true,
-			Enabled: false,
+		Services: config.ServicesConfigurations{
+			Auth: authservice.Config{
+				PASETO: authservice.PASETOConfig{
+					Issuer:       "todo_service",
+					Lifetime:     defaultPASETOLifetime,
+					LocalModeKey: examplePASETOKey,
+				},
+				Cookies:               localCookies,
+				Debug:                 true,
+				EnableUserSignup:      true,
+				MinimumUsernameLength: 4,
+				MinimumPasswordLength: 8,
+			},
+			Frontend: buildLocalFrontendServiceConfig(),
+			Webhooks: webhooks.Config{
+				Debug:   true,
+				Enabled: false,
+			},
+			Items: items.Config{
+				SearchIndexPath: defaultItemsSearchIndexPath,
+				Logger: logging.Config{
+					Name:     "items",
+					Level:    logging.InfoLevel,
+					Provider: logging.ProviderZerolog,
+				},
+			},
 		},
 		AuditLog: audit.Config{
 			Debug:   true,
@@ -311,16 +312,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		},
 	}
 
-	vConfig, err := viper.FromConfig(cfg)
-	if err != nil {
-		return fmt.Errorf("converting config object: %w", err)
-	}
-
-	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
-	}
-
-	return encryptAndSaveConfig(ctx, strings.Replace(filePath, ".toml", ".config", 1), cfg)
+	return encryptAndSaveConfig(ctx, filePath, cfg)
 }
 
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
@@ -330,7 +322,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			startupDeadline = 5 * time.Minute
 		}
 
-		cfg := &config.ServiceConfig{
+		cfg := &config.InstanceConfig{
 			Meta: config.MetaSettings{
 				Debug:   false,
 				RunMode: testingEnv,
@@ -343,25 +335,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				HTTPPort:        defaultPort,
 				StartupDeadline: startupDeadline,
 			},
-			Frontend: buildLocalFrontendServiceConfig(),
-			Auth: authservice.Config{
-				PASETO: authservice.PASETOConfig{
-					Issuer:       "todo_service",
-					Lifetime:     defaultPASETOLifetime,
-					LocalModeKey: examplePASETOKey,
-				},
-				Cookies: authservice.CookieConfig{
-					Name:       defaultCookieName,
-					Domain:     defaultCookieDomain,
-					SigningKey: debugCookieSecret,
-					Lifetime:   authservice.DefaultCookieLifetime,
-					SecureOnly: false,
-				},
-				Debug:                 false,
-				EnableUserSignup:      true,
-				MinimumUsernameLength: 4,
-				MinimumPasswordLength: 8,
-			},
+
 			Database: dbconfig.Config{
 				Debug:                     false,
 				RunMigrations:             true,
@@ -395,12 +369,40 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 			},
 			Search: search.Config{
-				Provider:       "bleve",
-				ItemsIndexPath: defaultItemsSearchIndexPath,
+				Provider: "bleve",
 			},
-			Webhooks: webhooks.Config{
-				Debug:   false,
-				Enabled: false,
+			Services: config.ServicesConfigurations{
+				Auth: authservice.Config{
+					PASETO: authservice.PASETOConfig{
+						Issuer:       "todo_service",
+						Lifetime:     defaultPASETOLifetime,
+						LocalModeKey: examplePASETOKey,
+					},
+					Cookies: authservice.CookieConfig{
+						Name:       defaultCookieName,
+						Domain:     defaultCookieDomain,
+						SigningKey: debugCookieSecret,
+						Lifetime:   authservice.DefaultCookieLifetime,
+						SecureOnly: false,
+					},
+					Debug:                 false,
+					EnableUserSignup:      true,
+					MinimumUsernameLength: 4,
+					MinimumPasswordLength: 8,
+				},
+				Frontend: buildLocalFrontendServiceConfig(),
+				Webhooks: webhooks.Config{
+					Debug:   true,
+					Enabled: false,
+				},
+				Items: items.Config{
+					SearchIndexPath: defaultItemsSearchIndexPath,
+					Logger: logging.Config{
+						Name:     "items",
+						Level:    logging.InfoLevel,
+						Provider: logging.ProviderZerolog,
+					},
+				},
 			},
 			AuditLog: audit.Config{
 				Debug:   false,
@@ -408,16 +410,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			},
 		}
 
-		vConfig, err := viper.FromConfig(cfg)
-		if err != nil {
-			return fmt.Errorf("converting config object: %w", err)
-		}
-
-		if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-			return fmt.Errorf("writing developmentEnv config: %w", writeErr)
-		}
-
-		return encryptAndSaveConfig(ctx, strings.Replace(filePath, ".toml", ".config", 1), cfg)
+		return encryptAndSaveConfig(ctx, filePath, cfg)
 	}
 }
 

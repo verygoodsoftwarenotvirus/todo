@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 
@@ -20,10 +22,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -45,7 +45,7 @@ func TestFromConfig(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		exampleConfig := &config.ServiceConfig{
+		exampleConfig := &config.InstanceConfig{
 			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
@@ -69,16 +69,6 @@ func TestFromConfig(T *testing.T) {
 					CancelURL:     "whatever",
 					WebhookSecret: "whatever",
 				},
-			},
-			Auth: authservice.Config{
-				Cookies: authservice.CookieConfig{
-					Name:     "todocookie",
-					Domain:   "https://verygoodsoftwarenotvirus.ru",
-					Lifetime: time.Second,
-				},
-				MinimumUsernameLength: 4,
-				MinimumPasswordLength: 8,
-				EnableUserSignup:      true,
 			},
 			Observability: observability.Config{
 				Metrics: metrics.Config{
@@ -114,11 +104,20 @@ func TestFromConfig(T *testing.T) {
 				},
 				Debug: false,
 			},
-			Frontend: frontend.Config{
-				//
-			},
-			Search: search.Config{
-				ItemsIndexPath: "/items_index_path",
+			Services: config.ServicesConfigurations{
+				Auth: authservice.Config{
+					Cookies: authservice.CookieConfig{
+						Name:     "todocookie",
+						Domain:   "https://verygoodsoftwarenotvirus.ru",
+						Lifetime: time.Second,
+					},
+					MinimumUsernameLength: 4,
+					MinimumPasswordLength: 8,
+					EnableUserSignup:      true,
+				},
+				Items: items.Config{
+					SearchIndexPath: "/items_index_path",
+				},
 			},
 			Database: config2.Config{
 				Provider:                  "postgres",
@@ -150,7 +149,7 @@ func TestFromConfig(T *testing.T) {
 	T.Run("with invalid config", func(t *testing.T) {
 		t.Parallel()
 
-		exampleConfig := &config.ServiceConfig{}
+		exampleConfig := &config.InstanceConfig{}
 
 		actual, err := FromConfig(exampleConfig)
 		assert.Nil(t, actual)
@@ -171,7 +170,7 @@ func TestParseConfigFile(T *testing.T) {
 		require.NoError(t, err)
 		filename := tf.Name()
 
-		exampleConfig := &config.ServiceConfig{
+		exampleConfig := &config.InstanceConfig{
 			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
@@ -186,16 +185,6 @@ func TestParseConfigFile(T *testing.T) {
 			Encoding: encoding.Config{
 				ContentType: "application/json",
 			},
-			Auth: authservice.Config{
-				Cookies: authservice.CookieConfig{
-					Name:     "todocookie",
-					Domain:   "https://verygoodsoftwarenotvirus.ru",
-					Lifetime: time.Second,
-				},
-				MinimumUsernameLength: 4,
-				MinimumPasswordLength: 8,
-				EnableUserSignup:      true,
-			},
 			Observability: observability.Config{
 				Metrics: metrics.Config{
 					Provider:                         "",
@@ -203,11 +192,20 @@ func TestParseConfigFile(T *testing.T) {
 					RuntimeMetricsCollectionInterval: 2 * time.Second,
 				},
 			},
-			Frontend: frontend.Config{
-				//
-			},
-			Search: search.Config{
-				ItemsIndexPath: "/items_index_path",
+			Services: config.ServicesConfigurations{
+				Auth: authservice.Config{
+					Cookies: authservice.CookieConfig{
+						Name:     "todocookie",
+						Domain:   "https://verygoodsoftwarenotvirus.ru",
+						Lifetime: time.Second,
+					},
+					MinimumUsernameLength: 4,
+					MinimumPasswordLength: 8,
+					EnableUserSignup:      true,
+				},
+				Items: items.Config{
+					SearchIndexPath: "/items_index_path",
+				},
 			},
 			Database: config2.Config{
 				Provider:                  "postgres",
@@ -262,7 +260,7 @@ debug = ":banana:"
 		require.NoError(t, err)
 		filename := tf.Name()
 
-		exampleConfig := &config.ServiceConfig{
+		exampleConfig := &config.InstanceConfig{
 			Server: server.Config{
 				HTTPPort:        1234,
 				Debug:           false,
@@ -277,16 +275,6 @@ debug = ":banana:"
 			Encoding: encoding.Config{
 				ContentType: "application/json",
 			},
-			Auth: authservice.Config{
-				Cookies: authservice.CookieConfig{
-					Name:     "todocookie",
-					Domain:   "https://verygoodsoftwarenotvirus.ru",
-					Lifetime: time.Second,
-				},
-				MinimumUsernameLength: 4,
-				MinimumPasswordLength: 8,
-				EnableUserSignup:      true,
-			},
 			Observability: observability.Config{
 				Metrics: metrics.Config{
 					Provider:                         "",
@@ -294,11 +282,20 @@ debug = ":banana:"
 					RuntimeMetricsCollectionInterval: 2 * time.Second,
 				},
 			},
-			Frontend: frontend.Config{
-				//
-			},
-			Search: search.Config{
-				ItemsIndexPath: "/items_index_path",
+			Services: config.ServicesConfigurations{
+				Auth: authservice.Config{
+					Cookies: authservice.CookieConfig{
+						Name:     "todocookie",
+						Domain:   "https://verygoodsoftwarenotvirus.ru",
+						Lifetime: time.Second,
+					},
+					MinimumUsernameLength: 4,
+					MinimumPasswordLength: 8,
+					EnableUserSignup:      true,
+				},
+				Items: items.Config{
+					SearchIndexPath: "/items_index_path",
+				},
 			},
 			Database: config2.Config{
 				Provider:                  "postgres",

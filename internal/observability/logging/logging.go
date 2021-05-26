@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// LoggerNameKey is a key we can use to denote logger names across implementations.
+	// LoggerNameKey is a key we can use to denote zerologLogger names across implementations.
 	LoggerNameKey = "_name_"
 )
 
@@ -57,7 +57,7 @@ type Logger interface {
 	WithError(error) Logger
 }
 
-// EnsureLogger guarantees that a logger is available.
+// EnsureLogger guarantees that a zerologLogger is available.
 func EnsureLogger(logger Logger) Logger {
 	if logger != nil {
 		return logger

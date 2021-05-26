@@ -41,7 +41,7 @@ func main() {
 
 	sm := initializeLocalSecretManager(ctx)
 
-	var cfg *config.ServiceConfig
+	var cfg *config.InstanceConfig
 	err = sm.Decrypt(ctx, string(content), &cfg)
 	if err != nil {
 		panic(err)

@@ -15,8 +15,7 @@ func TestConfig_ValidateWithContext(T *testing.T) {
 
 		ctx := context.Background()
 		cfg := &Config{
-			Provider:       BleveProvider,
-			ItemsIndexPath: "/blah",
+			Provider: BleveProvider,
 		}
 
 		assert.NoError(t, cfg.ValidateWithContext(ctx))

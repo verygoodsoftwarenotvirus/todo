@@ -259,7 +259,7 @@ linters:
     # - rowserrcheck     # checks whether Err of rows is checked successfully
     - sqlclosecheck    # Checks that sql.Rows and sql.Stmt are closed.
     # - stylecheck       # Stylecheck is a replacement for golint	style
-    # - tagliatelle      # Checks the struct tags.
+    # - tagliatelle      # Checks the struct tags.  # TODO: FUCK
     # - testpackage      # linter that makes you use a separate _test package
     - thelper          # thelper detects golang test helpers without t.Helper() call and checks the consistency of test helpers
     - tparallel        # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes

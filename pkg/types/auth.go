@@ -33,7 +33,7 @@ type (
 	UserAccountMembershipInfo struct {
 		AccountName  string   `json:"name"`
 		AccountRoles []string `json:"-"`
-		AccountID    uint64   `json:"accountId"`
+		AccountID    uint64   `json:"accountID"`
 	}
 
 	// SessionContextData represents what we encode in our passwords cookies.
@@ -61,13 +61,13 @@ type (
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
 	ChangeActiveAccountInput struct {
-		AccountID uint64 `json:"accountId"`
+		AccountID uint64 `json:"accountID"`
 	}
 
 	// PASETOCreationInput is used to create a PASETO.
 	PASETOCreationInput struct {
-		ClientID          string `json:"clientId"`
-		AccountID         uint64 `json:"accountId"`
+		ClientID          string `json:"clientID"`
+		AccountID         uint64 `json:"accountID"`
 		RequestTime       int64  `json:"requestTime"`
 		RequestedLifetime uint64 `json:"requestedLifetime,omitempty"`
 	}

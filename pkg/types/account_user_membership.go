@@ -41,8 +41,8 @@ type (
 	AddUserToAccountInput struct {
 		Reason       string   `json:"reason"`
 		AccountRoles []string `json:"accountRole"`
-		UserID       uint64   `json:"userId"`
-		AccountID    uint64   `json:"accountId"`
+		UserID       uint64   `json:"userID"`
+		AccountID    uint64   `json:"accountID"`
 	}
 
 	// AccountOwnershipTransferInput represents what a User could set as input for updating account user memberships.

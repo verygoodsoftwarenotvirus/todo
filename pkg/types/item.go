@@ -19,7 +19,7 @@ type (
 	Item struct {
 		ArchivedOn       *uint64 `json:"archivedOn"`
 		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
-		ExternalID       string  `json:"externalId"`
+		ExternalID       string  `json:"externalID"`
 		Name             string  `json:"name"`
 		Details          string  `json:"details"`
 		CreatedOn        uint64  `json:"createdOn"`

@@ -35,7 +35,7 @@ type (
 		LastUpdatedOn             *uint64       `json:"lastUpdatedOn"`
 		TwoFactorSecretVerifiedOn *uint64       `json:"-"`
 		AvatarSrc                 *string       `json:"avatar"`
-		ExternalID                string        `json:"externalId"`
+		ExternalID                string        `json:"externalID"`
 		Username                  string        `json:"username"`
 		ReputationExplanation     string        `json:"reputationExplanation"`
 		ServiceAccountStatus      accountStatus `json:"reputation"`
@@ -51,8 +51,8 @@ type (
 	TestUserCreationConfig struct {
 		Username       string `json:"username" mapstructure:"username" toml:"username,omitempty"`
 		Password       string `json:"password" mapstructure:"password" toml:"password,omitempty"`
-		HashedPassword string `json:"hashedPassword" mapstructure:"hashed_password" toml:"hashed_password,omitempty"`
-		IsServiceAdmin bool   `json:"isSiteAdmin" mapstructure:"is_site_admin" toml:"is_site_admin,omitempty"`
+		HashedPassword string `json:"hashed_password" mapstructure:"hashed_password" toml:"hashed_password,omitempty"`
+		IsServiceAdmin bool   `json:"is_site_admin" mapstructure:"is_site_admin" toml:"is_site_admin,omitempty"`
 	}
 
 	// UserList represents a list of users.
@@ -80,7 +80,7 @@ type (
 		AccountStatus   accountStatus `json:"accountStatus"`
 		TwoFactorSecret string        `json:"twoFactorSecret"`
 		TwoFactorQRCode string        `json:"qrCode"`
-		CreatedUserID   uint64        `json:"id"`
+		CreatedUserID   uint64        `json:"ID"`
 		CreatedOn       uint64        `json:"createdOn"`
 		IsAdmin         bool          `json:"isAdmin"`
 	}
@@ -108,7 +108,7 @@ type (
 	// TOTPSecretVerificationInput represents input a User would provide when validating their 2FA secret.
 	TOTPSecretVerificationInput struct {
 		TOTPToken string `json:"totpToken"`
-		UserID    uint64 `json:"userId"`
+		UserID    uint64 `json:"userID"`
 	}
 
 	// TOTPSecretRefreshResponse represents the response we provide to a User when updating their 2FA secret.

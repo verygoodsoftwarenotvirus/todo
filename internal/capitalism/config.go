@@ -21,10 +21,10 @@ type (
 
 	// StripeConfig configures our Stripe interface.
 	StripeConfig struct {
-		APIKey        string `json:"apiKey" mapstructure:"api_key" toml:"api_key"`
-		SuccessURL    string `json:"successUrl" mapstructure:"success_url" toml:"success_url"`
-		CancelURL     string `json:"cancelUrl" mapstructure:"cancel_url" toml:"cancel_url"`
-		WebhookSecret string `json:"webhookSecret" mapstructure:"webhook_secret" toml:"webhook_secret"`
+		APIKey        string `json:"api_key" mapstructure:"api_key" toml:"api_key"`
+		SuccessURL    string `json:"success_url" mapstructure:"success_url" toml:"success_url"`
+		CancelURL     string `json:"cancel_url" mapstructure:"cancel_url" toml:"cancel_url"`
+		WebhookSecret string `json:"webhook_secret" mapstructure:"webhook_secret" toml:"webhook_secret"`
 	}
 )
 

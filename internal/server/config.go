@@ -10,8 +10,8 @@ import (
 type (
 	// Config describes the settings pertinent to the HTTP serving portion of the service.
 	Config struct {
-		StartupDeadline time.Duration `json:"startupDeadline" mapstructure:"startup_deadline" toml:"startup_deadline,omitempty"`
-		HTTPPort        uint16        `json:"httpPort" mapstructure:"http_port" toml:"http_port,omitempty"`
+		StartupDeadline time.Duration `json:"startup_deadline" mapstructure:"startup_deadline" toml:"startup_deadline,omitempty"`
+		HTTPPort        uint16        `json:"http_port" mapstructure:"http_port" toml:"http_port,omitempty"`
 		Debug           bool          `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 	}
 )

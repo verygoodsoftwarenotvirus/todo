@@ -259,7 +259,7 @@ linters:
     # - rowserrcheck     # checks whether Err of rows is checked successfully
     - sqlclosecheck    # Checks that sql.Rows and sql.Stmt are closed.
     # - stylecheck       # Stylecheck is a replacement for golint	style
-    - tagliatelle      # Checks the struct tags.
+    # - tagliatelle      # Checks the struct tags.  # TODO: FUCK
     # - testpackage      # linter that makes you use a separate _test package
     - thelper          # thelper detects golang test helpers without t.Helper() call and checks the consistency of test helpers
     - tparallel        # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes
@@ -279,7 +279,8 @@ linters:
     - funlen           # Tool for detection of long functions
     - gofumpt          # Gofumpt checks whether code was gofumpt-ed.
     - nlreturn         # nlreturn checks for a new line before return and branch statements to increase code clarity
-    - rowserrcheck     # checks whether Err of rows is checked successfully; lots of false positives.
+    - rowserrcheck     # checks whether Err of rows is checked successfully; lots of false positives
+    - tagliatelle      # Checks the struct tags.
     - stylecheck       # Stylecheck is a replacement for golint
     - testpackage      # linter that makes you use a separate _test package
     - wsl              # Whitespace Linter - Forces you to use empty lines! Easily the most annoying one on here

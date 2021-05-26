@@ -12,7 +12,7 @@ type (
 	Webhook struct {
 		LastUpdatedOn    *uint64  `json:"lastUpdatedOn"`
 		ArchivedOn       *uint64  `json:"archivedOn"`
-		ExternalID       string   `json:"externalId"`
+		ExternalID       string   `json:"externalID"`
 		Name             string   `json:"name"`
 		URL              string   `json:"url"`
 		Method           string   `json:"method"`

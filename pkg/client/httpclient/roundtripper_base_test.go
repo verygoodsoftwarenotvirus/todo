@@ -66,7 +66,7 @@ func Test_buildRequestLogHook(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := logging.NewNonOperationalLogger()
+		l := logging.NewNoopLogger()
 
 		actual := buildRequestLogHook(l)
 
@@ -80,7 +80,7 @@ func Test_buildResponseLogHook(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := logging.NewNonOperationalLogger()
+		l := logging.NewNoopLogger()
 
 		actual := buildResponseLogHook(l)
 
@@ -109,7 +109,7 @@ func Test_buildErrorHandler(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		l := logging.NewNonOperationalLogger()
+		l := logging.NewNoopLogger()
 
 		actual := buildErrorHandler(l)
 

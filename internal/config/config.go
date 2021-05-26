@@ -9,27 +9,26 @@ import (
 	"strings"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querier"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -50,6 +49,7 @@ const (
 
 var (
 	errNilDatabaseConnection   = errors.New("nil DB connection provided")
+	errNilConfig               = errors.New("nil config provided")
 	errInvalidDatabaseProvider = errors.New("invalid database provider")
 )
 
@@ -57,26 +57,32 @@ type (
 	// runMode describes what method of operation the server is under.
 	runMode string
 
-	// ServerConfig is our server configuration struct. It is composed of all the other setting structs.
-	ServerConfig struct {
-		Search        search.Config         `json:"search" mapstructure:"search" toml:"search,omitempty"`
-		Encoding      encoding.Config       `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
-		Capitalism    capitalism.Config     `json:"capitalism" mapstructure:"capitalism" toml:"capitalism"`
-		Uploads       uploads.Config        `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
-		Observability observability.Config  `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
-		Routing       routing.Config        `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
-		Meta          MetaSettings          `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Database      config.Config         `json:"database" mapstructure:"database" toml:"database,omitempty"`
-		Auth          authentication.Config `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Server        server.Config         `json:"server" mapstructure:"server" toml:"server,omitempty"`
-		AuditLog      audit.Config          `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
-		Webhooks      webhooks.Config       `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		Frontend      frontend.Config       `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
+	// ServicesConfigurations collects the various service configurations.
+	ServicesConfigurations struct {
+		Items    items.Config       `json:"items" mapstructure:"items" toml:"items,omitempty"`
+		Auth     authservice.Config `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
+		Webhooks webhooks.Config    `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		Frontend frontend.Config    `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
+	}
+
+	// InstanceConfig configures an instance of the service. It is composed of all the other setting structs.
+	InstanceConfig struct {
+		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
+		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
+		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
+		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
+		Capitalism    capitalism.Config      `json:"capitalism" mapstructure:"capitalism" toml:"capitalism"`
+		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
+		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
+		Services      ServicesConfigurations `json:"services" mapstructure:"services" toml:"services,omitempty"`
+		Server        server.Config          `json:"server" mapstructure:"server" toml:"server,omitempty"`
+		AuditLog      audit.Config           `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 	}
 )
 
 // EncodeToFile renders your config to a file given your favorite encoder.
-func (cfg *ServerConfig) EncodeToFile(path string, marshaller func(v interface{}) ([]byte, error)) error {
+func (cfg *InstanceConfig) EncodeToFile(path string, marshaller func(v interface{}) ([]byte, error)) error {
 	byteSlice, err := marshaller(*cfg)
 	if err != nil {
 		return err
@@ -85,10 +91,10 @@ func (cfg *ServerConfig) EncodeToFile(path string, marshaller func(v interface{}
 	return os.WriteFile(path, byteSlice, 0600)
 }
 
-var _ validation.ValidatableWithContext = (*ServerConfig)(nil)
+var _ validation.ValidatableWithContext = (*InstanceConfig)(nil)
 
-// ValidateWithContext validates a ServerConfig struct.
-func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
+// ValidateWithContext validates a InstanceConfig struct.
+func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 	if err := cfg.Search.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating Search portion of config: %w", err)
 	}
@@ -125,15 +131,23 @@ func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 		return fmt.Errorf("error validating Database portion of config: %w", err)
 	}
 
-	if err := cfg.Auth.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Auth portion of config: %w", err)
-	}
-
 	if err := cfg.Server.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating HTTPServer portion of config: %w", err)
 	}
 
-	if err := cfg.Webhooks.ValidateWithContext(ctx); err != nil {
+	if err := cfg.Services.Auth.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Auth portion of config: %w", err)
+	}
+
+	if err := cfg.Services.Frontend.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
+	}
+
+	if err := cfg.Services.Webhooks.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
+	}
+
+	if err := cfg.Services.Items.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
 	}
 
@@ -146,9 +160,13 @@ func (cfg *ServerConfig) ValidateWithContext(ctx context.Context) error {
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 // NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
-func (cfg *ServerConfig) ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB) (database.DataManager, error) {
+func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *InstanceConfig) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
+	}
+
+	if cfg == nil {
+		return nil, errNilConfig
 	}
 
 	var qb querybuilding.SQLQueryBuilder

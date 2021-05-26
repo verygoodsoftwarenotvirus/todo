@@ -4,11 +4,11 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 
 	"github.com/alexedwards/scs/v2"
@@ -20,17 +20,17 @@ import (
 func buildTestService(t *testing.T) *service {
 	t.Helper()
 
-	logger := logging.NewNonOperationalLogger()
+	logger := logging.NewNoopLogger()
 
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On(
 		"BuildRouteParamIDFetcher",
-		mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+		mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 	s := ProvideService(
 		logger,
-		&authentication.Config{Cookies: authentication.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
-		&passwords.MockAuthenticator{},
+		&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
+		&authentication.MockAuthenticator{},
 		&mocktypes.AdminUserDataManager{},
 		&mocktypes.AuditLogEntryDataManager{},
 		scs.New(),
@@ -52,17 +52,17 @@ func TestProvideAdminService(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+			mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideService(
 			logger,
-			&authentication.Config{Cookies: authentication.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
-			&passwords.MockAuthenticator{},
+			&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
+			&authentication.MockAuthenticator{},
 			&mocktypes.AdminUserDataManager{},
 			&mocktypes.AuditLogEntryDataManager{},
 			scs.New(),

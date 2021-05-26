@@ -11,7 +11,7 @@ var (
 	Providers = wire.NewSet(
 		ProvideAPIKey,
 		ProvideWebhookSecret,
-		NewStripePaymentManager,
+		ProvideStripePaymentManager,
 	)
 )
 

@@ -116,7 +116,7 @@ func buildTestClient(t *testing.T) (*SQLQuerier, *sqlmockExpecterWrapper) {
 
 	c := &SQLQuerier{
 		db:              db,
-		logger:          logging.NewNonOperationalLogger(),
+		logger:          logging.NewNoopLogger(),
 		timeFunc:        defaultTimeFunc,
 		tracer:          tracing.NewTracer("test"),
 		sqlQueryBuilder: database.BuildMockSQLQueryBuilder(),
@@ -227,7 +227,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 			MaxPingAttempts: 1,
 		}
 
-		actual, err := ProvideDatabaseClient(ctx, logging.NewNonOperationalLogger(), db, exampleConfig, queryBuilder, true)
+		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), db, exampleConfig, queryBuilder, true)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
@@ -263,7 +263,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 			MaxPingAttempts: 1,
 		}
 
-		actual, err := ProvideDatabaseClient(ctx, logging.NewNonOperationalLogger(), db, exampleConfig, queryBuilder, true)
+		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), db, exampleConfig, queryBuilder, true)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
@@ -290,7 +290,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 			MaxPingAttempts: 1,
 		}
 
-		actual, err := ProvideDatabaseClient(ctx, logging.NewNonOperationalLogger(), db, exampleConfig, queryBuilder, true)
+		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), db, exampleConfig, queryBuilder, true)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 

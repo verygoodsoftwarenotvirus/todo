@@ -54,7 +54,7 @@ func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
 		},
 	}
 
-	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}

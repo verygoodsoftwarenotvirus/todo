@@ -85,7 +85,7 @@ func TestUsingLogger(T *testing.T) {
 		expectedURL, err := url.Parse("https://todo.verygoodsoftwarenotvirus.ru")
 		require.NoError(t, err)
 
-		c, err := NewClient(expectedURL, UsingLogger(logging.NewNonOperationalLogger()))
+		c, err := NewClient(expectedURL, UsingLogger(logging.NewNoopLogger()))
 		assert.NotNil(t, c)
 		assert.NoError(t, err)
 	})

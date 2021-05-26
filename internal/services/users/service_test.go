@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
 	mockuploads "gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -35,11 +35,11 @@ func buildTestService(t *testing.T) *service {
 	).Return(expectedUserCount, nil)
 
 	s := ProvideUsersService(
-		&authentication.Config{},
-		logging.NewNonOperationalLogger(),
+		&authservice.Config{},
+		logging.NewNoopLogger(),
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
-		&passwords.MockAuthenticator{},
+		&authentication.MockAuthenticator{},
 		mockencoding.NewMockEncoderDecoder(),
 		func(counterName, description string) metrics.UnitCounter {
 			return uc
@@ -63,14 +63,14 @@ func TestProvideUsersService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+			mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideUsersService(
-			&authentication.Config{},
-			logging.NewNonOperationalLogger(),
+			&authservice.Config{},
+			logging.NewNoopLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
-			&passwords.MockAuthenticator{},
+			&authentication.MockAuthenticator{},
 			mockencoding.NewMockEncoderDecoder(),
 			func(counterName, description string) metrics.UnitCounter {
 				return &mockmetrics.UnitCounter{}

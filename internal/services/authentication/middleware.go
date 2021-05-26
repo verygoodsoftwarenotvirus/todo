@@ -215,7 +215,7 @@ func (s *service) PermissionFilterMiddleware(permissions ...authorization.Permis
 	}
 }
 
-// AdminMiddleware restricts requests to admin users only.
+// ServiceAdminMiddleware restricts requests to admin users only.
 func (s *service) ServiceAdminMiddleware(next http.Handler) http.Handler {
 	const staticError = "admin status required"
 

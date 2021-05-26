@@ -7,8 +7,9 @@ import (
 	"net/url"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -38,7 +39,7 @@ func init() {
 
 	parsedURLToUse = testutil.DetermineServiceURL()
 	urlToUse = parsedURLToUse.String()
-	logger := zerolog.NewLogger()
+	logger := logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)

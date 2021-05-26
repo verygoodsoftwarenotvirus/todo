@@ -33,7 +33,7 @@ func TestNewBuilder(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		encoder := encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON)
 		c, err := NewBuilder(mustParseURL(exampleURI), logger, encoder)
 
@@ -44,7 +44,7 @@ func TestNewBuilder(T *testing.T) {
 	T.Run("with nil URL", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		encoder := encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON)
 		c, err := NewBuilder(nil, logger, encoder)
 
@@ -55,7 +55,7 @@ func TestNewBuilder(T *testing.T) {
 	T.Run("with nil encoder", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		c, err := NewBuilder(mustParseURL(exampleURI), logger, nil)
 
 		require.Nil(t, c)
@@ -101,7 +101,7 @@ func TestBuilder_BuildURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		encoder := encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON)
 
 		c, _ := NewBuilder(mustParseURL(exampleURI), logger, encoder)
@@ -204,7 +204,7 @@ func TestBuilder_buildUnversionedURL(T *testing.T) {
 	T.Run("various urls", func(t *testing.T) {
 		t.Parallel()
 
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		encoder := encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON)
 		b, err := NewBuilder(mustParseURL(exampleURI), logger, encoder)
 
@@ -257,7 +257,7 @@ func TestBuilder_BuildWebsocketURL(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		logger := logging.NewNonOperationalLogger()
+		logger := logging.NewNoopLogger()
 		encoder := encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON)
 		c, err := NewBuilder(mustParseURL(exampleURI), logger, encoder)
 

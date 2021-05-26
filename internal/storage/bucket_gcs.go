@@ -50,13 +50,13 @@ func buildGCSBucket(ctx context.Context, cfg *GCSConfig) (*blob.Bucket, error) {
 	} else {
 		var err error
 		if creds, err = gcp.DefaultCredentials(ctx); err != nil {
-			return nil, fmt.Errorf("constructing GCP credentials: %w", err)
+			return nil, fmt.Errorf("constructing GCPKMS credentials: %w", err)
 		}
 	}
 
 	gcsClient, gcsClientErr := gcp.NewHTTPClient(nil, gcp.CredentialsTokenSource(creds))
 	if gcsClientErr != nil {
-		return nil, fmt.Errorf("constructing GCP client: %w", gcsClientErr)
+		return nil, fmt.Errorf("constructing GCPKMS client: %w", gcsClientErr)
 	}
 
 	blobOpts := &gcsblob.Options{GoogleAccessID: cfg.BlobSettings.GoogleAccessID}

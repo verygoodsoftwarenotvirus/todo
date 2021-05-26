@@ -102,7 +102,7 @@ func buildTestHelper(t *testing.T) *authServiceHTTPRoutesTestHelper {
 
 	helper.setContextFetcher(t)
 
-	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 	var err error
 

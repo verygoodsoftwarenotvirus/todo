@@ -62,7 +62,7 @@ func Test_provideAzureBucket(T *testing.T) {
 			BucketName:  t.Name(),
 		}
 
-		x, err := provideAzureBucket(ctx, cfg, logging.NewNonOperationalLogger())
+		x, err := provideAzureBucket(ctx, cfg, logging.NewNoopLogger())
 		assert.NoError(t, err)
 		assert.NotNil(t, x)
 	})
@@ -78,7 +78,7 @@ func Test_provideAzureBucket(T *testing.T) {
 			SharedKeyAccountKey: base64.StdEncoding.EncodeToString([]byte(t.Name())),
 		}
 
-		x, err := provideAzureBucket(ctx, cfg, logging.NewNonOperationalLogger())
+		x, err := provideAzureBucket(ctx, cfg, logging.NewNoopLogger())
 		assert.NoError(t, err)
 		assert.NotNil(t, x)
 	})
@@ -94,7 +94,7 @@ func Test_provideAzureBucket(T *testing.T) {
 			SharedKeyAccountKey: "",
 		}
 
-		x, err := provideAzureBucket(ctx, cfg, logging.NewNonOperationalLogger())
+		x, err := provideAzureBucket(ctx, cfg, logging.NewNoopLogger())
 		assert.Error(t, err)
 		assert.Nil(t, x)
 	})
@@ -110,7 +110,7 @@ func Test_provideAzureBucket(T *testing.T) {
 			SharedKeyAccountKey: "        lol not valid base64       ",
 		}
 
-		x, err := provideAzureBucket(ctx, cfg, logging.NewNonOperationalLogger())
+		x, err := provideAzureBucket(ctx, cfg, logging.NewNoopLogger())
 		assert.Error(t, err)
 		assert.Nil(t, x)
 	})
@@ -126,7 +126,7 @@ func Test_provideAzureBucket(T *testing.T) {
 			TokenCredentialsInitialToken: t.Name(),
 		}
 
-		x, err := provideAzureBucket(ctx, cfg, logging.NewNonOperationalLogger())
+		x, err := provideAzureBucket(ctx, cfg, logging.NewNoopLogger())
 		assert.NoError(t, err)
 		assert.NotNil(t, x)
 	})
@@ -142,7 +142,7 @@ func Test_provideAzureBucket(T *testing.T) {
 			TokenCredentialsInitialToken: "",
 		}
 
-		x, err := provideAzureBucket(ctx, cfg, logging.NewNonOperationalLogger())
+		x, err := provideAzureBucket(ctx, cfg, logging.NewNoopLogger())
 		assert.Error(t, err)
 		assert.Nil(t, x)
 	})
@@ -154,7 +154,7 @@ func Test_buildPipelineLogFunc(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		x := buildPipelineLogFunc(logging.NewNonOperationalLogger())
+		x := buildPipelineLogFunc(logging.NewNoopLogger())
 
 		for _, level := range []pipeline.LogLevel{
 			pipeline.LogNone,
@@ -175,6 +175,6 @@ func Test_buildPipelineOptions(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, buildPipelineOptions(logging.NewNonOperationalLogger(), &AzureRetryConfig{}))
+		assert.NotNil(t, buildPipelineOptions(logging.NewNoopLogger(), &AzureRetryConfig{}))
 	})
 }

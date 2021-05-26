@@ -23,13 +23,15 @@ const (
 	// ConfigKeyEncodingContentType is the key viper will use to refer to the encoding.Config.ContentType setting.
 	ConfigKeyEncodingContentType = encodingKey + x + "content_type"
 
-	frontendKey = "frontend"
+	servicesKey = "services"
+
+	frontendKey = servicesKey + x + "frontend"
 	// ConfigKeyFrontendDebug is the key viper will use to refer to the FrontendSettings.debug setting.
 	ConfigKeyFrontendDebug = frontendKey + x + debugKey
 	// ConfigKeyFrontendUseFakeData is the key viper will use to refer to the frontend.Config.UseFakeData setting.
 	ConfigKeyFrontendUseFakeData = frontendKey + x + "use_fake_data"
 
-	authKey = "auth"
+	authKey = servicesKey + x + "auth"
 	// ConfigKeyAuthDebug is the key viper will use to refer to the AuthSettings.debug setting.
 	ConfigKeyAuthDebug = authKey + x + debugKey
 	cookiesKey         = "cookies"
@@ -122,8 +124,11 @@ const (
 	searchKey = "search"
 	// ConfigKeySearchProvider is the key viper will use to refer to the SearchSettings.Provider setting.
 	ConfigKeySearchProvider = searchKey + x + "provider"
+
+	itemsKey = servicesKey + x + "items"
+
 	// ConfigKeyItemsSearchIndexPath is the key viper will use to refer to the SearchSettings.ItemsSearchIndexPath setting.
-	ConfigKeyItemsSearchIndexPath = searchKey + x + "items_index_path"
+	ConfigKeyItemsSearchIndexPath = itemsKey + x + "search_index_path"
 
 	uploadsKey       = "uploads"
 	storageConfigKey = "storage_config"
@@ -182,7 +187,7 @@ const (
 	// ConfigKeyAuditLogEnabled is the key viper will use to refer to the AuditLogSettings.Enabled setting.
 	ConfigKeyAuditLogEnabled = auditLogKey + x + enabledKey
 
-	webhooksKey = "webhooks"
+	webhooksKey = servicesKey + x + "webhooks"
 	// ConfigKeyWebhooksEnabled is the key viper will use to refer to the AuditLogSettings.Enabled setting.
 	ConfigKeyWebhooksEnabled = webhooksKey + x + enabledKey
 )

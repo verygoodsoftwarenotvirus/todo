@@ -4,15 +4,15 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -26,10 +26,10 @@ func buildTestService(t *testing.T) *service {
 
 	return &service{
 		apiClientDataManager:      database.BuildMockDatabase(),
-		logger:                    logging.NewNonOperationalLogger(),
+		logger:                    logging.NewNoopLogger(),
 		encoderDecoder:            mockencoding.NewMockEncoderDecoder(),
-		authenticator:             &passwords.MockAuthenticator{},
-		sessionContextDataFetcher: authentication.FetchContextFromRequest,
+		authenticator:             &authentication.MockAuthenticator{},
+		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		urlClientIDExtractor:      func(req *http.Request) uint64 { return 0 },
 		apiClientCounter:          &mockmetrics.UnitCounter{},
 		secretGenerator:           &random.MockGenerator{},
@@ -48,16 +48,16 @@ func TestProvideAPIClientsService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()),
+			mock.IsType(logging.NewNoopLogger()),
 			APIClientIDURIParamKey,
 			"api client",
 		).Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideAPIClientsService(
-			logging.NewNonOperationalLogger(),
+			logging.NewNoopLogger(),
 			mockAPIClientDataManager,
 			&mocktypes.UserDataManager{},
-			&passwords.MockAuthenticator{},
+			&authentication.MockAuthenticator{},
 			mockencoding.NewMockEncoderDecoder(),
 			func(counterName, description string) metrics.UnitCounter {
 				return nil

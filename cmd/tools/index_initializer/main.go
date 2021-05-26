@@ -11,10 +11,10 @@ import (
 	"log"
 	"time"
 
-	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	bleve2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 
@@ -38,9 +38,9 @@ var (
 	}
 
 	validDatabaseTypes = map[string]struct{}{
-		config2.PostgresProvider: {},
-		config2.MariaDBProvider:  {},
-		config2.SqliteProvider:   {},
+		dbconfig.PostgresProvider: {},
+		dbconfig.MariaDBProvider:  {},
+		dbconfig.SqliteProvider:   {},
 	}
 )
 
@@ -62,7 +62,10 @@ func init() {
 
 func main() {
 	flag.Parse()
-	logger := zerolog.NewLogger().WithName("search_index_initializer")
+	logger := logging.ProvideLogger(logging.Config{
+		Name:     "search_index_initializer",
+		Provider: logging.ProviderZerolog,
+	})
 	ctx := context.Background()
 
 	if indexOutputPath == "" {
@@ -84,8 +87,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	cfg := &config.ServerConfig{
-		Database: config2.Config{
+	cfg := &config.InstanceConfig{
+		Database: dbconfig.Config{
 			MetricsCollectionInterval: time.Second,
 			Provider:                  databaseType,
 			ConnectionDetails:         database.ConnectionDetails(dbConnectionDetails),
@@ -94,14 +97,14 @@ func main() {
 
 	// connect to our database.
 	logger.Debug("connecting to database")
-	rawDB, err := cfg.Database.ProvideDatabaseConnection(logger)
+	rawDB, err := dbconfig.ProvideDatabaseConnection(logger, &cfg.Database)
 	if err != nil {
 		log.Fatalf("error establishing connection to database: %v", err)
 	}
 
 	// establish the database client.
 	logger.Debug("setting up database client")
-	dbClient, err := cfg.ProvideDatabaseClient(ctx, logger, rawDB)
+	dbClient, err := config.ProvideDatabaseClient(ctx, logger, rawDB, cfg)
 	if err != nil {
 		log.Fatalf("error initializing database client: %v", err)
 	}

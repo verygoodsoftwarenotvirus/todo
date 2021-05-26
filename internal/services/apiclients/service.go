@@ -3,14 +3,13 @@ package apiclients
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
-	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -35,7 +34,7 @@ type (
 		cfg                       *config
 		apiClientDataManager      types.APIClientDataManager
 		userDataManager           types.UserDataManager
-		authenticator             passwords.Authenticator
+		authenticator             authentication.Authenticator
 		encoderDecoder            encoding.ServerEncoderDecoder
 		urlClientIDExtractor      func(req *http.Request) uint64
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
@@ -50,7 +49,7 @@ func ProvideAPIClientsService(
 	logger logging.Logger,
 	clientDataManager types.APIClientDataManager,
 	userDataManager types.UserDataManager,
-	authenticator passwords.Authenticator,
+	authenticator authentication.Authenticator,
 	encoderDecoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
@@ -64,7 +63,7 @@ func ProvideAPIClientsService(
 		authenticator:             authenticator,
 		encoderDecoder:            encoderDecoder,
 		urlClientIDExtractor:      routeParamManager.BuildRouteParamIDFetcher(logger, APIClientIDURIParamKey, "api client"),
-		sessionContextDataFetcher: authentication.FetchContextFromRequest,
+		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		apiClientCounter:          metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		secretGenerator:           random.NewGenerator(logger),
 		tracer:                    tracing.NewTracer(serviceName),

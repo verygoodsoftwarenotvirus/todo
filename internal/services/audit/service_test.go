@@ -16,7 +16,7 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:                 logging.NewNonOperationalLogger(),
+		logger:                 logging.NewNoopLogger(),
 		auditLog:               &mocktypes.AuditLogEntryDataManager{},
 		auditLogEntryIDFetcher: func(req *http.Request) uint64 { return 0 },
 		encoderDecoder:         mockencoding.NewMockEncoderDecoder(),
@@ -33,10 +33,10 @@ func TestProvideAuditService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()), LogEntryURIParamKey, "audit log entry").Return(func(*http.Request) uint64 { return 0 })
+			mock.IsType(logging.NewNoopLogger()), LogEntryURIParamKey, "audit log entry").Return(func(*http.Request) uint64 { return 0 })
 
 		s := ProvideService(
-			logging.NewNonOperationalLogger(),
+			logging.NewNoopLogger(),
 			&mocktypes.AuditLogEntryDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			rpm,

@@ -17,6 +17,8 @@ The following tools are prerequisites for development work:
 
 You can run `mage -l` to see a list of available targets and their descriptions.
 
+## dev setup
+
 It's a good idea to run `mage quicktest lintegrationTests` before commits. You won't catch every error, but you'll catch the simplest ones that waste CI (and consequently your) time.
 
 ## running the server

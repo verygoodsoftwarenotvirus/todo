@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+
 	_ "embed"
 )
 
@@ -35,7 +36,7 @@ func buildBasicTableTemplate(cfg *basicTableTemplateConfig) string {
 }
 
 var tableConfigs = map[string]*basicTableTemplateConfig{
-	"internal/app/services/frontend/templates/partials/generated/tables/api_clients_table.gotpl": {
+	"internal/services/frontend/templates/partials/generated/tables/api_clients_table.gotpl": {
 		Title:              "API Clients",
 		CreatorPagePushURL: "/api_clients/new",
 		CreatorPageURL:     "/dashboard_pages/api_clients/new",
@@ -59,7 +60,7 @@ var tableConfigs = map[string]*basicTableTemplateConfig{
 		IncludeLastUpdatedOn: false,
 		IncludeCreatedOn:     true,
 	},
-	"internal/app/services/frontend/templates/partials/generated/tables/accounts_table.gotpl": {
+	"internal/services/frontend/templates/partials/generated/tables/accounts_table.gotpl": {
 		Title:              "Accounts",
 		CreatorPagePushURL: "/accounts/new",
 		CreatorPageURL:     "/dashboard_pages/accounts/new",
@@ -80,7 +81,7 @@ var tableConfigs = map[string]*basicTableTemplateConfig{
 		IncludeLastUpdatedOn: true,
 		IncludeCreatedOn:     true,
 	},
-	"internal/app/services/frontend/templates/partials/generated/tables/users_table.gotpl": {
+	"internal/services/frontend/templates/partials/generated/tables/users_table.gotpl": {
 		Title: "Users",
 		Columns: []string{
 			"ID",
@@ -98,7 +99,7 @@ var tableConfigs = map[string]*basicTableTemplateConfig{
 		IncludeDeleteRow:     false,
 		ExcludeLink:          true,
 	},
-	"internal/app/services/frontend/templates/partials/generated/tables/webhooks_table.gotpl": {
+	"internal/services/frontend/templates/partials/generated/tables/webhooks_table.gotpl": {
 		Title:              "Webhooks",
 		CreatorPagePushURL: "/accounts/webhooks/new",
 		CreatorPageURL:     "/dashboard_pages/accounts/webhooks/new",
@@ -123,7 +124,7 @@ var tableConfigs = map[string]*basicTableTemplateConfig{
 		IncludeLastUpdatedOn: true,
 		IncludeCreatedOn:     true,
 	},
-	"internal/app/services/frontend/templates/partials/generated/tables/items_table.gotpl": {
+	"internal/services/frontend/templates/partials/generated/tables/items_table.gotpl": {
 		Title:              "Items",
 		CreatorPagePushURL: "/items/new",
 		CreatorPageURL:     "/dashboard_pages/items/new",

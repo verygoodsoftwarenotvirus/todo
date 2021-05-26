@@ -22,7 +22,7 @@ func (h errorHandler) Handle(err error) {
 }
 
 func init() {
-	otel.SetErrorHandler(errorHandler{logger: logging.NewNonOperationalLogger().WithName("otel_errors")})
+	otel.SetErrorHandler(errorHandler{logger: logging.NewNoopLogger().WithName("otel_errors")})
 }
 
 // SetupJaeger creates a new trace provider instance and registers it as global trace provider.

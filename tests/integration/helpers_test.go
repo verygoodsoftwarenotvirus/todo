@@ -11,7 +11,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 
@@ -78,10 +77,10 @@ func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, err
 		panic("url not set!")
 	}
 
-	loggerToUse := zerolog.NewLogger()
+	logger := logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 
 	c, err := httpclient.NewClient(parsedURLToUse,
-		httpclient.UsingLogger(loggerToUse),
+		httpclient.UsingLogger(logger),
 		httpclient.UsingCookie(cookie),
 	)
 	if err != nil {
@@ -96,9 +95,10 @@ func initializeCookiePoweredClient(cookie *http.Cookie) (*httpclient.Client, err
 
 	return c, nil
 }
+
 func initializePASETOPoweredClient(clientID string, secretKey []byte) (*httpclient.Client, error) {
 	c, err := httpclient.NewClient(parsedURLToUse,
-		httpclient.UsingLogger(logging.NewNonOperationalLogger()),
+		httpclient.UsingLogger(logging.NewNoopLogger()),
 		httpclient.UsingPASETO(clientID, secretKey),
 	)
 	if err != nil {
@@ -141,7 +141,7 @@ func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookie
 
 	u := testutil.DetermineServiceURL()
 	urlToUse = u.String()
-	logger := zerolog.NewLogger()
+	logger := logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(ctx, urlToUse)

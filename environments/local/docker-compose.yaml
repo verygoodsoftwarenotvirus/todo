@@ -21,7 +21,7 @@ services:
             - database
 #            - prometheus
         volumes:
-            - source: '../../environments/local/config.toml'
+            - source: '../../environments/local/service.config'
               target: '/etc/config.toml'
               type: 'bind'
             - source: '../../'
@@ -74,24 +74,3 @@ services:
 #        - source: '../../environments/local/grafana/dashboards'
 #          target: '/etc/grafana/provisioning/dashboards/dashboards'
 #          type: 'bind'
-#    loki:
-#      image: grafana/loki:1.6.0
-#      ports:
-#        - "3100:3100"
-#      command: -config.file=/etc/loki/local-config.yaml
-#      volumes:
-#        - source: '../../environments/local/loki/config.yaml'
-#          target: '/etc/loki/local-config.yaml'
-#          type: 'bind'
-#      links:
-#        - grafana
-#    promtail:
-#      image: grafana/promtail:1.6.0
-#      command: -config.file=/etc/promtail/config.yml
-#      volumes:
-#        - /var/log:/var/log
-#        - source: '../../environments/local/promtail/config.yaml'
-#          target: '/etc/promtail/config.yml'
-#          type: 'bind'
-#      links:
-#        - loki

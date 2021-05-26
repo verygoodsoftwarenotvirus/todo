@@ -103,7 +103,7 @@ func assertRequestQuality(t *testing.T, req *http.Request, spec *requestSpec) {
 }
 
 func buildTestRequestBuilder() *Builder {
-	l := logging.NewNonOperationalLogger()
+	l := logging.NewNoopLogger()
 
 	return &Builder{
 		url:     parsedExampleURL,
@@ -137,7 +137,7 @@ func buildTestHelper() *testHelper {
 }
 
 func buildTestRequestBuilderWithInvalidURL() *Builder {
-	l := logging.NewNonOperationalLogger()
+	l := logging.NewNoopLogger()
 
 	return &Builder{
 		url:     invalidParsedURL,

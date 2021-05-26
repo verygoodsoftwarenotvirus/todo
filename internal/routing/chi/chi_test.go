@@ -17,7 +17,7 @@ import (
 )
 
 func buildRouterForTest() routing.Router {
-	return NewRouter(logging.NewNonOperationalLogger())
+	return NewRouter(logging.NewNoopLogger())
 }
 
 func TestNewRouter(T *testing.T) {
@@ -26,7 +26,7 @@ func TestNewRouter(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, NewRouter(logging.NewNonOperationalLogger()))
+		assert.NotNil(t, NewRouter(logging.NewNoopLogger()))
 	})
 }
 
@@ -36,7 +36,7 @@ func Test_buildChiMux(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, buildChiMux(logging.NewNonOperationalLogger()))
+		assert.NotNil(t, buildChiMux(logging.NewNoopLogger()))
 	})
 }
 
@@ -285,7 +285,7 @@ func Test_router_BuildRouteParamIDFetcher(T *testing.T) {
 		t.Parallel()
 
 		r := buildRouter(nil, nil)
-		l := logging.NewNonOperationalLogger()
+		l := logging.NewNoopLogger()
 		ctx := context.Background()
 		exampleKey := "blah"
 
@@ -313,7 +313,7 @@ func Test_router_BuildRouteParamIDFetcher(T *testing.T) {
 		t.Parallel()
 
 		r := buildRouter(nil, nil)
-		l := logging.NewNonOperationalLogger()
+		l := logging.NewNoopLogger()
 		ctx := context.Background()
 		exampleKey := "blah"
 

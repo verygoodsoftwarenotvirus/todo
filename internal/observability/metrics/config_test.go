@@ -20,7 +20,7 @@ func TestConfig_ProvideInstrumentationHandler(T *testing.T) {
 			RuntimeMetricsCollectionInterval: minimumRuntimeCollectionInterval,
 		}
 
-		actual, err := cfg.ProvideInstrumentationHandler(logging.NewNonOperationalLogger())
+		actual, err := cfg.ProvideInstrumentationHandler(logging.NewNoopLogger())
 		assert.NoError(t, err)
 		assert.NotNil(t, actual)
 	})
@@ -32,7 +32,7 @@ func TestConfig_ProvideInstrumentationHandler(T *testing.T) {
 			RuntimeMetricsCollectionInterval: minimumRuntimeCollectionInterval,
 		}
 
-		actual, err := cfg.ProvideInstrumentationHandler(logging.NewNonOperationalLogger())
+		actual, err := cfg.ProvideInstrumentationHandler(logging.NewNoopLogger())
 		assert.NoError(t, err)
 		assert.Nil(t, actual)
 	})
@@ -49,7 +49,7 @@ func TestConfig_ProvideUnitCounterProvider(T *testing.T) {
 			RuntimeMetricsCollectionInterval: minimumRuntimeCollectionInterval,
 		}
 
-		actual, err := ProvideUnitCounterProvider(cfg, logging.NewNonOperationalLogger())
+		actual, err := ProvideUnitCounterProvider(cfg, logging.NewNoopLogger())
 		assert.NoError(t, err)
 		assert.NotNil(t, actual)
 
@@ -63,7 +63,7 @@ func TestConfig_ProvideUnitCounterProvider(T *testing.T) {
 			RuntimeMetricsCollectionInterval: minimumRuntimeCollectionInterval,
 		}
 
-		actual, err := ProvideUnitCounterProvider(cfg, logging.NewNonOperationalLogger())
+		actual, err := ProvideUnitCounterProvider(cfg, logging.NewNoopLogger())
 		assert.NoError(t, err)
 		assert.Nil(t, actual)
 	})

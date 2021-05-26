@@ -10,7 +10,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -64,7 +63,7 @@ func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-	logger := zerolog.NewLogger()
+	logger := logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 
 	if debug {
 		logger.SetLevel(logging.DebugLevel)
@@ -136,6 +135,7 @@ func main() {
 					if accountCreationError != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("creating account #%d: %w", j, accountCreationError))
 					}
+
 					iterationLogger.WithValue(keys.AccountIDKey, createdAccount.ID).Debug("created account")
 				}
 				wg.Done()
@@ -164,6 +164,7 @@ func main() {
 					if apiClientCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("API Client webhook #%d: %w", j, apiClientCreationErr))
 					}
+
 					iterationLogger.WithValue(keys.APIClientDatabaseIDKey, createdAPIClient.ID).Debug("created API Client")
 				}
 				wg.Done()
@@ -178,6 +179,7 @@ func main() {
 					if webhookCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("creating webhook #%d: %w", j, webhookCreationErr))
 					}
+
 					iterationLogger.WithValue(keys.WebhookIDKey, createdWebhook.ID).Debug("created webhook")
 				}
 				wg.Done()
@@ -193,6 +195,7 @@ func main() {
 					if itemCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("creating item #%d: %w", j, itemCreationErr))
 					}
+
 					iterationLogger.WithValue(keys.WebhookIDKey, createdItem.ID).Debug("created item")
 				}
 				wg.Done()

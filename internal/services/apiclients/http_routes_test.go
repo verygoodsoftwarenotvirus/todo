@@ -13,10 +13,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -151,7 +151,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
@@ -168,7 +168,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		a := &passwords.MockAuthenticator{}
+		a := &authentication.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -215,7 +215,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
@@ -225,7 +225,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		var err error
 		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(nil))
@@ -240,7 +240,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		helper.service.cfg.minimumPasswordLength = math.MaxUint8
 		helper.exampleInput.Password = ""
@@ -259,7 +259,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
@@ -287,7 +287,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
@@ -311,7 +311,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		a := &passwords.MockAuthenticator{}
+		a := &authentication.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -332,7 +332,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
@@ -356,7 +356,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		a := &passwords.MockAuthenticator{}
+		a := &authentication.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -377,7 +377,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
@@ -393,7 +393,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 
-		a := &passwords.MockAuthenticator{}
+		a := &authentication.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -432,7 +432,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
@@ -449,7 +449,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		a := &passwords.MockAuthenticator{}
+		a := &authentication.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -491,7 +491,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
 
@@ -507,7 +507,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 
-		a := &passwords.MockAuthenticator{}
+		a := &authentication.MockAuthenticator{}
 		a.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,

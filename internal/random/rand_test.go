@@ -28,6 +28,7 @@ func TestGenerateBase32EncodedString(T *testing.T) {
 		assert.NotEmpty(t, actual)
 	})
 }
+
 func TestGenerateBase64EncodedString(T *testing.T) {
 	T.Parallel()
 
@@ -41,6 +42,7 @@ func TestGenerateBase64EncodedString(T *testing.T) {
 		assert.NotEmpty(t, actual)
 	})
 }
+
 func TestGenerateRawBytes(T *testing.T) {
 	T.Parallel()
 

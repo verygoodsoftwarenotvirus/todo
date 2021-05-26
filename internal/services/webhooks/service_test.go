@@ -18,7 +18,7 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		logger:             logging.NewNonOperationalLogger(),
+		logger:             logging.NewNoopLogger(),
 		webhookCounter:     &mockmetrics.UnitCounter{},
 		webhookDataManager: &mocktypes.WebhookDataManager{},
 		webhookIDFetcher:   func(req *http.Request) uint64 { return 0 },
@@ -40,10 +40,10 @@ func TestProvideWebhooksService(T *testing.T) {
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNonOperationalLogger()), WebhookIDURIParamKey, "webhook").Return(func(*http.Request) uint64 { return 0 })
+			mock.IsType(logging.NewNoopLogger()), WebhookIDURIParamKey, "webhook").Return(func(*http.Request) uint64 { return 0 })
 
 		actual := ProvideWebhooksService(
-			logging.NewNonOperationalLogger(),
+			logging.NewNoopLogger(),
 			&mocktypes.WebhookDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,

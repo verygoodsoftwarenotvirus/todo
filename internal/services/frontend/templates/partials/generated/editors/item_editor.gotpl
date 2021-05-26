@@ -14,8 +14,8 @@
             <div class="mb3">
                 <label for="details">Details</label>
                 <div class="input-group">
-                    <input class="form-control" type="text" id="" name="details" placeholder="" value="{{ .Details }}" />
-                    
+                    <input class="form-control" type="text" id="" name="details" placeholder="" required="" value="{{ .Details }}" />
+                    <div class="invalid-feedback" style="width: 100%;">details is required.</div>
                 </div>
             </div>
             <hr class="mb-4" />

@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/stripe/stripe-go"
-	"github.com/stripe/stripe-go/form"
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/form"
 )
 
 var _ stripe.Backend = (*mockBackend)(nil)
@@ -28,7 +28,7 @@ func (m *mockBackend) AnticipateCall(t *testing.T, v interface{}) {
 	m.anticipatedReturns = append(m.anticipatedReturns, b)
 }
 
-func (m *mockBackend) Call(method, path, key string, params stripe.ParamsContainer, v interface{}) error {
+func (m *mockBackend) Call(method, path, key string, params stripe.ParamsContainer, v stripe.LastResponseSetter) error {
 	b := m.anticipatedReturns[0]
 	m.anticipatedReturns = append(m.anticipatedReturns[:0], m.anticipatedReturns[1:]...)
 
@@ -39,7 +39,7 @@ func (m *mockBackend) Call(method, path, key string, params stripe.ParamsContain
 	return m.Called(method, path, key, params, v).Error(0)
 }
 
-func (m *mockBackend) CallRaw(method, path, key string, body *form.Values, params *stripe.Params, v interface{}) error {
+func (m *mockBackend) CallRaw(method, path, key string, body *form.Values, params *stripe.Params, v stripe.LastResponseSetter) error {
 	b := m.anticipatedReturns[0]
 	m.anticipatedReturns = append(m.anticipatedReturns[:0], m.anticipatedReturns[1:]...)
 
@@ -50,7 +50,7 @@ func (m *mockBackend) CallRaw(method, path, key string, body *form.Values, param
 	return m.Called(method, path, key, body, params, v).Error(0)
 }
 
-func (m *mockBackend) CallMultipart(method, path, key, boundary string, body *bytes.Buffer, params *stripe.Params, v interface{}) error {
+func (m *mockBackend) CallMultipart(method, path, key, boundary string, body *bytes.Buffer, params *stripe.Params, v stripe.LastResponseSetter) error {
 	b := m.anticipatedReturns[0]
 	m.anticipatedReturns = append(m.anticipatedReturns[:0], m.anticipatedReturns[1:]...)
 
@@ -61,6 +61,6 @@ func (m *mockBackend) CallMultipart(method, path, key, boundary string, body *by
 	return m.Called(method, path, key, boundary, body, params, v).Error(0)
 }
 
-func (m *mockBackend) SetMaxNetworkRetries(maxNetworkRetries int) {
+func (m *mockBackend) SetMaxNetworkRetries(maxNetworkRetries int64) {
 	m.Called(maxNetworkRetries)
 }

@@ -1,4 +1,3 @@
-{{- /* this template generates a template, don't be mad at me i'm trying my hardest */ -}}
 <div id="content" class="">
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">{{ print "{{ componentTitle . }}" }}</h1>

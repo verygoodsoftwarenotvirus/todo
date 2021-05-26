@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -174,7 +174,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		authenticator := &passwords.MockAuthenticator{}
+		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -197,7 +197,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		authenticator := &passwords.MockAuthenticator{}
+		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -205,7 +205,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
 			helper.exampleLoginInput.TOTPToken,
-		).Return(true, passwords.ErrInvalidTOTPToken)
+		).Return(true, authentication.ErrInvalidTOTPToken)
 		helper.service.authenticator = authenticator
 
 		actual, err := helper.service.validateLogin(helper.ctx, helper.exampleUser, helper.exampleLoginInput)
@@ -222,7 +222,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 
 		expectedErr := errors.New("arbitrary")
 
-		authenticator := &passwords.MockAuthenticator{}
+		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,
@@ -245,7 +245,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		authenticator := &passwords.MockAuthenticator{}
+		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutil.ContextMatcher,

@@ -8,26 +8,24 @@ import (
 	"os"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-
-	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	viper "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config/viper"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -40,7 +38,7 @@ const (
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	devSqliteConnDetails     = "/tmp/db"
 	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
-	defaultCookieName        = authentication.DefaultCookieName
+	defaultCookieName        = authservice.DefaultCookieName
 
 	// run modes.
 	developmentEnv = "development"
@@ -78,12 +76,12 @@ var (
 		StartupDeadline: time.Minute,
 	}
 
-	localCookies = authentication.CookieConfig{
+	localCookies = authservice.CookieConfig{
 		Name:       defaultCookieName,
 		Domain:     defaultCookieDomain,
 		HashKey:    debugCookieSecret,
 		SigningKey: debugCookieSecret,
-		Lifetime:   authentication.DefaultCookieLifetime,
+		Lifetime:   authservice.DefaultCookieLifetime,
 		SecureOnly: false,
 	}
 
@@ -95,27 +93,47 @@ var (
 			ServiceName:       "todo-service",
 		},
 	}
-
-	localCapitalism = capitalism.Config{
-		Enabled:  true,
-		Provider: capitalism.StripeProvider,
-		Stripe: &capitalism.StripeConfig{
-			WebhookSecret: os.Getenv("TODO_SERVICE_STRIPE_WEBHOOK_SECRET"),
-			SuccessURL:    "http://localhost:8888/billing/checkout/success",
-			CancelURL:     "http://localhost:8888/billing/checkout/cancel",
-			APIKey:        os.Getenv("TODO_SERVICE_STRIPE_API_KEY"),
-		},
-	}
 )
 
-type configFunc func(filePath string) error
+func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
+	logger := logging.NewNoopLogger()
+
+	cfg := &secrets.Config{
+		Provider: secrets.ProviderLocal,
+		Key:      "SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU=",
+	}
+
+	k, err := secrets.ProvideSecretKeeper(ctx, cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	sm, err := secrets.ProvideSecretManager(logger, k)
+	if err != nil {
+		panic(err)
+	}
+
+	return sm
+}
+
+func encryptAndSaveConfig(ctx context.Context, outputPath string, cfg *config.InstanceConfig) error {
+	sm := initializeLocalSecretManager(ctx)
+	output, err := sm.Encrypt(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("encrypting config: %v", err)
+	}
+
+	return os.WriteFile(outputPath, []byte(output), 0644)
+}
+
+type configFunc func(ctx context.Context, filePath string) error
 
 var files = map[string]configFunc{
-	"environments/local/config.toml":                                    localDevelopmentConfig,
-	"environments/testing/config_files/frontend-tests.toml":             frontendTestsConfig,
-	"environments/testing/config_files/integration-tests-postgres.toml": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
-	"environments/testing/config_files/integration-tests-sqlite.toml":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
-	"environments/testing/config_files/integration-tests-mariadb.toml":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
+	"environments/local/service.config":                                   localDevelopmentConfig,
+	"environments/testing/config_files/frontend-tests.config":             frontendTestsConfig,
+	"environments/testing/config_files/integration-tests-postgres.config": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
+	"environments/testing/config_files/integration-tests-sqlite.config":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
+	"environments/testing/config_files/integration-tests-mariadb.config":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
 }
 
 func buildLocalFrontendServiceConfig() frontend.Config {
@@ -125,7 +143,7 @@ func buildLocalFrontendServiceConfig() frontend.Config {
 }
 
 func mustHashPass(password string) string {
-	hashed, err := passwords.ProvideArgon2Authenticator(logging.NewNonOperationalLogger()).
+	hashed, err := authentication.ProvideArgon2Authenticator(logging.NewNoopLogger()).
 		HashPassword(context.Background(), password)
 
 	if err != nil {
@@ -146,8 +164,8 @@ func generatePASETOKey() []byte {
 	return b
 }
 
-func localDevelopmentConfig(filePath string) error {
-	cfg := &config.ServerConfig{
+func localDevelopmentConfig(ctx context.Context, filePath string) error {
+	cfg := &config.InstanceConfig{
 		Meta: config.MetaSettings{
 			Debug:   true,
 			RunMode: developmentEnv,
@@ -155,21 +173,8 @@ func localDevelopmentConfig(filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Server:   localServer,
-		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authentication.Config{
-			PASETO: authentication.PASETOConfig{
-				Issuer:       "todo_service",
-				Lifetime:     defaultPASETOLifetime,
-				LocalModeKey: examplePASETOKey,
-			},
-			Cookies:               localCookies,
-			Debug:                 true,
-			EnableUserSignup:      true,
-			MinimumUsernameLength: 4,
-			MinimumPasswordLength: 8,
-		},
-		Database: config2.Config{
+		Server: localServer,
+		Database: dbconfig.Config{
 			Debug:                     true,
 			RunMigrations:             true,
 			MaxPingAttempts:           maxAttempts,
@@ -206,12 +211,27 @@ func localDevelopmentConfig(filePath string) error {
 			},
 		},
 		Search: search.Config{
-			Provider:       "bleve",
-			ItemsIndexPath: "/search_indices/items.bleve",
+			Provider: "bleve",
 		},
-		Webhooks: webhooks.Config{
-			Debug:   true,
-			Enabled: false,
+		Services: config.ServicesConfigurations{
+			Auth: authservice.Config{
+				PASETO: authservice.PASETOConfig{
+					Issuer:       "todo_service",
+					Lifetime:     defaultPASETOLifetime,
+					LocalModeKey: examplePASETOKey,
+				},
+				Cookies:               localCookies,
+				Debug:                 true,
+				EnableUserSignup:      true,
+				MinimumUsernameLength: 4,
+				MinimumPasswordLength: 8,
+			},
+			Frontend: buildLocalFrontendServiceConfig(),
+			Webhooks: webhooks.Config{
+				Debug:   true,
+				Enabled: false,
+			},
+			Items: items.Config{SearchIndexPath: "/search_indices/items.bleve"},
 		},
 		AuditLog: audit.Config{
 			Debug:   true,
@@ -219,20 +239,11 @@ func localDevelopmentConfig(filePath string) error {
 		},
 	}
 
-	vConfig, err := viper.FromConfig(cfg)
-	if err != nil {
-		return fmt.Errorf("converting config object: %w", err)
-	}
-
-	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
-	}
-
-	return nil
+	return encryptAndSaveConfig(ctx, filePath, cfg)
 }
 
-func frontendTestsConfig(filePath string) error {
-	cfg := &config.ServerConfig{
+func frontendTestsConfig(ctx context.Context, filePath string) error {
+	cfg := &config.InstanceConfig{
 		Meta: config.MetaSettings{
 			Debug:   false,
 			RunMode: developmentEnv,
@@ -240,21 +251,8 @@ func frontendTestsConfig(filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Server:   localServer,
-		Frontend: buildLocalFrontendServiceConfig(),
-		Auth: authentication.Config{
-			PASETO: authentication.PASETOConfig{
-				Issuer:       "todo_service",
-				Lifetime:     defaultPASETOLifetime,
-				LocalModeKey: examplePASETOKey,
-			},
-			Cookies:               localCookies,
-			Debug:                 true,
-			EnableUserSignup:      true,
-			MinimumUsernameLength: 4,
-			MinimumPasswordLength: 8,
-		},
-		Database: config2.Config{
+		Server: localServer,
+		Database: dbconfig.Config{
 			Debug:                     true,
 			RunMigrations:             true,
 			Provider:                  postgres,
@@ -279,12 +277,34 @@ func frontendTestsConfig(filePath string) error {
 			},
 		},
 		Search: search.Config{
-			Provider:       "bleve",
-			ItemsIndexPath: defaultItemsSearchIndexPath,
+			Provider: "bleve",
 		},
-		Webhooks: webhooks.Config{
-			Debug:   true,
-			Enabled: false,
+		Services: config.ServicesConfigurations{
+			Auth: authservice.Config{
+				PASETO: authservice.PASETOConfig{
+					Issuer:       "todo_service",
+					Lifetime:     defaultPASETOLifetime,
+					LocalModeKey: examplePASETOKey,
+				},
+				Cookies:               localCookies,
+				Debug:                 true,
+				EnableUserSignup:      true,
+				MinimumUsernameLength: 4,
+				MinimumPasswordLength: 8,
+			},
+			Frontend: buildLocalFrontendServiceConfig(),
+			Webhooks: webhooks.Config{
+				Debug:   true,
+				Enabled: false,
+			},
+			Items: items.Config{
+				SearchIndexPath: defaultItemsSearchIndexPath,
+				Logger: logging.Config{
+					Name:     "items",
+					Level:    logging.InfoLevel,
+					Provider: logging.ProviderZerolog,
+				},
+			},
 		},
 		AuditLog: audit.Config{
 			Debug:   true,
@@ -292,26 +312,17 @@ func frontendTestsConfig(filePath string) error {
 		},
 	}
 
-	vConfig, err := viper.FromConfig(cfg)
-	if err != nil {
-		return fmt.Errorf("converting config object: %w", err)
-	}
-
-	if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-		return fmt.Errorf("writing developmentEnv config: %w", writeErr)
-	}
-
-	return nil
+	return encryptAndSaveConfig(ctx, filePath, cfg)
 }
 
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
-	return func(filePath string) error {
+	return func(ctx context.Context, filePath string) error {
 		startupDeadline := time.Minute
 		if dbVendor == mariadb {
 			startupDeadline = 5 * time.Minute
 		}
 
-		cfg := &config.ServerConfig{
+		cfg := &config.InstanceConfig{
 			Meta: config.MetaSettings{
 				Debug:   false,
 				RunMode: testingEnv,
@@ -324,26 +335,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				HTTPPort:        defaultPort,
 				StartupDeadline: startupDeadline,
 			},
-			Frontend: buildLocalFrontendServiceConfig(),
-			Auth: authentication.Config{
-				PASETO: authentication.PASETOConfig{
-					Issuer:       "todo_service",
-					Lifetime:     defaultPASETOLifetime,
-					LocalModeKey: examplePASETOKey,
-				},
-				Cookies: authentication.CookieConfig{
-					Name:       defaultCookieName,
-					Domain:     defaultCookieDomain,
-					SigningKey: debugCookieSecret,
-					Lifetime:   authentication.DefaultCookieLifetime,
-					SecureOnly: false,
-				},
-				Debug:                 false,
-				EnableUserSignup:      true,
-				MinimumUsernameLength: 4,
-				MinimumPasswordLength: 8,
-			},
-			Database: config2.Config{
+
+			Database: dbconfig.Config{
 				Debug:                     false,
 				RunMigrations:             true,
 				Provider:                  dbVendor,
@@ -376,12 +369,40 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 			},
 			Search: search.Config{
-				Provider:       "bleve",
-				ItemsIndexPath: defaultItemsSearchIndexPath,
+				Provider: "bleve",
 			},
-			Webhooks: webhooks.Config{
-				Debug:   false,
-				Enabled: false,
+			Services: config.ServicesConfigurations{
+				Auth: authservice.Config{
+					PASETO: authservice.PASETOConfig{
+						Issuer:       "todo_service",
+						Lifetime:     defaultPASETOLifetime,
+						LocalModeKey: examplePASETOKey,
+					},
+					Cookies: authservice.CookieConfig{
+						Name:       defaultCookieName,
+						Domain:     defaultCookieDomain,
+						SigningKey: debugCookieSecret,
+						Lifetime:   authservice.DefaultCookieLifetime,
+						SecureOnly: false,
+					},
+					Debug:                 false,
+					EnableUserSignup:      true,
+					MinimumUsernameLength: 4,
+					MinimumPasswordLength: 8,
+				},
+				Frontend: buildLocalFrontendServiceConfig(),
+				Webhooks: webhooks.Config{
+					Debug:   true,
+					Enabled: false,
+				},
+				Items: items.Config{
+					SearchIndexPath: defaultItemsSearchIndexPath,
+					Logger: logging.Config{
+						Name:     "items",
+						Level:    logging.InfoLevel,
+						Provider: logging.ProviderZerolog,
+					},
+				},
 			},
 			AuditLog: audit.Config{
 				Debug:   false,
@@ -389,22 +410,15 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			},
 		}
 
-		vConfig, err := viper.FromConfig(cfg)
-		if err != nil {
-			return fmt.Errorf("converting config object: %w", err)
-		}
-
-		if writeErr := vConfig.WriteConfigAs(filePath); writeErr != nil {
-			return fmt.Errorf("writing developmentEnv config: %w", writeErr)
-		}
-
-		return nil
+		return encryptAndSaveConfig(ctx, filePath, cfg)
 	}
 }
 
 func main() {
+	ctx := context.Background()
+
 	for filePath, fun := range files {
-		if err := fun(filePath); err != nil {
+		if err := fun(ctx, filePath); err != nil {
 			log.Fatalf("error rendering %s: %v", filePath, err)
 		}
 	}

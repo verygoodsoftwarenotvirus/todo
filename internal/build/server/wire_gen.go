@@ -7,8 +7,8 @@ package server
 
 import (
 	"context"
-	"database/sql"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -16,7 +16,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/passwords"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
@@ -24,7 +23,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	authentication2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
@@ -37,7 +36,7 @@ import (
 // Injectors from build.go:
 
 // Build builds a server.
-func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger, dbm database.DataManager, db *sql.DB, authenticator passwords.Authenticator) (*server.HTTPServer, error) {
+func Build(ctx context.Context, cfg *config.InstanceConfig, logger logging.Logger) (*server.HTTPServer, error) {
 	serverConfig := cfg.Server
 	observabilityConfig := &cfg.Observability
 	metricsConfig := &observabilityConfig.Metrics
@@ -45,14 +44,25 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	if err != nil {
 		return nil, err
 	}
-	authenticationConfig := &cfg.Auth
-	userDataManager := database.ProvideUserDataManager(dbm)
-	authAuditManager := database.ProvideAuthAuditManager(dbm)
-	apiClientDataManager := database.ProvideAPIClientDataManager(dbm)
-	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dbm)
+	servicesConfigurations := &cfg.Services
+	authenticationConfig := &servicesConfigurations.Auth
+	authenticator := authentication.ProvideArgon2Authenticator(logger)
+	configConfig := &cfg.Database
+	db, err := config2.ProvideDatabaseConnection(logger, configConfig)
+	if err != nil {
+		return nil, err
+	}
+	dataManager, err := config.ProvideDatabaseClient(ctx, logger, db, cfg)
+	if err != nil {
+		return nil, err
+	}
+	userDataManager := database.ProvideUserDataManager(dataManager)
+	authAuditManager := database.ProvideAuthAuditManager(dataManager)
+	apiClientDataManager := database.ProvideAPIClientDataManager(dataManager)
+	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dataManager)
 	cookieConfig := authenticationConfig.Cookies
-	databaseConfig := cfg.Database
-	sessionManager, err := config2.ProvideSessionManager(cookieConfig, databaseConfig, db)
+	config3 := cfg.Database
+	sessionManager, err := config2.ProvideSessionManager(cookieConfig, config3, db)
 	if err != nil {
 		return nil, err
 	}
@@ -60,13 +70,13 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	contentType := encoding.ProvideContentType(encodingConfig)
 	serverEncoderDecoder := encoding.ProvideServerEncoderDecoder(logger, contentType)
 	routeParamManager := chi.NewRouteParamManager()
-	authService, err := authentication.ProvideService(logger, authenticationConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, serverEncoderDecoder, routeParamManager)
+	authService, err := authentication2.ProvideService(logger, authenticationConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, serverEncoderDecoder, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
-	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dbm)
+	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dataManager)
 	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, serverEncoderDecoder, routeParamManager)
-	accountDataManager := database.ProvideAccountDataManager(dbm)
+	accountDataManager := database.ProvideAccountDataManager(dataManager)
 	unitCounterProvider, err := metrics.ProvideUnitCounterProvider(metricsConfig, logger)
 	if err != nil {
 		return nil, err
@@ -83,25 +93,25 @@ func Build(ctx context.Context, cfg *config.ServerConfig, logger logging.Logger,
 	accountDataService := accounts.ProvideService(logger, accountDataManager, accountUserMembershipDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
 	apiclientsConfig := apiclients.ProvideConfig(authenticationConfig)
 	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, routeParamManager, apiclientsConfig)
-	itemDataManager := database.ProvideItemDataManager(dbm)
-	searchConfig := cfg.Search
+	itemsConfig := servicesConfigurations.Items
+	itemDataManager := database.ProvideItemDataManager(dataManager)
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	itemDataService, err := items.ProvideService(logger, itemDataManager, serverEncoderDecoder, unitCounterProvider, searchConfig, indexManagerProvider, routeParamManager)
+	itemDataService, err := items.ProvideService(logger, itemsConfig, itemDataManager, serverEncoderDecoder, unitCounterProvider, indexManagerProvider, routeParamManager)
 	if err != nil {
 		return nil, err
 	}
-	webhookDataManager := database.ProvideWebhookDataManager(dbm)
+	webhookDataManager := database.ProvideWebhookDataManager(dataManager)
 	webhookDataService := webhooks.ProvideWebhooksService(logger, webhookDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
-	adminUserDataManager := database.ProvideAdminUserDataManager(dbm)
-	adminAuditManager := database.ProvideAdminAuditManager(dbm)
+	adminUserDataManager := database.ProvideAdminUserDataManager(dataManager)
+	adminAuditManager := database.ProvideAdminAuditManager(dataManager)
 	adminService := admin.ProvideService(logger, authenticationConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
-	frontendConfig := &cfg.Frontend
+	frontendConfig := &servicesConfigurations.Frontend
 	frontendAuthService := frontend.ProvideAuthService(authService)
 	usersService := frontend.ProvideUsersService(userDataService)
 	capitalismConfig := &cfg.Capitalism
 	stripeConfig := capitalismConfig.Stripe
-	paymentManager := stripe.NewStripePaymentManager(logger, stripeConfig)
-	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dbm, routeParamManager, paymentManager)
+	paymentManager := stripe.ProvideStripePaymentManager(logger, stripeConfig)
+	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dataManager, routeParamManager, paymentManager)
 	router := chi.NewRouter(logger)
 	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
 	if err != nil {

@@ -38,7 +38,7 @@ func TestNewUploadManager(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		l := logging.NewNonOperationalLogger()
+		l := logging.NewNoopLogger()
 		cfg := &Config{
 			BucketName: t.Name(),
 			Provider:   MemoryProvider,
@@ -57,7 +57,7 @@ func TestNewUploadManager(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		l := logging.NewNonOperationalLogger()
+		l := logging.NewNoopLogger()
 		rpm := &mockrouting.RouteParamManager{}
 
 		x, err := NewUploadManager(ctx, l, nil, rpm)
@@ -71,7 +71,7 @@ func TestNewUploadManager(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		l := logging.NewNonOperationalLogger()
+		l := logging.NewNoopLogger()
 		cfg := &Config{}
 		rpm := &mockrouting.RouteParamManager{}
 		rpm.On("BuildRouteParamStringIDFetcher", cfg.UploadFilenameKey).Return(func(*http.Request) string { return t.Name() })

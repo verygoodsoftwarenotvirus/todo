@@ -28,7 +28,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
@@ -62,7 +62,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 
 		helper := newTestHelper(t)
 		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
@@ -109,7 +109,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleCreationInput := &types.WebhookCreationInput{}
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
@@ -131,7 +131,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
@@ -367,7 +367,7 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleUpdateInput)
@@ -441,7 +441,7 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := &types.WebhookUpdateInput{}
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleUpdateInput)
@@ -459,7 +459,7 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleUpdateInput)
@@ -488,7 +488,7 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleUpdateInput)
@@ -517,7 +517,7 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleUpdateInput)
@@ -552,7 +552,7 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNonOperationalLogger(), encoding.ContentTypeJSON)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleUpdateInput := fakes.BuildFakeWebhookUpdateInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleUpdateInput)

@@ -23,7 +23,7 @@ func TestConfig_Initialize(T *testing.T) {
 			Provider: Jaeger,
 		}
 
-		actual, err := cfg.Initialize(logging.NewNonOperationalLogger())
+		actual, err := cfg.Initialize(logging.NewNoopLogger())
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
@@ -33,7 +33,7 @@ func TestConfig_Initialize(T *testing.T) {
 
 		cfg := &Config{}
 
-		actual, err := cfg.Initialize(logging.NewNonOperationalLogger())
+		actual, err := cfg.Initialize(logging.NewNoopLogger())
 		assert.Nil(t, actual)
 		assert.NoError(t, err)
 	})

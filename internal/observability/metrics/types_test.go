@@ -18,12 +18,12 @@ func TestEnsureUnitCounter(T *testing.T) {
 			return &noopUnitCounter{}
 		}
 
-		assert.NotNil(t, EnsureUnitCounter(ucp, logging.NewNonOperationalLogger(), "", ""))
+		assert.NotNil(t, EnsureUnitCounter(ucp, logging.NewNoopLogger(), "", ""))
 	})
 
 	T.Run("with nil UnitCounterProvider", func(t *testing.T) {
 		t.Parallel()
 
-		assert.NotNil(t, EnsureUnitCounter(nil, logging.NewNonOperationalLogger(), "", ""))
+		assert.NotNil(t, EnsureUnitCounter(nil, logging.NewNoopLogger(), "", ""))
 	})
 }

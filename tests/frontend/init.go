@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-	zerolog "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging/zerolog"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
@@ -17,7 +17,7 @@ func init() {
 	u := testutil.DetermineServiceURL()
 	urlToUse = u.String()
 
-	logger := zerolog.NewLogger()
+	logger := logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
 	testutil.EnsureServerIsUp(context.Background(), urlToUse)
 

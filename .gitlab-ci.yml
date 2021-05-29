@@ -20,6 +20,16 @@ coverage:
     - go run mage.go ensureMage
     - mage vendor coverage
 
+dependency-injection-check:
+  stage: quality
+  image: golang:stretch
+  variables:
+    GOPATH: "/go"
+  script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - go run mage.go ensureMage
+    - mage rewire
+
 golang-format-check:
   stage: quality
   image: golang:stretch

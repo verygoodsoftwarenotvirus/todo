@@ -8,12 +8,11 @@ import (
 	"os"
 	"strconv"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/build/server"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 
 	chimiddleware "github.com/go-chi/chi/middleware"
 	flag "github.com/spf13/pflag"

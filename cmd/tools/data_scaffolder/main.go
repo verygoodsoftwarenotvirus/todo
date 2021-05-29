@@ -11,7 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -21,9 +20,9 @@ import (
 )
 
 var (
-	uri string
-	userCount,
-	dataCount uint16
+	uri            string
+	userCount      uint16
+	dataCount      uint16
 	debug          bool
 	singleUserMode bool
 
@@ -95,7 +94,6 @@ func main() {
 	for i := 0; i < int(userCount); i++ {
 		wg.Add(1)
 		go func(x int, wg *sync.WaitGroup) {
-			// create user.
 			createdUser, userCreationErr := testutil.CreateServiceUser(ctx, uri, "")
 			if userCreationErr != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("creating user #%d: %w", x, userCreationErr))

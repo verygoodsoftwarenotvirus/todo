@@ -20,11 +20,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -135,8 +135,8 @@ var files = map[string]configFunc{
 	"environments/testing/config_files/integration-tests-mariadb.config":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
 }
 
-func buildLocalFrontendServiceConfig() frontend.Config {
-	return frontend.Config{
+func buildLocalFrontendServiceConfig() frontendservice.Config {
+	return frontendservice.Config{
 		UseFakeData: false,
 	}
 }
@@ -154,8 +154,6 @@ func mustHashPass(password string) string {
 
 func generatePASETOKey() []byte {
 	b := make([]byte, pasetoSecretSize)
-
-	// Note that err == nil only if we read len(b) bytes.
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
@@ -226,13 +224,20 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				MinimumPasswordLength: 8,
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
-			Webhooks: webhooks.Config{
+			Webhooks: webhooksservice.Config{
 				Debug:   true,
 				Enabled: false,
 			},
-			Items: items.Config{SearchIndexPath: "/search_indices/items.bleve"},
+			Items: itemsservice.Config{
+				SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				Logger: logging.Config{
+					Name:     "items",
+					Level:    logging.InfoLevel,
+					Provider: logging.ProviderZerolog,
+				},
+			},
 		},
-		AuditLog: audit.Config{
+		AuditLog: auditservice.Config{
 			Debug:   true,
 			Enabled: true,
 		},
@@ -292,12 +297,12 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				MinimumPasswordLength: 8,
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
-			Webhooks: webhooks.Config{
+			Webhooks: webhooksservice.Config{
 				Debug:   true,
 				Enabled: false,
 			},
-			Items: items.Config{
-				SearchIndexPath: defaultItemsSearchIndexPath,
+			Items: itemsservice.Config{
+				SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 				Logger: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
@@ -305,7 +310,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				},
 			},
 		},
-		AuditLog: audit.Config{
+		AuditLog: auditservice.Config{
 			Debug:   true,
 			Enabled: true,
 		},
@@ -334,7 +339,6 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				HTTPPort:        defaultPort,
 				StartupDeadline: startupDeadline,
 			},
-
 			Database: dbconfig.Config{
 				Debug:                     false,
 				RunMigrations:             true,
@@ -390,12 +394,12 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					MinimumPasswordLength: 8,
 				},
 				Frontend: buildLocalFrontendServiceConfig(),
-				Webhooks: webhooks.Config{
+				Webhooks: webhooksservice.Config{
 					Debug:   true,
 					Enabled: false,
 				},
-				Items: items.Config{
-					SearchIndexPath: defaultItemsSearchIndexPath,
+				Items: itemsservice.Config{
+					SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 					Logger: logging.Config{
 						Name:     "items",
 						Level:    logging.InfoLevel,
@@ -403,7 +407,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					},
 				},
 			},
-			AuditLog: audit.Config{
+			AuditLog: auditservice.Config{
 				Debug:   false,
 				Enabled: true,
 			},

@@ -18,15 +18,15 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	accountsservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/accounts"
+	adminservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/admin"
+	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/apiclients"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/audit"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/authentication"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/frontend"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/items"
+	usersservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/users"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/naff/example_output/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
@@ -57,14 +57,14 @@ func Build(
 		chi.Providers,
 		authentication.Providers,
 		authservice.Providers,
-		users.Providers,
-		accounts.Providers,
-		apiclients.Providers,
-		webhooks.Providers,
-		audit.Providers,
-		admin.Providers,
-		frontend.Providers,
-		items.Providers,
+		usersservice.Providers,
+		accountsservice.Providers,
+		apiclientsservice.Providers,
+		webhooksservice.Providers,
+		auditservice.Providers,
+		adminservice.Providers,
+		frontendservice.Providers,
+		itemsservice.Providers,
 	)
 
 	return nil, nil

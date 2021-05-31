@@ -58,7 +58,7 @@ func (s *service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 
 		apiClient, err := s.fetchAPIClient(ctx, sessionCtxData, req)
 		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
+			observability.AcknowledgeError(err, logger, span, "fetching API client from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}

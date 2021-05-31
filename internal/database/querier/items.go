@@ -17,7 +17,7 @@ var (
 	_ types.ItemDataManager = (*SQLQuerier)(nil)
 )
 
-// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
+// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an item struct.
 func (q *SQLQuerier) scanItem(ctx context.Context, scan database.Scanner, includeCounts bool) (x *types.Item, filteredCount, totalCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
@@ -324,8 +324,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 	return x, nil
 }
 
-// UpdateItem updates a particular item. Note that UpdateItem expects the
-// provided input to have a valid ID.
+// UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, changedByUser uint64, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()

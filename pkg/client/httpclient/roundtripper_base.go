@@ -10,13 +10,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"github.com/hashicorp/go-retryablehttp"
-
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
 const (
 	userAgentHeader = "User-Agent"
-	userAgent       = "TODO Service Client"
+	userAgent       = "Todo Service Client"
 
 	maxRetryCount = 5
 	minRetryWait  = 100 * time.Millisecond

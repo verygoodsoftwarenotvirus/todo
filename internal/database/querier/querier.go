@@ -8,15 +8,13 @@ import (
 	"sync"
 	"time"
 
-	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -39,7 +37,7 @@ var _ database.DataManager = (*SQLQuerier)(nil)
 
 // SQLQuerier is the primary database querying client. All tracing/logging/query execution happens here. Query building generally happens elsewhere.
 type SQLQuerier struct {
-	config          *config2.Config
+	config          *dbconfig.Config
 	db              *sql.DB
 	sqlQueryBuilder querybuilding.SQLQueryBuilder
 	timeFunc        func() uint64
@@ -54,7 +52,7 @@ func ProvideDatabaseClient(
 	ctx context.Context,
 	logger logging.Logger,
 	db *sql.DB,
-	cfg *config2.Config,
+	cfg *dbconfig.Config,
 	sqlQueryBuilder querybuilding.SQLQueryBuilder,
 	shouldCreateTestUser bool,
 ) (database.DataManager, error) {
@@ -73,7 +71,7 @@ func ProvideDatabaseClient(
 		idStrategy:      DefaultIDRetrievalStrategy,
 	}
 
-	if cfg.Provider == config2.PostgresProvider {
+	if cfg.Provider == dbconfig.PostgresProvider {
 		c.idStrategy = ReturningStatementIDRetrievalStrategy
 	}
 

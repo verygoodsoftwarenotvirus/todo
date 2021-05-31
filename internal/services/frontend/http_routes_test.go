@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 

@@ -7,9 +7,7 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
-	httpclient2 "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
@@ -29,13 +27,13 @@ func init() {
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
 }
 
-func initializeClient() *httpclient2.Client {
+func initializeClient() *httpclient.Client {
 	uri, err := url.Parse(urlToUse)
 	if err != nil {
 		panic(err)
 	}
 
-	c, err := httpclient2.NewClient(uri)
+	c, err := httpclient.NewClient(uri)
 	if err != nil {
 		panic(err)
 	}

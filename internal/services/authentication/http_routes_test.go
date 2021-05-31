@@ -15,14 +15,11 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
-	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"

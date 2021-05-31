@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 var _ querybuilding.AuditLogEntrySQLQueryBuilder = (*Postgres)(nil)

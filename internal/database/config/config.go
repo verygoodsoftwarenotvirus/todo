@@ -8,13 +8,12 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
-	zqlite "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -74,7 +73,7 @@ func ProvideDatabaseConnection(logger logging.Logger, cfg *Config) (*sql.DB, err
 	case MariaDBProvider:
 		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails)
 	case SqliteProvider:
-		return zqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
+		return sqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
 	}

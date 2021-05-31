@@ -5,9 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/vault/api"
-
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/hashicorp/vault/api"
 	"gocloud.dev/secrets"
 	"gocloud.dev/secrets/awskms"
 	"gocloud.dev/secrets/azurekeyvault"

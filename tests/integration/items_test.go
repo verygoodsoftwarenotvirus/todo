@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"testing"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func checkItemEquality(t *testing.T, expected, actual *types.Item) {

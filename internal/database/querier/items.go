@@ -5,12 +5,11 @@ import (
 	"database/sql"
 	"errors"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 

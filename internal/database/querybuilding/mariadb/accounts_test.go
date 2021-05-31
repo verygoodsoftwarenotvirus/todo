@@ -5,9 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"

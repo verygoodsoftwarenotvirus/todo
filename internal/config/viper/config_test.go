@@ -4,21 +4,18 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -113,7 +110,7 @@ func TestFromConfig(T *testing.T) {
 					SearchIndexPath: "/items_index_path",
 				},
 			},
-			Database: config2.Config{
+			Database: dbconfig.Config{
 				Provider:                  "postgres",
 				MetricsCollectionInterval: 2 * time.Second,
 				Debug:                     true,

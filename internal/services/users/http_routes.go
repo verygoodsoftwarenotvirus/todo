@@ -26,7 +26,7 @@ const (
 	// UserIDURIParamKey is used to refer to user IDs in router params.
 	UserIDURIParamKey = "userID"
 
-	totpIssuer             = "todoService"
+	totpIssuer             = "Todo"
 	base64ImagePrefix      = "data:image/jpeg;base64,"
 	minimumPasswordEntropy = 75
 	totpSecretSize         = 64

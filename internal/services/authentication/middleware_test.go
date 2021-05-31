@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"

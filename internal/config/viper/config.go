@@ -6,9 +6,8 @@ import (
 	"math"
 	"time"
 
-	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-
-	config "gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
@@ -47,7 +46,7 @@ func BuildViperConfig() *viper.Viper {
 
 	// metrics stuff.
 	cfg.SetDefault(ConfigKeyDatabaseMetricsCollectionInterval, metrics.DefaultMetricsCollectionInterval)
-	cfg.SetDefault(ConfigKeyMetricsRuntimeCollectionInterval, config2.DefaultMetricsCollectionInterval)
+	cfg.SetDefault(ConfigKeyMetricsRuntimeCollectionInterval, dbconfig.DefaultMetricsCollectionInterval)
 
 	// tracing stuff.
 	cfg.SetDefault(ConfigKeyObservabilityTracingSpanCollectionProbability, 1)

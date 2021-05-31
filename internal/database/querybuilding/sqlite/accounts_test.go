@@ -4,14 +4,12 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/stretchr/testify/mock"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestSqlite_BuildGetAccountQuery(T *testing.T) {

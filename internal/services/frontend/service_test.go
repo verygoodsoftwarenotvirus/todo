@@ -4,10 +4,8 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 

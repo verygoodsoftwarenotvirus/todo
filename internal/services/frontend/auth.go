@@ -2,18 +2,15 @@ package frontend
 
 import (
 	"context"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-
-	// import embed for the side effect.
-	_ "embed"
 	"html/template"
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	_ "embed"
 )
 
 //go:embed templates/partials/auth/login.gotpl

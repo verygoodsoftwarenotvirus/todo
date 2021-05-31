@@ -8,8 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"

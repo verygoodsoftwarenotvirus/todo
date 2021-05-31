@@ -9,12 +9,9 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -23,6 +20,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccountsService_ListHandler(T *testing.T) {

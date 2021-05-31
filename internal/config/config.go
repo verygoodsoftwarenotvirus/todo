@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
@@ -28,6 +26,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 
@@ -136,19 +135,19 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 	}
 
 	if err := cfg.Services.Auth.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Auth portion of config: %w", err)
+		return fmt.Errorf("error validating Auth service portion of config: %w", err)
 	}
 
 	if err := cfg.Services.Frontend.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
+		return fmt.Errorf("error validating Frontend service portion of config: %w", err)
 	}
 
 	if err := cfg.Services.Webhooks.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
+		return fmt.Errorf("error validating Webhooks service portion of config: %w", err)
 	}
 
 	if err := cfg.Services.Items.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
+		return fmt.Errorf("error validating Items service portion of config: %w", err)
 	}
 
 	if err := cfg.AuditLog.ValidateWithContext(ctx); err != nil {

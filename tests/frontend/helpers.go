@@ -77,7 +77,7 @@ func boolPointer(b bool) *bool {
 	return &b
 }
 
-const artifactsDir = "/home/vgsnv/src/gitlab.com/verygoodsoftwarenotvirus/todo/artifacts"
+const artifactsDir = "/relevant/absolute/path/should/go/here"
 
 func saveScreenshotTo(t *testing.T, page playwright.Page, path string) {
 	t.Helper()

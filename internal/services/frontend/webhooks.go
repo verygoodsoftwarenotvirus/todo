@@ -2,17 +2,16 @@ package frontend
 
 import (
 	"context"
-	_ "embed" // import embed for the side effect.
 	"fmt"
 	"html/template"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
+
+	_ "embed"
 )
 
 const (

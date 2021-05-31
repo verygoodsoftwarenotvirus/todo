@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"

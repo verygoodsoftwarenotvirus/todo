@@ -9,7 +9,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 

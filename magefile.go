@@ -14,11 +14,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/magefile/mage/mg"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 
 	"github.com/carolynvs/magex/pkg"
+	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
 

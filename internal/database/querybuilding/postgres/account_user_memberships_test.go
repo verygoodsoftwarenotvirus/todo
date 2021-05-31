@@ -6,11 +6,10 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
-	"github.com/stretchr/testify/assert"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPostgres_BuildGetDefaultAccountIDForUserQuery(T *testing.T) {

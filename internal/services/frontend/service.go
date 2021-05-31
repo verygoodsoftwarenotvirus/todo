@@ -5,17 +5,14 @@ import (
 	"html/template"
 	"net/http"
 
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"

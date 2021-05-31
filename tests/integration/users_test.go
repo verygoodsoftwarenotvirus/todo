@@ -5,9 +5,8 @@ import (
 	"strings"
 	"testing"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"

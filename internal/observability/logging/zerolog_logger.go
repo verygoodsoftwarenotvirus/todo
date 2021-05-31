@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/rs/zerolog"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+
+	"github.com/rs/zerolog"
 )
 
 func init() {

@@ -16,10 +16,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/moul/http2curl"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 const (

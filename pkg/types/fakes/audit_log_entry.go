@@ -1,7 +1,7 @@
 package fakes
 
 import (
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"

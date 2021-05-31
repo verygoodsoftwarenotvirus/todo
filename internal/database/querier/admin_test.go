@@ -5,8 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"

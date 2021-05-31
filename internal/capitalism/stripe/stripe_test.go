@@ -14,11 +14,10 @@ import (
 	"testing"
 	"time"
 
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
+	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

@@ -1,11 +1,11 @@
 package frontend
 
 import (
-	// import embed for the side effect.
-	_ "embed"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
+	_ "embed"
 )
 
 //go:embed assets/favicon.svg

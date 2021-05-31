@@ -6,9 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"

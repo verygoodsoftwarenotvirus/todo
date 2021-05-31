@@ -194,7 +194,7 @@ func main() {
 						quitter.ComplainAndQuit(fmt.Errorf("creating item #%d: %w", j, itemCreationErr))
 					}
 
-					iterationLogger.WithValue(keys.WebhookIDKey, createdItem.ID).Debug("created item")
+					iterationLogger.WithValue(keys.ItemIDKey, createdItem.ID).Debug("created item")
 				}
 				wg.Done()
 			}(wg)

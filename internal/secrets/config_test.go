@@ -5,10 +5,9 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 

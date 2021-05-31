@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	// import embed for the side effect.
 	"embed"
 	"fmt"
 	"io/fs"

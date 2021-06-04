@@ -16,7 +16,7 @@ var (
 	_ querybuilding.APIClientSQLQueryBuilder = (*Postgres)(nil)
 )
 
-// BuildGetBatchOfAPIClientsQuery returns a query that fetches every item in the database within a bucketed range.
+// BuildGetBatchOfAPIClientsQuery returns a query that fetches every API client in the database within a bucketed range.
 func (b *Postgres) BuildGetBatchOfAPIClientsQuery(ctx context.Context, beginID, endID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

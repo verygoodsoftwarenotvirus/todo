@@ -45,7 +45,7 @@ func (b *Postgres) BuildGetAllWebhooksCountQuery(ctx context.Context) string {
 		}))
 }
 
-// BuildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
+// BuildGetBatchOfWebhooksQuery returns a query that fetches every webhook in the database within a bucketed range.
 func (b *Postgres) BuildGetBatchOfWebhooksQuery(ctx context.Context, beginID, endID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

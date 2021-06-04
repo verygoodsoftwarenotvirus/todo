@@ -153,7 +153,7 @@ func (s *TestSuite) TestAccounts_Updating_Returns404ForNonexistentAccount() {
 	})
 }
 
-// convertAccountToAccountUpdateInput creates an AccountUpdateInput struct from an item.
+// convertAccountToAccountUpdateInput creates an AccountUpdateInput struct from an account.
 func convertAccountToAccountUpdateInput(x *types.Account) *types.AccountUpdateInput {
 	return &types.AccountUpdateInput{
 		Name:          x.Name,

@@ -9,7 +9,7 @@ var (
 	// Accounts Table.
 	//
 
-	// AccountsUserMembershipTableColumns are the columns for the items table.
+	// AccountsUserMembershipTableColumns are the columns for the account user memberships table.
 	AccountsUserMembershipTableColumns = []string{
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, IDColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, userOwnershipColumn),
@@ -25,7 +25,7 @@ var (
 	// Accounts Table.
 	//
 
-	// AccountsTableColumns are the columns for the items table.
+	// AccountsTableColumns are the columns for the accounts table.
 	AccountsTableColumns = []string{
 		fmt.Sprintf("%s.%s", AccountsTableName, IDColumn),
 		fmt.Sprintf("%s.%s", AccountsTableName, ExternalIDColumn),

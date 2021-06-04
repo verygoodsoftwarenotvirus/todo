@@ -10,8 +10,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	useragent "github.com/mssola/user_agent"
-	attribute "go.opentelemetry.io/otel/attribute"
-	trace "go.opentelemetry.io/otel/trace"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 func attachUint8ToSpan(span trace.Span, attachmentKey string, id uint8) {

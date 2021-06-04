@@ -26,15 +26,15 @@ type (
 		CanCreateAPIClients() bool
 		CanSeeAPIClients() bool
 		CanDeleteAPIClients() bool
-		CanSeeAuditLogEntriesForItems() bool
 		CanSeeAuditLogEntriesForWebhooks() bool
+		CanSeeAuditLogEntriesForItems() bool
 	}
 )
 
 const (
 	// AccountMemberRole is a role for a plain account participant.
 	AccountMemberRole AccountRole = iota
-	// AccountAdminRole is a role for someone who can manipulate the details of an account.
+	// AccountAdminRole is a role for someone who can manipulate the specifics of an account.
 	AccountAdminRole AccountRole = iota
 
 	accountAdminRoleName  = "account_admin"
@@ -137,12 +137,12 @@ func (r accountRoleCollection) CanDeleteAPIClients() bool {
 	return hasPermission(ArchiveAPIClientsPermission, r.Roles...)
 }
 
+// CanSeeAuditLogEntriesForWebhooks returns whether a user can view webhook audit log entries or not.
+func (r accountRoleCollection) CanSeeAuditLogEntriesForWebhooks() bool {
+	return hasPermission(ReadWebhooksAuditLogEntriesPermission, r.Roles...)
+}
+
 // CanSeeAuditLogEntriesForItems returns whether a user can view item audit log entries or not.
 func (r accountRoleCollection) CanSeeAuditLogEntriesForItems() bool {
 	return hasPermission(ReadItemsAuditLogEntriesPermission, r.Roles...)
-}
-
-// CanSeeAuditLogEntriesForWebhooks returns whether a user can view item audit log entries or not.
-func (r accountRoleCollection) CanSeeAuditLogEntriesForWebhooks() bool {
-	return hasPermission(ReadWebhooksAuditLogEntriesPermission, r.Roles...)
 }

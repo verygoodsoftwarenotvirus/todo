@@ -19,6 +19,9 @@ func (b *Postgres) BuildItemExistsQuery(ctx context.Context, itemID, accountID u
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn)).
@@ -38,14 +41,17 @@ func (b *Postgres) BuildGetItemQuery(ctx context.Context, itemID, accountID uint
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.ItemsTableColumns...).
 			From(querybuilding.ItemsTableName).
 			Where(squirrel.Eq{
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
-				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
 			}),
 	)
 }
@@ -56,12 +62,14 @@ func (b *Postgres) BuildGetAllItemsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
-		From(querybuilding.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
-		}))
+	return b.buildQueryOnly(
+		span,
+		b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
+			From(querybuilding.ItemsTableName).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
+			}),
+	)
 }
 
 // BuildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
@@ -91,6 +99,7 @@ func (b *Postgres) BuildGetItemsQuery(ctx context.Context, accountID uint64, for
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
+
 	return b.buildListQuery(ctx, querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn, querybuilding.ItemsTableColumns, accountID, forAdmin, filter)
 }
 
@@ -104,6 +113,8 @@ func (b *Postgres) BuildGetItemsQuery(ctx context.Context, accountID uint64, for
 func (b *Postgres) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
@@ -122,7 +133,8 @@ func (b *Postgres) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint
 		span,
 		b.sqlBuilder.Select(querybuilding.ItemsTableColumns...).
 			FromSelect(subqueryBuilder, querybuilding.ItemsTableName).
-			Where(where))
+			Where(where),
+	)
 }
 
 // BuildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
@@ -154,6 +166,9 @@ func (b *Postgres) BuildUpdateItemQuery(ctx context.Context, input *types.Item) 
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, input.ID)
+	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.ItemsTableName).
@@ -173,6 +188,9 @@ func (b *Postgres) BuildArchiveItemQuery(ctx context.Context, itemID, accountID 
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.ItemsTableName).
@@ -186,11 +204,12 @@ func (b *Postgres) BuildArchiveItemQuery(ctx context.Context, itemID, accountID 
 	)
 }
 
-// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries
-// associated with a given item.
+// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries relating to an item with a given ID.
 func (b *Postgres) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	itemIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 

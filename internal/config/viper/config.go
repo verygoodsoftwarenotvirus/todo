@@ -150,7 +150,7 @@ func FromConfig(input *config.InstanceConfig) (*viper.Viper, error) {
 	cfg.Set(ConfigKeyUploaderBucketName, input.Uploads.Storage.BucketName)
 	cfg.Set(ConfigKeyUploaderUploadFilename, input.Uploads.Storage.UploadFilenameKey)
 
-	cfg.Set(ConfigKeyAuditLogEnabled, input.AuditLog.Enabled)
+	cfg.Set(ConfigKeyAuditLogEnabled, input.Services.AuditLog.Enabled)
 
 	cfg.Set(ConfigKeyWebhooksEnabled, input.Services.Webhooks.Enabled)
 

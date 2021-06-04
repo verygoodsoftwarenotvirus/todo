@@ -211,6 +211,10 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
+			AuditLog: auditservice.Config{
+				Debug:   true,
+				Enabled: true,
+			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -236,10 +240,6 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 					Provider: logging.ProviderZerolog,
 				},
 			},
-		},
-		AuditLog: auditservice.Config{
-			Debug:   true,
-			Enabled: true,
 		},
 	}
 
@@ -284,6 +284,10 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
+			AuditLog: auditservice.Config{
+				Debug:   true,
+				Enabled: true,
+			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -309,10 +313,6 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 					Provider: logging.ProviderZerolog,
 				},
 			},
-		},
-		AuditLog: auditservice.Config{
-			Debug:   true,
-			Enabled: true,
 		},
 	}
 
@@ -375,6 +375,10 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Provider: "bleve",
 			},
 			Services: config.ServicesConfigurations{
+				AuditLog: auditservice.Config{
+					Debug:   false,
+					Enabled: true,
+				},
 				Auth: authservice.Config{
 					PASETO: authservice.PASETOConfig{
 						Issuer:       "todo_service",
@@ -406,10 +410,6 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 						Provider: logging.ProviderZerolog,
 					},
 				},
-			},
-			AuditLog: auditservice.Config{
-				Debug:   false,
-				Enabled: true,
 			},
 		}
 

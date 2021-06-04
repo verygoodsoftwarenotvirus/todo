@@ -319,7 +319,7 @@ func (b *Sqlite) BuildArchiveUserQuery(ctx context.Context, userID uint64) (quer
 	)
 }
 
-// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
 func (b *Sqlite) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

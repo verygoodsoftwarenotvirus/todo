@@ -158,7 +158,7 @@ func (b *MariaDB) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accou
 	)
 }
 
-// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
 func (b *MariaDB) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

@@ -89,11 +89,12 @@ func TestQuerier_ItemExists(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
+
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = exampleAccount.ID
 
-		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()

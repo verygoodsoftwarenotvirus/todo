@@ -101,29 +101,6 @@ func TestPostgres_BuildGetAuditLogEntriesQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		q, _ := buildTestService(t)
-		ctx := context.Background()
-
-		exampleItem := fakes.BuildFakeItem()
-
-		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'item_id' = $1 ORDER BY audit_log.created_on"
-		expectedArgs := []interface{}{
-			exampleItem.ID,
-		}
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForItemQuery(ctx, exampleItem.ID)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
 func TestPostgres_BuildCreateAuditLogEntryQuery(T *testing.T) {
 	T.Parallel()
 

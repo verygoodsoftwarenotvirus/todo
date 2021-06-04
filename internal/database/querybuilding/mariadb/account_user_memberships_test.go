@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestSqlite_BuildGetDefaultAccountIDForUserQuery(T *testing.T) {
+func TestMariaDB_BuildGetDefaultAccountIDForUserQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

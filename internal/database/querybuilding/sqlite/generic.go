@@ -86,6 +86,21 @@ func (b *Sqlite) buildFilteredCountQuery(ctx context.Context, tableName, ownersh
 	return b.buildQuery(span, filteredCountQueryBuilder)
 }
 
+func buildWhenThenStatement(ids []uint64) string {
+	statement := ""
+
+	for i, id := range ids {
+		if i != 0 {
+			statement += " "
+		}
+		statement += fmt.Sprintf("WHEN %d THEN %d", id, i)
+	}
+
+	statement += " END"
+
+	return statement
+}
+
 // BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
 func (b *Sqlite) buildListQuery(ctx context.Context, tableName, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {

@@ -13,7 +13,7 @@ import (
 
 var _ querybuilding.AuditLogEntrySQLQueryBuilder = (*Postgres)(nil)
 
-// BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID.
 func (b *Postgres) BuildGetAuditLogEntryQuery(ctx context.Context, entryID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

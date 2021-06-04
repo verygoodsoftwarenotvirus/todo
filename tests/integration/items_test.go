@@ -7,7 +7,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/converters"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
@@ -275,6 +274,14 @@ func (s *TestSuite) TestItems_Updating_Returns404ForNonexistentItem() {
 	})
 }
 
+// convertItemToItemUpdateInput creates an ItemUpdateInput struct from an item.
+func convertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateInput {
+	return &types.ItemUpdateInput{
+		Name:    x.Name,
+		Details: x.Details,
+	}
+}
+
 func (s *TestSuite) TestItems_Updating() {
 	s.runForEachClientExcept("it should be possible to update an item", func(testClients *testClientWrapper) func() {
 		return func() {
@@ -290,7 +297,7 @@ func (s *TestSuite) TestItems_Updating() {
 			requireNotNilAndNoProblems(t, createdItem, err)
 
 			// Change item.
-			createdItem.Update(converters.ConvertItemToItemUpdateInput(exampleItem))
+			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
 			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
 
 			// Fetch item.

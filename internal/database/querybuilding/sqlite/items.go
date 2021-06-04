@@ -12,14 +12,15 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var (
-	_ querybuilding.ItemSQLQueryBuilder = (*Sqlite)(nil)
-)
+var _ querybuilding.ItemSQLQueryBuilder = (*Sqlite)(nil)
 
 // BuildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
 func (b *Sqlite) BuildItemExistsQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	return b.buildQuery(
 		span,
@@ -40,6 +41,9 @@ func (b *Sqlite) BuildGetItemQuery(ctx context.Context, itemID, accountID uint64
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.ItemsTableColumns...).
@@ -58,12 +62,13 @@ func (b *Sqlite) BuildGetAllItemsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
-		From(querybuilding.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
-		}),
+	return b.buildQueryOnly(
+		span,
+		b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
+			From(querybuilding.ItemsTableName).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
+			}),
 	)
 }
 
@@ -94,23 +99,8 @@ func (b *Sqlite) BuildGetItemsQuery(ctx context.Context, accountID uint64, forAd
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
+
 	return b.buildListQuery(ctx, querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn, querybuilding.ItemsTableColumns, accountID, forAdmin, filter)
-}
-
-func buildWhenThenStatement(ids []uint64) string {
-	statement := ""
-
-	for i, id := range ids {
-		if i != 0 {
-			statement += " "
-		}
-
-		statement += fmt.Sprintf("WHEN %d THEN %d", id, i)
-	}
-
-	statement += " END"
-
-	return statement
 }
 
 // BuildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given account,
@@ -124,8 +114,9 @@ func (b *Sqlite) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	whenThenStatement := buildWhenThenStatement(ids)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
+	whenThenStatement := buildWhenThenStatement(ids)
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):         ids,
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
@@ -173,6 +164,9 @@ func (b *Sqlite) BuildUpdateItemQuery(ctx context.Context, input *types.Item) (q
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, input.ID)
+	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.ItemsTableName).
@@ -187,10 +181,13 @@ func (b *Sqlite) BuildUpdateItemQuery(ctx context.Context, input *types.Item) (q
 	)
 }
 
-// BuildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.
+// BuildArchiveItemQuery returns a SQL query which marks a given item belonging to a given account as archived.
 func (b *Sqlite) BuildArchiveItemQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	return b.buildQuery(
 		span,
@@ -205,10 +202,12 @@ func (b *Sqlite) BuildArchiveItemQuery(ctx context.Context, itemID, accountID ui
 	)
 }
 
-// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries relating to an item with a given ID.
 func (b *Sqlite) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	itemIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
 

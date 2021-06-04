@@ -10,6 +10,7 @@ import (
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
@@ -41,9 +42,6 @@ func TestFromConfig(T *testing.T) {
 				HTTPPort:        1234,
 				Debug:           false,
 				StartupDeadline: time.Minute,
-			},
-			AuditLog: audit.Config{
-				Enabled: true,
 			},
 			Meta: config.MetaSettings{
 				RunMode: config.DevelopmentRunMode,
@@ -96,6 +94,9 @@ func TestFromConfig(T *testing.T) {
 				Debug: false,
 			},
 			Services: config.ServicesConfigurations{
+				AuditLog: audit.Config{
+					Enabled: true,
+				},
 				Auth: authservice.Config{
 					Cookies: authservice.CookieConfig{
 						Name:     "todocookie",
@@ -108,6 +109,11 @@ func TestFromConfig(T *testing.T) {
 				},
 				Items: items.Config{
 					SearchIndexPath: "/items_index_path",
+					Logger: logging.Config{
+						Name:     "items",
+						Level:    logging.InfoLevel,
+						Provider: logging.ProviderZerolog,
+					},
 				},
 			},
 			Database: dbconfig.Config{

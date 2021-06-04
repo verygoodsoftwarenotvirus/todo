@@ -2,14 +2,13 @@ package frontend
 
 import (
 	"context"
+	_ "embed"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	_ "embed"
 )
 
 func (s *service) fetchUsers(ctx context.Context, req *http.Request) (users *types.UserList, err error) {

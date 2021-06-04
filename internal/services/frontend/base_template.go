@@ -1,12 +1,11 @@
 package frontend
 
 import (
+	_ "embed"
 	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	_ "embed"
 )
 
 type pageData struct {

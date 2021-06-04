@@ -125,11 +125,6 @@ const (
 	// ConfigKeySearchProvider is the key viper will use to refer to the SearchSettings.Provider setting.
 	ConfigKeySearchProvider = searchKey + x + "provider"
 
-	itemsKey = servicesKey + x + "items"
-
-	// ConfigKeyItemsSearchIndexPath is the key viper will use to refer to the SearchSettings.ItemsSearchIndexPath setting.
-	ConfigKeyItemsSearchIndexPath = itemsKey + x + "search_index_path"
-
 	uploadsKey       = "uploads"
 	storageConfigKey = "storage_config"
 	// ConfigKeyUploaderProvider is the key viper will use to refer to the UploadSettings.Provider value.
@@ -190,4 +185,9 @@ const (
 	webhooksKey = servicesKey + x + "webhooks"
 	// ConfigKeyWebhooksEnabled is the key viper will use to refer to the AuditLogSettings.Enabled setting.
 	ConfigKeyWebhooksEnabled = webhooksKey + x + enabledKey
+
+	itemsKey = servicesKey + x + "items"
+
+	// ConfigKeyItemsSearchIndexPath is the key viper will use to refer to the SearchSettings.ItemsSearchIndexPath setting.
+	ConfigKeyItemsSearchIndexPath = itemsKey + x + "search_index_path"
 )

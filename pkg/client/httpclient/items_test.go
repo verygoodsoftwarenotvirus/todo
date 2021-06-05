@@ -274,8 +274,8 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 
 	s.Run("with error building request", func() {
 		t := s.T()
-		ctx := context.Background()
 
+		ctx := context.Background()
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
 
 		c := buildTestClientWithInvalidURL(t)
@@ -287,8 +287,8 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 
 	s.Run("with error executing request", func() {
 		t := s.T()
-		ctx := context.Background()
 
+		ctx := context.Background()
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
 		c, _ := buildTestClientThatWaitsTooLong(t)
 

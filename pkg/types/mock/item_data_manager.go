@@ -16,14 +16,14 @@ type ItemDataManager struct {
 }
 
 // ItemExists is a mock function.
-func (m *ItemDataManager) ItemExists(ctx context.Context, itemID, userID uint64) (bool, error) {
-	args := m.Called(ctx, itemID, userID)
+func (m *ItemDataManager) ItemExists(ctx context.Context, itemID, accountID uint64) (bool, error) {
+	args := m.Called(ctx, itemID, accountID)
 	return args.Bool(0), args.Error(1)
 }
 
 // GetItem is a mock function.
-func (m *ItemDataManager) GetItem(ctx context.Context, itemID, userID uint64) (*types.Item, error) {
-	args := m.Called(ctx, itemID, userID)
+func (m *ItemDataManager) GetItem(ctx context.Context, itemID, accountID uint64) (*types.Item, error) {
+	args := m.Called(ctx, itemID, accountID)
 	return args.Get(0).(*types.Item), args.Error(1)
 }
 
@@ -40,8 +40,8 @@ func (m *ItemDataManager) GetAllItems(ctx context.Context, results chan []*types
 }
 
 // GetItems is a mock function.
-func (m *ItemDataManager) GetItems(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.ItemList, error) {
-	args := m.Called(ctx, userID, filter)
+func (m *ItemDataManager) GetItems(ctx context.Context, accountID uint64, filter *types.QueryFilter) (*types.ItemList, error) {
+	args := m.Called(ctx, accountID, filter)
 	return args.Get(0).(*types.ItemList), args.Error(1)
 }
 
@@ -63,8 +63,8 @@ func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item, c
 }
 
 // ArchiveItem is a mock function.
-func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedBy uint64) error {
-	return m.Called(ctx, itemID, belongsToAccount, archivedBy).Error(0)
+func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, accountID, archivedBy uint64) error {
+	return m.Called(ctx, itemID, accountID, archivedBy).Error(0)
 }
 
 // GetAuditLogEntriesForItem is a mock function.

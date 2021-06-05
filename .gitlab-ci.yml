@@ -141,17 +141,3 @@ daily-load_tests_sqlite:on-schedule:
     - make load_tests_sqlite
   only:
     - schedules
-
-# miscellaneous
-
-#gitlabcr:
-# stage: publish
-# image: docker:latest
-# services:
-#   - docker:dind
-# script:
-#   - docker login --username=gitlab-ci-token --passwords=$CI_JOB_TOKEN registry.gitlab.com
-#   - docker build --tag registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest --file environments/production/Dockerfile .
-#   - docker push registry.gitlab.com/verygoodsoftwarenotvirus/todo:latest
-# only:
-#   - master

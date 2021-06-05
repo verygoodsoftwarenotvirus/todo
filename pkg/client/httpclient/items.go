@@ -91,7 +91,6 @@ func (c *Client) GetItems(ctx context.Context, filter *types.QueryFilter) (*type
 	defer span.End()
 
 	logger := c.loggerWithFilter(filter)
-
 	tracing.AttachQueryFilterToSpan(span, filter)
 
 	req, err := c.requestBuilder.BuildGetItemsRequest(ctx, filter)

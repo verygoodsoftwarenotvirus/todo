@@ -107,7 +107,11 @@ func (b *Builder) BuildGetItemsRequest(ctx context.Context, filter *types.QueryF
 
 	logger := filter.AttachToLogger(b.logger)
 
-	uri := b.BuildURL(ctx, filter.ToValues(), itemsBasePath)
+	uri := b.BuildURL(
+		ctx,
+		filter.ToValues(),
+		itemsBasePath,
+	)
 	tracing.AttachRequestURIToSpan(span, uri)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
@@ -134,7 +138,11 @@ func (b *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemC
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.BuildURL(ctx, nil, itemsBasePath)
+	uri := b.BuildURL(
+		ctx,
+		nil,
+		itemsBasePath,
+	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
@@ -202,7 +210,13 @@ func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uin
 	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	uri := b.BuildURL(ctx, nil, itemsBasePath, id(itemID), "audit")
+	uri := b.BuildURL(
+		ctx,
+		nil,
+		itemsBasePath,
+		id(itemID),
+		"audit",
+	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)

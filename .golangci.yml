@@ -21,9 +21,6 @@ run:
   # from this option's value:
   #   	vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
   skip-dirs:
-    # javascript
-    - client/v1/frontend
-    # others
     - cmd/tools
     - cmd/playground
 
@@ -259,7 +256,7 @@ linters:
     # - rowserrcheck     # checks whether Err of rows is checked successfully
     - sqlclosecheck    # Checks that sql.Rows and sql.Stmt are closed.
     # - stylecheck       # Stylecheck is a replacement for golint	style
-    # - tagliatelle      # Checks the struct tags.  # TODO: FUCK
+    # - tagliatelle      # Checks the struct tags.
     # - testpackage      # linter that makes you use a separate _test package
     - thelper          # thelper detects golang test helpers without t.Helper() call and checks the consistency of test helpers
     - tparallel        # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes
@@ -418,7 +415,7 @@ issues:
       linters:
         - goerr113
 
-    - path: internal/database/querybuilding/postgres/migrations.go # TODO: FIXME
+    - path: internal/database/querybuilding/postgres/migrations.go
       linters:
         - gocognit
         - gocyclo

@@ -131,11 +131,11 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 		{
-			Version:     0.8,
+			Version:     0.08,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -146,7 +146,7 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 	}

@@ -8,7 +8,7 @@ import (
 
 var _ io.ReadCloser = (*mockReadCloser)(nil)
 
-// NOTE: there does exist a testutil.MockReadCloser, but since testutil currently imports this package, we need to duplicate the code here.
+// NOTE: there does exist a testutils.MockReadCloser, but since testutils currently imports this package, we need to duplicate the code here.
 
 // mockReadCloser is a mock io.ReadCloser for testing purposes.
 type mockReadCloser struct {

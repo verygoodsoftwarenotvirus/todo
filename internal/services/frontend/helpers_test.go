@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -101,7 +101,7 @@ func TestService_renderBytesToResponse(T *testing.T) {
 		t.Parallel()
 
 		thing := []byte(t.Name())
-		res := &testutil.MockHTTPResponseWriter{}
+		res := &testutils.MockHTTPResponseWriter{}
 		res.On("Write", mock.Anything).Return(-1, errors.New("blah"))
 
 		s := buildTestService(t)
@@ -158,7 +158,7 @@ func TestService_extractFormFromRequest(T *testing.T) {
 		ctx := context.Background()
 		s := buildTestService(t)
 
-		exampleBody := &testutil.MockReadCloser{}
+		exampleBody := &testutils.MockReadCloser{}
 		exampleBody.On("Read", mock.Anything).Return(0, errors.New("blah"))
 		exampleReq := &http.Request{
 			Body: exampleBody,

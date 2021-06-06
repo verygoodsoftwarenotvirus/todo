@@ -17,7 +17,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -209,7 +209,7 @@ func Test_stripePaymentManager_HandleSubscriptionEventWebhook(T *testing.T) {
 		_, err := mac.Write(b.Bytes())
 		require.NoError(t, err)
 
-		mrc := &testutil.MockReadCloser{}
+		mrc := &testutils.MockReadCloser{}
 		mrc.On("Read", mock.IsType([]byte(""))).Return(int(0), errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodPost, "/webhook_update", mrc)

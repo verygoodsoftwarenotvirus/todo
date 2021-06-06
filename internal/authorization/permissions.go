@@ -55,10 +55,10 @@ const (
 	ReadAPIClientsPermission Permission = "read.api_clients"
 	// ArchiveAPIClientsPermission is an account admin permission.
 	ArchiveAPIClientsPermission Permission = "archive.api_clients"
-	// ReadItemsAuditLogEntriesPermission is an account admin permission.
-	ReadItemsAuditLogEntriesPermission Permission = "read.audit_log_entries.items"
 	// ReadWebhooksAuditLogEntriesPermission is an account admin permission.
 	ReadWebhooksAuditLogEntriesPermission Permission = "read.audit_log_entries.webhooks"
+	// ReadItemsAuditLogEntriesPermission is an account admin permission.
+	ReadItemsAuditLogEntriesPermission Permission = "read.audit_log_entries.items"
 
 	// CreateItemsPermission is an account user permission.
 	CreateItemsPermission Permission = "create.items"
@@ -111,8 +111,8 @@ var (
 		CreateAPIClientsPermission.ID():                  CreateAPIClientsPermission,
 		ReadAPIClientsPermission.ID():                    ReadAPIClientsPermission,
 		ArchiveAPIClientsPermission.ID():                 ArchiveAPIClientsPermission,
-		ReadItemsAuditLogEntriesPermission.ID():          ReadItemsAuditLogEntriesPermission,
 		ReadWebhooksAuditLogEntriesPermission.ID():       ReadWebhooksAuditLogEntriesPermission,
+		ReadItemsAuditLogEntriesPermission.ID():          ReadItemsAuditLogEntriesPermission,
 	}
 
 	// account member permissions.

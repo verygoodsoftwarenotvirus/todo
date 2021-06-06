@@ -23,7 +23,7 @@ func Test_urlValidator_Validate(T *testing.T) {
 		t.Parallel()
 		x := &urlValidator{}
 
-		// much as we'd like to use testutil.InvalidRawURL here, it causes a cyclical import :'(
+		// much as we'd like to use testutils.InvalidRawURL here, it causes a cyclical import :'(
 		assert.NotNil(t, x.Validate(fmt.Sprintf("%s://verygoodsoftwarenotvirus.ru", string(byte(127)))))
 	})
 

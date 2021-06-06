@@ -280,7 +280,7 @@ func (s *service) handleTOTPVerificationSubmission(res http.ResponseWriter, req 
 	}
 
 	if err := s.usersService.VerifyUserTwoFactorSecret(ctx, verificationInput); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
+		observability.AcknowledgeError(err, logger, span, "rendering two factor secret verification prompt into dashboard")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

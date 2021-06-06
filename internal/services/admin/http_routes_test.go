@@ -12,7 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/alexedwards/scs/v2/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +41,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
 			"UpdateUserReputation",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleInput.TargetUserID,
 			helper.exampleInput,
 		).Return(nil)
@@ -50,7 +50,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogUserBanEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason,
 		).Return()
 		helper.service.auditLog = auditLog
@@ -79,7 +79,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
 			"UpdateUserReputation",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleInput.TargetUserID,
 			helper.exampleInput,
 		).Return(nil)
@@ -88,7 +88,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogAccountTerminationEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason,
 		).Return()
 		helper.service.auditLog = auditLog
@@ -117,7 +117,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
 			"UpdateUserReputation",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleInput.TargetUserID,
 			helper.exampleInput,
 		).Return(nil)
@@ -133,7 +133,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		helper.exampleInput.NewReputation = types.BannedUserAccountStatus
 
@@ -276,7 +276,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
 			"UpdateUserReputation",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleInput.TargetUserID,
 			helper.exampleInput,
 		).Return(sql.ErrNoRows)
@@ -306,7 +306,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
 			"UpdateUserReputation",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleInput.TargetUserID,
 			helper.exampleInput,
 		).Return(errors.New("blah"))
@@ -340,7 +340,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogUserBanEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleInput.TargetUserID,
 			helper.exampleInput.Reason,
@@ -350,7 +350,7 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(
 			"UpdateUserReputation",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleInput.TargetUserID,
 			helper.exampleInput,
 		).Return(nil)

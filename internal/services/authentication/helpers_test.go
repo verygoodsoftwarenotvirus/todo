@@ -9,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/gorilla/securecookie"
 	"github.com/stretchr/testify/assert"
@@ -73,7 +73,7 @@ func TestAuthenticationService_getUserIDFromCookie(T *testing.T) {
 		expectedToken := "blahblah"
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, expectedToken).Return(helper.ctx, errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, expectedToken).Return(helper.ctx, errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		c, err := helper.service.buildCookie(expectedToken, time.Now().Add(helper.service.config.Cookies.Lifetime))
@@ -119,7 +119,7 @@ func TestAuthenticationService_determineUserFromRequestCookie(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -152,7 +152,7 @@ func TestAuthenticationService_determineUserFromRequestCookie(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return((*types.User)(nil), expectedError)
 		helper.service.userDataManager = userDataManager
@@ -176,7 +176,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -199,7 +199,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -224,7 +224,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -247,7 +247,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,

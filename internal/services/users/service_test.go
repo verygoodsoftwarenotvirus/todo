@@ -16,7 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
 	mockuploads "gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -31,7 +31,7 @@ func buildTestService(t *testing.T) *service {
 	mockDB := database.BuildMockDatabase()
 	mockDB.UserDataManager.On(
 		"GetAllUsersCount",
-		testutil.ContextMatcher,
+		testutils.ContextMatcher,
 	).Return(expectedUserCount, nil)
 
 	s := ProvideUsersService(

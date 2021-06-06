@@ -16,7 +16,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -50,7 +50,7 @@ func buildPNGBytes(t *testing.T) *bytes.Buffer {
 	t.Helper()
 
 	b := new(bytes.Buffer)
-	exampleImage := testutil.BuildArbitraryImage(256)
+	exampleImage := testutils.BuildArbitraryImage(256)
 	require.NoError(t, png.Encode(b, exampleImage))
 
 	expected := b.Bytes()
@@ -61,7 +61,7 @@ func buildJPEGBytes(t *testing.T) *bytes.Buffer {
 	t.Helper()
 
 	b := new(bytes.Buffer)
-	exampleImage := testutil.BuildArbitraryImage(256)
+	exampleImage := testutils.BuildArbitraryImage(256)
 	require.NoError(t, jpeg.Encode(b, exampleImage, &jpeg.Options{Quality: jpeg.DefaultQuality}))
 
 	expected := b.Bytes()
@@ -72,7 +72,7 @@ func buildGIFBytes(t *testing.T) *bytes.Buffer {
 	t.Helper()
 
 	b := new(bytes.Buffer)
-	exampleImage := testutil.BuildArbitraryImage(256)
+	exampleImage := testutils.BuildArbitraryImage(256)
 	require.NoError(t, gif.Encode(b, exampleImage, &gif.Options{NumColors: 256}))
 
 	expected := b.Bytes()
@@ -126,7 +126,7 @@ func TestImage_Write(T *testing.T) {
 			Size:        12345,
 		}
 
-		res := &testutil.MockHTTPResponseWriter{}
+		res := &testutils.MockHTTPResponseWriter{}
 		res.On("Header").Return(http.Header{})
 		res.On("Write", mock.IsType([]byte(nil))).Return(0, errors.New("blah"))
 

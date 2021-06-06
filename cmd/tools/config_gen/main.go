@@ -234,7 +234,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			},
 			Items: itemsservice.Config{
 				SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
-				Logger: logging.Config{
+				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
 					Provider: logging.ProviderZerolog,
@@ -307,7 +307,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 			Items: itemsservice.Config{
 				SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
-				Logger: logging.Config{
+				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
 					Provider: logging.ProviderZerolog,
@@ -404,7 +404,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 				Items: itemsservice.Config{
 					SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
-					Logger: logging.Config{
+					Logging: logging.Config{
 						Name:     "items",
 						Level:    logging.InfoLevel,
 						Provider: logging.ProviderZerolog,

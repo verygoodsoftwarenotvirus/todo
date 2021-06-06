@@ -277,7 +277,7 @@ func (s *TestSuite) TestWebhooks_Auditing() {
 			assert.NoError(t, err)
 			assert.Len(t, actual, 2)
 
-			// Clean up item.
+			// Clean up webhook.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
 		}
 	})

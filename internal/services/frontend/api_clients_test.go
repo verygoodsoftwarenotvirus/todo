@@ -11,7 +11,7 @@ import (
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -43,7 +43,7 @@ func TestService_fetchAPIClient(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClientByDatabaseID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAPIClient.ID,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAPIClient, nil)
@@ -97,7 +97,7 @@ func TestService_fetchAPIClient(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClientByDatabaseID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAPIClient.ID,
 			exampleSessionContextData.Requester.UserID,
 		).Return((*types.APIClient)(nil), errors.New("blah"))
@@ -141,7 +141,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClientByDatabaseID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAPIClient.ID,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAPIClient, nil)
@@ -182,7 +182,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClientByDatabaseID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAPIClient.ID,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAPIClient, nil)
@@ -240,7 +240,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClientByDatabaseID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAPIClient.ID,
 			exampleSessionContextData.Requester.UserID,
 		).Return((*types.APIClient)(nil), errors.New("blah"))
@@ -272,7 +272,7 @@ func TestService_fetchAPIClients(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAPIClientList, nil)
@@ -314,7 +314,7 @@ func TestService_fetchAPIClients(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.APIClientList)(nil), errors.New("blah"))
@@ -347,7 +347,7 @@ func TestService_buildAPIClientsTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAPIClientList, nil)
@@ -377,7 +377,7 @@ func TestService_buildAPIClientsTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAPIClientList, nil)
@@ -422,7 +422,7 @@ func TestService_buildAPIClientsTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
 			"GetAPIClients",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.APIClientList)(nil), errors.New("blah"))

@@ -13,7 +13,7 @@ import (
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -45,7 +45,7 @@ func TestService_fetchItem(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 		).Return(exampleItem, nil)
@@ -99,7 +99,7 @@ func TestService_fetchItem(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 		).Return((*types.Item)(nil), errors.New("blah"))
@@ -189,7 +189,7 @@ func TestService_buildItemCreatorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		res := &testutil.MockHTTPResponseWriter{}
+		res := &testutils.MockHTTPResponseWriter{}
 		res.On("Write", mock.Anything).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
@@ -207,7 +207,7 @@ func TestService_buildItemCreatorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		res := &testutil.MockHTTPResponseWriter{}
+		res := &testutils.MockHTTPResponseWriter{}
 		res.On("Write", mock.Anything).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
@@ -243,7 +243,7 @@ func TestService_parseFormEncodedItemCreationInput(T *testing.T) {
 		ctx := context.Background()
 		exampleInput := fakes.BuildFakeItemCreationInput()
 
-		badBody := &testutil.MockReadCloser{}
+		badBody := &testutils.MockReadCloser{}
 		badBody.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodGet, "/test", badBody)
@@ -294,7 +294,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"CreateItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleItem, nil)
@@ -346,7 +346,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"CreateItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleItem, nil)
@@ -378,7 +378,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"CreateItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 			exampleSessionContextData.Requester.UserID,
 		).Return((*types.Item)(nil), errors.New("blah"))
@@ -420,7 +420,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 		).Return(exampleItem, nil)
@@ -461,7 +461,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 		).Return(exampleItem, nil)
@@ -519,7 +519,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 		).Return((*types.Item)(nil), errors.New("blah"))
@@ -551,7 +551,7 @@ func TestService_fetchItems(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
@@ -593,7 +593,7 @@ func TestService_fetchItems(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.ItemList)(nil), errors.New("blah"))
@@ -626,7 +626,7 @@ func TestService_buildItemsTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
@@ -656,7 +656,7 @@ func TestService_buildItemsTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
@@ -701,7 +701,7 @@ func TestService_buildItemsTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.ItemList)(nil), errors.New("blah"))
@@ -720,8 +720,8 @@ func TestService_buildItemsTableView(T *testing.T) {
 
 func attachItemUpdateInputToRequest(input *types.ItemUpdateInput) *http.Request {
 	form := url.Values{
-		itemCreationInputNameFormKey:    {input.Name},
-		itemCreationInputDetailsFormKey: {input.Details},
+		itemUpdateInputNameFormKey:    {input.Name},
+		itemUpdateInputDetailsFormKey: {input.Details},
 	}
 
 	return httptest.NewRequest(http.MethodPost, "/items", strings.NewReader(form.Encode()))
@@ -756,7 +756,7 @@ func TestService_parseFormEncodedItemUpdateInput(T *testing.T) {
 		ctx := context.Background()
 		sessionCtxData := fakes.BuildFakeSessionContextData()
 
-		badBody := &testutil.MockReadCloser{}
+		badBody := &testutils.MockReadCloser{}
 		badBody.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodGet, "/test", badBody)
@@ -811,14 +811,14 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 		).Return(exampleItem, nil)
 
 		mockDB.ItemDataManager.On(
 			"UpdateItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem,
 			exampleSessionContextData.Requester.UserID,
 			[]*types.FieldChangeSummary(nil),
@@ -902,7 +902,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 		).Return((*types.Item)(nil), errors.New("blah"))
@@ -945,14 +945,14 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 		).Return(exampleItem, nil)
 
 		mockDB.ItemDataManager.On(
 			"UpdateItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem,
 			exampleSessionContextData.Requester.UserID,
 			[]*types.FieldChangeSummary(nil),
@@ -1000,7 +1000,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"ArchiveItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 			exampleSessionContextData.Requester.UserID,
@@ -1009,7 +1009,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 
 		mockDB.ItemDataManager.On(
 			"GetItems",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
@@ -1068,7 +1068,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"ArchiveItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 			exampleSessionContextData.Requester.UserID,
@@ -1111,7 +1111,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"ArchiveItem",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleItem.ID,
 			exampleSessionContextData.ActiveAccountID,
 			exampleSessionContextData.Requester.UserID,
@@ -1120,7 +1120,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 
 		mockDB.ItemDataManager.On(
 			"GetItems",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.ItemList)(nil), errors.New("blah"))

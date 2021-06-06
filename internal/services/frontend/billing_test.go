@@ -9,7 +9,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -59,7 +59,7 @@ func Test_service_handleCheckoutSessionStart(T *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/whatever?plan=%s", examplePlanID), nil)
 
 		mpm := &capitalism.MockPaymentManager{}
-		mpm.On("CreateCheckoutSession", testutil.ContextMatcher, examplePlanID).Return(exampleSessionID, nil)
+		mpm.On("CreateCheckoutSession", testutils.ContextMatcher, examplePlanID).Return(exampleSessionID, nil)
 		s.paymentManager = mpm
 
 		s.handleCheckoutSessionStart(res, req)
@@ -91,7 +91,7 @@ func Test_service_handleCheckoutSessionStart(T *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/whatever?plan=%s", examplePlanID), nil)
 
 		mpm := &capitalism.MockPaymentManager{}
-		mpm.On("CreateCheckoutSession", testutil.ContextMatcher, examplePlanID).Return("", errors.New("blah"))
+		mpm.On("CreateCheckoutSession", testutils.ContextMatcher, examplePlanID).Return("", errors.New("blah"))
 		s.paymentManager = mpm
 
 		s.handleCheckoutSessionStart(res, req)

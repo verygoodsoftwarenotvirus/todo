@@ -407,7 +407,7 @@ issues:
       linters:
         - lll
 
-    - path: tests/testutil/testutil.go
+    - path: tests/testutil/testutils.go
       linters:
         - goerr113
 

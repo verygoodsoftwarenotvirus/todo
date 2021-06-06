@@ -275,7 +275,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusNoContent)
 }
 
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
+// AuditEntryHandler returns a GET handler that returns all audit log entries related to a webhook.
 func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -294,7 +294,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
 
-	// determine item ID.
+	// determine webhook ID.
 	webhookID := s.webhookIDFetcher(req)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)

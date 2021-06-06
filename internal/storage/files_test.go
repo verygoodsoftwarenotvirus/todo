@@ -10,7 +10,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -157,7 +157,7 @@ func TestUploader_ServeFiles(T *testing.T) {
 			},
 		}
 
-		res := &testutil.MockHTTPResponseWriter{}
+		res := &testutils.MockHTTPResponseWriter{}
 		res.On("Write", mock.IsType([]byte(nil))).Return(0, errors.New("blah"))
 		res.On("Header").Return(http.Header{})
 		req := httptest.NewRequest(http.MethodGet, "/things", nil)

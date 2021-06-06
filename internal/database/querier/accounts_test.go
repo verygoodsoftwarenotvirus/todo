@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -117,7 +117,7 @@ func TestQuerier_GetAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID, exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -180,7 +180,7 @@ func TestQuerier_GetAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID, exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -211,7 +211,7 @@ func TestQuerier_GetAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID, exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -242,7 +242,7 @@ func TestQuerier_GetAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID, exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -276,7 +276,7 @@ func TestQuerier_GetAllAccountsCount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAllAccountsCountQuery", testutil.ContextMatcher).Return(fakeQuery)
+			"BuildGetAllAccountsCountQuery", testutils.ContextMatcher).Return(fakeQuery)
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
@@ -309,7 +309,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAllAccountsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
+			"BuildGetAllAccountsCountQuery", testutils.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -318,7 +318,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetBatchOfAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			uint64(1), uint64(defaultBatchSize+1),
 		).Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -370,7 +370,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAllAccountsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
+			"BuildGetAllAccountsCountQuery", testutils.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -379,7 +379,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetBatchOfAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			uint64(1), uint64(exampleBatchSize+1),
 		).Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -409,7 +409,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAllAccountsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
+			"BuildGetAllAccountsCountQuery", testutils.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -437,7 +437,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAllAccountsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
+			"BuildGetAllAccountsCountQuery", testutils.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -446,7 +446,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetBatchOfAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			uint64(1), uint64(exampleBatchSize+1),
 		).Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -477,7 +477,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAllAccountsCountQuery", testutil.ContextMatcher).Return(fakeQuery, []interface{}{})
+			"BuildGetAllAccountsCountQuery", testutils.ContextMatcher).Return(fakeQuery, []interface{}{})
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -486,7 +486,7 @@ func TestQuerier_GetAllAccounts(T *testing.T) {
 		secondFakeQuery, secondFakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetBatchOfAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			uint64(1), uint64(exampleBatchSize+1),
 		).Return(secondFakeQuery, secondFakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -522,7 +522,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			false,
 			filter,
@@ -569,7 +569,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			false,
 			filter,
@@ -600,7 +600,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			false,
 			filter,
@@ -631,7 +631,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			false,
 			filter,
@@ -667,7 +667,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			uint64(0),
 			true,
 			filter,
@@ -700,7 +700,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			uint64(0),
 			true,
 			filter,
@@ -731,7 +731,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			uint64(0),
 			true,
 			filter,
@@ -762,7 +762,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			uint64(0),
 			true,
 			filter,
@@ -812,7 +812,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildAccountCreationQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleCreationInput,
 		).Return(fakeCreationQuery, fakeCreationArgs)
 
@@ -823,7 +823,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AuditLogEntryCreationInput{}),
 		).Return(fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs).Once()
 
@@ -834,7 +834,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeAccountAdditionQuery, fakeAccountAdditionArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccountAdditionInput,
 		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
@@ -845,7 +845,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AuditLogEntryCreationInput{}),
 		).Return(fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs).Once()
 
@@ -939,7 +939,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildAccountCreationQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -981,7 +981,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildAccountCreationQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleCreationInput,
 		).Return(fakeCreationQuery, fakeCreationArgs)
 
@@ -992,7 +992,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AuditLogEntryCreationInput{}),
 		).Return(fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs).Once()
 
@@ -1040,7 +1040,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildAccountCreationQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleCreationInput,
 		).Return(fakeCreationQuery, fakeCreationArgs)
 
@@ -1051,7 +1051,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AuditLogEntryCreationInput{}),
 		).Return(fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs).Once()
 
@@ -1062,7 +1062,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeAccountAdditionQuery, fakeAccountAdditionArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccountAdditionInput,
 		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
@@ -1110,7 +1110,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildAccountCreationQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleCreationInput,
 		).Return(fakeCreationQuery, fakeCreationArgs)
 
@@ -1121,7 +1121,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AuditLogEntryCreationInput{}),
 		).Return(fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs).Once()
 
@@ -1132,7 +1132,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeAccountAdditionQuery, fakeAccountAdditionArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccountAdditionInput,
 		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
@@ -1143,7 +1143,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AuditLogEntryCreationInput{}),
 		).Return(fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs).Once()
 
@@ -1191,7 +1191,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildAccountCreationQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleCreationInput,
 		).Return(fakeCreationQuery, fakeCreationArgs)
 
@@ -1202,7 +1202,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AuditLogEntryCreationInput{}),
 		).Return(fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs).Once()
 
@@ -1213,7 +1213,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeAccountAdditionQuery, fakeAccountAdditionArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccountAdditionInput,
 		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
@@ -1224,7 +1224,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 			"BuildCreateAuditLogEntryQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AuditLogEntryCreationInput{}),
 		).Return(fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs).Once()
 
@@ -1267,7 +1267,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildUpdateAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1345,7 +1345,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildUpdateAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1378,7 +1378,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildUpdateAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1413,7 +1413,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildUpdateAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1452,7 +1452,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildArchiveAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID, exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1528,7 +1528,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildArchiveAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID, exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1561,7 +1561,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildArchiveAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID, exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1596,7 +1596,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildArchiveAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID, exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1631,7 +1631,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAuditLogEntriesForAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1671,7 +1671,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAuditLogEntriesForAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1699,7 +1699,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAuditLogEntriesForAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder

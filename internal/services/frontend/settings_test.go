@@ -10,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,7 +33,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleUser, nil)
 		s.dataStore = mockDB
@@ -62,7 +62,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleUser, nil)
 		s.dataStore = mockDB
@@ -82,7 +82,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		s.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/whatever", nil)
@@ -105,7 +105,7 @@ func TestService_buildUserSettingsView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.Requester.UserID,
 		).Return((*types.User)(nil), errors.New("blah"))
 		s.dataStore = mockDB
@@ -138,7 +138,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAccount, nil)
@@ -168,7 +168,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			exampleSessionContextData.Requester.UserID,
 		).Return(exampleAccount, nil)
@@ -189,7 +189,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		s.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/whatever", nil)
@@ -213,7 +213,7 @@ func TestService_buildAccountSettingsView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData.ActiveAccountID,
 			exampleSessionContextData.Requester.UserID,
 		).Return((*types.Account)(nil), errors.New("blah"))
@@ -276,7 +276,7 @@ func TestService_buildAdminSettingsView(T *testing.T) {
 
 		s := buildTestService(t)
 
-		s.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		s.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/whatever", nil)

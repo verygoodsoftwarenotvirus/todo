@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -88,7 +88,7 @@ func TestService_parseFormEncodedLoginRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		ctx := context.Background()
-		badBody := &testutil.MockReadCloser{}
+		badBody := &testutils.MockReadCloser{}
 		badBody.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodPost, "/", badBody)
@@ -132,7 +132,7 @@ func TestService_handleLoginSubmission(T *testing.T) {
 		mockAuthService := &mocktypes.AuthService{}
 		mockAuthService.On(
 			"AuthenticateUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			expected,
 		).Return((*types.User)(nil), expectedCookie, nil)
 		s.authService = mockAuthService
@@ -174,7 +174,7 @@ func TestService_handleLoginSubmission(T *testing.T) {
 		mockAuthService := &mocktypes.AuthService{}
 		mockAuthService.On(
 			"AuthenticateUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			expected,
 		).Return((*types.User)(nil), (*http.Cookie)(nil), errors.New("blah"))
 		s.authService = mockAuthService
@@ -210,7 +210,7 @@ func TestService_handleLogoutSubmission(T *testing.T) {
 		mockAuthService := &mocktypes.AuthService{}
 		mockAuthService.On(
 			"LogoutUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData,
 			req,
 			res,
@@ -229,7 +229,7 @@ func TestService_handleLogoutSubmission(T *testing.T) {
 		t.Parallel()
 
 		s := buildTestService(t)
-		s.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		s.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/whatever", nil)
@@ -255,7 +255,7 @@ func TestService_handleLogoutSubmission(T *testing.T) {
 		mockAuthService := &mocktypes.AuthService{}
 		mockAuthService.On(
 			"LogoutUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleSessionContextData,
 			req,
 			res,
@@ -338,7 +338,7 @@ func TestService_parseFormEncodedRegistrationRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		ctx := context.Background()
-		badBody := &testutil.MockReadCloser{}
+		badBody := &testutils.MockReadCloser{}
 		badBody.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodPost, "/", badBody)
@@ -376,7 +376,7 @@ func TestService_handleRegistrationSubmission(T *testing.T) {
 		mockUsersService := &mocktypes.UsersService{}
 		mockUsersService.On(
 			"RegisterUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			expected,
 		).Return(&types.UserCreationResponse{}, nil)
 		s.usersService = mockUsersService
@@ -415,7 +415,7 @@ func TestService_handleRegistrationSubmission(T *testing.T) {
 		mockUsersService := &mocktypes.UsersService{}
 		mockUsersService.On(
 			"RegisterUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			expected,
 		).Return((*types.UserCreationResponse)(nil), errors.New("blah"))
 		s.usersService = mockUsersService
@@ -481,7 +481,7 @@ func TestService_parseFormEncodedTOTPSecretVerificationRequest(T *testing.T) {
 		s := buildTestService(t)
 
 		ctx := context.Background()
-		badBody := &testutil.MockReadCloser{}
+		badBody := &testutils.MockReadCloser{}
 		badBody.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodPost, "/", badBody)
@@ -543,7 +543,7 @@ func TestService_handleTOTPVerificationSubmission(T *testing.T) {
 		mockUsersService := &mocktypes.UsersService{}
 		mockUsersService.On(
 			"VerifyUserTwoFactorSecret",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			expected,
 		).Return(nil)
 		s.usersService = mockUsersService
@@ -581,7 +581,7 @@ func TestService_handleTOTPVerificationSubmission(T *testing.T) {
 		mockUsersService := &mocktypes.UsersService{}
 		mockUsersService.On(
 			"VerifyUserTwoFactorSecret",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			expected,
 		).Return(errors.New("blah"))
 		s.usersService = mockUsersService

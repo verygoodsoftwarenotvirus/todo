@@ -15,7 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
 	"github.com/stretchr/testify/assert"
@@ -41,12 +41,12 @@ func requireNotNilAndNoProblems(t *testing.T, i interface{}, err error) {
 func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.User, cookie *http.Cookie, cookieClient, pasetoClient *httpclient.Client) {
 	t.Helper()
 
-	user, err := testutil.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
+	user, err := testutils.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
 	require.NoError(t, err)
 
 	t.Logf("created user #%d: %q", user.ID, user.Username)
 
-	cookie, err = testutil.GetLoginCookie(ctx, urlToUse, user)
+	cookie, err = testutils.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
 	cookieClient, err = initializeCookiePoweredClient(cookie)
@@ -138,14 +138,14 @@ func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookie
 	ctx, span := tracing.StartSpan(ctx)
 	defer span.End()
 
-	u := testutil.DetermineServiceURL()
+	u := testutils.DetermineServiceURL()
 	urlToUse = u.String()
 	logger := logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 
 	logger.WithValue(keys.URLKey, urlToUse).Info("checking server")
-	testutil.EnsureServerIsUp(ctx, urlToUse)
+	testutils.EnsureServerIsUp(ctx, urlToUse)
 
-	adminCookie, err := testutil.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
+	adminCookie, err := testutils.GetLoginCookie(ctx, urlToUse, premadeAdminUser)
 	require.NoError(t, err)
 
 	cClient, err := initializeCookiePoweredClient(adminCookie)

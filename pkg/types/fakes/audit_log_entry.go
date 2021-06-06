@@ -7,7 +7,7 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakeAuditLogEntry builds a faked item.
+// BuildFakeAuditLogEntry builds a faked audit log entry.
 func BuildFakeAuditLogEntry() *types.AuditLogEntry {
 	return &types.AuditLogEntry{
 		ID:         uint64(fake.Uint32()),
@@ -38,11 +38,11 @@ func BuildFakeAuditLogEntryList() *types.AuditLogEntryList {
 
 // BuildFakeAuditLogEntryCreationInput builds a faked AuditLogEntryCreationInput.
 func BuildFakeAuditLogEntryCreationInput() *types.AuditLogEntryCreationInput {
-	item := BuildFakeAuditLogEntry()
-	return BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(item)
+	entry := BuildFakeAuditLogEntry()
+	return BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(entry)
 }
 
-// BuildFakeAuditLogEntryCreationInputFromAuditLogEntry builds a faked AuditLogEntryCreationInput from an item.
+// BuildFakeAuditLogEntryCreationInputFromAuditLogEntry builds a faked AuditLogEntryCreationInput from an audit log entry.
 func BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(entry *types.AuditLogEntry) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
 		EventType: entry.EventType,

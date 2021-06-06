@@ -166,7 +166,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, resObj, http.StatusCreated)
 }
 
-// ReadHandler returns a GET handler that returns an item.
+// ReadHandler returns a GET handler that returns an API client.
 func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -188,10 +188,10 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
-	tracing.AttachItemIDToSpan(span, apiClientID)
+	tracing.AttachAPIClientDatabaseIDToSpan(span, apiClientID)
 	logger = logger.WithValue(keys.APIClientDatabaseIDKey, apiClientID)
 
-	// fetch item from database.
+	// fetch API client from database.
 	x, err := s.apiClientDataManager.GetAPIClientByDatabaseID(ctx, apiClientID, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -229,7 +229,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
 	logger = logger.WithValue(keys.APIClientDatabaseIDKey, apiClientID)
-	tracing.AttachItemIDToSpan(span, apiClientID)
+	tracing.AttachAPIClientDatabaseIDToSpan(span, apiClientID)
 
 	// archive the API client in the database.
 	err = s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, sessionCtxData.ActiveAccountID, requester)

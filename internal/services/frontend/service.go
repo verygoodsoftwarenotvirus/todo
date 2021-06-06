@@ -60,7 +60,7 @@ type (
 	}
 )
 
-// ProvideService builds a new ItemsService.
+// ProvideService builds a new Service.
 func ProvideService(
 	cfg *Config,
 	logger logging.Logger,

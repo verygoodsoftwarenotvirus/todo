@@ -2,6 +2,7 @@ package frontend
 
 import (
 	"context"
+	_ "embed"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -10,8 +11,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	_ "embed"
 )
 
 const (
@@ -79,8 +78,14 @@ func (s *service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 }
 
 const (
-	itemCreationInputNameFormKey    = "name"
-	itemCreationInputDetailsFormKey = "details"
+	nameFormKey    = "name"
+	detailsFormKey = "details"
+
+	itemCreationInputNameFormKey    = nameFormKey
+	itemCreationInputDetailsFormKey = detailsFormKey
+
+	itemUpdateInputNameFormKey    = nameFormKey
+	itemUpdateInputDetailsFormKey = detailsFormKey
 )
 
 // parseFormEncodedItemCreationInput checks a request for an ItemCreationInput.
@@ -119,7 +124,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	logger.Debug("item Creation route called")
+	logger.Debug("item creation route called")
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
@@ -128,7 +133,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	logger.Debug("session context data retrieved for item Creation route")
+	logger.Debug("session context data retrieved for item creation route")
 
 	creationInput := s.parseFormEncodedItemCreationInput(ctx, req, sessionCtxData)
 	if creationInput == nil {
@@ -137,7 +142,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	logger.Debug("item Creation input parsed successfully")
+	logger.Debug("item creation input parsed successfully")
 
 	if _, err = s.dataStore.CreateItem(ctx, creationInput, sessionCtxData.Requester.UserID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "writing item to datastore")
@@ -145,7 +150,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	logger.Debug("item Created")
+	logger.Debug("item created")
 
 	htmxRedirectTo(res, "/items")
 	res.WriteHeader(http.StatusCreated)
@@ -250,11 +255,11 @@ func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Item) template.URL {
-				/* #nosec G203 */
+				// #nosec G203
 				return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 			},
 			"pushURL": func(x *types.Item) template.URL {
-				/* #nosec G203 */
+				// #nosec G203
 				return template.URL(fmt.Sprintf("/items/%d", x.ID))
 			},
 		}
@@ -295,8 +300,8 @@ func (s *service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http
 	}
 
 	updateInput = &types.ItemUpdateInput{
-		Name:             form.Get(itemCreationInputNameFormKey),
-		Details:          form.Get(itemCreationInputDetailsFormKey),
+		Name:             form.Get(itemUpdateInputNameFormKey),
+		Details:          form.Get(itemUpdateInputDetailsFormKey),
 		BelongsToAccount: sessionCtxData.ActiveAccountID,
 	}
 
@@ -386,11 +391,11 @@ func (s *service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 
 	tmplFuncMap := map[string]interface{}{
 		"individualURL": func(x *types.Item) template.URL {
-			/* #nosec G203 */
+			// #nosec G203
 			return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 		},
 		"pushURL": func(x *types.Item) template.URL {
-			/* #nosec G203 */
+			// #nosec G203
 			return template.URL(fmt.Sprintf("/items/%d", x.ID))
 		},
 	}

@@ -70,7 +70,7 @@ func main() {
 		log.Fatalf("No output path specified, please provide one via the --%s flag", outputPathVerboseFlagName)
 		return
 	} else if _, ok := validTypeNames[typeName]; !ok {
-		log.Fatalf("Invalid type name %q specified, one of [ 'item' ] expected", typeName)
+		log.Fatalf("Invalid type name %q specified", typeName)
 		return
 	} else if dbConnectionDetails == "" {
 		log.Fatalf("No database connection details %q specified, please provide one via the --%s flag", dbConnectionDetails, dbConnectionVerboseFlagName)

@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 type usersServiceHTTPRoutesTestHelper struct {
@@ -56,7 +56,7 @@ func newTestHelper(t *testing.T) *usersServiceHTTPRoutesTestHelper {
 		return sessionCtxData, nil
 	}
 
-	req := testutil.BuildTestRequest(t)
+	req := testutils.BuildTestRequest(t)
 	helper.req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionCtxData))
 	helper.res = httptest.NewRecorder()
 

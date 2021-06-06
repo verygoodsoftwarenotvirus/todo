@@ -631,7 +631,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusNoContent)
 }
 
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
+// AuditEntryHandler returns a GET handler that returns all audit log entries related to an audit log entry.
 func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()

@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +34,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 		exampleKey := "blah"
 		fn := r.BuildRouteParamIDFetcher(logging.NewNoopLogger(), exampleKey, "thing")
 		expected := uint64(123)
-		req := testutil.BuildTestRequest(t).WithContext(
+		req := testutils.BuildTestRequest(t).WithContext(
 			context.WithValue(
 				ctx,
 				chi.RouteCtxKey,
@@ -62,7 +62,7 @@ func Test_BuildRouteParamIDFetcher(T *testing.T) {
 		fn := r.BuildRouteParamIDFetcher(logging.NewNoopLogger(), exampleKey, "thing")
 		expected := uint64(0)
 
-		req := testutil.BuildTestRequest(t)
+		req := testutils.BuildTestRequest(t)
 		req = req.WithContext(
 			context.WithValue(
 				ctx,
@@ -94,7 +94,7 @@ func Test_BuildRouteParamStringIDFetcher(T *testing.T) {
 		fn := r.BuildRouteParamStringIDFetcher(exampleKey)
 		expectedInt := uint64(123)
 		expected := strconv.FormatUint(expectedInt, 10)
-		req := testutil.BuildTestRequest(t).WithContext(
+		req := testutils.BuildTestRequest(t).WithContext(
 			context.WithValue(
 				ctx,
 				chi.RouteCtxKey,

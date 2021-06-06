@@ -73,7 +73,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, item.ID)
 	logger = logger.WithValue(keys.ItemIDKey, item.ID)
 
-	// notify relevant parties.
+	// notify interested parties.
 	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
 		observability.AcknowledgeError(err, logger, span, "adding item to search index")
 	}
@@ -145,7 +145,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
-	// fetch item from database.
+	// check the database.
 	exists, err := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
 	if !errors.Is(err, sql.ErrNoRows) {
 		observability.AcknowledgeError(err, logger, span, "checking item existence")
@@ -183,7 +183,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 	items, err := s.itemDataManager.GetItems(ctx, sessionCtxData.ActiveAccountID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
-		// in the event no rows exist return an empty list.
+		// in the event no rows exist, return an empty list.
 		items = &types.ItemList{Items: []*types.Item{}}
 	} else if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving items")
@@ -232,7 +232,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch items from database.
 	items, err := s.itemDataManager.GetItemsWithIDs(ctx, sessionCtxData.ActiveAccountID, filter.Limit, relevantIDs)
 	if errors.Is(err, sql.ErrNoRows) {
-		// in the event no rows exist return an empty list.
+		// in the event no rows exist, return an empty list.
 		items = []*types.Item{}
 	} else if err != nil {
 		observability.AcknowledgeError(err, logger, span, "searching items")
@@ -294,7 +294,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// update the data structure.
+	// update the item.
 	changeReport := item.Update(input)
 	tracing.AttachChangeSummarySpan(span, "item", changeReport)
 
@@ -305,7 +305,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// notify relevant parties.
+	// notify interested parties.
 	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
 		observability.AcknowledgeError(err, logger, span, "updating item in search index")
 	}
@@ -349,7 +349,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// notify relevant parties.
+	// notify interested parties.
 	s.itemCounter.Decrement(ctx)
 
 	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {

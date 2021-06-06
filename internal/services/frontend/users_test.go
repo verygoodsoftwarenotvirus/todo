@@ -11,7 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -31,7 +31,7 @@ func TestService_fetchUsers(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleUserList, nil)
 		s.dataStore = mockDB
@@ -70,7 +70,7 @@ func TestService_fetchUsers(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.UserList)(nil), errors.New("blah"))
 		s.dataStore = mockDB
@@ -102,7 +102,7 @@ func TestService_buildUsersTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleUserList, nil)
 		s.dataStore = mockDB
@@ -132,7 +132,7 @@ func TestService_buildUsersTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"SearchForUsersByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleQuery,
 		).Return(exampleUserList.Users, nil)
 		s.dataStore = mockDB
@@ -162,7 +162,7 @@ func TestService_buildUsersTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"SearchForUsersByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleQuery,
 		).Return([]*types.User(nil), errors.New("blah"))
 		s.dataStore = mockDB
@@ -192,7 +192,7 @@ func TestService_buildUsersTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleUserList, nil)
 		s.dataStore = mockDB
@@ -236,7 +236,7 @@ func TestService_buildUsersTableView(T *testing.T) {
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.UserList)(nil), errors.New("blah"))
 		s.dataStore = mockDB

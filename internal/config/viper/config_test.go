@@ -109,7 +109,7 @@ func TestFromConfig(T *testing.T) {
 				},
 				Items: items.Config{
 					SearchIndexPath: "/items_index_path",
-					Logger: logging.Config{
+					Logging: logging.Config{
 						Name:     "items",
 						Level:    logging.InfoLevel,
 						Provider: logging.ProviderZerolog,

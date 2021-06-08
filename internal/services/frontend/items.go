@@ -27,7 +27,7 @@ func (s *service) fetchItem(ctx context.Context, sessionCtxData *types.SessionCo
 	if s.useFakeData {
 		item = fakes.BuildFakeItem()
 	} else {
-		itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
+		itemID := s.itemIDFetcher(req)
 		item, err = s.dataStore.GetItem(ctx, itemID, sessionCtxData.ActiveAccountID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching item data")
@@ -375,7 +375,7 @@ func (s *service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
+	itemID := s.itemIDFetcher(req)
 	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "archiving items in datastore")
 		res.WriteHeader(http.StatusInternalServerError)

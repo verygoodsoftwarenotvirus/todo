@@ -27,7 +27,7 @@ func (s *service) fetchWebhook(ctx context.Context, sessionCtxData *types.Sessio
 	if s.useFakeData {
 		webhook = fakes.BuildFakeWebhook()
 	} else {
-		webhookID := s.routeParamManager.BuildRouteParamIDFetcher(logger, webhookIDURLParamKey, "webhook")(req)
+		webhookID := s.webhookIDFetcher(req)
 		webhook, err = s.dataStore.GetWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching webhook data")

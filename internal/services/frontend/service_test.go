@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"net/http"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
@@ -12,6 +13,10 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func dummyIDFetcher(*http.Request) uint64 {
+	return 0
+}
+
 func buildTestService(t *testing.T) *service {
 	t.Helper()
 
@@ -21,6 +26,11 @@ func buildTestService(t *testing.T) *service {
 	usersService := &mocktypes.UsersService{}
 	dataManager := database.BuildMockDatabase()
 	rpm := mockrouting.NewRouteParamManager()
+
+	rpm.On("BuildRouteParamIDFetcher", logger, apiClientIDURLParamKey, "API client").Return(dummyIDFetcher)
+	rpm.On("BuildRouteParamIDFetcher", logger, accountIDURLParamKey, "account").Return(dummyIDFetcher)
+	rpm.On("BuildRouteParamIDFetcher", logger, webhookIDURLParamKey, "webhook").Return(dummyIDFetcher)
+	rpm.On("BuildRouteParamIDFetcher", logger, itemIDURLParamKey, "item").Return(dummyIDFetcher)
 
 	s := ProvideService(
 		cfg,

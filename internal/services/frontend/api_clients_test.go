@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -29,16 +28,9 @@ func TestService_fetchAPIClient(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			apiClientIDURLParamKey,
-			"API client",
-		).Return(func(req *http.Request) uint64 {
+		s.apiClientIDFetcher = func(req *http.Request) uint64 {
 			return exampleAPIClient.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
@@ -55,7 +47,7 @@ func TestService_fetchAPIClient(T *testing.T) {
 		assert.Equal(t, exampleAPIClient, actual)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with fake mode", func(t *testing.T) {
@@ -83,16 +75,9 @@ func TestService_fetchAPIClient(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			apiClientIDURLParamKey,
-			"API client",
-		).Return(func(req *http.Request) uint64 {
+		s.apiClientIDFetcher = func(req *http.Request) uint64 {
 			return exampleAPIClient.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
@@ -109,7 +94,7 @@ func TestService_fetchAPIClient(T *testing.T) {
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -127,16 +112,9 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			apiClientIDURLParamKey,
-			"API client",
-		).Return(func(req *http.Request) uint64 {
+		s.apiClientIDFetcher = func(req *http.Request) uint64 {
 			return exampleAPIClient.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
@@ -154,7 +132,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("without base template", func(t *testing.T) {
@@ -168,16 +146,9 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			apiClientIDURLParamKey,
-			"API client",
-		).Return(func(req *http.Request) uint64 {
+		s.apiClientIDFetcher = func(req *http.Request) uint64 {
 			return exampleAPIClient.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
@@ -195,7 +166,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error fetching session context data", func(t *testing.T) {
@@ -226,16 +197,9 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			apiClientIDURLParamKey,
-			"API client",
-		).Return(func(req *http.Request) uint64 {
+		s.apiClientIDFetcher = func(req *http.Request) uint64 {
 			return exampleAPIClient.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.APIClientDataManager.On(
@@ -253,7 +217,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 

@@ -48,14 +48,17 @@ type (
 		logger                    logging.Logger
 		tracer                    tracing.Tracer
 		panicker                  panicking.Panicker
-		routeParamManager         routing.RouteParamManager
 		authService               AuthService
 		usersService              UsersService
 		dataStore                 database.DataManager
-		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		localizer                 *i18n.Localizer
 		paymentManager            capitalism.PaymentManager
+		localizer                 *i18n.Localizer
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		templateFuncMap           template.FuncMap
+		webhookIDFetcher          func(*http.Request) uint64
+		apiClientIDFetcher        func(*http.Request) uint64
+		accountIDFetcher          func(*http.Request) uint64
+		itemIDFetcher             func(*http.Request) uint64
 		useFakeData               bool
 	}
 )
@@ -76,12 +79,15 @@ func ProvideService(
 		tracer:                    tracing.NewTracer(serviceName),
 		panicker:                  panicking.NewProductionPanicker(),
 		localizer:                 provideLocalizer(),
-		routeParamManager:         routeParamManager,
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		authService:               authService,
 		usersService:              usersService,
 		paymentManager:            paymentManager,
 		dataStore:                 dataStore,
+		apiClientIDFetcher:        routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client"),
+		accountIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, accountIDURLParamKey, "account"),
+		webhookIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, webhookIDURLParamKey, "webhook"),
+		itemIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item"),
 		templateFuncMap: map[string]interface{}{
 			"relativeTime":        relativeTime,
 			"relativeTimeFromPtr": relativeTimeFromPtr,

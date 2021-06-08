@@ -27,7 +27,7 @@ func (s *service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 	if s.useFakeData {
 		apiClient = fakes.BuildFakeAPIClient()
 	} else {
-		apiClientID := s.routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client")(req)
+		apiClientID := s.apiClientIDFetcher(req)
 		apiClient, err = s.dataStore.GetAPIClientByDatabaseID(ctx, apiClientID, sessionCtxData.Requester.UserID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching API client data")

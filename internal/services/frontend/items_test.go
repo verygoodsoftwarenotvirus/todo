@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -31,16 +30,9 @@ func TestService_fetchItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -57,7 +49,7 @@ func TestService_fetchItem(T *testing.T) {
 		assert.Equal(t, exampleItem, actual)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with fake mode", func(t *testing.T) {
@@ -85,16 +77,9 @@ func TestService_fetchItem(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -111,7 +96,7 @@ func TestService_fetchItem(T *testing.T) {
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -406,16 +391,9 @@ func TestService_buildItemEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -433,7 +411,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("without base template", func(t *testing.T) {
@@ -447,16 +425,9 @@ func TestService_buildItemEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -474,7 +445,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error fetching session context data", func(t *testing.T) {
@@ -505,16 +476,9 @@ func TestService_buildItemEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -532,7 +496,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -797,16 +761,9 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -832,7 +789,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error fetching session context data", func(t *testing.T) {
@@ -888,16 +845,9 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -915,7 +865,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error updating data", func(t *testing.T) {
@@ -931,16 +881,9 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -966,7 +909,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -986,16 +929,9 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -1022,7 +958,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error fetching session context data", func(t *testing.T) {
@@ -1054,16 +990,9 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -1082,7 +1011,7 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error retrieving new list of items", func(t *testing.T) {
@@ -1097,16 +1026,9 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			itemIDURLParamKey,
-			"item",
-		).Return(func(req *http.Request) uint64 {
+		s.itemIDFetcher = func(req *http.Request) uint64 {
 			return exampleItem.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -1133,6 +1055,6 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }

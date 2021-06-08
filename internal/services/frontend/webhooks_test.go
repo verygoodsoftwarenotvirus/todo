@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -29,16 +28,9 @@ func TestService_fetchWebhook(T *testing.T) {
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
+		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.WebhookDataManager.On(
@@ -55,7 +47,7 @@ func TestService_fetchWebhook(T *testing.T) {
 		assert.Equal(t, exampleWebhook, actual)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with fake mode", func(t *testing.T) {
@@ -83,16 +75,9 @@ func TestService_fetchWebhook(T *testing.T) {
 		exampleWebhook := fakes.BuildFakeWebhook()
 		exampleSessionContextData := fakes.BuildFakeSessionContextData()
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
+		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.WebhookDataManager.On(
@@ -109,7 +94,7 @@ func TestService_fetchWebhook(T *testing.T) {
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -407,16 +392,9 @@ func TestService_buildWebhookEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
+		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.WebhookDataManager.On(
@@ -434,7 +412,7 @@ func TestService_buildWebhookEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("without base template", func(t *testing.T) {
@@ -448,16 +426,9 @@ func TestService_buildWebhookEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
+		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.WebhookDataManager.On(
@@ -475,7 +446,7 @@ func TestService_buildWebhookEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error fetching session context data", func(t *testing.T) {
@@ -506,16 +477,9 @@ func TestService_buildWebhookEditorView(T *testing.T) {
 			return exampleSessionContextData, nil
 		}
 
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
+		s.webhookIDFetcher = func(req *http.Request) uint64 {
 			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
+		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.WebhookDataManager.On(
@@ -533,7 +497,7 @@ func TestService_buildWebhookEditorView(T *testing.T) {
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
+		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
 
@@ -718,426 +682,3 @@ func TestService_buildWebhooksTableView(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 }
-
-/*
-
-func attachWebhookUpdateInputToRequest(input *types.WebhookUpdateInput) *http.Request {
-	form := url.Values{
-		webhookCreationInputNameFormKey:    {input.Name},
-		webhookCreationInputDetailsFormKey: {input.Details},
-	}
-
-	return httptest.NewRequest(http.MethodPost, "/webhooks", strings.NewReader(form.Encode()))
-}
-
-func TestService_parseFormEncodedWebhookUpdateInput(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		ctx := context.Background()
-		exampleWebhook := fakes.BuildFakeWebhook()
-		expected := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-		sessionCtxData := &types.SessionContextData{
-			ActiveAccountID: expected.BelongsToAccount,
-		}
-
-		req := attachWebhookUpdateInputToRequest(expected)
-
-		actual := s.parseFormEncodedWebhookUpdateInput(ctx, req, sessionCtxData)
-		assert.Equal(t, expected, actual)
-	})
-
-	T.Run("with invalid form", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		ctx := context.Background()
-		sessionCtxData := fakes.BuildFakeSessionContextData()
-
-		badBody := &testutils.MockReadCloser{}
-		badBody.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
-
-		req := httptest.NewRequest(http.MethodGet, "/test", badBody)
-
-		actual := s.parseFormEncodedWebhookUpdateInput(ctx, req, sessionCtxData)
-		assert.Nil(t, actual)
-	})
-
-	T.Run("with invalid input attached to valid form", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		ctx := context.Background()
-		exampleInput := &types.WebhookUpdateInput{}
-		sessionCtxData := fakes.BuildFakeSessionContextData()
-
-		req := attachWebhookUpdateInputToRequest(exampleInput)
-
-		actual := s.parseFormEncodedWebhookUpdateInput(ctx, req, sessionCtxData)
-		assert.Nil(t, actual)
-	})
-}
-
-func TestService_handleWebhookUpdateRequest(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On(
-			"GetWebhook",
-			testutils.ContextMatcher,
-			exampleWebhook.ID,
-			exampleSessionContextData.ActiveAccountID,
-		).Return(exampleWebhook, nil)
-
-		mockDB.WebhookDataManager.On(
-			"UpdateWebhook",
-			testutils.ContextMatcher,
-			exampleWebhook,
-			exampleSessionContextData.Requester.ID,
-			[]*types.FieldChangeSummary(nil),
-		).Return(nil)
-		s.dataStore = mockDB
-
-		res := httptest.NewRecorder()
-		req := attachWebhookUpdateInputToRequest(exampleInput)
-
-		s.handleWebhookUpdateRequest(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
-	})
-
-	T.Run("with error fetching session context data", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return nil, errors.New("blah")
-		}
-
-		res := httptest.NewRecorder()
-		req := attachWebhookUpdateInputToRequest(exampleInput)
-
-		s.handleWebhookUpdateRequest(res, req)
-
-		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
-	})
-
-	T.Run("with invalid input", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleInput := &types.WebhookUpdateInput{}
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		res := httptest.NewRecorder()
-		req := attachWebhookUpdateInputToRequest(exampleInput)
-
-		s.handleWebhookUpdateRequest(res, req)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-	})
-
-	T.Run("with error fetching data", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On(
-			"GetWebhook",
-			testutils.ContextMatcher,
-			exampleWebhook.ID,
-			exampleSessionContextData.ActiveAccountID,
-		).Return((*types.Webhook)(nil), errors.New("blah"))
-		s.dataStore = mockDB
-
-		res := httptest.NewRecorder()
-		req := attachWebhookUpdateInputToRequest(exampleInput)
-
-		s.handleWebhookUpdateRequest(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
-	})
-
-	T.Run("with error updating data", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleInput := fakes.BuildFakeWebhookUpdateInputFromWebhook(exampleWebhook)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On(
-			"GetWebhook",
-			testutils.ContextMatcher,
-			exampleWebhook.ID,
-			exampleSessionContextData.ActiveAccountID,
-		).Return(exampleWebhook, nil)
-
-		mockDB.WebhookDataManager.On(
-			"UpdateWebhook",
-			testutils.ContextMatcher,
-			exampleWebhook,
-			exampleSessionContextData.Requester.ID,
-			[]*types.FieldChangeSummary(nil),
-		).Return(errors.New("blah"))
-		s.dataStore = mockDB
-
-		res := httptest.NewRecorder()
-		req := attachWebhookUpdateInputToRequest(exampleInput)
-
-		s.handleWebhookUpdateRequest(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
-	})
-}
-
-func TestService_handleWebhookDeletionRequest(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleWebhookList := fakes.BuildFakeWebhookList()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On(
-			"ArchiveWebhook",
-			testutils.ContextMatcher,
-			exampleWebhook.ID,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
-		).Return(nil)
-		s.dataStore = mockDB
-
-		mockDB.WebhookDataManager.On(
-			"GetWebhooks",
-			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
-			mock.IsType(&types.QueryFilter{}),
-		).Return(exampleWebhookList, nil)
-		s.dataStore = mockDB
-
-		res := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodDelete, "/webhooks", nil)
-
-		s.handleWebhookDeletionRequest(res, req)
-
-		assert.Equal(t, http.StatusOK, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
-	})
-
-	T.Run("with error fetching session context data", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return nil, errors.New("blah")
-		}
-
-		res := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodDelete, "/webhooks", nil)
-
-		s.handleWebhookDeletionRequest(res, req)
-
-		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
-	})
-
-	T.Run("with error archiving webhook", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On(
-			"ArchiveWebhook",
-			testutils.ContextMatcher,
-			exampleWebhook.ID,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
-		).Return(errors.New("blah"))
-		s.dataStore = mockDB
-
-		res := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodDelete, "/webhooks", nil)
-
-		s.handleWebhookDeletionRequest(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
-	})
-
-	T.Run("with error retrieving new list of webhooks", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestService(t)
-
-		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		rpm := mockrouting.NewRouteParamManager()
-		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.Anything,
-			webhookIDURLParamKey,
-			"webhook",
-		).Return(func(req *http.Request) uint64 {
-			return exampleWebhook.ID
-		})
-		s.routeParamManager = rpm
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.WebhookDataManager.On(
-			"ArchiveWebhook",
-			testutils.ContextMatcher,
-			exampleWebhook.ID,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.ID,
-		).Return(nil)
-		s.dataStore = mockDB
-
-		mockDB.WebhookDataManager.On(
-			"GetWebhooks",
-			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
-			mock.IsType(&types.QueryFilter{}),
-		).Return((*types.WebhookList)(nil), errors.New("blah"))
-		s.dataStore = mockDB
-
-		res := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodDelete, "/webhooks", nil)
-
-		s.handleWebhookDeletionRequest(res, req)
-
-		assert.Equal(t, http.StatusInternalServerError, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB, rpm)
-	})
-}
-
-*/

@@ -17,14 +17,14 @@ var (
 			"Uploads",
 			"Search",
 			"Server",
-			"AuditLog",
 			"Services",
 		),
 		wire.FieldsOf(new(*ServicesConfigurations),
+			"AuditLog",
 			"Auth",
-			"Items",
-			"Webhooks",
 			"Frontend",
+			"Webhooks",
+			"Items",
 		),
 	)
 )

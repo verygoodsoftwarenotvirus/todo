@@ -6,6 +6,9 @@ import (
 	"encoding/gob"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -146,4 +149,18 @@ func (x *SessionContextData) ToBytes() []byte {
 	}
 
 	return b.Bytes()
+}
+
+// AttachToLogger provides a consistent way to attach a SessionContextData object to a logger.
+func (x *SessionContextData) AttachToLogger(logger logging.Logger) logging.Logger {
+	if x != nil {
+		logger = logger.WithValue(keys.RequesterIDKey, x.Requester.UserID).
+			WithValue(keys.ActiveAccountIDKey, x.ActiveAccountID)
+
+		if x.Requester.ServicePermissions != nil {
+			logger = logger.WithValue(keys.ServiceRoleKey, x.Requester.ServicePermissions.IsServiceAdmin())
+		}
+	}
+
+	return logger
 }

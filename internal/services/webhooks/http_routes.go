@@ -34,7 +34,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, requester)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	input := new(types.WebhookCreationInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
@@ -90,7 +90,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// find the webhooks.
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, sessionCtxData.ActiveAccountID, filter)
@@ -125,7 +125,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -168,12 +168,10 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	userID := sessionCtxData.Requester.UserID
-	logger = logger.WithValue(keys.RequesterIDKey, userID)
-
 	accountID := sessionCtxData.ActiveAccountID
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -292,7 +290,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine webhook ID.
 	webhookID := s.webhookIDFetcher(req)

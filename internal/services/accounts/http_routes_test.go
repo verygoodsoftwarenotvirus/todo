@@ -583,7 +583,9 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager.On(
 			"ArchiveAccount",
 			testutils.ContextMatcher,
-			helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
+			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.accountDataManager = accountDataManager
 
@@ -630,7 +632,9 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager.On(
 			"ArchiveAccount",
 			testutils.ContextMatcher,
-			helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
+			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.accountDataManager = accountDataManager
 
@@ -658,7 +662,9 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager.On(
 			"ArchiveAccount",
 			testutils.ContextMatcher,
-			helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
+			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.accountDataManager = accountDataManager
 

@@ -44,7 +44,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check session context data for parsed input struct.
 	input := new(types.ItemCreationInput)
@@ -99,7 +99,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -138,7 +138,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -179,7 +179,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	items, err := s.itemDataManager.GetItems(ctx, sessionCtxData.ActiveAccountID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -220,7 +220,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	relevantIDs, err := s.search.Search(ctx, query, sessionCtxData.ActiveAccountID)
 	if err != nil {
@@ -261,7 +261,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check for parsed input attached to session context data.
 	input := new(types.ItemUpdateInput)
@@ -331,7 +331,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -377,7 +377,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)

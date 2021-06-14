@@ -31,6 +31,9 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 		return
 	}
 
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	logger = sessionCtxData.AttachToLogger(logger)
+
 	// check session context data for parsed input struct.
 	input := new(types.UserReputationUpdateInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
@@ -47,16 +50,11 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 
 	logger = logger.WithValue("new_status", input.NewReputation)
 
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-
 	if !sessionCtxData.Requester.ServicePermissions.CanUpdateUserReputations() {
 		// this should never happen in production
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "inadequate permissions for route", http.StatusForbidden)
 		return
 	}
-
-	requester := sessionCtxData.Requester.UserID
-	logger = logger.WithValue("ban_giver", requester)
 
 	var allowed bool
 
@@ -66,6 +64,9 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 		allowed = true
 	}
+
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue("ban_giver", requester)
 
 	if !allowed {
 		logger.Info("ban attempt made by admin without appropriate permissions")

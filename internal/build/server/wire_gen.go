@@ -7,6 +7,7 @@ package server
 
 import (
 	"context"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"

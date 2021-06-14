@@ -46,7 +46,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.UserIDKey, requester)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// fetch API clients.
 	apiClients, err := s.apiClientDataManager.GetAPIClients(ctx, requester, filter)
@@ -98,7 +98,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// keep relevant data in mind.
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue("username", input.Username)
+	logger = sessionCtxData.AttachToLogger(logger).WithValue("username", input.Username)
 
 	// retrieve user.
 	user, err := s.userDataManager.GetUser(ctx, sessionCtxData.Requester.UserID)
@@ -184,7 +184,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, requester)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -224,7 +224,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, requester)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine API client ID.
 	apiClientID := s.urlClientIDExtractor(req)
@@ -265,9 +265,8 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.UserIDKey, requester)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine relevant API client ID.
 	apiClientID := s.urlClientIDExtractor(req)

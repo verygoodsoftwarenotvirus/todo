@@ -73,10 +73,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	filter := types.ExtractQueryFilter(req)
-	logger := s.logger.WithRequest(req).
-		WithValue(keys.FilterLimitKey, filter.Limit).
-		WithValue(keys.FilterPageKey, filter.Page).
-		WithValue(keys.FilterSortByKey, string(filter.SortBy))
+	logger := filter.AttachToLogger(s.logger)
 
 	tracing.AttachRequestToSpan(span, req)
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
@@ -170,9 +167,6 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = sessionCtxData.AttachToLogger(logger)
 
-	userID := sessionCtxData.Requester.UserID
-	accountID := sessionCtxData.ActiveAccountID
-
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
@@ -192,7 +186,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// fetch the webhook in question.
-	webhook, err := s.webhookDataManager.GetWebhook(ctx, webhookID, accountID)
+	webhook, err := s.webhookDataManager.GetWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Debug("nonexistent webhook requested for update")
@@ -210,7 +204,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachChangeSummarySpan(span, "webhook", changeReport)
 
 	// save the update in the database.
-	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, userID, changeReport); err != nil {
+	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, sessionCtxData.Requester.UserID, changeReport); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Debug("attempted to update nonexistent webhook")
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)

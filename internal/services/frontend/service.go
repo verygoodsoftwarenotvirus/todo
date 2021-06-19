@@ -45,20 +45,20 @@ type (
 	}
 
 	service struct {
+		paymentManager            capitalism.PaymentManager
+		usersService              UsersService
 		logger                    logging.Logger
 		tracer                    tracing.Tracer
 		panicker                  panicking.Panicker
 		authService               AuthService
-		usersService              UsersService
 		dataStore                 database.DataManager
-		paymentManager            capitalism.PaymentManager
-		localizer                 *i18n.Localizer
-		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		templateFuncMap           template.FuncMap
-		webhookIDFetcher          func(*http.Request) uint64
-		apiClientIDFetcher        func(*http.Request) uint64
-		accountIDFetcher          func(*http.Request) uint64
 		itemIDFetcher             func(*http.Request) uint64
+		localizer                 *i18n.Localizer
+		templateFuncMap           template.FuncMap
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		accountIDFetcher          func(*http.Request) uint64
+		apiClientIDFetcher        func(*http.Request) uint64
+		webhookIDFetcher          func(*http.Request) uint64
 		useFakeData               bool
 	}
 )

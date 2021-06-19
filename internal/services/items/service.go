@@ -1,6 +1,7 @@
 package items
 
 import (
+	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -45,13 +46,12 @@ func ProvideService(
 	itemDataManager types.ItemDataManager,
 	encoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
-	indexProvider search.IndexManagerProvider,
+	searchIndexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
 ) (types.ItemDataService, error) {
-	searchIndexManager, indexInitErr := indexProvider(search.IndexPath(cfg.SearchIndexPath), types.ItemsSearchIndexName, logger)
-	if indexInitErr != nil {
-		logger.Error(indexInitErr, "setting up items search index")
-		return nil, indexInitErr
+	searchIndexManager, err := searchIndexProvider(search.IndexPath(cfg.SearchIndexPath), "items", logger)
+	if err != nil {
+		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
 	svc := &service{

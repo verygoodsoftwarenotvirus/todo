@@ -56,6 +56,9 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 		return
 	}
 
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue("ban_giver", requester)
+
 	var allowed bool
 
 	switch input.NewReputation {
@@ -64,9 +67,6 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 		allowed = true
 	}
-
-	requester := sessionCtxData.Requester.UserID
-	logger = logger.WithValue("ban_giver", requester)
 
 	if !allowed {
 		logger.Info("ban attempt made by admin without appropriate permissions")

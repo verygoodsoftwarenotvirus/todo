@@ -232,7 +232,6 @@ linters:
     # - gofumpt          # Gofumpt checks whether code was gofumpt-ed.
     - goheader         # Checks is file header matches to pattern
     - goimports        # Goimports does everything that gofmt does. Additionally it checks unused imports
-    - gomnd            # An analyzer to detect magic numbers.
     - gomoddirectives  # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
     - gomodguard       # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
     - goprintffuncname # Checks that printf-like functions are named with f at the end
@@ -275,6 +274,7 @@ linters:
     - dupl             # Tool for code clone detection
     - funlen           # Tool for detection of long functions
     - gofumpt          # Gofumpt checks whether code was gofumpt-ed.
+    - gomnd            # An analyzer to detect magic numbers.
     - nlreturn         # nlreturn checks for a new line before return and branch statements to increase code clarity
     - rowserrcheck     # checks whether Err of rows is checked successfully; lots of false positives
     - tagliatelle      # Checks the struct tags.

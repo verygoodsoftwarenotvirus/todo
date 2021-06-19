@@ -1229,6 +1229,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			"UpdateUser",
 			testutils.ContextMatcher,
 			mock.IsType(&types.User{}),
+			[]*types.FieldChangeSummary(nil),
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
@@ -1274,6 +1275,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			"UpdateUser",
 			testutils.ContextMatcher,
 			mock.IsType(&types.User{}),
+			[]*types.FieldChangeSummary(nil),
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
@@ -1671,14 +1673,17 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		ip.On(
 			"Process",
 			testutils.ContextMatcher,
-			testutils.HTTPRequestMatcher, "avatar").Return(returnImage, nil)
+			testutils.HTTPRequestMatcher,
+			"avatar",
+		).Return(returnImage, nil)
 		helper.service.imageUploadProcessor = ip
 
 		um := &mockuploads.UploadManager{}
 		um.On(
 			"SaveFile",
 			testutils.ContextMatcher,
-			fmt.Sprintf("avatar_%d", helper.exampleUser.ID), returnImage.Data,
+			fmt.Sprintf("avatar_%d", helper.exampleUser.ID),
+			returnImage.Data,
 		).Return(nil)
 		helper.service.uploadManager = um
 
@@ -1799,14 +1804,17 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		ip.On(
 			"Process",
 			testutils.ContextMatcher,
-			testutils.HTTPRequestMatcher, "avatar").Return(returnImage, nil)
+			testutils.HTTPRequestMatcher,
+			"avatar",
+		).Return(returnImage, nil)
 		helper.service.imageUploadProcessor = ip
 
 		um := &mockuploads.UploadManager{}
 		um.On(
 			"SaveFile",
 			testutils.ContextMatcher,
-			fmt.Sprintf("avatar_%d", helper.exampleUser.ID), returnImage.Data,
+			fmt.Sprintf("avatar_%d", helper.exampleUser.ID),
+			returnImage.Data,
 		).Return(errors.New("blah"))
 		helper.service.uploadManager = um
 
@@ -1848,14 +1856,17 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		ip.On(
 			"Process",
 			testutils.ContextMatcher,
-			testutils.HTTPRequestMatcher, "avatar").Return(returnImage, nil)
+			testutils.HTTPRequestMatcher,
+			"avatar",
+		).Return(returnImage, nil)
 		helper.service.imageUploadProcessor = ip
 
 		um := &mockuploads.UploadManager{}
 		um.On(
 			"SaveFile",
 			testutils.ContextMatcher,
-			fmt.Sprintf("avatar_%d", helper.exampleUser.ID), returnImage.Data,
+			fmt.Sprintf("avatar_%d", helper.exampleUser.ID),
+			returnImage.Data,
 		).Return(nil)
 		helper.service.uploadManager = um
 

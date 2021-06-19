@@ -1035,7 +1035,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager, unitCounter)
+		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, indexManager)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -1153,7 +1153,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager, unitCounter)
+		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, indexManager)
 	})
 }
 

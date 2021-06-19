@@ -39,10 +39,11 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
 
-	accounts, err := s.accountDataManager.GetAccounts(ctx, sessionCtxData.Requester.UserID, filter)
+	accounts, err := s.accountDataManager.GetAccounts(ctx, requester, filter)
 	if errors.Is(err, sql.ErrNoRows) {
 		// in the event no rows exist, return an empty list.
 		accounts = &types.AccountList{Accounts: []*types.Account{}}
@@ -89,8 +90,8 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.NameKey, input.Name)
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
 	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	input.BelongsToUser = requester
 
 	// create account in database.
@@ -126,8 +127,9 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine account ID.
 	accountID := s.accountIDFetcher(req)
@@ -135,7 +137,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	// fetch account from database.
-	account, err := s.accountDataManager.GetAccount(ctx, accountID, sessionCtxData.Requester.UserID)
+	account, err := s.accountDataManager.GetAccount(ctx, accountID, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -179,8 +181,8 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
 	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	input.BelongsToUser = requester
 
 	// determine account ID.
@@ -230,7 +232,8 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	logger = sessionCtxData.AttachToLogger(logger)
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// determine account ID.
@@ -239,7 +242,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// archive the account in the database.
-	err = s.accountDataManager.ArchiveAccount(ctx, accountID, sessionCtxData.Requester.UserID, sessionCtxData.Requester.UserID)
+	err = s.accountDataManager.ArchiveAccount(ctx, accountID, requester, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -286,15 +289,16 @@ func (s *service) AddMemberHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	accountID := s.accountIDFetcher(req)
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// create account in database.
-	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input, sessionCtxData.Requester.UserID); err != nil {
+	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input, requester); err != nil {
 		observability.AcknowledgeError(err, logger, span, "adding user to account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -333,7 +337,8 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 		return
 	}
 
-	logger = sessionCtxData.AttachToLogger(logger)
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	accountID := s.accountIDFetcher(req)
@@ -345,7 +350,7 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 	tracing.AttachAccountIDToSpan(span, userID)
 
 	// create account in database.
-	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, userID, accountID, sessionCtxData.Requester.UserID, input); err != nil {
+	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, userID, accountID, requester, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "modifying user permissions")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -388,11 +393,12 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
+	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// transfer ownership of account in database.
-	if err = s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, sessionCtxData.Requester.UserID, input); err != nil {
+	if err = s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, requester, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "transferring account ownership")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -421,7 +427,8 @@ func (s *service) RemoveMemberHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	logger = sessionCtxData.AttachToLogger(logger)
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	accountID := s.accountIDFetcher(req)
@@ -433,7 +440,7 @@ func (s *service) RemoveMemberHandler(res http.ResponseWriter, req *http.Request
 	tracing.AttachUserIDToSpan(span, userID)
 
 	// remove user from account in database.
-	if err = s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID, sessionCtxData.Requester.UserID, reason); err != nil {
+	if err = s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID, requester, reason); err != nil {
 		observability.AcknowledgeError(err, logger, span, "removing user from account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -462,11 +469,12 @@ func (s *service) MarkAsDefaultAccountHandler(res http.ResponseWriter, req *http
 		return
 	}
 
-	logger = sessionCtxData.AttachToLogger(logger)
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// mark account as default in database.
-	if err = s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, sessionCtxData.Requester.UserID, accountID, sessionCtxData.Requester.UserID); err != nil {
+	if err = s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, requester, accountID, requester); err != nil {
 		observability.AcknowledgeError(err, logger, span, "marking account as default")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -491,7 +499,8 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	logger = sessionCtxData.AttachToLogger(logger)
+	requester := sessionCtxData.Requester.UserID
+	logger = logger.WithValue(keys.RequesterIDKey, requester)
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// determine account ID.

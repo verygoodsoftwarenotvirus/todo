@@ -138,15 +138,13 @@ func (s *service) AuthorizationMiddleware(next http.Handler) http.Handler {
 
 		// UserAttributionMiddleware should be called before this middleware.
 		if sessionCtxData, err := s.sessionContextDataFetcher(req); err == nil && sessionCtxData != nil {
-			logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+			logger = sessionCtxData.AttachToLogger(logger)
 
 			if sessionCtxData.Requester.Reputation == types.BannedUserAccountStatus || sessionCtxData.Requester.Reputation == types.TerminatedUserReputation {
 				logger.Debug("banned user attempted to make request")
 				http.Redirect(res, req, "/", http.StatusForbidden)
 				return
 			}
-
-			logger = logger.WithValue("requested_account_id", sessionCtxData.ActiveAccountID)
 
 			if _, authorizedForAccount := sessionCtxData.AccountPermissions[sessionCtxData.ActiveAccountID]; !authorizedForAccount {
 				logger.Debug("user trying to access account they are not authorized for")
@@ -180,15 +178,9 @@ func (s *service) PermissionFilterMiddleware(permissions ...authorization.Permis
 				return
 			}
 
-			logger = logger.WithValues(map[string]interface{}{
-				keys.RequesterIDKey: sessionContextData.Requester.UserID,
-				keys.AccountIDKey:   sessionContextData.ActiveAccountID,
-				"account_perms":     sessionContextData.AccountPermissions,
-			})
-			logger.Debug("PermissionFilterMiddleware called")
+			logger = sessionContextData.AttachToLogger(logger)
 
 			isServiceAdmin := sessionContextData.Requester.ServicePermissions.IsServiceAdmin()
-			logger = logger.WithValue(keys.UserIsServiceAdminKey, isServiceAdmin)
 
 			_, allowed := sessionContextData.AccountPermissions[sessionContextData.ActiveAccountID]
 			if !allowed && !isServiceAdmin {
@@ -196,9 +188,6 @@ func (s *service) PermissionFilterMiddleware(permissions ...authorization.Permis
 				s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 				return
 			}
-
-			logger = logger.WithValue(keys.RequesterIDKey, sessionContextData.Requester.UserID).
-				WithValue(keys.AccountIDKey, sessionContextData.ActiveAccountID)
 
 			for _, perm := range permissions {
 				if !sessionContextData.ServiceRolePermissionChecker().HasPermission(perm) &&
@@ -231,7 +220,7 @@ func (s *service) ServiceAdminMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+		logger = sessionCtxData.AttachToLogger(logger)
 
 		if !sessionCtxData.Requester.ServicePermissions.IsServiceAdmin() {
 			logger.Debug("ServiceAdminMiddleware called by non-admin user")

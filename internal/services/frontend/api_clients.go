@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -28,6 +29,9 @@ func (s *service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 		apiClient = fakes.BuildFakeAPIClient()
 	} else {
 		apiClientID := s.apiClientIDFetcher(req)
+		tracing.AttachAPIClientDatabaseIDToSpan(span, apiClientID)
+		logger = logger.WithValue(keys.APIClientDatabaseIDKey, apiClientID)
+
 		apiClient, err = s.dataStore.GetAPIClientByDatabaseID(ctx, apiClientID, sessionCtxData.Requester.UserID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching API client data")

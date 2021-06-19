@@ -94,7 +94,7 @@ func (s *service) SetupRoutes(router routing.Router) {
 	router.WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.CreateItemsPermission)).
 		Post("/items/new/submit", s.handleItemCreationRequest)
 	router.WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveItemsPermission)).
-		Delete(fmt.Sprintf("/dashboard_pages/items/%s", singleItemPattern), s.handleItemDeletionRequest)
+		Delete(fmt.Sprintf("/dashboard_pages/items/%s", singleItemPattern), s.handleItemArchiveRequest)
 	router.WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveItemsPermission)).
 		Get("/dashboard_pages/items/new", s.buildItemCreatorView(false))
 	router.WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.UpdateItemsPermission)).

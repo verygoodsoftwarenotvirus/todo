@@ -77,8 +77,8 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
 		observability.AcknowledgeError(err, logger, span, "adding item to search index")
 	}
-
 	s.itemCounter.Increment(ctx)
+
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, item, http.StatusCreated)
 }
 
@@ -280,8 +280,8 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
 	item, err := s.itemDataManager.GetItem(ctx, itemID, sessionCtxData.ActiveAccountID)
@@ -335,8 +335,8 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// archive the item in the database.
 	err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID)

@@ -4,7 +4,7 @@ import (
 	"embed"
 	"fmt"
 	"io/fs"
-	"path/filepath"
+	"path"
 
 	"github.com/BurntSushi/toml"
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -24,7 +24,7 @@ func provideLocalizer() *i18n.Localizer {
 	}
 
 	for _, f := range translationFolderContents {
-		translationFilename := filepath.Join("translations", f.Name())
+		translationFilename := path.Join("translations", f.Name())
 		translationFileBytes, fileReadErr := fs.ReadFile(translationsDir, translationFilename)
 		if fileReadErr != nil {
 			panic(fmt.Errorf("error reading translation file %q: %w", translationFilename, fileReadErr))

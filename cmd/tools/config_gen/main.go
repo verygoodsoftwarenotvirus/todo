@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
@@ -120,6 +121,10 @@ func encryptAndSaveConfig(ctx context.Context, outputPath string, cfg *config.In
 	output, err := sm.Encrypt(ctx, cfg)
 	if err != nil {
 		return fmt.Errorf("encrypting config: %v", err)
+	}
+
+	if err = os.MkdirAll(filepath.Dir(outputPath), 0777); err != nil {
+		// that's okay
 	}
 
 	return os.WriteFile(outputPath, []byte(output), 0644)

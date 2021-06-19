@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -24,13 +23,11 @@ func TestService_fetchItem(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
 		exampleItem := fakes.BuildFakeItem()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
 
@@ -39,13 +36,13 @@ func TestService_fetchItem(T *testing.T) {
 			"GetItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 		).Return(exampleItem, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		actual, err := s.fetchItem(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchItem(s.ctx, req, s.sessionCtxData)
 		assert.Equal(t, exampleItem, actual)
 		assert.NoError(t, err)
 
@@ -55,15 +52,12 @@ func TestService_fetchItem(T *testing.T) {
 	T.Run("with fake mode", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.useFakeData = true
-
-		ctx := context.Background()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+		s := buildTestHelper(t)
+		s.service.useFakeData = true
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		actual, err := s.fetchItem(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchItem(s.ctx, req, s.sessionCtxData)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
@@ -71,13 +65,11 @@ func TestService_fetchItem(T *testing.T) {
 	T.Run("with error fetching item", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
 		exampleItem := fakes.BuildFakeItem()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
 
@@ -86,13 +78,13 @@ func TestService_fetchItem(T *testing.T) {
 			"GetItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 		).Return((*types.Item)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		actual, err := s.fetchItem(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchItem(s.ctx, req, s.sessionCtxData)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 
@@ -102,8 +94,8 @@ func TestService_fetchItem(T *testing.T) {
 
 func attachItemCreationInputToRequest(input *types.ItemCreationInput) *http.Request {
 	form := url.Values{
-		itemCreationInputNameFormKey:    {input.Name},
-		itemCreationInputDetailsFormKey: {input.Details},
+		itemCreationInputNameFormKey:    {anyToString(input.Name)},
+		itemCreationInputDetailsFormKey: {anyToString(input.Details)},
 	}
 
 	return httptest.NewRequest(http.MethodPost, "/items", strings.NewReader(form.Encode()))
@@ -115,17 +107,12 @@ func TestService_buildItemCreatorView(T *testing.T) {
 	T.Run("with base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
+		s := buildTestHelper(t)
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemCreatorView(true)(res, req)
+		s.service.buildItemCreatorView(true)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -133,17 +120,12 @@ func TestService_buildItemCreatorView(T *testing.T) {
 	T.Run("without base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
+		s := buildTestHelper(t)
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemCreatorView(false)(res, req)
+		s.service.buildItemCreatorView(false)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})
@@ -151,15 +133,15 @@ func TestService_buildItemCreatorView(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s := buildTestHelper(t)
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemCreatorView(false)(res, req)
+		s.service.buildItemCreatorView(false)(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
@@ -167,37 +149,27 @@ func TestService_buildItemCreatorView(T *testing.T) {
 	T.Run("with base template and error writing to response", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
+		s := buildTestHelper(t)
 
 		res := &testutils.MockHTTPResponseWriter{}
 		res.On("Write", mock.Anything).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemCreatorView(true)(res, req)
+		s.service.buildItemCreatorView(true)(res, req)
 	})
 
 	T.Run("without base template and error writing to response", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
+		s := buildTestHelper(t)
 
 		res := &testutils.MockHTTPResponseWriter{}
 		res.On("Write", mock.Anything).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemCreatorView(false)(res, req)
+		s.service.buildItemCreatorView(false)(res, req)
 	})
 }
 
@@ -207,52 +179,39 @@ func TestService_parseFormEncodedItemCreationInput(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
 		expected := fakes.BuildFakeItemCreationInput()
+		expected.BelongsToAccount = s.exampleAccount.ID
 		req := attachItemCreationInputToRequest(expected)
-		sessionCtxData := &types.SessionContextData{
-			ActiveAccountID: expected.BelongsToAccount,
-		}
 
-		actual := s.parseFormEncodedItemCreationInput(ctx, req, sessionCtxData)
+		actual := s.service.parseFormEncodedItemCreationInput(s.ctx, req, s.sessionCtxData)
 		assert.Equal(t, expected, actual)
 	})
 
 	T.Run("with error extracting form from request", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		ctx := context.Background()
-		exampleInput := fakes.BuildFakeItemCreationInput()
+		s := buildTestHelper(t)
 
 		badBody := &testutils.MockReadCloser{}
 		badBody.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodGet, "/test", badBody)
-		sessionCtxData := &types.SessionContextData{
-			ActiveAccountID: exampleInput.BelongsToAccount,
-		}
 
-		actual := s.parseFormEncodedItemCreationInput(ctx, req, sessionCtxData)
+		actual := s.service.parseFormEncodedItemCreationInput(s.ctx, req, s.sessionCtxData)
 		assert.Nil(t, actual)
 	})
 
 	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
 		exampleInput := &types.ItemCreationInput{}
 		req := attachItemCreationInputToRequest(exampleInput)
-		sessionCtxData := &types.SessionContextData{
-			ActiveAccountID: exampleInput.BelongsToAccount,
-		}
 
-		actual := s.parseFormEncodedItemCreationInput(ctx, req, sessionCtxData)
+		actual := s.service.parseFormEncodedItemCreationInput(s.ctx, req, s.sessionCtxData)
 		assert.Nil(t, actual)
 	})
 }
@@ -263,15 +222,16 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
+			return exampleItem.ID
 		}
-		exampleInput.BelongsToAccount = exampleSessionContextData.ActiveAccountID
+
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
 
 		res := httptest.NewRecorder()
 		req := attachItemCreationInputToRequest(exampleInput)
@@ -281,11 +241,11 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			"CreateItem",
 			testutils.ContextMatcher,
 			exampleInput,
-			exampleSessionContextData.Requester.UserID,
+			s.sessionCtxData.Requester.UserID,
 		).Return(exampleItem, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
-		s.handleItemCreationRequest(res, req)
+		s.service.handleItemCreationRequest(res, req)
 
 		assert.Equal(t, http.StatusCreated, res.Code)
 		assert.NotEmpty(t, res.Header().Get(htmxRedirectionHeader))
@@ -296,18 +256,23 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
+			return exampleItem.ID
+		}
+
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
 		req := attachItemCreationInputToRequest(exampleInput)
 
-		s.handleItemCreationRequest(res, req)
+		s.service.handleItemCreationRequest(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
@@ -315,15 +280,16 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
+			return exampleItem.ID
 		}
-		exampleInput.BelongsToAccount = exampleSessionContextData.ActiveAccountID
+
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
 
 		res := httptest.NewRecorder()
 		req := attachItemCreationInputToRequest(&types.ItemCreationInput{})
@@ -333,11 +299,11 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			"CreateItem",
 			testutils.ContextMatcher,
 			exampleInput,
-			exampleSessionContextData.Requester.UserID,
+			s.sessionCtxData.Requester.UserID,
 		).Return(exampleItem, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
-		s.handleItemCreationRequest(res, req)
+		s.service.handleItemCreationRequest(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 
@@ -347,15 +313,16 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 	T.Run("with error creating item in database", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
+			return exampleItem.ID
 		}
-		exampleInput.BelongsToAccount = exampleSessionContextData.ActiveAccountID
+
+		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
 
 		res := httptest.NewRecorder()
 		req := attachItemCreationInputToRequest(exampleInput)
@@ -365,11 +332,11 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			"CreateItem",
 			testutils.ContextMatcher,
 			exampleInput,
-			exampleSessionContextData.Requester.UserID,
+			s.sessionCtxData.Requester.UserID,
 		).Return((*types.Item)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
-		s.handleItemCreationRequest(res, req)
+		s.service.handleItemCreationRequest(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -383,15 +350,11 @@ func TestService_buildItemEditorView(T *testing.T) {
 	T.Run("with base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
+
 		exampleItem := fakes.BuildFakeItem()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
 
@@ -400,14 +363,14 @@ func TestService_buildItemEditorView(T *testing.T) {
 			"GetItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 		).Return(exampleItem, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemEditorView(true)(res, req)
+		s.service.buildItemEditorView(true)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -417,15 +380,11 @@ func TestService_buildItemEditorView(T *testing.T) {
 	T.Run("without base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
+
 		exampleItem := fakes.BuildFakeItem()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
 
@@ -434,14 +393,14 @@ func TestService_buildItemEditorView(T *testing.T) {
 			"GetItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 		).Return(exampleItem, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemEditorView(false)(res, req)
+		s.service.buildItemEditorView(false)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -451,16 +410,16 @@ func TestService_buildItemEditorView(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemEditorView(true)(res, req)
+		s.service.buildItemEditorView(true)(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
@@ -468,15 +427,11 @@ func TestService_buildItemEditorView(T *testing.T) {
 	T.Run("with error fetching item", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
+
 		exampleItem := fakes.BuildFakeItem()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
 
@@ -485,14 +440,14 @@ func TestService_buildItemEditorView(T *testing.T) {
 			"GetItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 		).Return((*types.Item)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemEditorView(true)(res, req)
+		s.service.buildItemEditorView(true)(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -506,24 +461,22 @@ func TestService_fetchItems(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
 		exampleItemList := fakes.BuildFakeItemList()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
 			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		actual, err := s.fetchItems(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchItems(s.ctx, req, s.sessionCtxData)
 		assert.Equal(t, exampleItemList, actual)
 		assert.NoError(t, err)
 
@@ -533,15 +486,12 @@ func TestService_fetchItems(T *testing.T) {
 	T.Run("with fake mode", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.useFakeData = true
-
-		ctx := context.Background()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+		s := buildTestHelper(t)
+		s.service.useFakeData = true
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		actual, err := s.fetchItems(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchItems(s.ctx, req, s.sessionCtxData)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
@@ -549,23 +499,20 @@ func TestService_fetchItems(T *testing.T) {
 	T.Run("with error fetching data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		ctx := context.Background()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
+		s := buildTestHelper(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
 			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.ItemList)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		actual, err := s.fetchItems(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchItems(s.ctx, req, s.sessionCtxData)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 
@@ -579,27 +526,26 @@ func TestService_buildItemsTableView(T *testing.T) {
 	T.Run("with base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItemList := fakes.BuildFakeItemList()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
+		for _, item := range exampleItemList.Items {
+			item.BelongsToAccount = s.exampleAccount.ID
 		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
 			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemsTableView(true)(res, req)
+		s.service.buildItemsTableView(true)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -609,27 +555,23 @@ func TestService_buildItemsTableView(T *testing.T) {
 	T.Run("without base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItemList := fakes.BuildFakeItemList()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
 			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemsTableView(false)(res, req)
+		s.service.buildItemsTableView(false)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -639,15 +581,15 @@ func TestService_buildItemsTableView(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s := buildTestHelper(t)
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemsTableView(true)(res, req)
+		s.service.buildItemsTableView(true)(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
@@ -655,26 +597,21 @@ func TestService_buildItemsTableView(T *testing.T) {
 	T.Run("with error fetching data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
+		s := buildTestHelper(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItems",
 			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.ItemList)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/items", nil)
 
-		s.buildItemsTableView(true)(res, req)
+		s.service.buildItemsTableView(true)(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -684,8 +621,8 @@ func TestService_buildItemsTableView(T *testing.T) {
 
 func attachItemUpdateInputToRequest(input *types.ItemUpdateInput) *http.Request {
 	form := url.Values{
-		itemUpdateInputNameFormKey:    {input.Name},
-		itemUpdateInputDetailsFormKey: {input.Details},
+		itemUpdateInputNameFormKey:    {anyToString(input.Name)},
+		itemUpdateInputDetailsFormKey: {anyToString(input.Details)},
 	}
 
 	return httptest.NewRequest(http.MethodPost, "/items", strings.NewReader(form.Encode()))
@@ -697,50 +634,46 @@ func TestService_parseFormEncodedItemUpdateInput(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
 		exampleItem := fakes.BuildFakeItem()
-		expected := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
-		sessionCtxData := &types.SessionContextData{
-			ActiveAccountID: expected.BelongsToAccount,
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
+			return exampleItem.ID
 		}
+
+		expected := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		req := attachItemUpdateInputToRequest(expected)
 
-		actual := s.parseFormEncodedItemUpdateInput(ctx, req, sessionCtxData)
+		actual := s.service.parseFormEncodedItemUpdateInput(s.ctx, req, s.sessionCtxData)
 		assert.Equal(t, expected, actual)
 	})
 
 	T.Run("with invalid form", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		ctx := context.Background()
-		sessionCtxData := fakes.BuildFakeSessionContextData()
+		s := buildTestHelper(t)
 
 		badBody := &testutils.MockReadCloser{}
 		badBody.On("Read", mock.IsType([]byte{})).Return(0, errors.New("blah"))
 
 		req := httptest.NewRequest(http.MethodGet, "/test", badBody)
 
-		actual := s.parseFormEncodedItemUpdateInput(ctx, req, sessionCtxData)
+		actual := s.service.parseFormEncodedItemUpdateInput(s.ctx, req, s.sessionCtxData)
 		assert.Nil(t, actual)
 	})
 
 	T.Run("with invalid input attached to valid form", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
 		exampleInput := &types.ItemUpdateInput{}
-		sessionCtxData := fakes.BuildFakeSessionContextData()
 
 		req := attachItemUpdateInputToRequest(exampleInput)
 
-		actual := s.parseFormEncodedItemUpdateInput(ctx, req, sessionCtxData)
+		actual := s.service.parseFormEncodedItemUpdateInput(s.ctx, req, s.sessionCtxData)
 		assert.Nil(t, actual)
 	})
 }
@@ -751,41 +684,37 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
+
+		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 		).Return(exampleItem, nil)
 
 		mockDB.ItemDataManager.On(
 			"UpdateItem",
 			testutils.ContextMatcher,
 			exampleItem,
-			exampleSessionContextData.Requester.UserID,
+			s.sessionCtxData.Requester.UserID,
 			[]*types.FieldChangeSummary(nil),
 		).Return(nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := attachItemUpdateInputToRequest(exampleInput)
 
-		s.handleItemUpdateRequest(res, req)
+		s.service.handleItemUpdateRequest(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -795,19 +724,24 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
+			return exampleItem.ID
+		}
+
 		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
 		req := attachItemUpdateInputToRequest(exampleInput)
 
-		s.handleItemUpdateRequest(res, req)
+		s.service.handleItemUpdateRequest(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
@@ -815,19 +749,14 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleInput := &types.ItemUpdateInput{}
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		res := httptest.NewRecorder()
 		req := attachItemUpdateInputToRequest(exampleInput)
 
-		s.handleItemUpdateRequest(res, req)
+		s.service.handleItemUpdateRequest(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -835,33 +764,29 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 	T.Run("with error fetching data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
+
+		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 		).Return((*types.Item)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := attachItemUpdateInputToRequest(exampleInput)
 
-		s.handleItemUpdateRequest(res, req)
+		s.service.handleItemUpdateRequest(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -871,41 +796,37 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 	T.Run("with error updating data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
+
+		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"GetItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 		).Return(exampleItem, nil)
 
 		mockDB.ItemDataManager.On(
 			"UpdateItem",
 			testutils.ContextMatcher,
 			exampleItem,
-			exampleSessionContextData.Requester.UserID,
+			s.sessionCtxData.Requester.UserID,
 			[]*types.FieldChangeSummary(nil),
 		).Return(errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := attachItemUpdateInputToRequest(exampleInput)
 
-		s.handleItemUpdateRequest(res, req)
+		s.service.handleItemUpdateRequest(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -913,48 +834,44 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 	})
 }
 
-func TestService_handleItemDeletionRequest(T *testing.T) {
+func TestService_handleItemArchiveRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItemList := fakes.BuildFakeItemList()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
+
+		exampleItemList := fakes.BuildFakeItemList()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
 			"ArchiveItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.UserID,
+			s.sessionCtxData.ActiveAccountID,
+			s.sessionCtxData.Requester.UserID,
 		).Return(nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		mockDB.ItemDataManager.On(
 			"GetItems",
 			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleItemList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodDelete, "/items", nil)
 
-		s.handleItemDeletionRequest(res, req)
+		s.service.handleItemArchiveRequest(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -964,16 +881,16 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodDelete, "/items", nil)
 
-		s.handleItemDeletionRequest(res, req)
+		s.service.handleItemArchiveRequest(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
@@ -981,16 +898,11 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 	T.Run("with error archiving item", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
 
@@ -999,15 +911,15 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 			"ArchiveItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.UserID,
+			s.sessionCtxData.ActiveAccountID,
+			s.sessionCtxData.Requester.UserID,
 		).Return(errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodDelete, "/items", nil)
 
-		s.handleItemDeletionRequest(res, req)
+		s.service.handleItemArchiveRequest(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -1017,16 +929,11 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 	T.Run("with error retrieving new list of items", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
-
-		s.itemIDFetcher = func(req *http.Request) uint64 {
+		exampleItem.BelongsToAccount = s.exampleAccount.ID
+		s.service.itemIDFetcher = func(*http.Request) uint64 {
 			return exampleItem.ID
 		}
 
@@ -1035,23 +942,23 @@ func TestService_handleItemDeletionRequest(T *testing.T) {
 			"ArchiveItem",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.UserID,
+			s.sessionCtxData.ActiveAccountID,
+			s.sessionCtxData.Requester.UserID,
 		).Return(nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		mockDB.ItemDataManager.On(
 			"GetItems",
 			testutils.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
+			s.sessionCtxData.ActiveAccountID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.ItemList)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodDelete, "/items", nil)
 
-		s.handleItemDeletionRequest(res, req)
+		s.service.handleItemArchiveRequest(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 

@@ -55,7 +55,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				},
 				Auth: authservice.Config{
 					Cookies: authservice.CookieConfig{
-						Name:     "todocookie",
+						Name:     "todo_cookie",
 						Domain:   "https://verygoodsoftwarenotvirus.ru",
 						Lifetime: time.Second,
 					},

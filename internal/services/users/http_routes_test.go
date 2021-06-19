@@ -1128,6 +1128,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			"UpdateUser",
 			testutils.ContextMatcher,
 			mock.IsType(&types.User{}),
+			[]*types.FieldChangeSummary(nil),
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
@@ -1329,6 +1330,7 @@ func TestService_NewTOTPSecretHandler(T *testing.T) {
 			"UpdateUser",
 			testutils.ContextMatcher,
 			mock.IsType(&types.User{}),
+			[]*types.FieldChangeSummary(nil),
 		).Return(errors.New("blah"))
 		helper.service.userDataManager = mockDB
 
@@ -1691,6 +1693,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 			"UpdateUser",
 			testutils.ContextMatcher,
 			mock.IsType(&types.User{}),
+			[]*types.FieldChangeSummary(nil),
 		).Return(nil)
 		helper.service.userDataManager = mockDB
 
@@ -1848,6 +1851,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 			"UpdateUser",
 			testutils.ContextMatcher,
 			mock.IsType(&types.User{}),
+			[]*types.FieldChangeSummary(nil),
 		).Return(errors.New("blah"))
 		helper.service.userDataManager = mockDB
 

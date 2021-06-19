@@ -286,6 +286,17 @@ func TestBuilder_BuildHealthCheckRequest(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, actual.Method, expectedMethod, "request should be a %s request", expectedMethod)
 	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+		ctx := context.Background()
+
+		c := buildTestRequestBuilderWithInvalidURL()
+
+		actual, err := c.BuildHealthCheckRequest(ctx)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
 func TestBuilder_buildDataRequest(T *testing.T) {

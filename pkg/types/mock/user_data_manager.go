@@ -72,7 +72,7 @@ func (m *UserDataManager) CreateUser(ctx context.Context, input *types.UserDataS
 
 // UpdateUser is a mock function.
 func (m *UserDataManager) UpdateUser(ctx context.Context, updated *types.User, changes []*types.FieldChangeSummary) error {
-	return m.Called(ctx, updated).Error(0)
+	return m.Called(ctx, updated, changes).Error(0)
 }
 
 // UpdateUserPassword is a mock function.

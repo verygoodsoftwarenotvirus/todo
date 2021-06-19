@@ -24,3 +24,8 @@ func BuildFakeSQLQuery() (query string, args []interface{}) {
 
 	return s, []interface{}{"things", "stuff"}
 }
+
+// BuildFakeID builds a fake ID.
+func BuildFakeID() uint64 {
+	return fake.Uint64()
+}

@@ -20,6 +20,7 @@ func TestBuilder_BuildItemExistsRequest(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
+
 		exampleItem := fakes.BuildFakeItem()
 
 		actual, err := helper.builder.BuildItemExistsRequest(helper.ctx, exampleItem.ID)
@@ -29,12 +30,25 @@ func TestBuilder_BuildItemExistsRequest(T *testing.T) {
 		assertRequestQuality(t, actual, spec)
 	})
 
-	T.Run("with invalid ID", func(t *testing.T) {
+	T.Run("with invalid item ID", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
 
 		actual, err := helper.builder.BuildItemExistsRequest(helper.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleItem := fakes.BuildFakeItem()
+
+		actual, err := helper.builder.BuildItemExistsRequest(helper.ctx, exampleItem.ID)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -49,6 +63,7 @@ func TestBuilder_BuildGetItemRequest(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
+
 		exampleItem := fakes.BuildFakeItem()
 
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, exampleItem.ID)
@@ -59,7 +74,7 @@ func TestBuilder_BuildGetItemRequest(T *testing.T) {
 		assertRequestQuality(t, actual, spec)
 	})
 
-	T.Run("with invalid ID", func(t *testing.T) {
+	T.Run("with invalid item ID", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
@@ -68,12 +83,25 @@ func TestBuilder_BuildGetItemRequest(T *testing.T) {
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleItem := fakes.BuildFakeItem()
+
+		actual, err := helper.builder.BuildGetItemRequest(helper.ctx, exampleItem.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
 func TestBuilder_BuildGetItemsRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/items"
+	const expectedPathFormat = "/api/v1/items"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -81,12 +109,25 @@ func TestBuilder_BuildGetItemsRequest(T *testing.T) {
 		helper := buildTestHelper()
 
 		filter := (*types.QueryFilter)(nil)
-		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
+		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPathFormat)
 
 		actual, err := helper.builder.BuildGetItemsRequest(helper.ctx, filter)
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		filter := (*types.QueryFilter)(nil)
+
+		actual, err := helper.builder.BuildGetItemsRequest(helper.ctx, filter)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
@@ -109,6 +150,20 @@ func TestBuilder_BuildSearchItemsRequest(T *testing.T) {
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		limit := types.DefaultQueryFilter().Limit
+		exampleQuery := "whatever"
+
+		actual, err := helper.builder.BuildSearchItemsRequest(helper.ctx, exampleQuery, limit)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
 func TestBuilder_BuildCreateItemRequest(T *testing.T) {
@@ -120,12 +175,13 @@ func TestBuilder_BuildCreateItemRequest(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
+
 		exampleInput := fakes.BuildFakeItemCreationInput()
+
+		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 		actual, err := helper.builder.BuildCreateItemRequest(helper.ctx, exampleInput)
 		assert.NoError(t, err)
-
-		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
 		assertRequestQuality(t, actual, spec)
 	})
@@ -149,6 +205,19 @@ func TestBuilder_BuildCreateItemRequest(T *testing.T) {
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleInput := fakes.BuildFakeItemCreationInput()
+
+		actual, err := helper.builder.BuildCreateItemRequest(helper.ctx, exampleInput)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
 func TestBuilder_BuildUpdateItemRequest(T *testing.T) {
@@ -160,6 +229,7 @@ func TestBuilder_BuildUpdateItemRequest(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
+
 		exampleItem := fakes.BuildFakeItem()
 
 		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, exampleItem.ID)
@@ -179,6 +249,19 @@ func TestBuilder_BuildUpdateItemRequest(T *testing.T) {
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleItem := fakes.BuildFakeItem()
+
+		actual, err := helper.builder.BuildUpdateItemRequest(helper.ctx, exampleItem)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
 func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
@@ -190,6 +273,7 @@ func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
+
 		exampleItem := fakes.BuildFakeItem()
 
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, exampleItem.ID)
@@ -200,12 +284,25 @@ func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
 		assertRequestQuality(t, actual, spec)
 	})
 
-	T.Run("with invalid ID", func(t *testing.T) {
+	T.Run("with invalid item ID", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
 
 		actual, err := helper.builder.BuildArchiveItemRequest(helper.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleItem := fakes.BuildFakeItem()
+
+		actual, err := helper.builder.BuildArchiveItemRequest(helper.ctx, exampleItem.ID)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -220,6 +317,7 @@ func TestBuilder_BuildGetAuditLogForItemRequest(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
+
 		exampleItem := fakes.BuildFakeItem()
 
 		actual, err := helper.builder.BuildGetAuditLogForItemRequest(helper.ctx, exampleItem.ID)
@@ -236,6 +334,19 @@ func TestBuilder_BuildGetAuditLogForItemRequest(T *testing.T) {
 		helper := buildTestHelper()
 
 		actual, err := helper.builder.BuildGetAuditLogForItemRequest(helper.ctx, 0)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleItem := fakes.BuildFakeItem()
+
+		actual, err := helper.builder.BuildGetAuditLogForItemRequest(helper.ctx, exampleItem.ID)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

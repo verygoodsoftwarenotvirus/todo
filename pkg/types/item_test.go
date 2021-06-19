@@ -2,10 +2,12 @@ package types
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestItem_Update(T *testing.T) {
@@ -34,7 +36,16 @@ func TestItem_Update(T *testing.T) {
 			},
 		}
 		actual := x.Update(updated)
-		assert.Equal(t, expected, actual, "expected and actual diff reports vary")
+
+		expectedJSONBytes, err := json.Marshal(expected)
+		require.NoError(t, err)
+
+		actualJSONBytes, err := json.Marshal(actual)
+		require.NoError(t, err)
+
+		expectedJSON, actualJSON := string(expectedJSONBytes), string(actualJSONBytes)
+
+		assert.Equal(t, expectedJSON, actualJSON)
 
 		assert.Equal(t, updated.Name, x.Name)
 		assert.Equal(t, updated.Details, x.Details)

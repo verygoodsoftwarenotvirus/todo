@@ -6,10 +6,9 @@ import (
 	"encoding/gob"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )

@@ -35,8 +35,20 @@ func TestBuilder_BuildGetAPIClientRequest(T *testing.T) {
 		helper := buildTestHelper()
 
 		actual, err := helper.builder.BuildGetAPIClientRequest(helper.ctx, 0)
-		assert.Error(t, err)
 		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		actual, err := helper.builder.BuildGetAPIClientRequest(helper.ctx, exampleAPIClient.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
@@ -56,6 +68,17 @@ func TestBuilder_BuildGetAPIClientsRequest(T *testing.T) {
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		actual, err := helper.builder.BuildGetAPIClientsRequest(helper.ctx, nil)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
@@ -85,8 +108,8 @@ func TestBuilder_BuildCreateAPIClientRequest(T *testing.T) {
 		exampleInput := fakes.BuildFakeAPIClientCreationInput()
 
 		actual, err := helper.builder.BuildCreateAPIClientRequest(helper.ctx, nil, exampleInput)
-		assert.Error(t, err)
 		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -95,20 +118,21 @@ func TestBuilder_BuildCreateAPIClientRequest(T *testing.T) {
 		helper := buildTestHelper()
 
 		actual, err := helper.builder.BuildCreateAPIClientRequest(helper.ctx, &http.Cookie{}, nil)
-		assert.Error(t, err)
 		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 
-	T.Run("with error building data request", func(t *testing.T) {
+	T.Run("with invalid request builder", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
 		exampleInput := fakes.BuildFakeAPIClientCreationInput()
 
-		helper.builder = buildTestRequestBuilderWithInvalidURL()
 		actual, err := helper.builder.BuildCreateAPIClientRequest(helper.ctx, &http.Cookie{}, exampleInput)
-		assert.Error(t, err)
 		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
@@ -137,8 +161,20 @@ func TestBuilder_BuildArchiveAPIClientRequest(T *testing.T) {
 		helper := buildTestHelper()
 
 		actual, err := helper.builder.BuildArchiveAPIClientRequest(helper.ctx, 0)
-		assert.Error(t, err)
 		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		actual, err := helper.builder.BuildArchiveAPIClientRequest(helper.ctx, exampleAPIClient.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
@@ -167,7 +203,19 @@ func TestBuilder_BuildGetAuditLogForAPIClientRequest(T *testing.T) {
 		helper := buildTestHelper()
 
 		actual, err := helper.builder.BuildGetAuditLogForAPIClientRequest(helper.ctx, 0)
-		assert.Error(t, err)
 		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		actual, err := helper.builder.BuildGetAuditLogForAPIClientRequest(helper.ctx, exampleAPIClient.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }

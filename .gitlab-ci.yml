@@ -20,15 +20,16 @@ coverage:
     - go run mage.go ensureMage
     - mage vendor coverage
 
-dependency-injection-check:
-  stage: quality
-  image: golang:stretch
-  variables:
-    GOPATH: "/go"
-  script:
-    - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - go run mage.go ensureMage
-    - mage rewire
+# FIXME:
+# dependency-injection-check:
+#   stage: quality
+#   image: golang:stretch
+#   variables:
+#     GOPATH: "/go"
+#   script:
+#     - apt-get update -y && apt-get install -y make git gcc musl-dev
+#     - go run mage.go ensureMage
+#     - mage rewire
 
 golang-format-check:
   stage: quality
@@ -94,50 +95,3 @@ golang-lint:
 #  script:
 #    - apk add --update make
 #    - docker-compose --file environments/testing/compose_files/frontend-tests.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
-
-# daily load tests
-
-daily-load_tests_postgres:on-schedule:
-  stage: load-testing
-  image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    GOPATH: "/go"
-    LOADTEST_RUN_TIME: "10m"
-  script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-    - pip install docker-compose
-    - make load_tests_postgres
-  only:
-    - schedules
-
-daily-load_tests_mariadb:on-schedule:
-  stage: load-testing
-  image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    GOPATH: "/go"
-    LOADTEST_RUN_TIME: "10m"
-  script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-    - pip install docker-compose
-    - make load_tests_mariadb
-  only:
-    - schedules
-
-daily-load_tests_sqlite:on-schedule:
-  stage: load-testing
-  image: docker:latest
-  services:
-    - docker:dind
-  variables:
-    GOPATH: "/go"
-    LOADTEST_RUN_TIME: "10m"
-  script:
-    - apk add --update --no-cache py-pip openssl python3-dev libffi-dev openssl-dev gcc libc-dev make
-    - pip install docker-compose
-    - make load_tests_sqlite
-  only:
-    - schedules

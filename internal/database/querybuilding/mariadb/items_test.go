@@ -162,7 +162,7 @@ func TestMariaDB_BuildGetItemsWithIDsQuery(T *testing.T) {
 			exampleIDs[1],
 			exampleIDs[2],
 		}
-		actualQuery, actualArgs := q.BuildGetItemsWithIDsQuery(ctx, exampleUser.ID, defaultLimit, exampleIDs, false)
+		actualQuery, actualArgs := q.BuildGetItemsWithIDsQuery(ctx, exampleUser.ID, defaultLimit, exampleIDs, true)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

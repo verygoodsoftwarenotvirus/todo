@@ -100,7 +100,7 @@ func (b *Postgres) BuildGetItemsQuery(ctx context.Context, accountID uint64, for
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn, querybuilding.ItemsTableColumns, accountID, forAdmin, filter)
+	return b.buildListQuery(ctx, querybuilding.ItemsTableName, nil, nil, querybuilding.ItemsTableAccountOwnershipColumn, querybuilding.ItemsTableColumns, accountID, forAdmin, filter)
 }
 
 // BuildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given account,

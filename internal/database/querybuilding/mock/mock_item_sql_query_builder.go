@@ -52,8 +52,8 @@ func (m *ItemSQLQueryBuilder) BuildGetItemsQuery(ctx context.Context, accountID 
 }
 
 // BuildGetItemsWithIDsQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, accountID, limit, ids, forAdmin)
+func (m *ItemSQLQueryBuilder) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, restrictToAccount bool) (query string, args []interface{}) {
+	returnArgs := m.Called(ctx, accountID, limit, ids, restrictToAccount)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

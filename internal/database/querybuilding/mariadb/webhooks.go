@@ -74,7 +74,7 @@ func (b *MariaDB) BuildGetWebhooksQuery(ctx context.Context, accountID uint64, f
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
-	return b.buildListQuery(ctx, querybuilding.WebhooksTableName, querybuilding.WebhooksTableOwnershipColumn, querybuilding.WebhooksTableColumns, accountID, false, filter)
+	return b.buildListQuery(ctx, querybuilding.WebhooksTableName, nil, nil, querybuilding.WebhooksTableOwnershipColumn, querybuilding.WebhooksTableColumns, accountID, false, filter)
 }
 
 // BuildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.

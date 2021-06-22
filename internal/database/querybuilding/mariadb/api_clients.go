@@ -97,7 +97,7 @@ func (b *MariaDB) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, fi
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.APIClientsTableName, querybuilding.APIClientsTableOwnershipColumn, querybuilding.APIClientsTableColumns, userID, false, filter)
+	return b.buildListQuery(ctx, querybuilding.APIClientsTableName, nil, nil, querybuilding.APIClientsTableOwnershipColumn, querybuilding.APIClientsTableColumns, userID, false, filter)
 }
 
 // BuildCreateAPIClientQuery returns a SQL query (and args) that will create the given APIClient in the database.

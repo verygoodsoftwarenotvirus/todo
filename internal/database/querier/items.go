@@ -256,7 +256,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID uint64, limi
 		"id_count":     len(ids),
 	})
 
-	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, accountID, limit, ids, false)
+	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, accountID, limit, ids, true)
 
 	rows, err := q.performReadQuery(ctx, q.db, "items with IDs", query, args...)
 	if err != nil {

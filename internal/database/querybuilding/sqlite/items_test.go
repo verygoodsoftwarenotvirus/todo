@@ -20,16 +20,15 @@ func TestSqlite_BuildItemExistsQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		expectedQuery := "SELECT EXISTS ( SELECT items.id FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id = ? )"
 		expectedArgs := []interface{}{
-			exampleItem.BelongsToAccount,
+			exampleAccountID,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildItemExistsQuery(ctx, exampleItem.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildItemExistsQuery(ctx, exampleItem.ID, exampleAccountID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -46,16 +45,15 @@ func TestSqlite_BuildGetItemQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id = ?"
 		expectedArgs := []interface{}{
-			exampleItem.BelongsToAccount,
+			exampleAccountID,
 			exampleItem.ID,
 		}
-		actualQuery, actualArgs := q.BuildGetItemQuery(ctx, exampleItem.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildGetItemQuery(ctx, exampleItem.ID, exampleAccountID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -113,24 +111,24 @@ func TestSqlite_BuildGetItemsQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccountID := fakes.BuildFakeID()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
 		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ?) as total_count, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) as filtered_count FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? GROUP BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
-			exampleUser.ID,
+			exampleAccountID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
-			exampleUser.ID,
-			exampleUser.ID,
+			exampleAccountID,
+			exampleAccountID,
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.BuildGetItemsQuery(ctx, exampleUser.ID, false, filter)
+		actualQuery, actualArgs := q.BuildGetItemsQuery(ctx, exampleAccountID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -147,7 +145,7 @@ func TestSqlite_BuildGetItemsWithIDsQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		exampleUser := fakes.BuildFakeUser()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleIDs := []uint64{
 			789,
 			123,
@@ -156,12 +154,12 @@ func TestSqlite_BuildGetItemsWithIDsQuery(T *testing.T) {
 
 		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id IN (?,?,?) ORDER BY CASE items.id WHEN 789 THEN 0 WHEN 123 THEN 1 WHEN 456 THEN 2 END LIMIT 20"
 		expectedArgs := []interface{}{
-			exampleUser.ID,
+			exampleAccountID,
 			exampleIDs[0],
 			exampleIDs[1],
 			exampleIDs[2],
 		}
-		actualQuery, actualArgs := q.BuildGetItemsWithIDsQuery(ctx, exampleUser.ID, defaultLimit, exampleIDs, false)
+		actualQuery, actualArgs := q.BuildGetItemsWithIDsQuery(ctx, exampleAccountID, defaultLimit, exampleIDs, true)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -178,9 +176,7 @@ func TestSqlite_BuildCreateItemQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		exIDGen := &querybuilding.MockExternalIDGenerator{}
@@ -213,9 +209,7 @@ func TestSqlite_BuildUpdateItemQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		expectedQuery := "UPDATE items SET name = ?, details = ?, last_updated_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?"
 		expectedArgs := []interface{}{
@@ -241,16 +235,15 @@ func TestSqlite_BuildArchiveItemQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
+		exampleAccountID := fakes.BuildFakeID()
+		exampleItemID := fakes.BuildFakeID()
 
 		expectedQuery := "UPDATE items SET last_updated_on = (strftime('%s','now')), archived_on = (strftime('%s','now')) WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?"
 		expectedArgs := []interface{}{
-			exampleAccount.ID,
-			exampleItem.ID,
+			exampleAccountID,
+			exampleItemID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveItemQuery(ctx, exampleItem.ID, exampleAccount.ID)
+		actualQuery, actualArgs := q.BuildArchiveItemQuery(ctx, exampleItemID, exampleAccountID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

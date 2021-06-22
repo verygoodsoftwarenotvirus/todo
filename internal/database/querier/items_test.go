@@ -739,7 +739,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 			exampleAccount.ID,
 			defaultLimit,
 			exampleIDs,
-			false,
+			true,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -793,7 +793,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 			exampleAccount.ID,
 			defaultLimit,
 			exampleIDs,
-			false,
+			true,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -830,7 +830,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 			exampleAccount.ID,
 			defaultLimit,
 			exampleIDs,
-			false,
+			true,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -867,7 +867,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 			exampleAccount.ID,
 			defaultLimit,
 			exampleIDs,
-			false,
+			true,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 

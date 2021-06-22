@@ -94,8 +94,8 @@ func (b *Sqlite) BuildGetAccountsQuery(ctx context.Context, userID uint64, forAd
 	}
 
 	columns := append(querybuilding.AccountsTableColumns, querybuilding.AccountsUserMembershipTableColumns...)
-	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived, filter)
-	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived)
+	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived, filter)
+	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived)
 
 	builder := b.sqlBuilder.
 		Select(append(

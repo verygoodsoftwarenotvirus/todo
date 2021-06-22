@@ -144,7 +144,17 @@ func (b *Sqlite) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFilt
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.UsersTableName, "", querybuilding.UsersTableColumns, 0, false, filter)
+	return b.buildListQuery(
+		ctx,
+		querybuilding.UsersTableName,
+		nil,
+		nil,
+		"",
+		querybuilding.UsersTableColumns,
+		0,
+		false,
+		filter,
+	)
 }
 
 // BuildTestUserCreationQuery builds a query and arguments that creates a test user.

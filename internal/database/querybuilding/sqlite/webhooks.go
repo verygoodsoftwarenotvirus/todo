@@ -76,6 +76,8 @@ func (b *Sqlite) BuildGetWebhooksQuery(ctx context.Context, accountID uint64, fi
 	return b.buildListQuery(
 		ctx,
 		querybuilding.WebhooksTableName,
+		nil,
+		nil,
 		querybuilding.WebhooksTableOwnershipColumn,
 		querybuilding.WebhooksTableColumns,
 		accountID,

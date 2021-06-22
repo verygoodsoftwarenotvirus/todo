@@ -30,8 +30,8 @@ func (b *MariaDB) BuildItemExistsQuery(ctx context.Context, itemID, accountID ui
 			Suffix(querybuilding.ExistenceSuffix).
 			Where(squirrel.Eq{
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
-				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 			}),
 	)
 }
@@ -50,8 +50,8 @@ func (b *MariaDB) BuildGetItemQuery(ctx context.Context, itemID, accountID uint6
 			From(querybuilding.ItemsTableName).
 			Where(squirrel.Eq{
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
-				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 			}),
 	)
 }
@@ -92,7 +92,7 @@ func (b *MariaDB) BuildGetBatchOfItemsQuery(ctx context.Context, beginID, endID 
 
 // BuildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -100,7 +100,21 @@ func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, forA
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn, querybuilding.ItemsTableColumns, accountID, forAdmin, filter)
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
+	}
+
+	return b.buildListQuery(
+		ctx,
+		querybuilding.ItemsTableName,
+		nil,
+		where,
+		querybuilding.ItemsTableAccountOwnershipColumn,
+		querybuilding.ItemsTableColumns,
+		accountID,
+		includeArchived,
+		filter,
+	)
 }
 
 // BuildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given account,
@@ -110,7 +124,7 @@ func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, forA
 // slice of uint64s instead of a slice of strings in order to ensure all the provided strings
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
-func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, restrictToAccount bool) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -122,7 +136,7 @@ func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint6
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
 	}
 
-	if !forAdmin {
+	if restrictToAccount {
 		where[fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn)] = accountID
 	}
 
@@ -209,7 +223,13 @@ func (b *MariaDB) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemI
 
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	itemIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, itemID, audit.ItemAssignmentKey)
+	itemIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		itemID,
+		audit.ItemAssignmentKey,
+	)
 
 	return b.buildQuery(
 		span,

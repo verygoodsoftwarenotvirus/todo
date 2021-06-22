@@ -150,7 +150,7 @@ func (b *MariaDB) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFil
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.UsersTableName, "", querybuilding.UsersTableColumns, 0, false, filter)
+	return b.buildListQuery(ctx, querybuilding.UsersTableName, nil, nil, "", querybuilding.UsersTableColumns, 0, false, filter)
 }
 
 // BuildTestUserCreationQuery returns a SQL query (and arguments) that would create a given test user.

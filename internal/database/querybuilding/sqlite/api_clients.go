@@ -39,6 +39,8 @@ func (b *Sqlite) BuildGetAPIClientByClientIDQuery(ctx context.Context, clientID 
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachAPIClientClientIDToSpan(span, clientID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.APIClientsTableColumns...).
@@ -51,13 +53,12 @@ func (b *Sqlite) BuildGetAPIClientByClientIDQuery(ctx context.Context, clientID 
 }
 
 // BuildGetAllAPIClientsCountQuery returns a SQL query for the number of API clients
-// returns the database, regardless of ownership.
+// in the database, regardless of ownership.
 func (b *Sqlite) BuildGetAllAPIClientsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.APIClientsTableName)).
+	return b.buildQueryOnly(span, b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.APIClientsTableName)).
 		From(querybuilding.APIClientsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.ArchivedOnColumn): nil,
@@ -65,10 +66,12 @@ func (b *Sqlite) BuildGetAllAPIClientsCountQuery(ctx context.Context) string {
 }
 
 // BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of API clients that
-// returns the given filter's criteria (if relevant) and belong to a given account.
+// meet the given filter's criteria (if relevant) and belong to a given account.
 func (b *Sqlite) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
@@ -91,6 +94,9 @@ func (b *Sqlite) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, fil
 func (b *Sqlite) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
 
 	return b.buildQuery(
 		span,
@@ -134,6 +140,10 @@ func (b *Sqlite) BuildUpdateAPIClientQuery(ctx context.Context, input *types.API
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
+	tracing.AttachAPIClientClientIDToSpan(span, input.ClientID)
+	tracing.AttachAPIClientDatabaseIDToSpan(span, input.ID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.APIClientsTableName).
@@ -152,6 +162,9 @@ func (b *Sqlite) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userI
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.APIClientsTableName).
@@ -169,6 +182,8 @@ func (b *Sqlite) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userI
 func (b *Sqlite) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
 
 	apiClientIDKey := fmt.Sprintf(
 		jsonPluckQuery,

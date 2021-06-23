@@ -13,7 +13,9 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ querybuilding.UserSQLQueryBuilder = (*MariaDB)(nil)
+var (
+	_ querybuilding.UserSQLQueryBuilder = (*MariaDB)(nil)
+)
 
 // BuildUserHasStatusQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (b *MariaDB) BuildUserHasStatusQuery(ctx context.Context, userID uint64, statuses ...string) (query string, args []interface{}) {
@@ -37,7 +39,8 @@ func (b *MariaDB) BuildUserHasStatusQuery(ctx context.Context, userID uint64, st
 				fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
 			}).
 			Where(whereStatuses).
-			Suffix(querybuilding.ExistenceSuffix))
+			Suffix(querybuilding.ExistenceSuffix),
+	)
 }
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
@@ -150,20 +153,30 @@ func (b *MariaDB) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFil
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.UsersTableName, nil, nil, "", querybuilding.UsersTableColumns, 0, false, filter)
+	return b.buildListQuery(
+		ctx,
+		querybuilding.UsersTableName,
+		nil,
+		nil,
+		"",
+		querybuilding.UsersTableColumns,
+		0,
+		false,
+		filter,
+	)
 }
 
-// BuildTestUserCreationQuery returns a SQL query (and arguments) that would create a given test user.
+// BuildTestUserCreationQuery builds a query and arguments that creates a test user.
 func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUsernameToSpan(span, testUserConfig.Username)
 
 	serviceRole := authorization.ServiceUserRole
 	if testUserConfig.IsServiceAdmin {
 		serviceRole = authorization.ServiceAdminRole
 	}
-
-	tracing.AttachUsernameToSpan(span, testUserConfig.Username)
 
 	return b.buildQuery(
 		span,
@@ -222,25 +235,6 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 	)
 }
 
-// BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (b *MariaDB) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, input.TargetUserID)
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Update(querybuilding.UsersTableName).
-			Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
-			Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
-			Where(squirrel.Eq{
-				querybuilding.IDColumn:         input.TargetUserID,
-				querybuilding.ArchivedOnColumn: nil,
-			}),
-	)
-}
-
 // BuildUpdateUserQuery returns a SQL query (and arguments) that would update the given user's row.
 func (b *MariaDB) BuildUpdateUserQuery(ctx context.Context, input *types.User) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
@@ -260,6 +254,25 @@ func (b *MariaDB) BuildUpdateUserQuery(ctx context.Context, input *types.User) (
 			Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 			Where(squirrel.Eq{
 				querybuilding.IDColumn:         input.ID,
+				querybuilding.ArchivedOnColumn: nil,
+			}),
+	)
+}
+
+// BuildSetUserStatusQuery returns a SQL query (and arguments) that would change a user's account status.
+func (b *MariaDB) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, input.TargetUserID)
+
+	return b.buildQuery(
+		span,
+		b.sqlBuilder.Update(querybuilding.UsersTableName).
+			Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
+			Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
+			Where(squirrel.Eq{
+				querybuilding.IDColumn:         input.TargetUserID,
 				querybuilding.ArchivedOnColumn: nil,
 			}),
 	)
@@ -349,30 +362,29 @@ func (b *MariaDB) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userI
 
 	tracing.AttachUserIDToSpan(span, userID)
 
+	userIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		userID,
+		audit.UserAssignmentKey,
+	)
+
+	performedByIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		userID,
+		audit.ActorAssignmentKey,
+	)
+
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.
-			Select(querybuilding.AuditLogEntriesTableColumns...).
+		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
 			From(querybuilding.AuditLogEntriesTableName).
 			Where(squirrel.Or{
-				squirrel.Expr(
-					fmt.Sprintf(
-						jsonPluckQuery,
-						querybuilding.AuditLogEntriesTableName,
-						querybuilding.AuditLogEntriesTableContextColumn,
-						userID,
-						audit.ActorAssignmentKey,
-					),
-				),
-				squirrel.Expr(
-					fmt.Sprintf(
-						jsonPluckQuery,
-						querybuilding.AuditLogEntriesTableName,
-						querybuilding.AuditLogEntriesTableContextColumn,
-						userID,
-						audit.UserAssignmentKey,
-					),
-				),
+				squirrel.Expr(userIDKey),
+				squirrel.Expr(performedByIDKey),
 			}).
 			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)

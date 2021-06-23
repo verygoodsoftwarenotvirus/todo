@@ -29,6 +29,7 @@ func buildWhenThenStatement(ids []uint64) string {
 // BuildQueryOnly builds a given query, handles whatever errs and returns just the query and args.
 func (b *Sqlite) buildQueryOnly(span tracing.Span, builder squirrel.Sqlizer) string {
 	query, _, err := builder.ToSql()
+
 	b.logQueryBuildingError(span, err)
 
 	return query
@@ -37,6 +38,7 @@ func (b *Sqlite) buildQueryOnly(span tracing.Span, builder squirrel.Sqlizer) str
 // BuildQuery builds a given query, handles whatever errs and returns just the query and args.
 func (b *Sqlite) buildQuery(span tracing.Span, builder squirrel.Sqlizer) (query string, args []interface{}) {
 	query, args, err := builder.ToSql()
+
 	b.logQueryBuildingError(span, err)
 
 	return query, args
@@ -158,6 +160,7 @@ func (b *Sqlite) buildListQuery(ctx context.Context, tableName string, joins []s
 
 		builder = builder.Where(where)
 	}
+
 	builder = builder.GroupBy(fmt.Sprintf("%s.%s", tableName, querybuilding.IDColumn))
 
 	if filter != nil {

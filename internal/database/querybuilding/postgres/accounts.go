@@ -12,7 +12,9 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ querybuilding.AccountSQLQueryBuilder = (*Postgres)(nil)
+var (
+	_ querybuilding.AccountSQLQueryBuilder = (*Postgres)(nil)
+)
 
 // BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
 func (b *Postgres) BuildGetAccountQuery(ctx context.Context, accountID, userID uint64) (query string, args []interface{}) {
@@ -50,16 +52,11 @@ func (b *Postgres) BuildGetAllAccountsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	allAccountsCountQuery, _, err := b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountsTableName)).
+	return b.buildQueryOnly(span, b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountsTableName)).
 		From(querybuilding.AccountsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn): nil,
-		}).
-		ToSql()
-	b.logQueryBuildingError(span, err)
-
-	return allAccountsCountQuery
+		}))
 }
 
 // BuildGetBatchOfAccountsQuery returns a query that fetches every account in the database within a bucketed range.
@@ -101,12 +98,11 @@ func (b *Postgres) BuildGetAccountsQuery(ctx context.Context, userID uint64, for
 	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived, filter)
 	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived)
 
-	builder := b.sqlBuilder.
-		Select(append(
-			columns,
-			fmt.Sprintf("(%s) as total_count", totalCountQuery),
-			fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
-		)...).
+	builder := b.sqlBuilder.Select(append(
+		columns,
+		fmt.Sprintf("(%s) as total_count", totalCountQuery),
+		fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
+	)...).
 		From(querybuilding.AccountsTableName).
 		Join(fmt.Sprintf(
 			"%s ON %s.%s = %s.%s",
@@ -220,7 +216,12 @@ func (b *Postgres) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, a
 
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	accountIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.AccountAssignmentKey)
+	accountIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		audit.AccountAssignmentKey,
+	)
 
 	return b.buildQuery(
 		span,

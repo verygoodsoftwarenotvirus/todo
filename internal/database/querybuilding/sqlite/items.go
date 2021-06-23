@@ -223,7 +223,12 @@ func (b *Sqlite) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID
 
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	itemIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
+	itemIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		audit.ItemAssignmentKey,
+	)
 
 	return b.buildQuery(
 		span,

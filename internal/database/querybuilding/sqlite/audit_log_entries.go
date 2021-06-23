@@ -20,6 +20,8 @@ func (b *Sqlite) BuildGetAuditLogEntryQuery(ctx context.Context, entryID uint64)
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
@@ -69,15 +71,13 @@ func (b *Sqlite) BuildGetAuditLogEntriesQuery(ctx context.Context, filter *types
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	countQueryBuilder := b.sqlBuilder.
-		Select(allCountQuery).
+	countQueryBuilder := b.sqlBuilder.Select(allCountQuery).
 		From(querybuilding.AuditLogEntriesTableName)
 
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
 	b.logQueryBuildingError(span, err)
 
-	builder := b.sqlBuilder.
-		Select(append(querybuilding.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
+	builder := b.sqlBuilder.Select(append(querybuilding.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(querybuilding.AuditLogEntriesTableName).
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
 

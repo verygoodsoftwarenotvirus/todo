@@ -153,6 +153,7 @@ func (b *MariaDB) buildListQuery(ctx context.Context, tableName string, joins []
 			where = squirrel.Eq{}
 		}
 		where[fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn)] = nil
+
 		if ownershipColumn != "" && ownerID != 0 {
 			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = ownerID
 		}

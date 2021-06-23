@@ -22,6 +22,9 @@ func (b *Sqlite) BuildGetWebhookQuery(ctx context.Context, webhookID, accountID 
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachWebhookIDToSpan(span, webhookID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.WebhooksTableColumns...).
@@ -39,8 +42,7 @@ func (b *Sqlite) BuildGetAllWebhooksCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.WebhooksTableName)).
+	return b.buildQueryOnly(span, b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.WebhooksTableName)).
 		From(querybuilding.WebhooksTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.ArchivedOnColumn): nil,
@@ -124,6 +126,9 @@ func (b *Sqlite) BuildUpdateWebhookQuery(ctx context.Context, input *types.Webho
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachWebhookIDToSpan(span, input.ID)
+	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.WebhooksTableName).
@@ -148,6 +153,9 @@ func (b *Sqlite) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accoun
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachWebhookIDToSpan(span, webhookID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.WebhooksTableName).
@@ -161,10 +169,12 @@ func (b *Sqlite) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accoun
 	)
 }
 
-// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
+// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a webhook with a given ID.
 func (b *Sqlite) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachWebhookIDToSpan(span, webhookID)
 
 	webhookIDKey := fmt.Sprintf(
 		jsonPluckQuery,

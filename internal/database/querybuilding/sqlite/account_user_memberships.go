@@ -13,7 +13,9 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ querybuilding.AccountUserMembershipSQLQueryBuilder = (*Sqlite)(nil)
+var (
+	_ querybuilding.AccountUserMembershipSQLQueryBuilder = (*Sqlite)(nil)
+)
 
 const (
 	accountMemberRolesSeparator = ","
@@ -24,36 +26,24 @@ func (b *Sqlite) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userI
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQuery(span, b.sqlBuilder.
-		Select(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn)).
-		From(querybuilding.AccountsTableName).
-		Join(fmt.Sprintf(
-			"%s ON %s.%s = %s.%s",
-			querybuilding.AccountsUserMembershipTableName,
-			querybuilding.AccountsUserMembershipTableName,
-			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
-			querybuilding.AccountsTableName,
-			querybuilding.IDColumn,
-		)).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):      userID,
-			fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn): true,
-		}),
-	)
-}
-
-// BuildArchiveAccountMembershipsForUserQuery does .
-func (b *Sqlite) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
-			Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
+		b.sqlBuilder.
+			Select(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn)).
+			From(querybuilding.AccountsTableName).
+			Join(fmt.Sprintf(
+				"%s ON %s.%s = %s.%s",
+				querybuilding.AccountsUserMembershipTableName,
+				querybuilding.AccountsUserMembershipTableName,
+				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+				querybuilding.AccountsTableName,
+				querybuilding.IDColumn,
+			)).
 			Where(squirrel.Eq{
-				querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
-				querybuilding.ArchivedOnColumn:                               nil,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):      userID,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn): true,
 			}),
 	)
 }
@@ -67,7 +57,8 @@ func (b *Sqlite) BuildGetAccountMembershipsForUserQuery(ctx context.Context, use
 
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Select(querybuilding.AccountsUserMembershipTableColumns...).
+		b.sqlBuilder.
+			Select(querybuilding.AccountsUserMembershipTableColumns...).
 			Join(fmt.Sprintf(
 				"%s ON %s.%s = %s.%s",
 				querybuilding.AccountsTableName,
@@ -84,21 +75,93 @@ func (b *Sqlite) BuildGetAccountMembershipsForUserQuery(ctx context.Context, use
 	)
 }
 
-// BuildMarkAccountAsUserDefaultQuery does .
+// BuildUserIsMemberOfAccountQuery builds a query that checks to see if the user is the member of a given account.
+func (b *Sqlite) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
+	return b.buildQuery(
+		span,
+		b.sqlBuilder.
+			Select(fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.IDColumn)).
+			Prefix(querybuilding.ExistencePrefix).
+			From(querybuilding.AccountsUserMembershipTableName).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableAccountOwnershipColumn): accountID,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):    userID,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.ArchivedOnColumn):                                  nil,
+			}).
+			Suffix(querybuilding.ExistenceSuffix),
+	)
+}
+
+// BuildAddUserToAccountQuery builds a query that adds a user to an account.
+func (b *Sqlite) BuildAddUserToAccountQuery(ctx context.Context, input *types.AddUserToAccountInput) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, input.UserID)
+	tracing.AttachAccountIDToSpan(span, input.AccountID)
+
+	return b.buildQuery(
+		span,
+		b.sqlBuilder.Insert(querybuilding.AccountsUserMembershipTableName).
+			Columns(
+				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
+				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
+			).
+			Values(
+				input.UserID,
+				input.AccountID,
+				strings.Join(input.AccountRoles, accountMemberRolesSeparator),
+			),
+	)
+}
+
+// BuildMarkAccountAsUserDefaultQuery builds a query that marks a user's account as their primary.
 func (b *Sqlite) BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
-			Set(querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn, squirrel.And{
-				squirrel.Eq{querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID},
-				squirrel.Eq{querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID},
-			}).
+			Set(
+				querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
+				squirrel.And{
+					squirrel.Eq{querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID},
+					squirrel.Eq{querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID},
+				},
+			).
 			Where(squirrel.Eq{
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
 				querybuilding.ArchivedOnColumn:                               nil,
+			}),
+	)
+}
+
+// BuildModifyUserPermissionsQuery builds.
+func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, newRoles []string) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
+	return b.buildQuery(
+		span,
+		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
+			Set(querybuilding.AccountsUserMembershipTableAccountRolesColumn, strings.Join(newRoles, accountMemberRolesSeparator)).
+			Where(squirrel.Eq{
+				querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
+				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
 			}),
 	)
 }
@@ -107,6 +170,9 @@ func (b *Sqlite) BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userID,
 func (b *Sqlite) BuildTransferAccountOwnershipQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, newOwnerID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	return b.buildQuery(
 		span,
@@ -125,6 +191,9 @@ func (b *Sqlite) BuildTransferAccountMembershipsQuery(ctx context.Context, curre
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, newOwnerID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
@@ -137,26 +206,13 @@ func (b *Sqlite) BuildTransferAccountMembershipsQuery(ctx context.Context, curre
 	)
 }
 
-// BuildModifyUserPermissionsQuery builds.
-func (b *Sqlite) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, newRoles []string) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
-			Set(querybuilding.AccountsUserMembershipTableAccountRolesColumn, strings.Join(newRoles, accountMemberRolesSeparator)).
-			Where(squirrel.Eq{
-				querybuilding.AccountsUserMembershipTableUserOwnershipColumn:    userID,
-				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn: accountID,
-			}),
-	)
-}
-
 // BuildCreateMembershipForNewUserQuery builds a query that .
 func (b *Sqlite) BuildCreateMembershipForNewUserQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	return b.buildQuery(
 		span,
@@ -176,50 +232,13 @@ func (b *Sqlite) BuildCreateMembershipForNewUserQuery(ctx context.Context, userI
 	)
 }
 
-// BuildUserIsMemberOfAccountQuery builds a query that checks to see if the user is the member of a given account.
-func (b *Sqlite) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Select(fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.IDColumn)).
-			Prefix(querybuilding.ExistencePrefix).
-			From(querybuilding.AccountsUserMembershipTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn): accountID,
-				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn): userID,
-				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.ArchivedOnColumn):                               nil,
-			}).
-			Suffix(querybuilding.ExistenceSuffix),
-	)
-}
-
-// BuildAddUserToAccountQuery builds a query that adds a user to an account.
-func (b *Sqlite) BuildAddUserToAccountQuery(ctx context.Context, input *types.AddUserToAccountInput) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Insert(querybuilding.AccountsUserMembershipTableName).
-			Columns(
-				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
-				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
-				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
-			).
-			Values(
-				input.UserID,
-				input.AccountID,
-				strings.Join(input.AccountRoles, accountMemberRolesSeparator),
-			),
-	)
-}
-
 // BuildRemoveUserFromAccountQuery builds a query that removes a user from an account.
 func (b *Sqlite) BuildRemoveUserFromAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	return b.buildQuery(
 		span,
@@ -228,6 +247,24 @@ func (b *Sqlite) BuildRemoveUserFromAccountQuery(ctx context.Context, userID, ac
 				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableAccountOwnershipColumn): accountID,
 				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):    userID,
 				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.ArchivedOnColumn):                                  nil,
+			}),
+	)
+}
+
+// BuildArchiveAccountMembershipsForUserQuery does .
+func (b *Sqlite) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+
+	return b.buildQuery(
+		span,
+		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
+			Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
+			Where(squirrel.Eq{
+				querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+				querybuilding.ArchivedOnColumn:                               nil,
 			}),
 	)
 }

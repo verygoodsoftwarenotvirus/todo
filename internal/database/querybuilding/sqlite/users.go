@@ -39,13 +39,16 @@ func (b *Sqlite) BuildUserHasStatusQuery(ctx context.Context, userID uint64, sta
 				fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
 			}).
 			Where(whereStatuses).
-			Suffix(querybuilding.ExistenceSuffix))
+			Suffix(querybuilding.ExistenceSuffix),
+	)
 }
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (b *Sqlite) BuildGetUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -67,6 +70,8 @@ func (b *Sqlite) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Cont
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.UsersTableColumns...).
@@ -83,6 +88,8 @@ func (b *Sqlite) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Cont
 func (b *Sqlite) BuildGetUserByUsernameQuery(ctx context.Context, username string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUsernameToSpan(span, username)
 
 	return b.buildQuery(
 		span,
@@ -102,6 +109,8 @@ func (b *Sqlite) BuildGetUserByUsernameQuery(ctx context.Context, username strin
 func (b *Sqlite) BuildSearchForUserByUsernameQuery(ctx context.Context, usernameQuery string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachSearchQueryToSpan(span, usernameQuery)
 
 	return b.buildQuery(
 		span,
@@ -162,6 +171,8 @@ func (b *Sqlite) BuildTestUserCreationQuery(ctx context.Context, testUserConfig 
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUsernameToSpan(span, testUserConfig.Username)
+
 	serviceRole := authorization.ServiceUserRole
 	if testUserConfig.IsServiceAdmin {
 		serviceRole = authorization.ServiceAdminRole
@@ -200,6 +211,8 @@ func (b *Sqlite) BuildCreateUserQuery(ctx context.Context, input *types.UserData
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUsernameToSpan(span, input.Username)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
@@ -227,6 +240,9 @@ func (b *Sqlite) BuildUpdateUserQuery(ctx context.Context, input *types.User) (q
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, input.ID)
+	tracing.AttachUsernameToSpan(span, input.Username)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -248,6 +264,8 @@ func (b *Sqlite) BuildSetUserStatusQuery(ctx context.Context, input *types.UserR
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, input.TargetUserID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -264,6 +282,8 @@ func (b *Sqlite) BuildSetUserStatusQuery(ctx context.Context, input *types.UserR
 func (b *Sqlite) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64, newHash string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -284,6 +304,8 @@ func (b *Sqlite) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -300,6 +322,8 @@ func (b *Sqlite) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID
 func (b *Sqlite) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -318,6 +342,8 @@ func (b *Sqlite) BuildArchiveUserQuery(ctx context.Context, userID uint64) (quer
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -333,6 +359,8 @@ func (b *Sqlite) BuildArchiveUserQuery(ctx context.Context, userID uint64) (quer
 func (b *Sqlite) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	userIDKey := fmt.Sprintf(
 		jsonPluckQuery,

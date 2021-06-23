@@ -12,7 +12,9 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ querybuilding.AccountSQLQueryBuilder = (*Sqlite)(nil)
+var (
+	_ querybuilding.AccountSQLQueryBuilder = (*Sqlite)(nil)
+)
 
 // BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
 func (b *Sqlite) BuildGetAccountQuery(ctx context.Context, accountID, userID uint64) (query string, args []interface{}) {
@@ -50,8 +52,7 @@ func (b *Sqlite) BuildGetAllAccountsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountsTableName)).
+	return b.buildQueryOnly(span, b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountsTableName)).
 		From(querybuilding.AccountsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn): nil,
@@ -97,12 +98,11 @@ func (b *Sqlite) BuildGetAccountsQuery(ctx context.Context, userID uint64, forAd
 	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived, filter)
 	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived)
 
-	builder := b.sqlBuilder.
-		Select(append(
-			columns,
-			fmt.Sprintf("(%s) as total_count", totalCountQuery),
-			fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
-		)...).
+	builder := b.sqlBuilder.Select(append(
+		columns,
+		fmt.Sprintf("(%s) as total_count", totalCountQuery),
+		fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
+	)...).
 		From(querybuilding.AccountsTableName).
 		Join(fmt.Sprintf(
 			"%s ON %s.%s = %s.%s",
@@ -120,7 +120,13 @@ func (b *Sqlite) BuildGetAccountsQuery(ctx context.Context, userID uint64, forAd
 		})
 	}
 
-	builder = builder.GroupBy(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn))
+	builder = builder.GroupBy(fmt.Sprintf(
+		"%s.%s, %s.%s",
+		querybuilding.AccountsTableName,
+		querybuilding.IDColumn,
+		querybuilding.AccountsUserMembershipTableName,
+		querybuilding.IDColumn,
+	))
 
 	if filter != nil {
 		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.AccountsTableName, builder)
@@ -163,6 +169,8 @@ func (b *Sqlite) BuildUpdateAccountQuery(ctx context.Context, input *types.Accou
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachAccountIDToSpan(span, input.ID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsTableName).
@@ -183,6 +191,9 @@ func (b *Sqlite) BuildArchiveAccountQuery(ctx context.Context, accountID, userID
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.AccountsTableName).
@@ -196,12 +207,19 @@ func (b *Sqlite) BuildArchiveAccountQuery(ctx context.Context, accountID, userID
 	)
 }
 
-// BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
+// BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries belong to an account with a given ID.
 func (b *Sqlite) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	accountIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.AccountAssignmentKey)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
+	accountIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		audit.AccountAssignmentKey,
+	)
 
 	return b.buildQuery(
 		span,

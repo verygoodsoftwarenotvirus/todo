@@ -24,6 +24,10 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleStatuses := []string{
+			string(types.BannedUserAccountStatus),
+			string(types.TerminatedUserReputation),
+		}
 
 		expectedQuery := "SELECT EXISTS ( SELECT users.id FROM users WHERE users.archived_on IS NULL AND users.id = ? AND (users.reputation = ? OR users.reputation = ?) )"
 		expectedArgs := []interface{}{
@@ -31,7 +35,7 @@ func TestSqlite_BuildUserIsBannedQuery(T *testing.T) {
 			string(types.BannedUserAccountStatus),
 			string(types.TerminatedUserReputation),
 		}
-		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, string(types.BannedUserAccountStatus), string(types.TerminatedUserReputation))
+		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, exampleStatuses...)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -49,6 +53,7 @@ func TestSqlite_BuildGetUserQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+
 		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.service_roles, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.id = ? AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
 			exampleUser.ID,

@@ -12,7 +12,9 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ querybuilding.AccountSQLQueryBuilder = (*MariaDB)(nil)
+var (
+	_ querybuilding.AccountSQLQueryBuilder = (*MariaDB)(nil)
+)
 
 // BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
 func (b *MariaDB) BuildGetAccountQuery(ctx context.Context, accountID, userID uint64) (query string, args []interface{}) {
@@ -50,8 +52,7 @@ func (b *MariaDB) BuildGetAllAccountsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountsTableName)).
+	return b.buildQueryOnly(span, b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.AccountsTableName)).
 		From(querybuilding.AccountsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn): nil,
@@ -97,12 +98,11 @@ func (b *MariaDB) BuildGetAccountsQuery(ctx context.Context, userID uint64, forA
 	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived, filter)
 	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived)
 
-	builder := b.sqlBuilder.
-		Select(append(
-			columns,
-			fmt.Sprintf("(%s) as total_count", totalCountQuery),
-			fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
-		)...).
+	builder := b.sqlBuilder.Select(append(
+		columns,
+		fmt.Sprintf("(%s) as total_count", totalCountQuery),
+		fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
+	)...).
 		From(querybuilding.AccountsTableName).
 		Join(fmt.Sprintf(
 			"%s ON %s.%s = %s.%s",
@@ -120,7 +120,13 @@ func (b *MariaDB) BuildGetAccountsQuery(ctx context.Context, userID uint64, forA
 		})
 	}
 
-	builder = builder.GroupBy(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn))
+	builder = builder.GroupBy(fmt.Sprintf(
+		"%s.%s, %s.%s",
+		querybuilding.AccountsTableName,
+		querybuilding.IDColumn,
+		querybuilding.AccountsUserMembershipTableName,
+		querybuilding.IDColumn,
+	))
 
 	if filter != nil {
 		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.AccountsTableName, builder)
@@ -201,24 +207,26 @@ func (b *MariaDB) BuildArchiveAccountQuery(ctx context.Context, accountID, userI
 	)
 }
 
-// BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
+// BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries belong to an account with a given ID.
 func (b *MariaDB) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachAccountIDToSpan(span, accountID)
+
+	accountIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		accountID,
+		audit.AccountAssignmentKey,
+	)
 
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
 			From(querybuilding.AuditLogEntriesTableName).
-			Where(squirrel.Expr(
-				fmt.Sprintf(
-					jsonPluckQuery,
-					querybuilding.AuditLogEntriesTableName,
-					querybuilding.AuditLogEntriesTableContextColumn,
-					accountID,
-					audit.AccountAssignmentKey,
-				),
-			)).
+			Where(squirrel.Expr(accountIDKey)).
 			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

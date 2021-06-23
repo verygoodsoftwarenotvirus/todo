@@ -59,30 +59,6 @@ func TestMariaDB_BuildGetAPIClientQuery(T *testing.T) {
 	})
 }
 
-func TestMariaDB_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		q, _ := buildTestService(t)
-		ctx := context.Background()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-
-		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.id = ?"
-		expectedArgs := []interface{}{
-			exampleAPIClient.BelongsToUser,
-			exampleAPIClient.ID,
-		}
-		actualQuery, actualArgs := q.BuildGetAPIClientByDatabaseIDQuery(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
 func TestMariaDB_BuildGetAllAPIClientsCountQuery(T *testing.T) {
 	T.Parallel()
 
@@ -127,6 +103,31 @@ func TestMariaDB_BuildGetAPIClientsQuery(T *testing.T) {
 			filter.UpdatedBefore,
 		}
 		actualQuery, actualArgs := q.BuildGetAPIClientsQuery(ctx, exampleUser.ID, filter)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
+func TestMariaDB_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
+
+		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.id = ?"
+		expectedArgs := []interface{}{
+			exampleUser.ID,
+			exampleAPIClient.ID,
+		}
+		actualQuery, actualArgs := q.BuildGetAPIClientByDatabaseIDQuery(ctx, exampleAPIClient.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -202,14 +203,15 @@ func TestMariaDB_BuildArchiveAPIClientQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		expectedQuery := "UPDATE api_clients SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?"
 		expectedArgs := []interface{}{
-			exampleAPIClient.BelongsToUser,
+			exampleUser.ID,
 			exampleAPIClient.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
+		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(ctx, exampleAPIClient.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

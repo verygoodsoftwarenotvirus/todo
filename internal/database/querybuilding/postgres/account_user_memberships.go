@@ -13,7 +13,9 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-var _ querybuilding.AccountUserMembershipSQLQueryBuilder = (*Postgres)(nil)
+var (
+	_ querybuilding.AccountUserMembershipSQLQueryBuilder = (*Postgres)(nil)
+)
 
 const (
 	accountMemberRolesSeparator = ","
@@ -24,38 +26,24 @@ func (b *Postgres) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, use
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQuery(span, b.sqlBuilder.
-		Select(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn)).
-		From(querybuilding.AccountsTableName).
-		Join(fmt.Sprintf(
-			"%s ON %s.%s = %s.%s",
-			querybuilding.AccountsUserMembershipTableName,
-			querybuilding.AccountsUserMembershipTableName,
-			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
-			querybuilding.AccountsTableName,
-			querybuilding.IDColumn,
-		)).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):      userID,
-			fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn): true,
-		}),
-	)
-}
-
-// BuildArchiveAccountMembershipsForUserQuery does .
-func (b *Postgres) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
 	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
-			Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
+		b.sqlBuilder.
+			Select(fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.IDColumn)).
+			From(querybuilding.AccountsTableName).
+			Join(fmt.Sprintf(
+				"%s ON %s.%s = %s.%s",
+				querybuilding.AccountsUserMembershipTableName,
+				querybuilding.AccountsUserMembershipTableName,
+				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+				querybuilding.AccountsTableName,
+				querybuilding.IDColumn,
+			)).
 			Where(squirrel.Eq{
-				querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
-				querybuilding.ArchivedOnColumn:                               nil,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):      userID,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn): true,
 			}),
 	)
 }
@@ -69,7 +57,8 @@ func (b *Postgres) BuildGetAccountMembershipsForUserQuery(ctx context.Context, u
 
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Select(querybuilding.AccountsUserMembershipTableColumns...).
+		b.sqlBuilder.
+			Select(querybuilding.AccountsUserMembershipTableColumns...).
 			Join(fmt.Sprintf(
 				"%s ON %s.%s = %s.%s",
 				querybuilding.AccountsTableName,
@@ -86,8 +75,8 @@ func (b *Postgres) BuildGetAccountMembershipsForUserQuery(ctx context.Context, u
 	)
 }
 
-// BuildCreateMembershipForNewUserQuery builds a query that .
-func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+// BuildUserIsMemberOfAccountQuery builds a query that checks to see if the user is the member of a given account.
+func (b *Postgres) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -96,18 +85,39 @@ func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, use
 
 	return b.buildQuery(
 		span,
+		b.sqlBuilder.
+			Select(fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.IDColumn)).
+			Prefix(querybuilding.ExistencePrefix).
+			From(querybuilding.AccountsUserMembershipTableName).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableAccountOwnershipColumn): accountID,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):    userID,
+				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.ArchivedOnColumn):                                  nil,
+			}).
+			Suffix(querybuilding.ExistenceSuffix),
+	)
+}
+
+// BuildAddUserToAccountQuery builds a query that adds a user to an account.
+func (b *Postgres) BuildAddUserToAccountQuery(ctx context.Context, input *types.AddUserToAccountInput) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, input.UserID)
+	tracing.AttachAccountIDToSpan(span, input.AccountID)
+
+	return b.buildQuery(
+		span,
 		b.sqlBuilder.Insert(querybuilding.AccountsUserMembershipTableName).
 			Columns(
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
-				querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
 				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
 			).
 			Values(
-				userID,
-				accountID,
-				true,
-				strings.Join([]string{authorization.AccountAdminRole.String()}, accountMemberRolesSeparator),
+				input.UserID,
+				input.AccountID,
+				strings.Join(input.AccountRoles, accountMemberRolesSeparator),
 			),
 	)
 }
@@ -156,7 +166,7 @@ func (b *Postgres) BuildModifyUserPermissionsQuery(ctx context.Context, userID, 
 	)
 }
 
-// BuildTransferAccountOwnershipQuery builds.
+// BuildTransferAccountOwnershipQuery does .
 func (b *Postgres) BuildTransferAccountOwnershipQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -196,8 +206,8 @@ func (b *Postgres) BuildTransferAccountMembershipsQuery(ctx context.Context, cur
 	)
 }
 
-// BuildUserIsMemberOfAccountQuery builds a query that checks to see if the user is the member of a given account.
-func (b *Postgres) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+// BuildCreateMembershipForNewUserQuery builds a query that .
+func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -206,37 +216,18 @@ func (b *Postgres) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, 
 
 	return b.buildQuery(
 		span,
-		b.sqlBuilder.Select(fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.IDColumn)).
-			Prefix(querybuilding.ExistencePrefix).
-			From(querybuilding.AccountsUserMembershipTableName).
-			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn): accountID,
-				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn): userID,
-				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.ArchivedOnColumn):                               nil,
-			}).
-			Suffix(querybuilding.ExistenceSuffix))
-}
-
-// BuildAddUserToAccountQuery builds a query that adds a user to an account.
-func (b *Postgres) BuildAddUserToAccountQuery(ctx context.Context, input *types.AddUserToAccountInput) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, input.UserID)
-	tracing.AttachAccountIDToSpan(span, input.AccountID)
-
-	return b.buildQuery(
-		span,
 		b.sqlBuilder.Insert(querybuilding.AccountsUserMembershipTableName).
 			Columns(
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
+				querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
 				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
 			).
 			Values(
-				input.UserID,
-				input.AccountID,
-				strings.Join(input.AccountRoles, accountMemberRolesSeparator),
+				userID,
+				accountID,
+				true,
+				strings.Join([]string{authorization.AccountAdminRole.String()}, accountMemberRolesSeparator),
 			),
 	)
 }
@@ -256,6 +247,24 @@ func (b *Postgres) BuildRemoveUserFromAccountQuery(ctx context.Context, userID, 
 				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableAccountOwnershipColumn): accountID,
 				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.AccountsUserMembershipTableUserOwnershipColumn):    userID,
 				fmt.Sprintf("%s.%s", querybuilding.AccountsUserMembershipTableName, querybuilding.ArchivedOnColumn):                                  nil,
+			}),
+	)
+}
+
+// BuildArchiveAccountMembershipsForUserQuery does .
+func (b *Postgres) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+
+	return b.buildQuery(
+		span,
+		b.sqlBuilder.Update(querybuilding.AccountsUserMembershipTableName).
+			Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
+			Where(squirrel.Eq{
+				querybuilding.AccountsUserMembershipTableUserOwnershipColumn: userID,
+				querybuilding.ArchivedOnColumn:                               nil,
 			}),
 	)
 }

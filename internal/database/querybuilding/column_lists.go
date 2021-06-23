@@ -12,8 +12,8 @@ var (
 	// AccountsUserMembershipTableColumns are the columns for the account user memberships table.
 	AccountsUserMembershipTableColumns = []string{
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, IDColumn),
-		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, userOwnershipColumn),
-		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, accountOwnershipColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableUserOwnershipColumn),
+		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableAccountOwnershipColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableAccountRolesColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, AccountsUserMembershipTableDefaultUserAccountColumn),
 		fmt.Sprintf("%s.%s", AccountsUserMembershipTableName, CreatedOnColumn),

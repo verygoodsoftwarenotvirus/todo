@@ -52,6 +52,44 @@ func (b *MariaDB) BuildGetAPIClientByClientIDQuery(ctx context.Context, clientID
 	)
 }
 
+// BuildGetAllAPIClientsCountQuery returns a SQL query for the number of API clients
+// in the database, regardless of ownership.
+func (b *MariaDB) BuildGetAllAPIClientsCountQuery(ctx context.Context) string {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	return b.buildQueryOnly(span, b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.APIClientsTableName)).
+		From(querybuilding.APIClientsTableName).
+		Where(squirrel.Eq{
+			fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.ArchivedOnColumn): nil,
+		}))
+}
+
+// BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of API clients that
+// meet the given filter's criteria (if relevant) and belong to a given account.
+func (b *MariaDB) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
+
+	if filter != nil {
+		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
+	}
+
+	return b.buildListQuery(
+		ctx,
+		querybuilding.APIClientsTableName,
+		nil,
+		nil,
+		querybuilding.APIClientsTableOwnershipColumn,
+		querybuilding.APIClientsTableColumns,
+		userID,
+		false,
+		filter,
+	)
+}
+
 // BuildGetAPIClientByDatabaseIDQuery returns a SQL query which requests a given API client by its database ID.
 func (b *MariaDB) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
@@ -70,34 +108,6 @@ func (b *MariaDB) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, client
 				fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.ArchivedOnColumn):               nil,
 			}),
 	)
-}
-
-// BuildGetAllAPIClientsCountQuery returns a SQL query for the number of API clients
-// in the database, regardless of ownership.
-func (b *MariaDB) BuildGetAllAPIClientsCountQuery(ctx context.Context) string {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.APIClientsTableName)).
-		From(querybuilding.APIClientsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.ArchivedOnColumn): nil,
-		}))
-}
-
-// BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of API clients that
-// meet the given filter's criteria (if relevant) and belong to a given account.
-func (b *MariaDB) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-	if filter != nil {
-		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
-	}
-
-	return b.buildListQuery(ctx, querybuilding.APIClientsTableName, nil, nil, querybuilding.APIClientsTableOwnershipColumn, querybuilding.APIClientsTableColumns, userID, false, filter)
 }
 
 // BuildCreateAPIClientQuery returns a SQL query (and args) that will create the given APIClient in the database.
@@ -141,8 +151,8 @@ func (b *MariaDB) BuildUpdateAPIClientQuery(ctx context.Context, input *types.AP
 			Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 			Where(squirrel.Eq{
 				querybuilding.IDColumn:                       input.ID,
-				querybuilding.ArchivedOnColumn:               nil,
 				querybuilding.APIClientsTableOwnershipColumn: input.BelongsToUser,
+				querybuilding.ArchivedOnColumn:               nil,
 			}),
 	)
 }
@@ -175,19 +185,19 @@ func (b *MariaDB) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, 
 
 	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
 
+	apiClientIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		clientID,
+		audit.APIClientAssignmentKey,
+	)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
 			From(querybuilding.AuditLogEntriesTableName).
-			Where(squirrel.Expr(
-				fmt.Sprintf(
-					jsonPluckQuery,
-					querybuilding.AuditLogEntriesTableName,
-					querybuilding.AuditLogEntriesTableContextColumn,
-					clientID,
-					audit.APIClientAssignmentKey,
-				),
-			)).
+			Where(squirrel.Expr(apiClientIDKey)).
 			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

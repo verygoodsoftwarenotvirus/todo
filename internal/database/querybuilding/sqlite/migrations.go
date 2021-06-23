@@ -10,7 +10,7 @@ import (
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     0.00,
+			Version:     0.0,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (

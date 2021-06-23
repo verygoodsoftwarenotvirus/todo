@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Masterminds/squirrel"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/stretchr/testify/assert"
 )
 

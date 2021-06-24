@@ -13,10 +13,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func joinIDsForQuery(in []uint64) string {
+func joinIDsForQuery(ids []uint64) string {
 	out := []string{}
 
-	for _, x := range in {
+	for _, x := range ids {
 		out = append(out, strconv.FormatUint(x, 10))
 	}
 
@@ -26,6 +26,7 @@ func joinIDsForQuery(in []uint64) string {
 // BuildQueryOnly builds a given query, handles whatever errs and returns just the query and args.
 func (b *Postgres) buildQueryOnly(span tracing.Span, builder squirrel.Sqlizer) string {
 	query, _, err := builder.ToSql()
+
 	b.logQueryBuildingError(span, err)
 
 	return query
@@ -34,6 +35,7 @@ func (b *Postgres) buildQueryOnly(span tracing.Span, builder squirrel.Sqlizer) s
 // BuildQuery builds a given query, handles whatever errs and returns just the query and args.
 func (b *Postgres) buildQuery(span tracing.Span, builder squirrel.Sqlizer) (query string, args []interface{}) {
 	query, args, err := builder.ToSql()
+
 	b.logQueryBuildingError(span, err)
 
 	return query, args

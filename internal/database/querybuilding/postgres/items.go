@@ -126,7 +126,7 @@ func (b *Postgres) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint
 
 	subqueryBuilder := b.sqlBuilder.Select(querybuilding.ItemsTableColumns...).
 		From(querybuilding.ItemsTableName).
-		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinUint64s(ids))).
+		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinIDsForQuery(ids))).
 		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
 
 	return b.buildQuery(

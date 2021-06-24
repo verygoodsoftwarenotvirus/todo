@@ -154,7 +154,7 @@ func TestPostgres_BuildGetItemsWithIDsQuery(T *testing.T) {
 			123,
 			456,
 		}
-		exampleIDsAsStrings := joinUint64s(exampleIDs)
+		exampleIDsAsStrings := joinIDsForQuery(exampleIDs)
 
 		expectedQuery := fmt.Sprintf("SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM (SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items JOIN unnest('{%s}'::int[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d) AS items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1", exampleIDsAsStrings, defaultLimit)
 		expectedArgs := []interface{}{

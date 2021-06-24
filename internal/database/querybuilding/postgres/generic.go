@@ -13,7 +13,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func joinUint64s(in []uint64) string {
+func joinIDsForQuery(in []uint64) string {
 	out := []string{}
 
 	for _, x := range in {

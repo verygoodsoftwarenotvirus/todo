@@ -11,7 +11,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func buildWhenThenStatement(ids []uint64) string {
+func joinIDsForQuery(ids []uint64) string {
 	statement := ""
 
 	for i, id := range ids {

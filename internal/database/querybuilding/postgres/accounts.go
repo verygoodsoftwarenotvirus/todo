@@ -121,7 +121,7 @@ func (b *Postgres) BuildGetAccountsQuery(ctx context.Context, userID uint64, for
 	}
 
 	builder = builder.GroupBy(fmt.Sprintf(
-		"(%s.%s, %s.%s)",
+		"%s.%s, %s.%s",
 		querybuilding.AccountsTableName,
 		querybuilding.IDColumn,
 		querybuilding.AccountsUserMembershipTableName,

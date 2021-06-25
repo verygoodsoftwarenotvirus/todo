@@ -45,8 +45,8 @@ func (m *ItemSQLQueryBuilder) BuildGetBatchOfItemsQuery(ctx context.Context, beg
 }
 
 // BuildGetItemsQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetItemsQuery(ctx context.Context, accountID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, accountID, forAdmin, filter)
+func (m *ItemSQLQueryBuilder) BuildGetItemsQuery(ctx context.Context, accountID uint64, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	returnArgs := m.Called(ctx, accountID, includeArchived, filter)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

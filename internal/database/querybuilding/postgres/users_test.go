@@ -24,6 +24,10 @@ func TestPostgres_BuildUserIsBannedQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleUser := fakes.BuildFakeUser()
+		exampleStatuses := []string{
+			string(types.BannedUserAccountStatus),
+			string(types.TerminatedUserReputation),
+		}
 
 		expectedQuery := "SELECT EXISTS ( SELECT users.id FROM users WHERE users.archived_on IS NULL AND users.id = $1 AND (users.reputation = $2 OR users.reputation = $3) )"
 		expectedArgs := []interface{}{
@@ -31,7 +35,7 @@ func TestPostgres_BuildUserIsBannedQuery(T *testing.T) {
 			string(types.BannedUserAccountStatus),
 			string(types.TerminatedUserReputation),
 		}
-		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, string(types.BannedUserAccountStatus), string(types.TerminatedUserReputation))
+		actualQuery, actualArgs := q.BuildUserHasStatusQuery(ctx, exampleUser.ID, exampleStatuses...)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -115,6 +119,46 @@ func TestPostgres_BuildGetUsersQuery(T *testing.T) {
 	})
 }
 
+func TestPostgres_BuildTestUserCreationQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		fakeUUID := "blahblah"
+		mockExternalIDGenerator := &querybuilding.MockExternalIDGenerator{}
+		mockExternalIDGenerator.On("NewExternalID").Return(fakeUUID)
+		q.externalIDGenerator = mockExternalIDGenerator
+
+		exampleInput := &types.TestUserCreationConfig{
+			Username:       "username",
+			Password:       "password",
+			HashedPassword: "hashashashash",
+			IsServiceAdmin: true,
+		}
+
+		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,service_roles,two_factor_secret_verified_on) VALUES ($1,$2,$3,$4,$5,$6,extract(epoch FROM NOW())) RETURNING id"
+		expectedArgs := []interface{}{
+			fakeUUID,
+			exampleInput.Username,
+			exampleInput.HashedPassword,
+			querybuilding.DefaultTestUserTwoFactorSecret,
+			types.GoodStandingAccountStatus,
+			authorization.ServiceAdminRole.String(),
+		}
+		actualQuery, actualArgs := q.BuildTestUserCreationQuery(ctx, exampleInput)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+
+		mock.AssertExpectationsForObjects(t, mockExternalIDGenerator)
+	})
+}
+
 func TestPostgres_BuildGetUserByUsernameQuery(T *testing.T) {
 	T.Parallel()
 
@@ -147,13 +191,13 @@ func TestPostgres_BuildSearchForUserByUsernameQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
-		exampleUsername := fakes.BuildFakeUser().Username
+		exampleUser := fakes.BuildFakeUser()
 
 		expectedQuery := "SELECT users.id, users.external_id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.service_roles, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username ILIKE $1 AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL"
 		expectedArgs := []interface{}{
-			fmt.Sprintf("%s%%", exampleUsername),
+			fmt.Sprintf("%s%%", exampleUser.Username),
 		}
-		actualQuery, actualArgs := q.BuildSearchForUserByUsernameQuery(ctx, exampleUsername)
+		actualQuery, actualArgs := q.BuildSearchForUserByUsernameQuery(ctx, exampleUser.Username)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -175,42 +219,6 @@ func TestPostgres_BuildGetAllUsersCountQuery(T *testing.T) {
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)
-	})
-}
-
-func TestPostgres_BuildTestUserCreationQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		q, _ := buildTestService(t)
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := fakes.BuildTestUserCreationConfig()
-		exampleInput.IsServiceAdmin = true
-
-		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleUser.ExternalID)
-		q.externalIDGenerator = exIDGen
-
-		expectedQuery := "INSERT INTO users (external_id,username,hashed_password,two_factor_secret,reputation,service_roles,two_factor_secret_verified_on) VALUES ($1,$2,$3,$4,$5,$6,extract(epoch FROM NOW())) RETURNING id"
-		expectedArgs := []interface{}{
-			exampleUser.ExternalID,
-			exampleInput.Username,
-			exampleInput.HashedPassword,
-			"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
-			types.GoodStandingAccountStatus,
-			authorization.ServiceAdminRole.String(),
-		}
-		actualQuery, actualArgs := q.BuildTestUserCreationQuery(ctx, exampleInput)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-
-		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }
 
@@ -302,6 +310,32 @@ func TestPostgres_BuildUpdateUserPasswordQuery(T *testing.T) {
 	})
 }
 
+func TestPostgres_BuildSetUserStatusQuery(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestService(t)
+		ctx := context.Background()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleInput := fakes.BuildFakeUserReputationUpdateInputFromUser(exampleUser)
+
+		expectedQuery := "UPDATE users SET reputation = $1, reputation_explanation = $2 WHERE archived_on IS NULL AND id = $3"
+		expectedArgs := []interface{}{
+			exampleInput.NewReputation,
+			exampleInput.Reason,
+			exampleInput.TargetUserID,
+		}
+		actualQuery, actualArgs := q.BuildSetUserStatusQuery(ctx, exampleInput)
+
+		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
+		assert.Equal(t, expectedQuery, actualQuery)
+		assert.Equal(t, expectedArgs, actualArgs)
+	})
+}
+
 func TestPostgres_BuildUpdateUserTwoFactorSecretQuery(T *testing.T) {
 	T.Parallel()
 
@@ -344,36 +378,6 @@ func TestPostgres_BuildVerifyUserTwoFactorSecretQuery(T *testing.T) {
 			exampleUser.ID,
 		}
 		actualQuery, actualArgs := q.BuildVerifyUserTwoFactorSecretQuery(ctx, exampleUser.ID)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
-func TestPostgres_BuildSetUserStatusQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		q, _ := buildTestService(t)
-		ctx := context.Background()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleInput := &types.UserReputationUpdateInput{
-			TargetUserID:  exampleUser.ID,
-			NewReputation: "new",
-			Reason:        "test",
-		}
-
-		expectedQuery := "UPDATE users SET reputation = $1, reputation_explanation = $2 WHERE archived_on IS NULL AND id = $3"
-		expectedArgs := []interface{}{
-			exampleInput.NewReputation,
-			exampleInput.Reason,
-			exampleInput.TargetUserID,
-		}
-		actualQuery, actualArgs := q.BuildSetUserStatusQuery(ctx, exampleInput)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

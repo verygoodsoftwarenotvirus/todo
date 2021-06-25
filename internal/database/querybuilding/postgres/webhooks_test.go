@@ -111,7 +111,7 @@ func TestPostgres_BuildGetWebhooksQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_BuildWebhookCreationQuery(T *testing.T) {
+func TestPostgres_BuildCreateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

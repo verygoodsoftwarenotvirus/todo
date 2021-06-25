@@ -144,7 +144,7 @@ func (b *Sqlite) BuildGetAllUsersCountQuery(ctx context.Context) (query string) 
 }
 
 // BuildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
-// to a given filter's criteria.
+// to a given filter's criteria. It is assumed that this is only accessible to site administrators.
 func (b *Sqlite) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

@@ -130,7 +130,7 @@ func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint6
 
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	whenThenStatement := joinIDsForQuery(ids)
+	whenThenStatement := joinIDs(ids)
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):         ids,
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,

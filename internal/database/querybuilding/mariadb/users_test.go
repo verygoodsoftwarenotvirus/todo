@@ -154,6 +154,8 @@ func TestMariaDB_BuildTestUserCreationQuery(T *testing.T) {
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
+
+		mock.AssertExpectationsForObjects(t, mockExternalIDGenerator)
 	})
 }
 

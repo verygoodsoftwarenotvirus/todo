@@ -25,7 +25,7 @@ func buildCreationTriggerScript(tableName string) string {
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     0.00,
+			Version:     0.0,
 			Description: "create sessions table for session manager",
 			Script: strings.Join([]string{
 				"CREATE TABLE sessions (",
@@ -62,7 +62,7 @@ var (
 		},
 		{
 			Version:     0.04,
-			Description: "create audit_log table creation trigger",
+			Description: "create audit log table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.AuditLogEntriesTableName),
 		},
 		{
@@ -103,10 +103,10 @@ var (
 				"    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,",
 				"    `external_id` VARCHAR(36) NOT NULL,",
 				"    `name` LONGTEXT NOT NULL,",
-				"	 `billing_status` TEXT NOT NULL DEFAULT 'unpaid',",
-				"	 `contact_email` TEXT NOT NULL DEFAULT '',",
-				"	 `contact_phone` TEXT NOT NULL DEFAULT '',",
-				"	 `payment_processor_customer_id` TEXT NOT NULL DEFAULT '',",
+				"    `billing_status` TEXT NOT NULL DEFAULT 'unpaid',",
+				"    `contact_email` TEXT NOT NULL DEFAULT '',",
+				"    `contact_phone` TEXT NOT NULL DEFAULT '',",
+				"    `payment_processor_customer_id` TEXT NOT NULL DEFAULT '',",
 				"    `subscription_plan_id` VARCHAR(128),",
 				"    `created_on` BIGINT UNSIGNED,",
 				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
@@ -143,9 +143,9 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.10,
+			Version:     0.1,
 			Description: "create accounts membership creation trigger",
-			Script:      buildCreationTriggerScript("account_user_memberships"),
+			Script:      buildCreationTriggerScript(querybuilding.AccountsUserMembershipTableName),
 		},
 		{
 			Version:     0.11,
@@ -171,7 +171,7 @@ var (
 		},
 		{
 			Version:     0.12,
-			Description: "create api_clients table creation trigger",
+			Description: "create API clients table creation trigger",
 			Script:      buildCreationTriggerScript(querybuilding.APIClientsTableName),
 		},
 		{

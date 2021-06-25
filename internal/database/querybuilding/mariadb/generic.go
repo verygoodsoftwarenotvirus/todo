@@ -11,7 +11,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func joinIDsForQuery(ids []uint64) string {
+func joinIDs(ids []uint64) string {
 	statement := ""
 
 	for i, id := range ids {
@@ -53,6 +53,7 @@ func (b *MariaDB) buildTotalCountQuery(ctx context.Context, tableName string, jo
 	}
 
 	totalCountQueryBuilder := b.sqlBuilder.
+		PlaceholderFormat(squirrel.Question).
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
 		From(tableName)
 
@@ -90,6 +91,7 @@ func (b *MariaDB) buildFilteredCountQuery(ctx context.Context, tableName string,
 	}
 
 	filteredCountQueryBuilder := b.sqlBuilder.
+		PlaceholderFormat(squirrel.Question).
 		Select(fmt.Sprintf(columnCountQueryTemplate, tableName)).
 		From(tableName)
 
@@ -121,7 +123,7 @@ func (b *MariaDB) buildFilteredCountQuery(ctx context.Context, tableName string,
 // BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
 func (b *MariaDB) buildListQuery(ctx context.Context, tableName string, joins []string, where squirrel.Eq, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
+	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if filter != nil {

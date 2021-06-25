@@ -170,8 +170,7 @@ func (b *Postgres) BuildArchiveWebhookQuery(ctx context.Context, webhookID, acco
 	)
 }
 
-// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries
-// associated with a given webhook.
+// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a webhook with a given ID.
 func (b *Postgres) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

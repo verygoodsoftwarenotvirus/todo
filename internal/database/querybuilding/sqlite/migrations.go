@@ -156,8 +156,8 @@ var (
 // migrate a sqlite database.
 func (b *Sqlite) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
-		d := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
-		if err := darwin.Migrate(d, migrations, nil); err != nil {
+		driver := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
+		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
 			panic(fmt.Errorf("migrating database: %w", err))
 		}
 	}

@@ -130,7 +130,7 @@ func (b *Sqlite) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64
 
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	whenThenStatement := joinIDsForQuery(ids)
+	whenThenStatement := joinIDs(ids)
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):         ids,
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,

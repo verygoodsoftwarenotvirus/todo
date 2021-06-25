@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/Masterminds/squirrel"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -85,7 +84,17 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, nil, nil, exampleOwnershipColumn, exampleColumns, exampleUser.ID, true, filter)
+		actualQuery, actualArgs := q.buildListQuery(
+			ctx,
+			exampleTableName,
+			nil,
+			nil,
+			exampleOwnershipColumn,
+			exampleColumns,
+			exampleUser.ID,
+			true,
+			filter,
+		)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -113,7 +122,17 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, nil, nil, exampleOwnershipColumn, exampleColumns, exampleUser.ID, true, filter)
+		actualQuery, actualArgs := q.buildListQuery(
+			ctx,
+			exampleTableName,
+			nil,
+			nil,
+			exampleOwnershipColumn,
+			exampleColumns,
+			exampleUser.ID,
+			true,
+			filter,
+		)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

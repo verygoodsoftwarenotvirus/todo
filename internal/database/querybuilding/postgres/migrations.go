@@ -10,7 +10,7 @@ import (
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     0.00,
+			Version:     0.0,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -157,7 +157,7 @@ var (
 func (b *Postgres) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
-		if err := darwin.Migrate(driver, migrations, nil); err != nil {
+		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
 			panic(fmt.Errorf("migrating database: %w", err))
 		}
 	}

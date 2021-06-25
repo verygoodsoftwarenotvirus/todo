@@ -208,8 +208,7 @@ func (b *Postgres) BuildArchiveAccountQuery(ctx context.Context, accountID, user
 	)
 }
 
-// BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries
-// associated with a given account.
+// BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries belong to an account with a given ID.
 func (b *Postgres) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

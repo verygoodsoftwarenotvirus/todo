@@ -13,7 +13,7 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-func joinIDsForQuery(ids []uint64) string {
+func joinIDs(ids []uint64) string {
 	out := []string{}
 
 	for _, x := range ids {
@@ -119,7 +119,7 @@ func (b *Postgres) buildFilteredCountQuery(ctx context.Context, tableName string
 
 // BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (b *Postgres) buildListQuery(ctx context.Context, tableName string, joins []string, where squirrel.Eq, ownershipColumn string, columns []string, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Postgres) buildListQuery(ctx context.Context, tableName string, joins []string, where squirrel.Eq, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -132,8 +132,8 @@ func (b *Postgres) buildListQuery(ctx context.Context, tableName string, joins [
 		includeArchived = filter.IncludeArchived
 	}
 
-	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, tableName, joins, where, ownershipColumn, userID, forAdmin, includeArchived, filter)
-	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, tableName, joins, where, ownershipColumn, userID, forAdmin, includeArchived)
+	filteredCountQuery, filteredCountQueryArgs := b.buildFilteredCountQuery(ctx, tableName, joins, where, ownershipColumn, ownerID, forAdmin, includeArchived, filter)
+	totalCountQuery, totalCountQueryArgs := b.buildTotalCountQuery(ctx, tableName, joins, where, ownershipColumn, ownerID, forAdmin, includeArchived)
 
 	builder := b.sqlBuilder.
 		Select(append(
@@ -151,11 +151,10 @@ func (b *Postgres) buildListQuery(ctx context.Context, tableName string, joins [
 		if where == nil {
 			where = squirrel.Eq{}
 		}
-
 		where[fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn)] = nil
 
-		if ownershipColumn != "" && userID != 0 {
-			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = userID
+		if ownershipColumn != "" && ownerID != 0 {
+			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = ownerID
 		}
 
 		builder = builder.Where(where)

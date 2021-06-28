@@ -328,7 +328,7 @@ func TestBuilder_BuildGetAuditLogForItemRequest(T *testing.T) {
 		assertRequestQuality(t, actual, spec)
 	})
 
-	T.Run("with invalid ID", func(t *testing.T) {
+	T.Run("with invalid item ID", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()

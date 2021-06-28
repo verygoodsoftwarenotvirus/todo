@@ -207,7 +207,7 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID uint64, filter *typ
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := filter.AttachToLogger(q.logger)
+	logger := q.logger
 
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
@@ -216,6 +216,7 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID uint64, filter *typ
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	x = &types.ItemList{}
+	logger = filter.AttachToLogger(logger)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
 	if filter != nil {

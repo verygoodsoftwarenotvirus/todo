@@ -199,10 +199,7 @@ func (s *itemsTestSuite) TestClient_SearchItems() {
 	s.Run("with empty query", func() {
 		t := s.T()
 
-		exampleItemList := fakes.BuildFakeItemList()
-
-		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
-		c, _ := buildTestClientWithJSONResponse(t, spec, exampleItemList.Items)
+		c, _ := buildSimpleTestClient(t)
 		actual, err := c.SearchItems(s.ctx, "", 0)
 
 		assert.Nil(t, actual)
@@ -212,22 +209,20 @@ func (s *itemsTestSuite) TestClient_SearchItems() {
 	s.Run("with error building request", func() {
 		t := s.T()
 
-		limit := types.DefaultQueryFilter().Limit
 		c := buildTestClientWithInvalidURL(t)
 
-		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
+		actual, err := c.SearchItems(s.ctx, exampleQuery, 0)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
 
-	s.Run("standard", func() {
+	s.Run("with bad response from server", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
-		limit := types.DefaultQueryFilter().Limit
 		c := buildTestClientWithInvalidResponse(t, spec)
-		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
+		actual, err := c.SearchItems(s.ctx, exampleQuery, 0)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err)

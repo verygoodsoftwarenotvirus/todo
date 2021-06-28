@@ -200,8 +200,8 @@ func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) ([]*type
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	req, err := c.requestBuilder.BuildGetAuditLogForItemRequest(ctx, itemID)
 	if err != nil {

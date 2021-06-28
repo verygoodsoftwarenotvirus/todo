@@ -218,11 +218,12 @@ func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uin
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(

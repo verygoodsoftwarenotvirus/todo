@@ -30,6 +30,7 @@ func (s *TestSuite) TestItems_Creating() {
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
+			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItem, err := testClients.main.CreateItem(ctx, exampleItemInput)
@@ -46,7 +47,7 @@ func (s *TestSuite) TestItems_Creating() {
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
 
-			// clean up
+			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 		}
 	})

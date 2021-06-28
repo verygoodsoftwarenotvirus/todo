@@ -8,9 +8,11 @@ const (
 	// APIClientAssignmentKey is the key we use to indicate that an audit log entry is associated with an API client.
 	APIClientAssignmentKey = "api_client_id"
 
-	// APIClientCreationEvent events indicate a user created an API client.
+	// APIClientCreationEvent events indicate a user created a API client.
 	APIClientCreationEvent = "api_client_created"
-	// APIClientArchiveEvent events indicate a user deleted an API client.
+	// APIClientUpdateEvent events indicate a user updated a API client.
+	APIClientUpdateEvent = "api_client_created"
+	// APIClientArchiveEvent events indicate a user deleted a API client.
 	APIClientArchiveEvent = "api_client_archived"
 )
 

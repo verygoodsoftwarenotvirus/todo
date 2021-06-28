@@ -91,9 +91,8 @@ func TestQuerier_ItemExists(T *testing.T) {
 
 		ctx := context.Background()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		c, db := buildTestClient(t)
 
@@ -104,7 +103,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 			"BuildItemExistsQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -112,7 +111,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
-		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccount.ID)
+		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
 		assert.NoError(t, err)
 		assert.True(t, actual)
 
@@ -122,14 +121,13 @@ func TestQuerier_ItemExists(T *testing.T) {
 	T.Run("with invalid item ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
-
 		ctx := context.Background()
+
+		exampleAccountID := fakes.BuildFakeID()
+
 		c, _ := buildTestClient(t)
 
-		actual, err := c.ItemExists(ctx, 0, exampleAccount.ID)
+		actual, err := c.ItemExists(ctx, 0, exampleAccountID)
 		assert.Error(t, err)
 		assert.False(t, actual)
 	})
@@ -137,11 +135,10 @@ func TestQuerier_ItemExists(T *testing.T) {
 	T.Run("with invalid account ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
-
 		ctx := context.Background()
+
+		exampleItem := fakes.BuildFakeItem()
+
 		c, db := buildTestClient(t)
 
 		actual, err := c.ItemExists(ctx, exampleItem.ID, 0)
@@ -154,11 +151,11 @@ func TestQuerier_ItemExists(T *testing.T) {
 	T.Run("with sql.ErrNoRows", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
-
 		ctx := context.Background()
+
+		exampleAccountID := fakes.BuildFakeID()
+		exampleItem := fakes.BuildFakeItem()
+
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -168,7 +165,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 			"BuildItemExistsQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -176,7 +173,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccount.ID)
+		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
 		assert.NoError(t, err)
 		assert.False(t, actual)
 
@@ -186,11 +183,11 @@ func TestQuerier_ItemExists(T *testing.T) {
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
-
 		ctx := context.Background()
+
+		exampleAccountID := fakes.BuildFakeID()
+		exampleItem := fakes.BuildFakeItem()
+
 		c, db := buildTestClient(t)
 
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
@@ -200,7 +197,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 			"BuildItemExistsQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -208,7 +205,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccount.ID)
+		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
 		assert.Error(t, err)
 		assert.False(t, actual)
 
@@ -222,9 +219,8 @@ func TestQuerier_GetItem(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -236,7 +232,7 @@ func TestQuerier_GetItem(T *testing.T) {
 			"BuildGetItemQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -244,7 +240,7 @@ func TestQuerier_GetItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromItems(false, 0, exampleItem))
 
-		actual, err := c.GetItem(ctx, exampleItem.ID, exampleAccount.ID)
+		actual, err := c.GetItem(ctx, exampleItem.ID, exampleAccountID)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItem, actual)
 
@@ -254,14 +250,12 @@ func TestQuerier_GetItem(T *testing.T) {
 	T.Run("with invalid item ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
+		exampleAccountID := fakes.BuildFakeID()
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetItem(ctx, 0, exampleItem.BelongsToAccount)
+		actual, err := c.GetItem(ctx, 0, exampleAccountID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -269,9 +263,7 @@ func TestQuerier_GetItem(T *testing.T) {
 	T.Run("with invalid account ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -284,9 +276,8 @@ func TestQuerier_GetItem(T *testing.T) {
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -298,7 +289,7 @@ func TestQuerier_GetItem(T *testing.T) {
 			"BuildGetItemQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
 
@@ -306,7 +297,7 @@ func TestQuerier_GetItem(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetItem(ctx, exampleItem.ID, exampleAccount.ID)
+		actual, err := c.GetItem(ctx, exampleItem.ID, exampleAccountID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -572,7 +563,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
 
 		ctx := context.Background()
@@ -583,7 +574,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildGetItemsQuery",
 			testutils.ContextMatcher,
-			exampleAccount.ID,
+			exampleAccountID,
 			false,
 			filter,
 		).Return(fakeQuery, fakeArgs)
@@ -593,7 +584,7 @@ func TestQuerier_GetItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromItems(true, exampleItemList.FilteredCount, exampleItemList.Items...))
 
-		actual, err := c.GetItems(ctx, exampleAccount.ID, filter)
+		actual, err := c.GetItems(ctx, exampleAccountID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList, actual)
 
@@ -604,7 +595,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		t.Parallel()
 
 		filter := (*types.QueryFilter)(nil)
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
 		exampleItemList.Page = 0
 		exampleItemList.Limit = 0
@@ -618,7 +609,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildGetItemsQuery",
 			testutils.ContextMatcher,
-			exampleAccount.ID,
+			exampleAccountID,
 			false,
 			filter,
 		).Return(fakeQuery, fakeArgs)
@@ -628,7 +619,7 @@ func TestQuerier_GetItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromItems(true, exampleItemList.FilteredCount, exampleItemList.Items...))
 
-		actual, err := c.GetItems(ctx, exampleAccount.ID, filter)
+		actual, err := c.GetItems(ctx, exampleAccountID, filter)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList, actual)
 
@@ -652,7 +643,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -663,7 +654,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildGetItemsQuery",
 			testutils.ContextMatcher,
-			exampleAccount.ID,
+			exampleAccountID,
 			false,
 			filter,
 		).Return(fakeQuery, fakeArgs)
@@ -673,7 +664,7 @@ func TestQuerier_GetItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetItems(ctx, exampleAccount.ID, filter)
+		actual, err := c.GetItems(ctx, exampleAccountID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -684,7 +675,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		t.Parallel()
 
 		filter := types.DefaultQueryFilter()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -695,7 +686,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildGetItemsQuery",
 			testutils.ContextMatcher,
-			exampleAccount.ID,
+			exampleAccountID,
 			false,
 			filter,
 		).Return(fakeQuery, fakeArgs)
@@ -705,7 +696,7 @@ func TestQuerier_GetItems(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		actual, err := c.GetItems(ctx, exampleAccount.ID, filter)
+		actual, err := c.GetItems(ctx, exampleAccountID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -719,7 +710,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
 
 		var exampleIDs []uint64
@@ -736,7 +727,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildGetItemsWithIDsQuery",
 			testutils.ContextMatcher,
-			exampleAccount.ID,
+			exampleAccountID,
 			defaultLimit,
 			exampleIDs,
 			true,
@@ -747,7 +738,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromItems(false, 0, exampleItemList.Items...))
 
-		actual, err := c.GetItemsWithIDs(ctx, exampleAccount.ID, defaultLimit, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccountID, defaultLimit, exampleIDs)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList.Items, actual)
 
@@ -774,7 +765,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Run("sets limit if not present", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, x := range exampleItemList.Items {
@@ -790,7 +781,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildGetItemsWithIDsQuery",
 			testutils.ContextMatcher,
-			exampleAccount.ID,
+			exampleAccountID,
 			defaultLimit,
 			exampleIDs,
 			true,
@@ -801,7 +792,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromItems(false, 0, exampleItemList.Items...))
 
-		actual, err := c.GetItemsWithIDs(ctx, exampleAccount.ID, 0, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccountID, 0, exampleIDs)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleItemList.Items, actual)
 
@@ -811,7 +802,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, x := range exampleItemList.Items {
@@ -827,7 +818,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildGetItemsWithIDsQuery",
 			testutils.ContextMatcher,
-			exampleAccount.ID,
+			exampleAccountID,
 			defaultLimit,
 			exampleIDs,
 			true,
@@ -838,7 +829,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.GetItemsWithIDs(ctx, exampleAccount.ID, defaultLimit, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccountID, defaultLimit, exampleIDs)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -848,7 +839,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Run("with erroneous response from database", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
 		var exampleIDs []uint64
 		for _, x := range exampleItemList.Items {
@@ -864,7 +855,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		mockQueryBuilder.ItemSQLQueryBuilder.On(
 			"BuildGetItemsWithIDsQuery",
 			testutils.ContextMatcher,
-			exampleAccount.ID,
+			exampleAccountID,
 			defaultLimit,
 			exampleIDs,
 			true,
@@ -875,7 +866,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRow())
 
-		actual, err := c.GetItemsWithIDs(ctx, exampleAccount.ID, defaultLimit, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccountID, defaultLimit, exampleIDs)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
@@ -1102,9 +1093,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1137,9 +1126,6 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -1150,9 +1136,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 	T.Run("with invalid actor ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -1164,9 +1148,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1180,9 +1162,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1214,9 +1194,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1250,9 +1228,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1289,10 +1265,9 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleUserID := fakes.BuildFakeID()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1306,7 +1281,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 			"BuildArchiveItemQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -1319,7 +1294,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.NoError(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+		assert.NoError(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID, exampleUserID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -1327,67 +1302,60 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Run("with invalid item ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
+		exampleUserID := fakes.BuildFakeID()
+		exampleAccountID := fakes.BuildFakeID()
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveItem(ctx, 0, exampleAccount.ID, exampleUser.ID))
+		assert.Error(t, c.ArchiveItem(ctx, 0, exampleAccountID, exampleUserID))
 	})
 
 	T.Run("with invalid account ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleUserID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, 0, exampleUser.ID))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, 0, exampleUserID))
 	})
 
 	T.Run("with invalid actor ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, 0))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID, 0))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleUserID := fakes.BuildFakeID()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		db.ExpectBegin().WillReturnError(errors.New("blah"))
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID, exampleUserID))
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleUserID := fakes.BuildFakeID()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1401,7 +1369,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 			"BuildArchiveItemQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -1412,7 +1380,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID, exampleUserID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -1420,10 +1388,9 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Run("with error writing audit log entry", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleUserID := fakes.BuildFakeID()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1437,7 +1404,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 			"BuildArchiveItemQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -1450,7 +1417,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID, exampleUserID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
@@ -1458,10 +1425,9 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Run("with error committing transaction", func(t *testing.T) {
 		t.Parallel()
 
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleUserID := fakes.BuildFakeID()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = exampleAccount.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1475,7 +1441,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 			"BuildArchiveItemQuery",
 			testutils.ContextMatcher,
 			exampleItem.ID,
-			exampleAccount.ID,
+			exampleAccountID,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -1488,7 +1454,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 
 		c.sqlQueryBuilder = mockQueryBuilder
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccount.ID, exampleUser.ID))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID, exampleUserID))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

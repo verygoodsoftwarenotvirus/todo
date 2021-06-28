@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -31,8 +30,8 @@ func (b *MariaDB) BuildItemExistsQuery(ctx context.Context, itemID, accountID ui
 			Suffix(querybuilding.ExistenceSuffix).
 			Where(squirrel.Eq{
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
-				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 			}),
 	)
 }
@@ -51,8 +50,8 @@ func (b *MariaDB) BuildGetItemQuery(ctx context.Context, itemID, accountID uint6
 			From(querybuilding.ItemsTableName).
 			Where(squirrel.Eq{
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
-				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 			}),
 	)
 }
@@ -63,12 +62,14 @@ func (b *MariaDB) BuildGetAllItemsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
-		From(querybuilding.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
-		}))
+	return b.buildQueryOnly(
+		span,
+		b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
+			From(querybuilding.ItemsTableName).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
+			}),
+	)
 }
 
 // BuildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
@@ -91,14 +92,29 @@ func (b *MariaDB) BuildGetBatchOfItemsQuery(ctx context.Context, beginID, endID 
 
 // BuildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
-	return b.buildListQuery(ctx, querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn, querybuilding.ItemsTableColumns, accountID, forAdmin, filter)
+
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
+	}
+
+	return b.buildListQuery(
+		ctx,
+		querybuilding.ItemsTableName,
+		nil,
+		where,
+		querybuilding.ItemsTableAccountOwnershipColumn,
+		querybuilding.ItemsTableColumns,
+		accountID,
+		includeArchived,
+		filter,
+	)
 }
 
 // BuildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given account,
@@ -108,20 +124,19 @@ func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, forA
 // slice of uint64s instead of a slice of strings in order to ensure all the provided strings
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
-func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, restrictToAccount bool) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	whenThenStatement := buildWhenThenStatement(ids)
-
+	whenThenStatement := joinIDs(ids)
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):         ids,
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
 	}
 
-	if !forAdmin {
+	if restrictToAccount {
 		where[fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn)] = accountID
 	}
 
@@ -180,7 +195,7 @@ func (b *MariaDB) BuildUpdateItemQuery(ctx context.Context, input *types.Item) (
 	)
 }
 
-// BuildArchiveItemQuery returns a SQL query which marks a given item belonging to a given user as archived.
+// BuildArchiveItemQuery returns a SQL query which marks a given item belonging to a given account as archived.
 func (b *MariaDB) BuildArchiveItemQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -201,26 +216,26 @@ func (b *MariaDB) BuildArchiveItemQuery(ctx context.Context, itemID, accountID u
 	)
 }
 
-// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries relating to an item with a given ID.
 func (b *MariaDB) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachItemIDToSpan(span, itemID)
 
+	itemIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		itemID,
+		audit.ItemAssignmentKey,
+	)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
 			From(querybuilding.AuditLogEntriesTableName).
-			Where(squirrel.Expr(
-				fmt.Sprintf(
-					jsonPluckQuery,
-					querybuilding.AuditLogEntriesTableName,
-					querybuilding.AuditLogEntriesTableContextColumn,
-					itemID,
-					audit.ItemAssignmentKey,
-				),
-			)).
+			Where(squirrel.Expr(itemIDKey)).
 			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

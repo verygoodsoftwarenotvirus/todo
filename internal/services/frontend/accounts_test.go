@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,22 +21,20 @@ func TestService_fetchAccount(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.ActiveAccountID,
+			s.sessionCtxData.Requester.UserID,
 		).Return(exampleAccount, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
-		actual, err := s.fetchAccount(ctx, exampleSessionContextData)
+		actual, err := s.service.fetchAccount(s.ctx, s.sessionCtxData)
 		assert.Equal(t, exampleAccount, actual)
 		assert.NoError(t, err)
 
@@ -47,14 +44,10 @@ func TestService_fetchAccount(T *testing.T) {
 	T.Run("with fake mode", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.useFakeData = true
+		s := buildTestHelper(t)
+		s.service.useFakeData = true
 
-		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-
-		actual, err := s.fetchAccount(ctx, exampleSessionContextData)
+		actual, err := s.service.fetchAccount(s.ctx, s.sessionCtxData)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
@@ -62,22 +55,18 @@ func TestService_fetchAccount(T *testing.T) {
 	T.Run("with error fetching account", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
+		s := buildTestHelper(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.ActiveAccountID,
+			s.sessionCtxData.Requester.UserID,
 		).Return((*types.Account)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
-		actual, err := s.fetchAccount(ctx, exampleSessionContextData)
+		actual, err := s.service.fetchAccount(s.ctx, s.sessionCtxData)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 
@@ -91,27 +80,22 @@ func TestService_buildAccountEditorView(T *testing.T) {
 	T.Run("with base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.ActiveAccountID,
+			s.sessionCtxData.Requester.UserID,
 		).Return(exampleAccount, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/items", nil)
+		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		s.buildAccountEditorView(true)(res, req)
+		s.service.buildAccountEditorView(true)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -121,27 +105,22 @@ func TestService_buildAccountEditorView(T *testing.T) {
 	T.Run("without base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.ActiveAccountID,
+			s.sessionCtxData.Requester.UserID,
 		).Return(exampleAccount, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/items", nil)
+		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		s.buildAccountEditorView(false)(res, req)
+		s.service.buildAccountEditorView(false)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -151,44 +130,38 @@ func TestService_buildAccountEditorView(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/items", nil)
+		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		s.buildAccountEditorView(true)(res, req)
+		s.service.buildAccountEditorView(true)(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
 
-	T.Run("with error fetching item", func(t *testing.T) {
+	T.Run("with error fetching account", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
+		s := buildTestHelper(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
-			exampleSessionContextData.ActiveAccountID,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.ActiveAccountID,
+			s.sessionCtxData.Requester.UserID,
 		).Return((*types.Account)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
-		req := httptest.NewRequest(http.MethodGet, "/items", nil)
+		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		s.buildAccountEditorView(true)(res, req)
+		s.service.buildAccountEditorView(true)(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -202,25 +175,22 @@ func TestService_fetchAccounts(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
 		exampleAccountList := fakes.BuildFakeAccountList()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
-			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAccountList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		actual, err := s.fetchAccounts(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchAccounts(s.ctx, s.sessionCtxData, req)
 		assert.Equal(t, exampleAccountList, actual)
 		assert.NoError(t, err)
 
@@ -230,16 +200,12 @@ func TestService_fetchAccounts(T *testing.T) {
 	T.Run("with fake mode", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.useFakeData = true
-
-		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
+		s := buildTestHelper(t)
+		s.service.useFakeData = true
 
 		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		actual, err := s.fetchAccounts(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchAccounts(s.ctx, s.sessionCtxData, req)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
@@ -247,24 +213,20 @@ func TestService_fetchAccounts(T *testing.T) {
 	T.Run("with error fetching data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
+		s := buildTestHelper(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
-			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.AccountList)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		actual, err := s.fetchAccounts(ctx, exampleSessionContextData, req)
+		actual, err := s.service.fetchAccounts(s.ctx, s.sessionCtxData, req)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 
@@ -278,28 +240,23 @@ func TestService_buildAccountsTableView(T *testing.T) {
 	T.Run("with base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleAccountList := fakes.BuildFakeAccountList()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
-			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAccountList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		s.buildAccountsTableView(true)(res, req)
+		s.service.buildAccountsTableView(true)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -309,28 +266,23 @@ func TestService_buildAccountsTableView(T *testing.T) {
 	T.Run("without base template", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleAccountList := fakes.BuildFakeAccountList()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
-			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAccountList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		s.buildAccountsTableView(false)(res, req)
+		s.service.buildAccountsTableView(false)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -340,15 +292,15 @@ func TestService_buildAccountsTableView(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s := buildTestHelper(t)
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		s.buildAccountsTableView(true)(res, req)
+		s.service.buildAccountsTableView(true)(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
@@ -356,27 +308,21 @@ func TestService_buildAccountsTableView(T *testing.T) {
 	T.Run("with error fetching data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleSessionContextData := fakes.BuildFakeSessionContextDataForAccount(exampleAccount)
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
+		s := buildTestHelper(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.AccountDataManager.On(
 			"GetAccounts",
-			testutil.ContextMatcher,
-			exampleSessionContextData.Requester.UserID,
+			testutils.ContextMatcher,
+			s.sessionCtxData.Requester.UserID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.AccountList)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/accounts", nil)
 
-		s.buildAccountsTableView(true)(res, req)
+		s.service.buildAccountsTableView(true)(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 

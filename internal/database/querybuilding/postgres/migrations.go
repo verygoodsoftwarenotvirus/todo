@@ -10,7 +10,7 @@ import (
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     0.00,
+			Version:     0.0,
 			Description: "create sessions table for session manager",
 			Script: `
 			CREATE TABLE sessions (
@@ -131,11 +131,11 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 		{
-			Version:     0.8,
+			Version:     0.08,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
@@ -146,7 +146,7 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 	}
@@ -157,7 +157,7 @@ var (
 func (b *Postgres) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
 		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
-		if err := darwin.Migrate(driver, migrations, nil); err != nil {
+		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
 			panic(fmt.Errorf("migrating database: %w", err))
 		}
 	}

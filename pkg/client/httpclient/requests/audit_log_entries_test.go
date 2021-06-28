@@ -27,6 +27,19 @@ func TestBuilder_BuildGetAuditLogEntryRequest(T *testing.T) {
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
+
+		actual, err := helper.builder.BuildGetAuditLogEntryRequest(helper.ctx, exampleAuditLogEntry.ID)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
 func TestBuilder_BuildGetAuditLogEntriesRequest(T *testing.T) {
@@ -45,5 +58,17 @@ func TestBuilder_BuildGetAuditLogEntriesRequest(T *testing.T) {
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+		filter := types.DefaultQueryFilter()
+
+		actual, err := helper.builder.BuildGetAuditLogEntriesRequest(helper.ctx, filter)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }

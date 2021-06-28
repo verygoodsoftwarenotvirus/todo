@@ -6,7 +6,7 @@ import (
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakeUserReputationUpdateInput builds a faked ItemCreationInput.
+// BuildFakeUserReputationUpdateInput builds a faked UserReputationUpdateInput.
 func BuildFakeUserReputationUpdateInput() *types.UserReputationUpdateInput {
 	return &types.UserReputationUpdateInput{
 		TargetUserID:  uint64(fake.Uint32()),

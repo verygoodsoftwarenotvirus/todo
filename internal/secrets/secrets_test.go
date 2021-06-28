@@ -6,15 +6,13 @@ import (
 	"encoding/json"
 	"testing"
 
-	"gocloud.dev/secrets"
-
-	"github.com/stretchr/testify/assert"
-	"gocloud.dev/secrets/localsecrets"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gocloud.dev/secrets"
+	"gocloud.dev/secrets/localsecrets"
 )
 
 type example struct {

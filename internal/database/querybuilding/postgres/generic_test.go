@@ -6,6 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,21 +33,31 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT column_one, column_two, column_three, (SELECT COUNT(example_table.id) FROM example_table WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = $1) as total_count, (SELECT COUNT(example_table.id) FROM example_table WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = $2 AND example_table.created_on > $3 AND example_table.created_on < $4 AND example_table.last_updated_on > $5 AND example_table.last_updated_on < $6) as filtered_count FROM example_table WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = $7 AND example_table.created_on > $8 AND example_table.created_on < $9 AND example_table.last_updated_on > $10 AND example_table.last_updated_on < $11 GROUP BY example_table.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT column_one, column_two, column_three, (SELECT COUNT(example_table.id) FROM example_table JOIN things on stuff.thing_id=things.id WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = $1 AND key = $2) as total_count, (SELECT COUNT(example_table.id) FROM example_table JOIN things on stuff.thing_id=things.id WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = $3 AND key = $4 AND example_table.created_on > $5 AND example_table.created_on < $6 AND example_table.last_updated_on > $7 AND example_table.last_updated_on < $8) as filtered_count FROM example_table JOIN things on stuff.thing_id=things.id WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = $9 AND key = $10 AND example_table.created_on > $11 AND example_table.created_on < $12 AND example_table.last_updated_on > $13 AND example_table.last_updated_on < $14 GROUP BY example_table.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
+			"value",
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 			exampleUser.ID,
+			"value",
 			exampleUser.ID,
+			"value",
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleOwnershipColumn, exampleColumns, exampleUser.ID, false, filter)
+		exampleJoins := []string{
+			"things on stuff.thing_id=things.id",
+		}
+		exampleWhere := squirrel.Eq{
+			"key": "value",
+		}
+
+		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleJoins, exampleWhere, exampleOwnershipColumn, exampleColumns, exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -73,7 +84,17 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleOwnershipColumn, exampleColumns, exampleUser.ID, true, filter)
+		actualQuery, actualArgs := q.buildListQuery(
+			ctx,
+			exampleTableName,
+			nil,
+			nil,
+			exampleOwnershipColumn,
+			exampleColumns,
+			exampleUser.ID,
+			true,
+			filter,
+		)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -101,7 +122,17 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleOwnershipColumn, exampleColumns, exampleUser.ID, true, filter)
+		actualQuery, actualArgs := q.buildListQuery(
+			ctx,
+			exampleTableName,
+			nil,
+			nil,
+			exampleOwnershipColumn,
+			exampleColumns,
+			exampleUser.ID,
+			true,
+			filter,
+		)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

@@ -28,13 +28,13 @@ type (
 		CreatedOn  uint64          `json:"createdOn"`
 	}
 
-	// AuditLogEntryList represents a list of items.
+	// AuditLogEntryList represents a list of audit log entries.
 	AuditLogEntryList struct {
 		Entries []*AuditLogEntry `json:"entries"`
 		Pagination
 	}
 
-	// AuditLogEntryCreationInput represents what a User could set as input for creating items.
+	// AuditLogEntryCreationInput represents input for creating audit log entries.
 	AuditLogEntryCreationInput struct {
 		Context   AuditLogContext `json:"context"`
 		EventType string          `json:"eventType"`

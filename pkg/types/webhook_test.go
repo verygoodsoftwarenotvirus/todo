@@ -79,7 +79,7 @@ func TestWebhookCreationInput_Validate(T *testing.T) {
 	T.Run("bad url", func(t *testing.T) {
 		t.Parallel()
 		exampleInput := buildValidWebhookCreationInput()
-		// much as we'd like to use testutil.InvalidRawURL here, it causes a cyclical import :'(
+		// much as we'd like to use testutils.InvalidRawURL here, it causes a cyclical import :'(
 		exampleInput.URL = fmt.Sprintf(`%s://verygoodsoftwarenotvirus.ru`, string(byte(127)))
 
 		assert.Error(t, exampleInput.ValidateWithContext(context.Background()))

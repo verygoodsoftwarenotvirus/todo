@@ -11,10 +11,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
-	bleve "github.com/blevesearch/bleve/v2"
+	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/search/searcher"
 )
 

@@ -6,7 +6,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -15,11 +14,13 @@ func (c *Client) ItemExists(ctx context.Context, itemID uint64) (bool, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger
+
 	if itemID == 0 {
 		return false, ErrInvalidIDProvided
 	}
-
-	logger := c.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	req, err := c.requestBuilder.BuildItemExistsRequest(ctx, itemID)
 	if err != nil {
@@ -39,11 +40,13 @@ func (c *Client) GetItem(ctx context.Context, itemID uint64) (*types.Item, error
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	logger := c.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	req, err := c.requestBuilder.BuildGetItemRequest(ctx, itemID)
 	if err != nil {
@@ -63,6 +66,8 @@ func (c *Client) SearchItems(ctx context.Context, query string, limit uint8) ([]
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger
+
 	if query == "" {
 		return nil, ErrEmptyQueryProvided
 	}
@@ -71,7 +76,7 @@ func (c *Client) SearchItems(ctx context.Context, query string, limit uint8) ([]
 		limit = 20
 	}
 
-	logger := c.logger.WithValue(keys.SearchQueryKey, query).WithValue(keys.FilterLimitKey, limit)
+	logger = logger.WithValue(keys.SearchQueryKey, query).WithValue(keys.FilterLimitKey, limit)
 
 	req, err := c.requestBuilder.BuildSearchItemsRequest(ctx, query, limit)
 	if err != nil {
@@ -92,7 +97,6 @@ func (c *Client) GetItems(ctx context.Context, filter *types.QueryFilter) (*type
 	defer span.End()
 
 	logger := c.loggerWithFilter(filter)
-
 	tracing.AttachQueryFilterToSpan(span, filter)
 
 	req, err := c.requestBuilder.BuildGetItemsRequest(ctx, filter)
@@ -113,11 +117,11 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger
+
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}
-
-	logger := c.logger
 
 	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
@@ -141,11 +145,13 @@ func (c *Client) UpdateItem(ctx context.Context, item *types.Item) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger
+
 	if item == nil {
 		return ErrNilInputProvided
 	}
-
-	logger := c.logger.WithValue(keys.ItemIDKey, item.ID)
+	logger = logger.WithValue(keys.ItemIDKey, item.ID)
+	tracing.AttachItemIDToSpan(span, item.ID)
 
 	req, err := c.requestBuilder.BuildUpdateItemRequest(ctx, item)
 	if err != nil {
@@ -164,11 +170,13 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger
+
 	if itemID == 0 {
 		return ErrInvalidIDProvided
 	}
-
-	logger := c.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	req, err := c.requestBuilder.BuildArchiveItemRequest(ctx, itemID)
 	if err != nil {
@@ -187,11 +195,13 @@ func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) ([]*type
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := c.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	logger := c.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	req, err := c.requestBuilder.BuildGetAuditLogForItemRequest(ctx, itemID)
 	if err != nil {

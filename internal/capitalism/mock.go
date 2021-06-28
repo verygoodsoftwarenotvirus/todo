@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/stretchr/testify/mock"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/stretchr/testify/mock"
 )
 
 var _ PaymentManager = (*MockPaymentManager)(nil)

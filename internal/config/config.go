@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
@@ -25,10 +23,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -59,25 +58,25 @@ type (
 
 	// ServicesConfigurations collects the various service configurations.
 	ServicesConfigurations struct {
-		Items    items.Config       `json:"items" mapstructure:"items" toml:"items,omitempty"`
-		Auth     authservice.Config `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Webhooks webhooks.Config    `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		Frontend frontend.Config    `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
+		Items    itemsservice.Config    `json:"items" mapstructure:"items" toml:"items,omitempty"`
+		Auth     authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
+		Webhooks webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		AuditLog auditservice.Config    `json:"auditLog" mapstructure:"audit_log" toml:"audit_log,omitempty"`
+		Frontend frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 
 	// InstanceConfig configures an instance of the service. It is composed of all the other setting structs.
 	InstanceConfig struct {
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
-		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"meta,omitempty"`
+		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"encoding,omitempty"`
 		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
 		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
-		Capitalism    capitalism.Config      `json:"capitalism" mapstructure:"capitalism" toml:"capitalism"`
+		Capitalism    capitalism.Config      `json:"capitalism" mapstructure:"capitalism" toml:"capitalism,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
 		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Services      ServicesConfigurations `json:"services" mapstructure:"services" toml:"services,omitempty"`
 		Server        server.Config          `json:"server" mapstructure:"server" toml:"server,omitempty"`
-		AuditLog      audit.Config           `json:"audit_log" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 	}
 )
 
@@ -135,24 +134,24 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 		return fmt.Errorf("error validating HTTPServer portion of config: %w", err)
 	}
 
+	if err := cfg.Services.AuditLog.ValidateWithContext(ctx); err != nil {
+		return fmt.Errorf("error validating AuditLog portion of config: %w", err)
+	}
+
 	if err := cfg.Services.Auth.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Auth portion of config: %w", err)
+		return fmt.Errorf("error validating Auth service portion of config: %w", err)
 	}
 
 	if err := cfg.Services.Frontend.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
+		return fmt.Errorf("error validating Frontend service portion of config: %w", err)
 	}
 
 	if err := cfg.Services.Webhooks.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
+		return fmt.Errorf("error validating Webhooks service portion of config: %w", err)
 	}
 
 	if err := cfg.Services.Items.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Webhooks portion of config: %w", err)
-	}
-
-	if err := cfg.AuditLog.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating AuditLog portion of config: %w", err)
+		return fmt.Errorf("error validating Items service portion of config: %w", err)
 	}
 
 	return nil

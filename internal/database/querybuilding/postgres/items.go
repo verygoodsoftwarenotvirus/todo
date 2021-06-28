@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -20,6 +19,9 @@ func (b *Postgres) BuildItemExistsQuery(ctx context.Context, itemID, accountID u
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn)).
@@ -28,8 +30,8 @@ func (b *Postgres) BuildItemExistsQuery(ctx context.Context, itemID, accountID u
 			Suffix(querybuilding.ExistenceSuffix).
 			Where(squirrel.Eq{
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
-				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 			}),
 	)
 }
@@ -39,14 +41,17 @@ func (b *Postgres) BuildGetItemQuery(ctx context.Context, itemID, accountID uint
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.ItemsTableColumns...).
 			From(querybuilding.ItemsTableName).
 			Where(squirrel.Eq{
-				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
-				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
 				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):                         itemID,
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn):                 nil,
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn): accountID,
 			}),
 	)
 }
@@ -57,12 +62,14 @@ func (b *Postgres) BuildGetAllItemsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
-		From(querybuilding.ItemsTableName).
-		Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
-		}))
+	return b.buildQueryOnly(
+		span,
+		b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.ItemsTableName)).
+			From(querybuilding.ItemsTableName).
+			Where(squirrel.Eq{
+				fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
+			}),
+	)
 }
 
 // BuildGetBatchOfItemsQuery returns a query that fetches every item in the database within a bucketed range.
@@ -85,14 +92,29 @@ func (b *Postgres) BuildGetBatchOfItemsQuery(ctx context.Context, beginID, endID
 
 // BuildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (b *Postgres) BuildGetItemsQuery(ctx context.Context, accountID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Postgres) BuildGetItemsQuery(ctx context.Context, accountID uint64, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
-	return b.buildListQuery(ctx, querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn, querybuilding.ItemsTableColumns, accountID, forAdmin, filter)
+
+	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
+	}
+
+	return b.buildListQuery(
+		ctx,
+		querybuilding.ItemsTableName,
+		nil,
+		where,
+		querybuilding.ItemsTableAccountOwnershipColumn,
+		querybuilding.ItemsTableColumns,
+		accountID,
+		includeArchived,
+		filter,
+	)
 }
 
 // BuildGetItemsWithIDsQuery builds a SQL query selecting items that belong to a given account,
@@ -102,28 +124,32 @@ func (b *Postgres) BuildGetItemsQuery(ctx context.Context, accountID uint64, for
 // slice of uint64s instead of a slice of strings in order to ensure all the provided strings
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
-func (b *Postgres) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
+func (b *Postgres) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, restrictToAccount bool) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	where := squirrel.Eq{
+		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):         ids,
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
 	}
 
-	if !forAdmin {
+	if restrictToAccount {
 		where[fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ItemsTableAccountOwnershipColumn)] = accountID
 	}
 
 	subqueryBuilder := b.sqlBuilder.Select(querybuilding.ItemsTableColumns...).
 		From(querybuilding.ItemsTableName).
-		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinUint64s(ids))).
+		Join(fmt.Sprintf("unnest('{%s}'::int[])", joinIDs(ids))).
 		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
 
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.ItemsTableColumns...).
 			FromSelect(subqueryBuilder, querybuilding.ItemsTableName).
-			Where(where))
+			Where(where),
+	)
 }
 
 // BuildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
@@ -155,6 +181,9 @@ func (b *Postgres) BuildUpdateItemQuery(ctx context.Context, input *types.Item) 
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, input.ID)
+	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.ItemsTableName).
@@ -174,6 +203,9 @@ func (b *Postgres) BuildArchiveItemQuery(ctx context.Context, itemID, accountID 
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachItemIDToSpan(span, itemID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.ItemsTableName).
@@ -187,13 +219,19 @@ func (b *Postgres) BuildArchiveItemQuery(ctx context.Context, itemID, accountID 
 	)
 }
 
-// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries
-// associated with a given item.
+// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries relating to an item with a given ID.
 func (b *Postgres) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	itemIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.ItemAssignmentKey)
+	tracing.AttachItemIDToSpan(span, itemID)
+
+	itemIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		audit.ItemAssignmentKey,
+	)
 
 	return b.buildQuery(
 		span,

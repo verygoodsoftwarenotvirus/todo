@@ -9,7 +9,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -22,11 +21,12 @@ func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*h
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(
@@ -50,11 +50,12 @@ func (b *Builder) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(
@@ -78,12 +79,11 @@ func (b *Builder) BuildSearchItemsRequest(ctx context.Context, query string, lim
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger.WithValue(types.SearchQueryKey, query).WithValue(types.LimitQueryKey, limit)
+
 	params := url.Values{}
 	params.Set(types.SearchQueryKey, query)
 	params.Set(types.LimitQueryKey, strconv.FormatUint(uint64(limit), 10))
-
-	logger := b.logger.WithValue(types.SearchQueryKey, query).
-		WithValue(types.LimitQueryKey, limit)
 
 	uri := b.BuildURL(
 		ctx,
@@ -108,7 +108,11 @@ func (b *Builder) BuildGetItemsRequest(ctx context.Context, filter *types.QueryF
 
 	logger := filter.AttachToLogger(b.logger)
 
-	uri := b.BuildURL(ctx, filter.ToValues(), itemsBasePath)
+	uri := b.BuildURL(
+		ctx,
+		filter.ToValues(),
+		itemsBasePath,
+	)
 	tracing.AttachRequestURIToSpan(span, uri)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
@@ -125,20 +129,29 @@ func (b *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemC
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}
-
-	logger := b.logger
 
 	if err := input.ValidateWithContext(ctx); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.BuildURL(ctx, nil, itemsBasePath)
+	uri := b.BuildURL(
+		ctx,
+		nil,
+		itemsBasePath,
+	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
+	req, err := b.buildDataRequest(ctx, http.MethodPost, uri, input)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building request")
+	}
+
+	return req, nil
 }
 
 // BuildUpdateItemRequest builds an HTTP request for updating an item.
@@ -146,10 +159,13 @@ func (b *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) 
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	if item == nil {
 		return nil, ErrNilInputProvided
 	}
 
+	logger = logger.WithValue(keys.ItemIDKey, item.ID)
 	tracing.AttachItemIDToSpan(span, item.ID)
 
 	uri := b.BuildURL(
@@ -160,7 +176,12 @@ func (b *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) 
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
-	return b.buildDataRequest(ctx, http.MethodPut, uri, item)
+	req, err := b.buildDataRequest(ctx, http.MethodPut, uri, item)
+	if err != nil {
+		return nil, observability.PrepareError(err, logger, span, "building request")
+	}
+
+	return req, nil
 }
 
 // BuildArchiveItemRequest builds an HTTP request for archiving an item.
@@ -168,11 +189,12 @@ func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	uri := b.BuildURL(
@@ -196,14 +218,21 @@ func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uin
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := b.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	logger := b.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	uri := b.BuildURL(ctx, nil, itemsBasePath, id(itemID), "audit")
+	uri := b.BuildURL(
+		ctx,
+		nil,
+		itemsBasePath,
+		id(itemID),
+		"audit",
+	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)

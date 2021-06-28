@@ -2,17 +2,13 @@ package frontend
 
 import (
 	"context"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-
-	// import embed for the side effect.
 	_ "embed"
 	"html/template"
 	"net/http"
 	"strconv"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -284,7 +280,7 @@ func (s *service) handleTOTPVerificationSubmission(res http.ResponseWriter, req 
 	}
 
 	if err := s.usersService.VerifyUserTwoFactorSecret(ctx, verificationInput); err != nil {
-		observability.AcknowledgeError(err, logger, span, "rendering item viewer into dashboard")
+		observability.AcknowledgeError(err, logger, span, "rendering two factor secret verification prompt into dashboard")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}

@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
@@ -22,10 +21,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -35,9 +35,9 @@ const (
 	defaultPort              = 8888
 	defaultCookieDomain      = "localhost"
 	debugCookieSecret        = "HEREISA32CHARSECRETWHICHISMADEUP"
-	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	devSqliteConnDetails     = "/tmp/db"
 	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
+	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	defaultCookieName        = authservice.DefaultCookieName
 
 	// run modes.
@@ -90,7 +90,7 @@ var (
 		SpanCollectionProbability: 1,
 		Jaeger: &tracing.JaegerConfig{
 			CollectorEndpoint: "http://tracing-server:14268/api/traces",
-			ServiceName:       "todo-service",
+			ServiceName:       "todo_service",
 		},
 	}
 )
@@ -123,6 +123,10 @@ func encryptAndSaveConfig(ctx context.Context, outputPath string, cfg *config.In
 		return fmt.Errorf("encrypting config: %v", err)
 	}
 
+	if err = os.MkdirAll(filepath.Dir(outputPath), 0777); err != nil {
+		// that's okay
+	}
+
 	return os.WriteFile(outputPath, []byte(output), 0644)
 }
 
@@ -136,8 +140,8 @@ var files = map[string]configFunc{
 	"environments/testing/config_files/integration-tests-mariadb.config":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
 }
 
-func buildLocalFrontendServiceConfig() frontend.Config {
-	return frontend.Config{
+func buildLocalFrontendServiceConfig() frontendservice.Config {
+	return frontendservice.Config{
 		UseFakeData: false,
 	}
 }
@@ -155,8 +159,6 @@ func mustHashPass(password string) string {
 
 func generatePASETOKey() []byte {
 	b := make([]byte, pasetoSecretSize)
-
-	// Note that err == nil only if we read len(b) bytes.
 	if _, err := rand.Read(b); err != nil {
 		panic(err)
 	}
@@ -214,6 +216,10 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
+			AuditLog: auditservice.Config{
+				Debug:   true,
+				Enabled: true,
+			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -227,15 +233,18 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				MinimumPasswordLength: 8,
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
-			Webhooks: webhooks.Config{
+			Webhooks: webhooksservice.Config{
 				Debug:   true,
 				Enabled: false,
 			},
-			Items: items.Config{SearchIndexPath: "/search_indices/items.bleve"},
-		},
-		AuditLog: audit.Config{
-			Debug:   true,
-			Enabled: true,
+			Items: itemsservice.Config{
+				SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				Logging: logging.Config{
+					Name:     "items",
+					Level:    logging.InfoLevel,
+					Provider: logging.ProviderZerolog,
+				},
+			},
 		},
 	}
 
@@ -280,6 +289,10 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
+			AuditLog: auditservice.Config{
+				Debug:   true,
+				Enabled: true,
+			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -293,22 +306,18 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				MinimumPasswordLength: 8,
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
-			Webhooks: webhooks.Config{
+			Webhooks: webhooksservice.Config{
 				Debug:   true,
 				Enabled: false,
 			},
-			Items: items.Config{
-				SearchIndexPath: defaultItemsSearchIndexPath,
-				Logger: logging.Config{
+			Items: itemsservice.Config{
+				SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
 					Provider: logging.ProviderZerolog,
 				},
 			},
-		},
-		AuditLog: audit.Config{
-			Debug:   true,
-			Enabled: true,
 		},
 	}
 
@@ -335,7 +344,6 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				HTTPPort:        defaultPort,
 				StartupDeadline: startupDeadline,
 			},
-
 			Database: dbconfig.Config{
 				Debug:                     false,
 				RunMigrations:             true,
@@ -372,6 +380,10 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Provider: "bleve",
 			},
 			Services: config.ServicesConfigurations{
+				AuditLog: auditservice.Config{
+					Debug:   false,
+					Enabled: true,
+				},
 				Auth: authservice.Config{
 					PASETO: authservice.PASETOConfig{
 						Issuer:       "todo_service",
@@ -391,22 +403,18 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					MinimumPasswordLength: 8,
 				},
 				Frontend: buildLocalFrontendServiceConfig(),
-				Webhooks: webhooks.Config{
+				Webhooks: webhooksservice.Config{
 					Debug:   true,
 					Enabled: false,
 				},
-				Items: items.Config{
-					SearchIndexPath: defaultItemsSearchIndexPath,
-					Logger: logging.Config{
+				Items: itemsservice.Config{
+					SearchIndexPath: fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+					Logging: logging.Config{
 						Name:     "items",
 						Level:    logging.InfoLevel,
 						Provider: logging.ProviderZerolog,
 					},
 				},
-			},
-			AuditLog: audit.Config{
-				Debug:   false,
-				Enabled: true,
 			},
 		}
 

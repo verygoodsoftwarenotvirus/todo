@@ -1,6 +1,4 @@
-# todo
-
-archetypal todo process
+# Todo
 
 ## dev dependencies
 
@@ -11,7 +9,7 @@ The following tools are prerequisites for development work:
     - If you don't have `go` installed, I can't help you.
 - [go](https://golang.org/) 1.16+
 - [node.js](https://nodejs.org/) and [pnpm](https://pnpm.js.org/)
-- [docker](https://docs.docker.com/get-docker/) 
+- [docker](https://docs.docker.com/get-docker/)
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [wire](https://github.com/google/wire) for dependency management
 

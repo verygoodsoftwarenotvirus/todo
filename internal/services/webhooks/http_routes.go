@@ -8,7 +8,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -35,7 +34,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, requester)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	input := new(types.WebhookCreationInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
@@ -74,10 +73,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	defer span.End()
 
 	filter := types.ExtractQueryFilter(req)
-	logger := s.logger.WithRequest(req).
-		WithValue(keys.FilterLimitKey, filter.Limit).
-		WithValue(keys.FilterPageKey, filter.Page).
-		WithValue(keys.FilterSortByKey, string(filter.SortBy))
+	logger := filter.AttachToLogger(s.logger)
 
 	tracing.AttachRequestToSpan(span, req)
 	tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
@@ -91,7 +87,7 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// find the webhooks.
 	webhooks, err := s.webhookDataManager.GetWebhooks(ctx, sessionCtxData.ActiveAccountID, filter)
@@ -126,7 +122,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -169,12 +165,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-
-	userID := sessionCtxData.Requester.UserID
-	logger = logger.WithValue(keys.RequesterIDKey, userID)
-
-	accountID := sessionCtxData.ActiveAccountID
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine relevant webhook ID.
 	webhookID := s.webhookIDFetcher(req)
@@ -195,7 +186,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// fetch the webhook in question.
-	webhook, err := s.webhookDataManager.GetWebhook(ctx, webhookID, accountID)
+	webhook, err := s.webhookDataManager.GetWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Debug("nonexistent webhook requested for update")
@@ -213,7 +204,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachChangeSummarySpan(span, "webhook", changeReport)
 
 	// save the update in the database.
-	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, userID, changeReport); err != nil {
+	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, sessionCtxData.Requester.UserID, changeReport); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Debug("attempted to update nonexistent webhook")
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -276,7 +267,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusNoContent)
 }
 
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
+// AuditEntryHandler returns a GET handler that returns all audit log entries related to a webhook.
 func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -293,9 +284,9 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
-	// determine item ID.
+	// determine webhook ID.
 	webhookID := s.webhookIDFetcher(req)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)

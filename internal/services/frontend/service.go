@@ -5,17 +5,14 @@ import (
 	"html/template"
 	"net/http"
 
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/nicksnyder/go-i18n/v2/i18n"
@@ -48,22 +45,25 @@ type (
 	}
 
 	service struct {
+		paymentManager            capitalism.PaymentManager
+		usersService              UsersService
 		logger                    logging.Logger
 		tracer                    tracing.Tracer
 		panicker                  panicking.Panicker
-		routeParamManager         routing.RouteParamManager
 		authService               AuthService
-		usersService              UsersService
 		dataStore                 database.DataManager
-		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		itemIDFetcher             func(*http.Request) uint64
 		localizer                 *i18n.Localizer
-		paymentManager            capitalism.PaymentManager
 		templateFuncMap           template.FuncMap
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		accountIDFetcher          func(*http.Request) uint64
+		apiClientIDFetcher        func(*http.Request) uint64
+		webhookIDFetcher          func(*http.Request) uint64
 		useFakeData               bool
 	}
 )
 
-// ProvideService builds a new ItemsService.
+// ProvideService builds a new Service.
 func ProvideService(
 	cfg *Config,
 	logger logging.Logger,
@@ -79,12 +79,15 @@ func ProvideService(
 		tracer:                    tracing.NewTracer(serviceName),
 		panicker:                  panicking.NewProductionPanicker(),
 		localizer:                 provideLocalizer(),
-		routeParamManager:         routeParamManager,
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		authService:               authService,
 		usersService:              usersService,
 		paymentManager:            paymentManager,
 		dataStore:                 dataStore,
+		apiClientIDFetcher:        routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client"),
+		accountIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, accountIDURLParamKey, "account"),
+		webhookIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, webhookIDURLParamKey, "webhook"),
+		itemIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item"),
 		templateFuncMap: map[string]interface{}{
 			"relativeTime":        relativeTime,
 			"relativeTimeFromPtr": relativeTimeFromPtr,

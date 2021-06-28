@@ -2,17 +2,14 @@ package frontend
 
 import (
 	"context"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-
-	// import embed for the side effect.
 	_ "embed"
 	"fmt"
 	"html/template"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	keys "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
@@ -21,7 +18,7 @@ const (
 	itemIDURLParamKey = "item"
 )
 
-func (s *service) fetchItem(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (item *types.Item, err error) {
+func (s *service) fetchItem(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (item *types.Item, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -31,7 +28,11 @@ func (s *service) fetchItem(ctx context.Context, sessionCtxData *types.SessionCo
 	if s.useFakeData {
 		item = fakes.BuildFakeItem()
 	} else {
-		itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
+		// determine item ID.
+		itemID := s.itemIDFetcher(req)
+		tracing.AttachItemIDToSpan(span, itemID)
+		logger = logger.WithValue(keys.ItemIDKey, itemID)
+
 		item, err = s.dataStore.GetItem(ctx, itemID, sessionCtxData.ActiveAccountID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching item data")
@@ -82,8 +83,14 @@ func (s *service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 }
 
 const (
-	itemCreationInputNameFormKey    = "name"
-	itemCreationInputDetailsFormKey = "details"
+	nameFormKey    = "name"
+	detailsFormKey = "details"
+
+	itemCreationInputNameFormKey    = nameFormKey
+	itemCreationInputDetailsFormKey = detailsFormKey
+
+	itemUpdateInputNameFormKey    = nameFormKey
+	itemUpdateInputDetailsFormKey = detailsFormKey
 )
 
 // parseFormEncodedItemCreationInput checks a request for an ItemCreationInput.
@@ -122,7 +129,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 	logger := s.logger.WithRequest(req)
 	tracing.AttachRequestToSpan(span, req)
 
-	logger.Debug("item Creation route called")
+	logger.Debug("item creation route called")
 
 	sessionCtxData, err := s.sessionContextDataFetcher(req)
 	if err != nil {
@@ -131,7 +138,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	logger.Debug("session context data retrieved for item Creation route")
+	logger.Debug("session context data retrieved for item creation route")
 
 	creationInput := s.parseFormEncodedItemCreationInput(ctx, req, sessionCtxData)
 	if creationInput == nil {
@@ -140,7 +147,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	logger.Debug("item Creation input parsed successfully")
+	logger.Debug("item creation input parsed successfully")
 
 	if _, err = s.dataStore.CreateItem(ctx, creationInput, sessionCtxData.Requester.UserID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "writing item to datastore")
@@ -148,7 +155,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	logger.Debug("item Created")
+	logger.Debug("item created")
 
 	htmxRedirectTo(res, "/items")
 	res.WriteHeader(http.StatusCreated)
@@ -172,7 +179,7 @@ func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 			return
 		}
 
-		item, err := s.fetchItem(ctx, sessionCtxData, req)
+		item, err := s.fetchItem(ctx, req, sessionCtxData)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
@@ -206,7 +213,7 @@ func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 	}
 }
 
-func (s *service) fetchItems(ctx context.Context, sessionCtxData *types.SessionContextData, req *http.Request) (items *types.ItemList, err error) {
+func (s *service) fetchItems(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (items *types.ItemList, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -217,6 +224,8 @@ func (s *service) fetchItems(ctx context.Context, sessionCtxData *types.SessionC
 		items = fakes.BuildFakeItemList()
 	} else {
 		filter := types.ExtractQueryFilter(req)
+		tracing.AttachQueryFilterToSpan(span, filter)
+
 		items, err = s.dataStore.GetItems(ctx, sessionCtxData.ActiveAccountID, filter)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching item data")
@@ -244,7 +253,7 @@ func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 			return
 		}
 
-		items, err := s.fetchItems(ctx, sessionCtxData, req)
+		items, err := s.fetchItems(ctx, req, sessionCtxData)
 		if err != nil {
 			observability.AcknowledgeError(err, logger, span, "fetching items from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
@@ -253,11 +262,11 @@ func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Item) template.URL {
-				/* #nosec G203 */
+				// #nosec G203
 				return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 			},
 			"pushURL": func(x *types.Item) template.URL {
-				/* #nosec G203 */
+				// #nosec G203
 				return template.URL(fmt.Sprintf("/items/%d", x.ID))
 			},
 		}
@@ -298,8 +307,8 @@ func (s *service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http
 	}
 
 	updateInput = &types.ItemUpdateInput{
-		Name:             form.Get(itemCreationInputNameFormKey),
-		Details:          form.Get(itemCreationInputDetailsFormKey),
+		Name:             form.Get(itemUpdateInputNameFormKey),
+		Details:          form.Get(itemUpdateInputDetailsFormKey),
 		BelongsToAccount: sessionCtxData.ActiveAccountID,
 	}
 
@@ -333,7 +342,7 @@ func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 		return
 	}
 
-	item, err := s.fetchItem(ctx, sessionCtxData, req)
+	item, err := s.fetchItem(ctx, req, sessionCtxData)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -359,7 +368,7 @@ func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 	s.renderTemplateToResponse(ctx, tmpl, item, res)
 }
 
-func (s *service) handleItemDeletionRequest(res http.ResponseWriter, req *http.Request) {
+func (s *service) handleItemArchiveRequest(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
 
@@ -373,14 +382,17 @@ func (s *service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 		return
 	}
 
-	itemID := s.routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item")(req)
+	itemID := s.itemIDFetcher(req)
+	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+
 	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "archiving items in datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	items, err := s.fetchItems(ctx, sessionCtxData, req)
+	items, err := s.fetchItems(ctx, req, sessionCtxData)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching items from datastore")
 		res.WriteHeader(http.StatusInternalServerError)
@@ -389,11 +401,11 @@ func (s *service) handleItemDeletionRequest(res http.ResponseWriter, req *http.R
 
 	tmplFuncMap := map[string]interface{}{
 		"individualURL": func(x *types.Item) template.URL {
-			/* #nosec G203 */
+			// #nosec G203
 			return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
 		},
 		"pushURL": func(x *types.Item) template.URL {
-			/* #nosec G203 */
+			// #nosec G203
 			return template.URL(fmt.Sprintf("/items/%d", x.ID))
 		},
 	}

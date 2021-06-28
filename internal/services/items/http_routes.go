@@ -9,7 +9,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -45,7 +44,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check session context data for parsed input struct.
 	input := new(types.ItemCreationInput)
@@ -74,12 +73,12 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, item.ID)
 	logger = logger.WithValue(keys.ItemIDKey, item.ID)
 
-	// notify relevant parties.
+	// notify interested parties.
 	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
 		observability.AcknowledgeError(err, logger, span, "adding item to search index")
 	}
-
 	s.itemCounter.Increment(ctx)
+
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, item, http.StatusCreated)
 }
 
@@ -100,7 +99,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
@@ -139,14 +138,14 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
 	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
-	// fetch item from database.
+	// check the database.
 	exists, err := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
 	if !errors.Is(err, sql.ErrNoRows) {
 		observability.AcknowledgeError(err, logger, span, "checking item existence")
@@ -180,11 +179,11 @@ func (s *service) ListHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	items, err := s.itemDataManager.GetItems(ctx, sessionCtxData.ActiveAccountID, filter)
 	if errors.Is(err, sql.ErrNoRows) {
-		// in the event no rows exist return an empty list.
+		// in the event no rows exist, return an empty list.
 		items = &types.ItemList{Items: []*types.Item{}}
 	} else if err != nil {
 		observability.AcknowledgeError(err, logger, span, "retrieving items")
@@ -221,7 +220,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	relevantIDs, err := s.search.Search(ctx, query, sessionCtxData.ActiveAccountID)
 	if err != nil {
@@ -233,7 +232,7 @@ func (s *service) SearchHandler(res http.ResponseWriter, req *http.Request) {
 	// fetch items from database.
 	items, err := s.itemDataManager.GetItemsWithIDs(ctx, sessionCtxData.ActiveAccountID, filter.Limit, relevantIDs)
 	if errors.Is(err, sql.ErrNoRows) {
-		// in the event no rows exist return an empty list.
+		// in the event no rows exist, return an empty list.
 		items = []*types.Item{}
 	} else if err != nil {
 		observability.AcknowledgeError(err, logger, span, "searching items")
@@ -262,7 +261,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check for parsed input attached to session context data.
 	input := new(types.ItemUpdateInput)
@@ -281,8 +280,8 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// fetch item from database.
 	item, err := s.itemDataManager.GetItem(ctx, itemID, sessionCtxData.ActiveAccountID)
@@ -295,7 +294,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// update the data structure.
+	// update the item.
 	changeReport := item.Update(input)
 	tracing.AttachChangeSummarySpan(span, "item", changeReport)
 
@@ -306,7 +305,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// notify relevant parties.
+	// notify interested parties.
 	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
 		observability.AcknowledgeError(err, logger, span, "updating item in search index")
 	}
@@ -332,12 +331,12 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID).WithValue(keys.AccountIDKey, sessionCtxData.ActiveAccountID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// archive the item in the database.
 	err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID)
@@ -350,7 +349,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	// notify relevant parties.
+	// notify interested parties.
 	s.itemCounter.Decrement(ctx)
 
 	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
@@ -378,7 +377,7 @@ func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) 
 	}
 
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// determine item ID.
 	itemID := s.itemIDFetcher(req)

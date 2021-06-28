@@ -5,10 +5,11 @@ import (
 )
 
 var (
-	// Providers represents this package's offering to the dependency manager.
+	// Providers represents this package's offering to the dependency injector.
 	Providers = wire.NewSet(
 		ProvideDatabaseClient,
-		wire.FieldsOf(new(*InstanceConfig),
+		wire.FieldsOf(
+			new(*InstanceConfig),
 			"Database",
 			"Observability",
 			"Capitalism",
@@ -17,14 +18,15 @@ var (
 			"Uploads",
 			"Search",
 			"Server",
-			"AuditLog",
 			"Services",
 		),
-		wire.FieldsOf(new(*ServicesConfigurations),
+		wire.FieldsOf(
+			new(*ServicesConfigurations),
+			"AuditLog",
 			"Auth",
-			"Items",
-			"Webhooks",
 			"Frontend",
+			"Webhooks",
+			"Items",
 		),
 	)
 )

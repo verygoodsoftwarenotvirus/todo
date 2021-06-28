@@ -26,6 +26,17 @@ func TestBuilder_BuildUserStatusRequest(T *testing.T) {
 
 		assertRequestQuality(t, actual, spec)
 	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		actual, err := helper.builder.BuildUserStatusRequest(helper.ctx)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
 func TestBuilder_BuildLoginRequest(T *testing.T) {
@@ -56,6 +67,19 @@ func TestBuilder_BuildLoginRequest(T *testing.T) {
 		assert.Nil(t, req)
 		assert.Error(t, err)
 	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleInput := fakes.BuildFakeUserLoginInputFromUser(helper.exampleUser)
+
+		actual, err := helper.builder.BuildLoginRequest(helper.ctx, exampleInput)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+	})
 }
 
 func TestBuilder_BuildLogoutRequest(T *testing.T) {
@@ -73,6 +97,17 @@ func TestBuilder_BuildLogoutRequest(T *testing.T) {
 		assert.NoError(t, err)
 
 		assertRequestQuality(t, actual, spec)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		actual, err := helper.builder.BuildLogoutRequest(helper.ctx)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }
 
@@ -104,7 +139,7 @@ func TestBuilder_BuildChangePasswordRequest(T *testing.T) {
 		assert.Nil(t, actual)
 	})
 
-	T.Run("with error building request", func(t *testing.T) {
+	T.Run("with invalid request builder", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
@@ -166,7 +201,7 @@ func TestBuilder_BuildCycleTwoFactorSecretRequest(T *testing.T) {
 		assert.Nil(t, actual)
 	})
 
-	T.Run("with error building request", func(t *testing.T) {
+	T.Run("with invalid request builder", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper()
@@ -217,5 +252,18 @@ func TestBuilder_BuildVerifyTOTPSecretRequest(T *testing.T) {
 		actual, err := helper.builder.BuildVerifyTOTPSecretRequest(helper.ctx, helper.exampleUser.ID, " nope lol ")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
+	})
+
+	T.Run("with invalid request builder", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper()
+		helper.builder = buildTestRequestBuilderWithInvalidURL()
+
+		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
+
+		actual, err := helper.builder.BuildVerifyTOTPSecretRequest(helper.ctx, helper.exampleUser.ID, exampleInput.TOTPToken)
+		assert.Nil(t, actual)
+		assert.Error(t, err)
 	})
 }

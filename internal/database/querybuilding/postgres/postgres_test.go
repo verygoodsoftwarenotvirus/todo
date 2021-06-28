@@ -63,7 +63,7 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 	})
 }
 
-func Test_joinUint64s(T *testing.T) {
+func Test_joinIDs(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -71,7 +71,7 @@ func Test_joinUint64s(T *testing.T) {
 
 		exampleInput := []uint64{123, 456, 789}
 		expected := "123,456,789"
-		actual := joinUint64s(exampleInput)
+		actual := joinIDs(exampleInput)
 
 		assert.Equal(t, expected, actual, "expected %s to equal %s", expected, actual)
 	})

@@ -9,20 +9,18 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccountsService_ListHandler(T *testing.T) {
@@ -38,7 +36,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccounts",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleAccountList, nil)
@@ -47,8 +45,8 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			mock.IsType(&types.AccountList{}),
 		)
 		helper.service.encoderDecoder = encoderDecoder
@@ -64,13 +62,13 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -91,7 +89,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccounts",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.AccountList)(nil), sql.ErrNoRows)
@@ -100,8 +98,8 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			mock.IsType(&types.AccountList{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -121,7 +119,7 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccounts",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.AccountList)(nil), errors.New("blah"))
@@ -130,8 +128,8 @@ func TestAccountsService_ListHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -163,14 +161,14 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"CreateAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AccountCreationInput{}),
 			helper.exampleUser.ID,
 		).Return(helper.exampleAccount, nil)
 		helper.service.accountDataManager = accountDataManager
 
 		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Increment", testutil.ContextMatcher).Return()
+		unitCounter.On("Increment", testutils.ContextMatcher).Return()
 		helper.service.accountCounter = unitCounter
 
 		helper.service.CreateHandler(helper.res, helper.req)
@@ -194,7 +192,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		helper.service.CreateHandler(helper.res, helper.req)
 
@@ -253,7 +251,7 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"CreateAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.AccountCreationInput{}),
 			helper.exampleUser.ID,
 		).Return((*types.Account)(nil), errors.New("blah"))
@@ -278,7 +276,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAccount, nil)
@@ -287,8 +285,8 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			mock.IsType(&types.Account{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -305,13 +303,13 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -332,7 +330,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 		).Return((*types.Account)(nil), sql.ErrNoRows)
@@ -341,8 +339,8 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -361,7 +359,7 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID, helper.exampleUser.ID,
 		).Return((*types.Account)(nil), errors.New("blah"))
 		helper.service.accountDataManager = accountDataManager
@@ -369,8 +367,8 @@ func TestAccountsService_ReadHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -402,12 +400,12 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID, helper.exampleUser.ID,
 		).Return(helper.exampleAccount, nil)
 		accountDataManager.On(
 			"UpdateAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.Account{}), helper.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
@@ -434,7 +432,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		helper.service.UpdateHandler(helper.res, helper.req)
 
@@ -493,7 +491,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID, helper.exampleUser.ID,
 		).Return((*types.Account)(nil), sql.ErrNoRows)
 		helper.service.accountDataManager = accountDataManager
@@ -522,7 +520,7 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID, helper.exampleUser.ID,
 		).Return((*types.Account)(nil), errors.New("blah"))
 		helper.service.accountDataManager = accountDataManager
@@ -554,12 +552,12 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID, helper.exampleUser.ID,
 		).Return(helper.exampleAccount, nil)
 		accountDataManager.On(
 			"UpdateAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.Account{}), helper.exampleUser.ID,
 			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(errors.New("blah"))
@@ -584,13 +582,15 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"ArchiveAccount",
-			testutil.ContextMatcher,
-			helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID,
+			testutils.ContextMatcher,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
+			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.accountDataManager = accountDataManager
 
 		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Decrement", testutil.ContextMatcher).Return()
+		unitCounter.On("Decrement", testutils.ContextMatcher).Return()
 		helper.service.accountCounter = unitCounter
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
@@ -604,13 +604,13 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -631,16 +631,18 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"ArchiveAccount",
-			testutil.ContextMatcher,
-			helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID,
+			testutils.ContextMatcher,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
+			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.accountDataManager = accountDataManager
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		)
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -659,16 +661,18 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"ArchiveAccount",
-			testutil.ContextMatcher,
-			helper.exampleAccount.ID, helper.exampleUser.ID, helper.exampleUser.ID,
+			testutils.ContextMatcher,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
+			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.accountDataManager = accountDataManager
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -700,7 +704,7 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"AddUserToAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 			helper.exampleUser.ID,
 		).Return(nil)
@@ -727,7 +731,7 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		helper.service.AddMemberHandler(helper.res, helper.req)
 
@@ -786,7 +790,7 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"AddUserToAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
@@ -820,7 +824,7 @@ func TestAccountsService_ModifyMemberPermissionsHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"ModifyUserPermissions",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -874,7 +878,7 @@ func TestAccountsService_ModifyMemberPermissionsHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeUserPermissionModificationInput()
@@ -907,7 +911,7 @@ func TestAccountsService_ModifyMemberPermissionsHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"ModifyUserPermissions",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -943,7 +947,7 @@ func TestAccountsService_TransferAccountOwnershipHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"TransferAccountOwnership",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 			exampleInput,
@@ -996,7 +1000,7 @@ func TestAccountsService_TransferAccountOwnershipHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
@@ -1029,7 +1033,7 @@ func TestAccountsService_TransferAccountOwnershipHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"TransferAccountOwnership",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 			exampleInput,
@@ -1057,7 +1061,7 @@ func TestAccountsService_RemoveMemberHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"RemoveUserFromAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -1078,13 +1082,13 @@ func TestAccountsService_RemoveMemberHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -1108,7 +1112,7 @@ func TestAccountsService_RemoveMemberHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"RemoveUserFromAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -1119,8 +1123,8 @@ func TestAccountsService_RemoveMemberHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -1143,7 +1147,7 @@ func TestAccountsService_MarkAsDefaultAccountHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"MarkAccountAsUserDefault",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -1161,13 +1165,13 @@ func TestAccountsService_MarkAsDefaultAccountHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -1188,7 +1192,7 @@ func TestAccountsService_MarkAsDefaultAccountHandler(T *testing.T) {
 		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipDataManager.On(
 			"MarkAccountAsUserDefault",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
@@ -1198,8 +1202,8 @@ func TestAccountsService_MarkAsDefaultAccountHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -1224,7 +1228,7 @@ func TestAccountsService_AuditEntryHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAuditLogEntriesForAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
 		).Return(exampleAuditLogEntries, nil)
 		helper.service.accountDataManager = accountDataManager
@@ -1232,8 +1236,8 @@ func TestAccountsService_AuditEntryHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"RespondWithData",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			mock.IsType([]*types.AuditLogEntry{}),
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
@@ -1249,13 +1253,13 @@ func TestAccountsService_AuditEntryHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 			"unauthenticated",
 			http.StatusUnauthorized,
 		).Return()
@@ -1276,7 +1280,7 @@ func TestAccountsService_AuditEntryHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAuditLogEntriesForAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
 		).Return([]*types.AuditLogEntry(nil), sql.ErrNoRows)
 		helper.service.accountDataManager = accountDataManager
@@ -1284,8 +1288,8 @@ func TestAccountsService_AuditEntryHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeNotFoundResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 
@@ -1304,7 +1308,7 @@ func TestAccountsService_AuditEntryHandler(T *testing.T) {
 		accountDataManager := &mocktypes.AccountDataManager{}
 		accountDataManager.On(
 			"GetAuditLogEntriesForAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
 		).Return([]*types.AuditLogEntry(nil), errors.New("blah"))
 		helper.service.accountDataManager = accountDataManager
@@ -1312,8 +1316,8 @@ func TestAccountsService_AuditEntryHandler(T *testing.T) {
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
 		encoderDecoder.On(
 			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutil.ContextMatcher,
-			testutil.HTTPResponseWriterMatcher,
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
 		).Return()
 		helper.service.encoderDecoder = encoderDecoder
 

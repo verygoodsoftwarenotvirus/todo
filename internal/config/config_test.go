@@ -16,9 +16,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,9 +36,6 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				Debug:           false,
 				StartupDeadline: time.Minute,
 			},
-			AuditLog: audit.Config{
-				Enabled: true,
-			},
 			Meta: MetaSettings{
 				RunMode: DevelopmentRunMode,
 			},
@@ -53,9 +50,12 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				},
 			},
 			Services: ServicesConfigurations{
+				AuditLog: auditservice.Config{
+					Enabled: true,
+				},
 				Auth: authservice.Config{
 					Cookies: authservice.CookieConfig{
-						Name:     "todocookie",
+						Name:     "todo_cookie",
 						Domain:   "https://verygoodsoftwarenotvirus.ru",
 						Lifetime: time.Second,
 					},
@@ -63,7 +63,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 					MinimumPasswordLength: 8,
 					EnableUserSignup:      true,
 				},
-				Items: items.Config{
+				Items: itemsservice.Config{
 					SearchIndexPath: "/items_index_path",
 				},
 			},

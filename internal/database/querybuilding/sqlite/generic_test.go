@@ -6,6 +6,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
+	"github.com/Masterminds/squirrel"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -32,29 +33,31 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT column_one, column_two, column_three, (SELECT COUNT(example_table.id) FROM example_table WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = ?) as total_count, (SELECT COUNT(example_table.id) FROM example_table WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = ? AND example_table.created_on > ? AND example_table.created_on < ? AND example_table.last_updated_on > ? AND example_table.last_updated_on < ?) as filtered_count FROM example_table WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = ? AND example_table.created_on > ? AND example_table.created_on < ? AND example_table.last_updated_on > ? AND example_table.last_updated_on < ? GROUP BY example_table.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT column_one, column_two, column_three, (SELECT COUNT(example_table.id) FROM example_table JOIN things on stuff.thing_id=things.id WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = ? AND key = ?) as total_count, (SELECT COUNT(example_table.id) FROM example_table JOIN things on stuff.thing_id=things.id WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = ? AND key = ? AND example_table.created_on > ? AND example_table.created_on < ? AND example_table.last_updated_on > ? AND example_table.last_updated_on < ?) as filtered_count FROM example_table JOIN things on stuff.thing_id=things.id WHERE example_table.archived_on IS NULL AND example_table.belongs_to_account = ? AND key = ? AND example_table.created_on > ? AND example_table.created_on < ? AND example_table.last_updated_on > ? AND example_table.last_updated_on < ? GROUP BY example_table.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
+			"value",
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 			exampleUser.ID,
+			"value",
 			exampleUser.ID,
+			"value",
 			filter.CreatedAfter,
 			filter.CreatedBefore,
 			filter.UpdatedAfter,
 			filter.UpdatedBefore,
 		}
-		actualQuery, actualArgs := q.buildListQuery(
-			ctx,
-			exampleTableName,
-			exampleOwnershipColumn,
-			exampleColumns,
-			exampleUser.ID,
-			false,
-			filter,
-		)
+		exampleJoins := []string{
+			"things on stuff.thing_id=things.id",
+		}
+		exampleWhere := squirrel.Eq{
+			"key": "value",
+		}
+
+		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleJoins, exampleWhere, exampleOwnershipColumn, exampleColumns, exampleUser.ID, false, filter)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
@@ -84,6 +87,8 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 		actualQuery, actualArgs := q.buildListQuery(
 			ctx,
 			exampleTableName,
+			nil,
+			nil,
 			exampleOwnershipColumn,
 			exampleColumns,
 			exampleUser.ID,
@@ -120,6 +125,8 @@ func TestSqlite_BuildListQuery(T *testing.T) {
 		actualQuery, actualArgs := q.buildListQuery(
 			ctx,
 			exampleTableName,
+			nil,
+			nil,
 			exampleOwnershipColumn,
 			exampleColumns,
 			exampleUser.ID,

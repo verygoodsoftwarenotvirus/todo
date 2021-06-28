@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"sync"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -12,9 +14,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	postgres "github.com/lib/pq"
 	"github.com/luna-duclos/instrumentedsql"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 )
 
 const (

@@ -1,20 +1,16 @@
 package items
 
 import (
-	"context"
+	"fmt"
 	"net/http"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
-
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -30,13 +26,7 @@ type (
 	// SearchIndex is a type alias for dependency injection's sake.
 	SearchIndex search.IndexManager
 
-	// Config configures the service.
-	Config struct {
-		Logger          logging.Config `json:"logging" mapstructure:"logging" toml:"logging,omitempty"`
-		SearchIndexPath string         `json:"search_index_path" mapstructure:"search_index_path" toml:"search_index_path,omitempty"`
-	}
-
-	// service handles to-do list items.
+	// service handles items.
 	service struct {
 		logger                    logging.Logger
 		itemDataManager           types.ItemDataManager
@@ -49,15 +39,6 @@ type (
 	}
 )
 
-var _ validation.ValidatableWithContext = (*Config)(nil)
-
-// ValidateWithContext validates a Config struct.
-func (cfg *Config) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.SearchIndexPath, validation.Required),
-	)
-}
-
 // ProvideService builds a new ItemsService.
 func ProvideService(
 	logger logging.Logger,
@@ -65,15 +46,12 @@ func ProvideService(
 	itemDataManager types.ItemDataManager,
 	encoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
-	indexProvider search.IndexManagerProvider,
+	searchIndexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
 ) (types.ItemDataService, error) {
-	logger.WithValue("index_path", cfg.SearchIndexPath).Debug("setting up items search index")
-
-	searchIndexManager, indexInitErr := indexProvider(search.IndexPath(cfg.SearchIndexPath), types.ItemsSearchIndexName, logger)
-	if indexInitErr != nil {
-		logger.Error(indexInitErr, "setting up items search index")
-		return nil, indexInitErr
+	searchIndexManager, err := searchIndexProvider(search.IndexPath(cfg.SearchIndexPath), "items", logger)
+	if err != nil {
+		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
 	svc := &service{

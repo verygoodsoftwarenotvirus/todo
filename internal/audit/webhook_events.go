@@ -8,11 +8,11 @@ const (
 	// WebhookAssignmentKey is the key we use to indicate that an audit log entry is associated with a webhook.
 	WebhookAssignmentKey = "webhook_id"
 
-	// WebhookCreationEvent events indicate a user created an item.
+	// WebhookCreationEvent events indicate a user created a webhook.
 	WebhookCreationEvent = "webhook_created"
-	// WebhookUpdateEvent events indicate a user updated an item.
+	// WebhookUpdateEvent events indicate a user updated a webhook.
 	WebhookUpdateEvent = "webhook_updated"
-	// WebhookArchiveEvent events indicate a user deleted an item.
+	// WebhookArchiveEvent events indicate a user deleted a webhook.
 	WebhookArchiveEvent = "webhook_archived"
 )
 

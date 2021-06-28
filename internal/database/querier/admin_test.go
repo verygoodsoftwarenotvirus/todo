@@ -5,12 +5,11 @@ import (
 	"errors"
 	"testing"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -37,7 +36,7 @@ func TestQuerier_UpdateUserReputation(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.UserSQLQueryBuilder.On(
 			"BuildSetUserStatusQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -69,7 +68,7 @@ func TestQuerier_UpdateUserReputation(T *testing.T) {
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.UserSQLQueryBuilder.On(
 			"BuildSetUserStatusQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder

@@ -1,4 +1,4 @@
 /*
-Package postgres provides a Database implementation that is compatible with Postgres instances
+Package postgres provides a querybuilder implementation that is compatible with postgres.
 */
 package postgres

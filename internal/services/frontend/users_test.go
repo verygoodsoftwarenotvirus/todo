@@ -1,7 +1,6 @@
 package frontend
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -11,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -23,22 +22,21 @@ func TestService_fetchUsers(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		ctx := context.Background()
 		exampleUserList := fakes.BuildFakeUserList()
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleUserList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		req := httptest.NewRequest(http.MethodGet, "/users", nil)
 
-		actual, err := s.fetchUsers(ctx, req)
+		actual, err := s.service.fetchUsers(s.ctx, req)
 		assert.Equal(t, exampleUserList, actual)
 		assert.NoError(t, err)
 
@@ -48,14 +46,12 @@ func TestService_fetchUsers(T *testing.T) {
 	T.Run("with fake mode", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.useFakeData = true
-
-		ctx := context.Background()
+		s := buildTestHelper(t)
+		s.service.useFakeData = true
 
 		req := httptest.NewRequest(http.MethodGet, "/users", nil)
 
-		actual, err := s.fetchUsers(ctx, req)
+		actual, err := s.service.fetchUsers(s.ctx, req)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 	})
@@ -63,21 +59,19 @@ func TestService_fetchUsers(T *testing.T) {
 	T.Run("with error fetching data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		ctx := context.Background()
+		s := buildTestHelper(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.UserList)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		req := httptest.NewRequest(http.MethodGet, "/users", nil)
 
-		actual, err := s.fetchUsers(ctx, req)
+		actual, err := s.service.fetchUsers(s.ctx, req)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 
@@ -91,26 +85,22 @@ func TestService_buildUsersTableView(T *testing.T) {
 	T.Run("with base template but not for search", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleUserList := fakes.BuildFakeUserList()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleUserList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/users", nil)
 
-		s.buildUsersTableView(true, false)(res, req)
+		s.service.buildUsersTableView(true, false)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -120,28 +110,24 @@ func TestService_buildUsersTableView(T *testing.T) {
 	T.Run("with base template and for search", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleQuery := "whatever"
 		exampleUserList := fakes.BuildFakeUserList()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"SearchForUsersByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleQuery,
 		).Return(exampleUserList.Users, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		uri := fmt.Sprintf("/users?%s=%s", types.SearchQueryKey, exampleQuery)
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, uri, nil)
 
-		s.buildUsersTableView(true, true)(res, req)
+		s.service.buildUsersTableView(true, true)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -151,27 +137,23 @@ func TestService_buildUsersTableView(T *testing.T) {
 	T.Run("with base template and for search and error performing search", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleQuery := "whatever"
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"SearchForUsersByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleQuery,
 		).Return([]*types.User(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		uri := fmt.Sprintf("/users?%s=%s", types.SearchQueryKey, exampleQuery)
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, uri, nil)
 
-		s.buildUsersTableView(true, true)(res, req)
+		s.service.buildUsersTableView(true, true)(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 
@@ -181,26 +163,22 @@ func TestService_buildUsersTableView(T *testing.T) {
 	T.Run("without base template but for search", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		exampleUserList := fakes.BuildFakeUserList()
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return(exampleUserList, nil)
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/users", nil)
 
-		s.buildUsersTableView(false, false)(res, req)
+		s.service.buildUsersTableView(false, false)(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 
@@ -210,15 +188,15 @@ func TestService_buildUsersTableView(T *testing.T) {
 	T.Run("with error fetching session context data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
+		s := buildTestHelper(t)
+		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/users", nil)
 
-		s.buildUsersTableView(true, false)(res, req)
+		s.service.buildUsersTableView(true, false)(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
 	})
@@ -226,25 +204,20 @@ func TestService_buildUsersTableView(T *testing.T) {
 	T.Run("with error fetching data", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
-
-		exampleSessionContextData := fakes.BuildFakeSessionContextData()
-		s.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
-			return exampleSessionContextData, nil
-		}
+		s := buildTestHelper(t)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.UserDataManager.On(
 			"GetUsers",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			mock.IsType(&types.QueryFilter{}),
 		).Return((*types.UserList)(nil), errors.New("blah"))
-		s.dataStore = mockDB
+		s.service.dataStore = mockDB
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/users", nil)
 
-		s.buildUsersTableView(true, false)(res, req)
+		s.service.buildUsersTableView(true, false)(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 

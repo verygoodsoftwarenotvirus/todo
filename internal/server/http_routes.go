@@ -5,15 +5,14 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
+	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
+	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
+	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
+	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 
 	"github.com/heptiolabs/healthcheck"
 )
@@ -80,7 +79,7 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 				Post("/users/status", s.adminService.UserReputationChangeHandler)
 
 			adminRouter.Route("/audit_log", func(auditRouter routing.Router) {
-				entryIDRouteParam := buildNumericIDURLChunk(audit.LogEntryURIParamKey)
+				entryIDRouteParam := buildNumericIDURLChunk(auditservice.LogEntryURIParamKey)
 				auditRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadAllAuditLogEntriesPermission)).
 					Get(root, s.auditService.ListHandler)
@@ -103,7 +102,7 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 			usersRouter.Post("/avatar/upload", s.usersService.AvatarUploadHandler)
 			usersRouter.Get("/self", s.usersService.SelfHandler)
 
-			singleUserRoute := buildNumericIDURLChunk(users.UserIDURIParamKey)
+			singleUserRoute := buildNumericIDURLChunk(usersservice.UserIDURIParamKey)
 			usersRouter.Route(singleUserRoute, func(singleUserRouter routing.Router) {
 				singleUserRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadUserPermission)).
@@ -121,8 +120,8 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 			accountsRouter.Post(root, s.accountsService.CreateHandler)
 			accountsRouter.Get(root, s.accountsService.ListHandler)
 
-			singleUserRoute := buildNumericIDURLChunk(accounts.UserIDURIParamKey)
-			singleAccountRoute := buildNumericIDURLChunk(accounts.AccountIDURIParamKey)
+			singleUserRoute := buildNumericIDURLChunk(accountsservice.UserIDURIParamKey)
+			singleAccountRoute := buildNumericIDURLChunk(accountsservice.AccountIDURIParamKey)
 			accountsRouter.Route(singleAccountRoute, func(singleAccountRouter routing.Router) {
 				singleAccountRouter.Get(root, s.accountsService.ReadHandler)
 				singleAccountRouter.Put(root, s.accountsService.UpdateHandler)
@@ -156,7 +155,7 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 				WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.CreateAPIClientsPermission)).
 				Post(root, s.apiClientsService.CreateHandler)
 
-			singleClientRoute := buildNumericIDURLChunk(apiclients.APIClientIDURIParamKey)
+			singleClientRoute := buildNumericIDURLChunk(apiclientsservice.APIClientIDURIParamKey)
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
 				singleClientRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadAPIClientsPermission)).
@@ -172,19 +171,17 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 
 		// Webhooks
 		v1Router.Route("/webhooks", func(webhookRouter routing.Router) {
-			singleWebhookRoute := buildNumericIDURLChunk(webhooks.WebhookIDURIParamKey)
+			singleWebhookRoute := buildNumericIDURLChunk(webhooksservice.WebhookIDURIParamKey)
 			webhookRouter.
 				WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadWebhooksPermission)).
 				Get(root, s.webhooksService.ListHandler)
-
-			webhookRouter.WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.CreateWebhooksPermission)).
+			webhookRouter.
+				WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.CreateWebhooksPermission)).
 				Post(root, s.webhooksService.CreateHandler)
-
 			webhookRouter.Route(singleWebhookRoute, func(singleWebhookRouter routing.Router) {
 				singleWebhookRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadWebhooksPermission)).
 					Get(root, s.webhooksService.ReadHandler)
-
 				singleWebhookRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveWebhooksPermission)).
 					Delete(root, s.webhooksService.ArchiveHandler)
@@ -200,7 +197,7 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 		// Items
 		itemPath := "items"
 		itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
-		itemIDRouteParam := buildNumericIDURLChunk(items.ItemIDURIParamKey)
+		itemIDRouteParam := buildNumericIDURLChunk(itemsservice.ItemIDURIParamKey)
 		v1Router.Route(itemsRouteWithPrefix, func(itemsRouter routing.Router) {
 			itemsRouter.
 				WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.CreateItemsPermission)).

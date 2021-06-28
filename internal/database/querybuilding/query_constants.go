@@ -156,6 +156,6 @@ const (
 	ItemsTableNameColumn = "name"
 	// ItemsTableDetailsColumn is what the items table calls the details column.
 	ItemsTableDetailsColumn = "details"
-	// ItemsTableAccountOwnershipColumn is what the items table calls the user ownership column.
+	// ItemsTableAccountOwnershipColumn is what the items table calls the ownership column.
 	ItemsTableAccountOwnershipColumn = accountOwnershipColumn
 )

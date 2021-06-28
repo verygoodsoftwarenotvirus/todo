@@ -13,7 +13,6 @@ require (
 	github.com/Masterminds/squirrel v1.5.0
 	github.com/PuerkitoBio/goquery v1.6.1 // indirect
 	github.com/RoaringBitmap/roaring v0.6.0 // indirect
-	github.com/RussellLuo/validating/v2 v2.1.0
 	github.com/aead/chacha20poly1305 v0.0.0-20201124145622-1a5aba2a8b29 // indirect
 	github.com/alexedwards/argon2id v0.0.0-20210326052512-e2135f7c9c77
 	github.com/alexedwards/scs/mysqlstore v0.0.0-20210407073823-f445396108a4

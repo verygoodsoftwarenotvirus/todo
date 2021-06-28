@@ -59,7 +59,6 @@ type (
 		types.APIClientDataManager
 		types.WebhookDataManager
 		types.ItemDataManager
-
 		types.AdminAuditManager
 		types.AuthAuditManager
 	}

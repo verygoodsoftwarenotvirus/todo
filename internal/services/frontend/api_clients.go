@@ -2,17 +2,14 @@ package frontend
 
 import (
 	"context"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-
-	// import embed for the side effect.
 	_ "embed"
 	"fmt"
 	"html/template"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
@@ -31,7 +28,10 @@ func (s *service) fetchAPIClient(ctx context.Context, sessionCtxData *types.Sess
 	if s.useFakeData {
 		apiClient = fakes.BuildFakeAPIClient()
 	} else {
-		apiClientID := s.routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client")(req)
+		apiClientID := s.apiClientIDFetcher(req)
+		tracing.AttachAPIClientDatabaseIDToSpan(span, apiClientID)
+		logger = logger.WithValue(keys.APIClientDatabaseIDKey, apiClientID)
+
 		apiClient, err = s.dataStore.GetAPIClientByDatabaseID(ctx, apiClientID, sessionCtxData.Requester.UserID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching API client data")
@@ -61,7 +61,7 @@ func (s *service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 
 		apiClient, err := s.fetchAPIClient(ctx, sessionCtxData, req)
 		if err != nil {
-			observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
+			observability.AcknowledgeError(err, logger, span, "fetching API client from datastore")
 			res.WriteHeader(http.StatusInternalServerError)
 			return
 		}

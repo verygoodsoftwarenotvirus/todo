@@ -5,16 +5,17 @@ import (
 	"fmt"
 	"strings"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
 )
 
-var _ querybuilding.WebhookSQLQueryBuilder = (*MariaDB)(nil)
+var (
+	_ querybuilding.WebhookSQLQueryBuilder = (*MariaDB)(nil)
+)
 
 // BuildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
 func (b *MariaDB) BuildGetWebhookQuery(ctx context.Context, webhookID, accountID uint64) (query string, args []interface{}) {
@@ -41,15 +42,14 @@ func (b *MariaDB) BuildGetAllWebhooksCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.WebhooksTableName)).
+	return b.buildQueryOnly(span, b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.WebhooksTableName)).
 		From(querybuilding.WebhooksTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.WebhooksTableName, querybuilding.ArchivedOnColumn): nil,
 		}))
 }
 
-// BuildGetBatchOfWebhooksQuery returns a query that fetches every item in the database within a bucketed range.
+// BuildGetBatchOfWebhooksQuery returns a query that fetches every webhook in the database within a bucketed range.
 func (b *MariaDB) BuildGetBatchOfWebhooksQuery(ctx context.Context, beginID, endID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -67,7 +67,7 @@ func (b *MariaDB) BuildGetBatchOfWebhooksQuery(ctx context.Context, beginID, end
 	)
 }
 
-// BuildGetWebhooksQuery returns a SQL query (and arguments) that would return a query and arguments to retrieve a list of webhooks.
+// BuildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
 func (b *MariaDB) BuildGetWebhooksQuery(ctx context.Context, accountID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -75,7 +75,17 @@ func (b *MariaDB) BuildGetWebhooksQuery(ctx context.Context, accountID uint64, f
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
-	return b.buildListQuery(ctx, querybuilding.WebhooksTableName, querybuilding.WebhooksTableOwnershipColumn, querybuilding.WebhooksTableColumns, accountID, false, filter)
+	return b.buildListQuery(
+		ctx,
+		querybuilding.WebhooksTableName,
+		nil,
+		nil,
+		querybuilding.WebhooksTableOwnershipColumn,
+		querybuilding.WebhooksTableColumns,
+		accountID,
+		false,
+		filter,
+	)
 }
 
 // BuildCreateWebhookQuery returns a SQL query (and arguments) that would create a given webhook.
@@ -126,14 +136,14 @@ func (b *MariaDB) BuildUpdateWebhookQuery(ctx context.Context, input *types.Webh
 			Set(querybuilding.WebhooksTableContentTypeColumn, input.ContentType).
 			Set(querybuilding.WebhooksTableURLColumn, input.URL).
 			Set(querybuilding.WebhooksTableMethodColumn, input.Method).
-			Set(querybuilding.WebhooksTableEventsColumn, strings.Join(input.Events, querybuilding.WebhooksTableTopicsSeparator)).
+			Set(querybuilding.WebhooksTableEventsColumn, strings.Join(input.Events, querybuilding.WebhooksTableEventsSeparator)).
 			Set(querybuilding.WebhooksTableDataTypesColumn, strings.Join(input.DataTypes, querybuilding.WebhooksTableDataTypesSeparator)).
 			Set(querybuilding.WebhooksTableTopicsColumn, strings.Join(input.Topics, querybuilding.WebhooksTableTopicsSeparator)).
 			Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 			Where(squirrel.Eq{
 				querybuilding.IDColumn:                     input.ID,
-				querybuilding.ArchivedOnColumn:             nil,
 				querybuilding.WebhooksTableOwnershipColumn: input.BelongsToAccount,
+				querybuilding.ArchivedOnColumn:             nil,
 			}),
 	)
 }
@@ -159,28 +169,26 @@ func (b *MariaDB) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accou
 	)
 }
 
-// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a webhook with a given ID.
 func (b *MariaDB) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 
+	webhookIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		webhookID,
+		audit.WebhookAssignmentKey,
+	)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
 			From(querybuilding.AuditLogEntriesTableName).
-			Where(
-				squirrel.Expr(
-					fmt.Sprintf(
-						jsonPluckQuery,
-						querybuilding.AuditLogEntriesTableName,
-						querybuilding.AuditLogEntriesTableContextColumn,
-						webhookID,
-						audit.WebhookAssignmentKey,
-					),
-				),
-			).
+			Where(squirrel.Expr(webhookIDKey)).
 			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

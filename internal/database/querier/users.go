@@ -6,14 +6,12 @@ import (
 	"errors"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -208,7 +206,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 	return nil
 }
 
-// UserHasStatus fetches whether an item exists from the database.
+// UserHasStatus fetches whether an user has a particular status.
 func (q *SQLQuerier) UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (banned bool, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()

@@ -14,11 +14,10 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/brianvoe/gofakeit/v5"
 	"github.com/pquerna/otp/totp"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 var (

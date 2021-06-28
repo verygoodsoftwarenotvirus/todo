@@ -1,9 +1,9 @@
 package frontend
 
 import (
-	"github.com/nleeper/goment"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
+
+	"github.com/nleeper/goment"
 )
 
 var gomentPanicker = panicking.NewProductionPanicker()

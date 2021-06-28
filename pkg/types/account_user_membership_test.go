@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestAddUserToAccountInput_ValidateWithContext(T *testing.T) {

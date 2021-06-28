@@ -7,13 +7,11 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 type itemsServiceHTTPRoutesTestHelper struct {
@@ -65,7 +63,7 @@ func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
 		return sessionCtxData, nil
 	}
 
-	req := testutil.BuildTestRequest(t)
+	req := testutils.BuildTestRequest(t)
 
 	helper.req = req.WithContext(context.WithValue(req.Context(), types.SessionContextDataKey, sessionCtxData))
 

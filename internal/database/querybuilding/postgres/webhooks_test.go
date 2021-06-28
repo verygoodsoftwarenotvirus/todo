@@ -5,12 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestPostgres_BuildGetWebhookQuery(T *testing.T) {
@@ -112,7 +111,7 @@ func TestPostgres_BuildGetWebhooksQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_BuildWebhookCreationQuery(T *testing.T) {
+func TestPostgres_BuildCreateWebhookQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

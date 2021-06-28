@@ -9,6 +9,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -16,8 +17,6 @@ import (
 	"gocloud.dev/blob/fileblob"
 	"gocloud.dev/blob/memblob"
 	"gocloud.dev/blob/s3blob"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 )
 
 const (

@@ -5,13 +5,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 func TestItems(t *testing.T) {
@@ -23,9 +22,8 @@ func TestItems(t *testing.T) {
 type itemsBaseSuite struct {
 	suite.Suite
 
-	ctx             context.Context
-	exampleItem     *types.Item
-	exampleItemList *types.ItemList
+	ctx         context.Context
+	exampleItem *types.Item
 }
 
 var _ suite.SetupTestSuite = (*itemsBaseSuite)(nil)
@@ -33,7 +31,6 @@ var _ suite.SetupTestSuite = (*itemsBaseSuite)(nil)
 func (s *itemsBaseSuite) SetupTest() {
 	s.ctx = context.Background()
 	s.exampleItem = fakes.BuildFakeItem()
-	s.exampleItemList = fakes.BuildFakeItemList()
 }
 
 type itemsTestSuite struct {
@@ -60,9 +57,7 @@ func (s *itemsTestSuite) TestClient_ItemExists() {
 	s.Run("with invalid item ID", func() {
 		t := s.T()
 
-		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, s.exampleItem.ID)
-
-		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
+		c, _ := buildSimpleTestClient(t)
 		actual, err := c.ItemExists(s.ctx, 0)
 
 		assert.Error(t, err)
@@ -108,8 +103,7 @@ func (s *itemsTestSuite) TestClient_GetItem() {
 	s.Run("with invalid item ID", func() {
 		t := s.T()
 
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleItem.ID)
-		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
+		c, _ := buildSimpleTestClient(t)
 		actual, err := c.GetItem(s.ctx, 0)
 
 		require.Nil(t, actual)
@@ -146,13 +140,15 @@ func (s *itemsTestSuite) TestClient_GetItems() {
 
 		filter := (*types.QueryFilter)(nil)
 
+		exampleItemList := fakes.BuildFakeItemList()
+
 		spec := newRequestSpec(true, http.MethodGet, "includeArchived=false&limit=20&page=1&sortBy=asc", expectedPath)
-		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItemList)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleItemList)
 		actual, err := c.GetItems(s.ctx, filter)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err)
-		assert.Equal(t, s.exampleItemList, actual)
+		assert.Equal(t, exampleItemList, actual)
 	})
 
 	s.Run("with error building request", func() {
@@ -189,20 +185,21 @@ func (s *itemsTestSuite) TestClient_SearchItems() {
 	s.Run("standard", func() {
 		t := s.T()
 
+		exampleItemList := fakes.BuildFakeItemList()
+
 		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
-		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItemList.Items)
+		c, _ := buildTestClientWithJSONResponse(t, spec, exampleItemList.Items)
 		actual, err := c.SearchItems(s.ctx, exampleQuery, 0)
 
 		require.NotNil(t, actual)
 		assert.NoError(t, err)
-		assert.Equal(t, s.exampleItemList.Items, actual)
+		assert.Equal(t, exampleItemList.Items, actual)
 	})
 
 	s.Run("with empty query", func() {
 		t := s.T()
 
-		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
-		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItemList.Items)
+		c, _ := buildSimpleTestClient(t)
 		actual, err := c.SearchItems(s.ctx, "", 0)
 
 		assert.Nil(t, actual)
@@ -212,22 +209,20 @@ func (s *itemsTestSuite) TestClient_SearchItems() {
 	s.Run("with error building request", func() {
 		t := s.T()
 
-		limit := types.DefaultQueryFilter().Limit
 		c := buildTestClientWithInvalidURL(t)
 
-		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
+		actual, err := c.SearchItems(s.ctx, exampleQuery, 0)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
 
-	s.Run("standard", func() {
+	s.Run("with bad response from server", func() {
 		t := s.T()
 
 		spec := newRequestSpec(true, http.MethodGet, "limit=20&q=whatever", expectedPath)
-		limit := types.DefaultQueryFilter().Limit
 		c := buildTestClientWithInvalidResponse(t, spec)
-		actual, err := c.SearchItems(s.ctx, exampleQuery, limit)
+		actual, err := c.SearchItems(s.ctx, exampleQuery, 0)
 
 		assert.Nil(t, actual)
 		assert.Error(t, err)
@@ -244,11 +239,12 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		exampleInput.BelongsToAccount = 0
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		c := buildTestClientWithRequestBodyValidation(t, spec, &types.ItemCreationInput{}, exampleInput, s.exampleItem)
+		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
 
 		actual, err := c.CreateItem(s.ctx, exampleInput)
 		require.NotNil(t, actual)
 		assert.NoError(t, err)
+
 		assert.Equal(t, s.exampleItem, actual)
 	})
 
@@ -275,25 +271,23 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 
 	s.Run("with error building request", func() {
 		t := s.T()
-		ctx := context.Background()
 
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
 
 		c := buildTestClientWithInvalidURL(t)
 
-		actual, err := c.CreateItem(ctx, exampleInput)
+		actual, err := c.CreateItem(s.ctx, exampleInput)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
 
 	s.Run("with error executing request", func() {
 		t := s.T()
-		ctx := context.Background()
 
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
-		actual, err := c.CreateItem(ctx, exampleInput)
+		actual, err := c.CreateItem(s.ctx, exampleInput)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

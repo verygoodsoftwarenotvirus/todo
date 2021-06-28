@@ -16,11 +16,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"github.com/google/uuid"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/securecookie"
 	"github.com/o1egl/paseto"
 )

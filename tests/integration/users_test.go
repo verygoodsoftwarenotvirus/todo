@@ -5,12 +5,11 @@ import (
 	"strings"
 	"testing"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -151,7 +150,7 @@ func (s *TestSuite) TestUsers_Searching() {
 			// create users
 			createdUserIDs := []uint64{}
 			for i := 0; i < 5; i++ {
-				user, err := testutil.CreateServiceUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i))
+				user, err := testutils.CreateServiceUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i))
 				require.NoError(t, err)
 				createdUserIDs = append(createdUserIDs, user.ID)
 			}
@@ -264,7 +263,7 @@ func (s *TestSuite) TestUsers_Auditing_InaccessibleToNonAdmins() {
 			assert.Error(t, err)
 			assert.Nil(t, actual)
 
-			// Clean up item.
+			// Clean up user.
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
 		}
 	})
@@ -295,7 +294,7 @@ func (s *TestSuite) TestUsers_Auditing() {
 			}
 			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, 0, "")
 
-			// Clean up item.
+			// Clean up user.
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
 		}
 	})
@@ -309,7 +308,7 @@ func (s *TestSuite) TestUsers_AvatarManagement() {
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			avatar := testutil.BuildArbitraryImagePNGBytes(256)
+			avatar := testutils.BuildArbitraryImagePNGBytes(256)
 
 			require.NoError(t, testClients.main.UploadNewAvatar(ctx, avatar, "png"))
 

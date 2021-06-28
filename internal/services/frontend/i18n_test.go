@@ -12,9 +12,9 @@ func TestService_getSimpleLocalizedString(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
-		assert.Equal(t, ":)", s.getSimpleLocalizedString("testing.translation"))
+		assert.Equal(t, ":)", s.service.getSimpleLocalizedString("testing.translation"))
 	})
 }
 

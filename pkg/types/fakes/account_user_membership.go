@@ -2,13 +2,12 @@ package fakes
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 )
 
-// BuildFakeAccountUserMembership builds a faked item.
+// BuildFakeAccountUserMembership builds a faked AccountUserMembership.
 func BuildFakeAccountUserMembership() *types.AccountUserMembership {
 	return &types.AccountUserMembership{
 		ID:               uint64(fake.Uint32()),
@@ -38,7 +37,7 @@ func BuildFakeAccountUserMembershipList() *types.AccountUserMembershipList {
 	}
 }
 
-// BuildFakeAccountUserMembershipUpdateInputFromAccountUserMembership builds a faked AccountUserMembershipUpdateInput from an item.
+// BuildFakeAccountUserMembershipUpdateInputFromAccountUserMembership builds a faked AccountUserMembershipUpdateInput from an account user membership.
 func BuildFakeAccountUserMembershipUpdateInputFromAccountUserMembership(accountUserMembership *types.AccountUserMembership) *types.AccountUserMembershipUpdateInput {
 	return &types.AccountUserMembershipUpdateInput{
 		BelongsToUser:    accountUserMembership.BelongsToUser,
@@ -51,7 +50,7 @@ func BuildFakeAccountUserMembershipCreationInput() *types.AccountUserMembershipC
 	return BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership(BuildFakeAccountUserMembership())
 }
 
-// BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership builds a faked AccountUserMembershipCreationInput from an item.
+// BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership builds a faked AccountUserMembershipCreationInput from an account user membership.
 func BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership(accountUserMembership *types.AccountUserMembership) *types.AccountUserMembershipCreationInput {
 	return &types.AccountUserMembershipCreationInput{
 		BelongsToUser:    accountUserMembership.BelongsToUser,

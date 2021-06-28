@@ -4,17 +4,18 @@ import (
 	"context"
 	"fmt"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
 )
 
-var _ querybuilding.UserSQLQueryBuilder = (*Postgres)(nil)
+var (
+	_ querybuilding.UserSQLQueryBuilder = (*Postgres)(nil)
+)
 
 // BuildUserHasStatusQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (b *Postgres) BuildUserHasStatusQuery(ctx context.Context, userID uint64, statuses ...string) (query string, args []interface{}) {
@@ -38,13 +39,16 @@ func (b *Postgres) BuildUserHasStatusQuery(ctx context.Context, userID uint64, s
 				fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
 			}).
 			Where(whereStatuses).
-			Suffix(querybuilding.ExistenceSuffix))
+			Suffix(querybuilding.ExistenceSuffix),
+	)
 }
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (b *Postgres) BuildGetUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -66,6 +70,8 @@ func (b *Postgres) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Co
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.UsersTableColumns...).
@@ -82,6 +88,8 @@ func (b *Postgres) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Co
 func (b *Postgres) BuildGetUserByUsernameQuery(ctx context.Context, username string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUsernameToSpan(span, username)
 
 	return b.buildQuery(
 		span,
@@ -101,6 +109,8 @@ func (b *Postgres) BuildGetUserByUsernameQuery(ctx context.Context, username str
 func (b *Postgres) BuildSearchForUserByUsernameQuery(ctx context.Context, usernameQuery string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachSearchQueryToSpan(span, usernameQuery)
 
 	return b.buildQuery(
 		span,
@@ -143,13 +153,25 @@ func (b *Postgres) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFi
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.UsersTableName, "", querybuilding.UsersTableColumns, 0, false, filter)
+	return b.buildListQuery(
+		ctx,
+		querybuilding.UsersTableName,
+		nil,
+		nil,
+		"",
+		querybuilding.UsersTableColumns,
+		0,
+		false,
+		filter,
+	)
 }
 
-// BuildTestUserCreationQuery returns a SQL query (and arguments) that would create a test user.
+// BuildTestUserCreationQuery builds a query and arguments that creates a test user.
 func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUsernameToSpan(span, testUserConfig.Username)
 
 	serviceRole := authorization.ServiceUserRole
 	if testUserConfig.IsServiceAdmin {
@@ -190,6 +212,8 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUsernameToSpan(span, input.Username)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
@@ -218,6 +242,9 @@ func (b *Postgres) BuildUpdateUserQuery(ctx context.Context, input *types.User) 
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, input.ID)
+	tracing.AttachUsernameToSpan(span, input.Username)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -234,10 +261,31 @@ func (b *Postgres) BuildUpdateUserQuery(ctx context.Context, input *types.User) 
 	)
 }
 
+// BuildSetUserStatusQuery returns a SQL query (and arguments) that would change a user's account status.
+func (b *Postgres) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
+	_, span := b.tracer.StartSpan(ctx)
+	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, input.TargetUserID)
+
+	return b.buildQuery(
+		span,
+		b.sqlBuilder.Update(querybuilding.UsersTableName).
+			Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
+			Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
+			Where(squirrel.Eq{
+				querybuilding.IDColumn:         input.TargetUserID,
+				querybuilding.ArchivedOnColumn: nil,
+			}),
+	)
+}
+
 // BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's passwords.
 func (b *Postgres) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64, newHash string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -258,6 +306,8 @@ func (b *Postgres) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, user
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -275,6 +325,8 @@ func (b *Postgres) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, user
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -287,27 +339,12 @@ func (b *Postgres) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, user
 	)
 }
 
-// BuildSetUserStatusQuery returns a SQL query (and arguments) that would set a user's account status to banned.
-func (b *Postgres) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Update(querybuilding.UsersTableName).
-			Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
-			Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
-			Where(squirrel.Eq{
-				querybuilding.IDColumn:         input.TargetUserID,
-				querybuilding.ArchivedOnColumn: nil,
-			}),
-	)
-}
-
 // BuildArchiveUserQuery builds a SQL query that marks a user as archived.
 func (b *Postgres) BuildArchiveUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -320,22 +357,35 @@ func (b *Postgres) BuildArchiveUserQuery(ctx context.Context, userID uint64) (qu
 	)
 }
 
-// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries
-// associated with a given user.
+// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
 func (b *Postgres) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	userIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.UserAssignmentKey)
-	performedByIDKey := fmt.Sprintf(jsonPluckQuery, querybuilding.AuditLogEntriesTableName, querybuilding.AuditLogEntriesTableContextColumn, audit.ActorAssignmentKey)
-	builder := b.sqlBuilder.
-		Select(querybuilding.AuditLogEntriesTableColumns...).
-		From(querybuilding.AuditLogEntriesTableName).
-		Where(squirrel.Or{
-			squirrel.Eq{userIDKey: userID},
-			squirrel.Eq{performedByIDKey: userID},
-		}).
-		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
+	tracing.AttachUserIDToSpan(span, userID)
 
-	return b.buildQuery(span, builder)
+	userIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		audit.UserAssignmentKey,
+	)
+
+	performedByIDKey := fmt.Sprintf(
+		jsonPluckQuery,
+		querybuilding.AuditLogEntriesTableName,
+		querybuilding.AuditLogEntriesTableContextColumn,
+		audit.ActorAssignmentKey,
+	)
+
+	return b.buildQuery(
+		span,
+		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
+			From(querybuilding.AuditLogEntriesTableName).
+			Where(squirrel.Or{
+				squirrel.Eq{userIDKey: userID},
+				squirrel.Eq{performedByIDKey: userID},
+			}).
+			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
+	)
 }

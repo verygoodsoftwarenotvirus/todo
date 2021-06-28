@@ -26,7 +26,7 @@ const (
 	// UserIDURIParamKey is used to refer to user IDs in router params.
 	UserIDURIParamKey = "userID"
 
-	totpIssuer             = "todoService"
+	totpIssuer             = "Todo"
 	base64ImagePrefix      = "data:image/jpeg;base64,"
 	minimumPasswordEntropy = 75
 	totpSecretSize         = 64
@@ -499,7 +499,7 @@ func (s *service) UpdatePasswordHandler(res http.ResponseWriter, req *http.Reque
 
 	// determine relevant user ID.
 	tracing.AttachRequestingUserIDToSpan(span, sessionCtxData.Requester.UserID)
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 
 	// make sure everything's on the up-and-up
 	user, httpStatus := s.validateCredentialChangeRequest(
@@ -562,7 +562,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	logger = logger.WithValue(keys.RequesterIDKey, sessionCtxData.Requester.UserID)
+	logger = sessionCtxData.AttachToLogger(logger)
 	logger.Debug("session context data data extracted")
 
 	user, err := s.userDataManager.GetUser(ctx, sessionCtxData.Requester.UserID)
@@ -631,7 +631,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusNoContent)
 }
 
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
+// AuditEntryHandler returns a GET handler that returns all audit log entries related to an audit log entry.
 func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()

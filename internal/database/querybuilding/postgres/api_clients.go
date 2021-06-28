@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -17,7 +16,7 @@ var (
 	_ querybuilding.APIClientSQLQueryBuilder = (*Postgres)(nil)
 )
 
-// BuildGetBatchOfAPIClientsQuery returns a query that fetches every item in the database within a bucketed range.
+// BuildGetBatchOfAPIClientsQuery returns a query that fetches every API client in the database within a bucketed range.
 func (b *Postgres) BuildGetBatchOfAPIClientsQuery(ctx context.Context, beginID, endID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -54,13 +53,12 @@ func (b *Postgres) BuildGetAPIClientByClientIDQuery(ctx context.Context, clientI
 }
 
 // BuildGetAllAPIClientsCountQuery returns a SQL query for the number of API clients
-// in the database regardless of ownership.
+// in the database, regardless of ownership.
 func (b *Postgres) BuildGetAllAPIClientsCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	return b.buildQueryOnly(span, b.sqlBuilder.
-		Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.APIClientsTableName)).
+	return b.buildQueryOnly(span, b.sqlBuilder.Select(fmt.Sprintf(columnCountQueryTemplate, querybuilding.APIClientsTableName)).
 		From(querybuilding.APIClientsTableName).
 		Where(squirrel.Eq{
 			fmt.Sprintf("%s.%s", querybuilding.APIClientsTableName, querybuilding.ArchivedOnColumn): nil,
@@ -68,17 +66,28 @@ func (b *Postgres) BuildGetAllAPIClientsCountQuery(ctx context.Context) string {
 }
 
 // BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of API clients that
-// meet the given client's criteria (if relevant) and belong to a given account.
+// meet the given filter's criteria (if relevant) and belong to a given account.
 func (b *Postgres) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachUserIDToSpan(span, userID)
+
 	if filter != nil {
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.APIClientsTableName, querybuilding.APIClientsTableOwnershipColumn, querybuilding.APIClientsTableColumns, userID, false, filter)
+	return b.buildListQuery(
+		ctx,
+		querybuilding.APIClientsTableName,
+		nil,
+		nil,
+		querybuilding.APIClientsTableOwnershipColumn,
+		querybuilding.APIClientsTableColumns,
+		userID,
+		false,
+		filter,
+	)
 }
 
 // BuildGetAPIClientByDatabaseIDQuery returns a SQL query which requests a given API client by its database ID.
@@ -132,6 +141,7 @@ func (b *Postgres) BuildUpdateAPIClientQuery(ctx context.Context, input *types.A
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
 	tracing.AttachAPIClientClientIDToSpan(span, input.ClientID)
 	tracing.AttachAPIClientDatabaseIDToSpan(span, input.ID)
 
@@ -142,8 +152,8 @@ func (b *Postgres) BuildUpdateAPIClientQuery(ctx context.Context, input *types.A
 			Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
 			Where(squirrel.Eq{
 				querybuilding.IDColumn:                       input.ID,
-				querybuilding.ArchivedOnColumn:               nil,
 				querybuilding.APIClientsTableOwnershipColumn: input.BelongsToUser,
+				querybuilding.ArchivedOnColumn:               nil,
 			}),
 	)
 }
@@ -163,13 +173,13 @@ func (b *Postgres) BuildArchiveAPIClientQuery(ctx context.Context, clientID, use
 			Set(querybuilding.ArchivedOnColumn, currentUnixTimeQuery).
 			Where(squirrel.Eq{
 				querybuilding.IDColumn:                       clientID,
-				querybuilding.APIClientsTableOwnershipColumn: userID,
 				querybuilding.ArchivedOnColumn:               nil,
+				querybuilding.APIClientsTableOwnershipColumn: userID,
 			}),
 	)
 }
 
-// BuildGetAuditLogEntriesForAPIClientQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForAPIClientQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
 func (b *Postgres) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()

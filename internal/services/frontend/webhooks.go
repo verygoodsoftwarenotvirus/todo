@@ -2,15 +2,14 @@ package frontend
 
 import (
 	"context"
-	_ "embed" // import embed for the side effect.
+	_ "embed"
 	"fmt"
 	"html/template"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
@@ -29,7 +28,10 @@ func (s *service) fetchWebhook(ctx context.Context, sessionCtxData *types.Sessio
 	if s.useFakeData {
 		webhook = fakes.BuildFakeWebhook()
 	} else {
-		webhookID := s.routeParamManager.BuildRouteParamIDFetcher(logger, webhookIDURLParamKey, "webhook")(req)
+		webhookID := s.webhookIDFetcher(req)
+		tracing.AttachWebhookIDToSpan(span, webhookID)
+		logger = logger.WithValue(keys.WebhookIDKey, webhookID)
+
 		webhook, err = s.dataStore.GetWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID)
 		if err != nil {
 			return nil, observability.PrepareError(err, logger, span, "fetching webhook data")

@@ -5,11 +5,9 @@ import (
 	"errors"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -33,6 +31,9 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 		return
 	}
 
+	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
+	logger = sessionCtxData.AttachToLogger(logger)
+
 	// check session context data for parsed input struct.
 	input := new(types.UserReputationUpdateInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
@@ -48,8 +49,6 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 	}
 
 	logger = logger.WithValue("new_status", input.NewReputation)
-
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	if !sessionCtxData.Requester.ServicePermissions.CanUpdateUserReputations() {
 		// this should never happen in production

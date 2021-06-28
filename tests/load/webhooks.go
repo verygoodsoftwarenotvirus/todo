@@ -5,15 +5,14 @@ import (
 	"math/rand"
 	"net/http"
 
-	httpclient2 "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
-
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 // fetchRandomWebhook retrieves a random webhook from the list of available webhooks.
-func fetchRandomWebhook(c *httpclient2.Client) *models.Webhook {
+func fetchRandomWebhook(c *httpclient.Client) *types.Webhook {
 	webhooks, err := c.GetWebhooks(context.Background(), nil)
 	if err != nil || webhooks == nil || len(webhooks.Webhooks) == 0 {
 		return nil
@@ -23,7 +22,7 @@ func fetchRandomWebhook(c *httpclient2.Client) *models.Webhook {
 	return webhooks.Webhooks[randIndex]
 }
 
-func buildWebhookActions(c *httpclient2.Client, builder *requests.Builder) map[string]*Action {
+func buildWebhookActions(c *httpclient.Client, builder *requests.Builder) map[string]*Action {
 	return map[string]*Action{
 		"GetWebhooks": {
 			Name: "GetWebhooks",
@@ -48,7 +47,7 @@ func buildWebhookActions(c *httpclient2.Client, builder *requests.Builder) map[s
 			Name: "CreateWebhook",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
-				exampleInput := fakemodels.BuildFakeWebhookCreationInput()
+				exampleInput := fakes.BuildFakeWebhookCreationInput()
 				return builder.BuildCreateWebhookRequest(ctx, exampleInput)
 			},
 			Weight: 1,
@@ -58,7 +57,7 @@ func buildWebhookActions(c *httpclient2.Client, builder *requests.Builder) map[s
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 				if randomWebhook := fetchRandomWebhook(c); randomWebhook != nil {
-					randomWebhook.Name = fakemodels.BuildFakeWebhook().Name
+					randomWebhook.Name = fakes.BuildFakeWebhook().Name
 					return builder.BuildUpdateWebhookRequest(ctx, randomWebhook)
 				}
 				return nil, ErrUnavailableYet

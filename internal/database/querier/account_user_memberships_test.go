@@ -8,12 +8,11 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -128,7 +127,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		mockQueryBuilder.UserSQLQueryBuilder.On(
 			"BuildGetUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeUserRetrievalQuery, fakeUserRetrievalArgs)
 
@@ -140,7 +139,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildGetAccountMembershipsForUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeAccountMembershipsQuery, fakeAccountMembershipsArgs)
 
@@ -203,7 +202,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		mockQueryBuilder.UserSQLQueryBuilder.On(
 			"BuildGetUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeUserRetrievalQuery, fakeUserRetrievalArgs)
 
@@ -247,7 +246,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		mockQueryBuilder.UserSQLQueryBuilder.On(
 			"BuildGetUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeUserRetrievalQuery, fakeUserRetrievalArgs)
 
@@ -259,7 +258,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildGetAccountMembershipsForUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeAccountMembershipsQuery, fakeAccountMembershipsArgs)
 
@@ -303,7 +302,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		mockQueryBuilder.UserSQLQueryBuilder.On(
 			"BuildGetUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeUserRetrievalQuery, fakeUserRetrievalArgs)
 
@@ -315,7 +314,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildGetAccountMembershipsForUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeAccountMembershipsQuery, fakeAccountMembershipsArgs)
 
@@ -348,7 +347,7 @@ func TestQuerier_GetDefaultAccountIDForUser(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildGetDefaultAccountIDForUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -387,7 +386,7 @@ func TestQuerier_GetDefaultAccountIDForUser(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildGetDefaultAccountIDForUserQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 		).Return(fakeQuery, fakeArgs)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -422,7 +421,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildMarkAccountAsUserDefaultQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -491,7 +490,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildMarkAccountAsUserDefaultQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -521,7 +520,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildMarkAccountAsUserDefaultQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -553,7 +552,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildMarkAccountAsUserDefaultQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -587,7 +586,7 @@ func TestQuerier_UserIsMemberOfAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildUserIsMemberOfAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -641,7 +640,7 @@ func TestQuerier_UserIsMemberOfAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildUserIsMemberOfAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -676,7 +675,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildModifyUserPermissionsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 			exampleInput.NewRoles,
@@ -762,7 +761,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildModifyUserPermissionsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 			exampleInput.NewRoles,
@@ -794,7 +793,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildModifyUserPermissionsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 			exampleInput.NewRoles,
@@ -828,7 +827,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildModifyUserPermissionsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 			exampleInput.NewRoles,
@@ -867,7 +866,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountTransferQuery, fakeAccountTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildTransferAccountOwnershipQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -880,7 +879,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildTransferAccountMembershipsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -955,7 +954,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountTransferQuery, fakeAccountTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildTransferAccountOwnershipQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -989,7 +988,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountTransferQuery, fakeAccountTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildTransferAccountOwnershipQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -1002,7 +1001,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildTransferAccountMembershipsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -1038,7 +1037,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountTransferQuery, fakeAccountTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildTransferAccountOwnershipQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -1051,7 +1050,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildTransferAccountMembershipsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -1087,7 +1086,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountTransferQuery, fakeAccountTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildTransferAccountOwnershipQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -1100,7 +1099,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildTransferAccountMembershipsQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput.CurrentOwner,
 			exampleInput.NewOwner,
 			exampleAccount.ID,
@@ -1147,7 +1146,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 		).Return(fakeUpdateQuery, fakeUpdateArgs)
 
@@ -1247,7 +1246,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 		).Return(fakeUpdateQuery, fakeUpdateArgs)
 
@@ -1288,7 +1287,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 		).Return(fakeUpdateQuery, fakeUpdateArgs)
 
@@ -1331,7 +1330,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleInput,
 		).Return(fakeUpdateQuery, fakeUpdateArgs)
 
@@ -1369,7 +1368,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildRemoveUserFromAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -1436,7 +1435,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildRemoveUserFromAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -1482,7 +1481,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildRemoveUserFromAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -1512,7 +1511,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildRemoveUserFromAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)
@@ -1544,7 +1543,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildRemoveUserFromAccountQuery",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			exampleUser.ID,
 			exampleAccount.ID,
 		).Return(fakeQuery, fakeArgs)

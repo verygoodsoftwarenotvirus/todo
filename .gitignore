@@ -12,12 +12,12 @@
 
 # pretty good IDEs
 .idea
+.vscode/
 
 # Vim
 *.swp
 
 # Sqlite databases
-*.sqlite
 *.db
 
 # OSX

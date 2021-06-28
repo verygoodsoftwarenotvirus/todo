@@ -9,6 +9,4 @@ services:
               target: '/etc/config.toml'
               type: 'bind'
     test:
-        environment:
-            TARGET_ADDRESS: 'http://todo-server:8888'
         container_name: 'sqlite_integration_tests'

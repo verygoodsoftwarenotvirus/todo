@@ -7,10 +7,8 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
-	httpclient2 "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
-
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 var (
@@ -19,23 +17,23 @@ var (
 
 func init() {
 	ctx := context.Background()
-	urlToUse = testutil.DetermineServiceURL().String()
+	urlToUse = testutils.DetermineServiceURL().String()
 	logger := logging.ProvideLogger(logging.Config{Provider: logging.ProviderZerolog})
 
 	logger.WithValue("url", urlToUse).Info("checking server")
-	testutil.EnsureServerIsUp(ctx, urlToUse)
+	testutils.EnsureServerIsUp(ctx, urlToUse)
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
 }
 
-func initializeClient() *httpclient2.Client {
+func initializeClient() *httpclient.Client {
 	uri, err := url.Parse(urlToUse)
 	if err != nil {
 		panic(err)
 	}
 
-	c, err := httpclient2.NewClient(uri)
+	c, err := httpclient.NewClient(uri)
 	if err != nil {
 		panic(err)
 	}

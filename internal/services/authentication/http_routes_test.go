@@ -15,18 +15,15 @@ import (
 	"testing"
 	"time"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
-	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/gorilla/securecookie"
 	"github.com/o1egl/paseto"
@@ -46,11 +43,11 @@ func TestAuthenticationService_issueSessionManagedCookie(T *testing.T) {
 		require.NoError(t, err)
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(nil)
-		sm.On("Put", testutil.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
-		sm.On("Put", testutil.ContextMatcher, accountIDContextKey, helper.exampleAccount.ID)
-		sm.On("Commit", testutil.ContextMatcher).Return(expectedToken, time.Now().Add(24*time.Hour), nil)
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(nil)
+		sm.On("Put", testutils.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
+		sm.On("Put", testutils.ContextMatcher, accountIDContextKey, helper.exampleAccount.ID)
+		sm.On("Commit", testutils.ContextMatcher).Return(expectedToken, time.Now().Add(24*time.Hour), nil)
 		helper.service.sessionManager = sm
 
 		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
@@ -71,7 +68,7 @@ func TestAuthenticationService_issueSessionManagedCookie(T *testing.T) {
 		helper := buildTestHelper(t)
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
@@ -87,8 +84,8 @@ func TestAuthenticationService_issueSessionManagedCookie(T *testing.T) {
 		helper := buildTestHelper(t)
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
@@ -106,11 +103,11 @@ func TestAuthenticationService_issueSessionManagedCookie(T *testing.T) {
 		require.NoError(t, err)
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(nil)
-		sm.On("Put", testutil.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
-		sm.On("Put", testutil.ContextMatcher, accountIDContextKey, helper.exampleAccount.ID)
-		sm.On("Commit", testutil.ContextMatcher).Return(expectedToken, time.Now(), errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(nil)
+		sm.On("Put", testutils.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
+		sm.On("Put", testutils.ContextMatcher, accountIDContextKey, helper.exampleAccount.ID)
+		sm.On("Commit", testutils.ContextMatcher).Return(expectedToken, time.Now(), errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		cookie, err := helper.service.issueSessionManagedCookie(helper.ctx, helper.exampleAccount.ID, helper.exampleUser.ID)
@@ -128,11 +125,11 @@ func TestAuthenticationService_issueSessionManagedCookie(T *testing.T) {
 		require.NoError(t, err)
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(nil)
-		sm.On("Put", testutil.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
-		sm.On("Put", testutil.ContextMatcher, accountIDContextKey, helper.exampleAccount.ID)
-		sm.On("Commit", testutil.ContextMatcher).Return(expectedToken, time.Now().Add(24*time.Hour), nil)
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(nil)
+		sm.On("Put", testutils.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
+		sm.On("Put", testutils.ContextMatcher, accountIDContextKey, helper.exampleAccount.ID)
+		sm.On("Commit", testutils.ContextMatcher).Return(expectedToken, time.Now().Add(24*time.Hour), nil)
 		helper.service.sessionManager = sm
 
 		helper.service.cookieManager = securecookie.New(
@@ -165,7 +162,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -173,7 +170,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -184,7 +181,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetDefaultAccountIDForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
@@ -192,7 +189,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogSuccessfulLoginEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		)
 		helper.service.auditLog = auditLog
@@ -257,7 +254,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return((*types.User)(nil), sql.ErrNoRows)
 		helper.service.userDataManager = userDataManager
@@ -286,7 +283,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return((*types.User)(nil), errors.New("blah"))
 		helper.service.userDataManager = userDataManager
@@ -318,7 +315,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -326,7 +323,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogBannedUserLoginAttemptEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID)
 		helper.service.auditLog = auditLog
 
@@ -354,7 +351,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -362,7 +359,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -373,7 +370,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogUnsuccessfulLoginBadPasswordEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID)
 		helper.service.auditLog = auditLog
 
@@ -401,7 +398,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -409,7 +406,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -441,7 +438,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -449,7 +446,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -460,7 +457,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogUnsuccessfulLoginBad2FATokenEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		)
 		helper.service.auditLog = auditLog
@@ -489,7 +486,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -497,7 +494,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -508,7 +505,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogUnsuccessfulLoginBadPasswordEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		)
 		helper.service.auditLog = auditLog
@@ -537,7 +534,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -545,7 +542,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -556,7 +553,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetDefaultAccountIDForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(uint64(0), errors.New("blah"))
 		helper.service.accountMembershipManager = membershipDB
@@ -585,7 +582,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -593,7 +590,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -604,13 +601,13 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetDefaultAccountIDForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.BeginSessionHandler(helper.res, helper.req)
@@ -637,7 +634,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -645,7 +642,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -656,14 +653,14 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetDefaultAccountIDForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.BeginSessionHandler(helper.res, helper.req)
@@ -690,7 +687,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -698,7 +695,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -709,17 +706,17 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetDefaultAccountIDForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(nil)
-		sm.On("Put", testutil.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
-		sm.On("Put", testutil.ContextMatcher, accountIDContextKey, helper.exampleAccount.ID)
-		sm.On("Commit", testutil.ContextMatcher).Return("", time.Now(), errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(nil)
+		sm.On("Put", testutils.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
+		sm.On("Put", testutils.ContextMatcher, accountIDContextKey, helper.exampleAccount.ID)
+		sm.On("Commit", testutils.ContextMatcher).Return("", time.Now(), errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.BeginSessionHandler(helper.res, helper.req)
@@ -755,7 +752,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -763,7 +760,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -774,7 +771,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetDefaultAccountIDForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
@@ -811,7 +808,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUserByUsername",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.Username,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -819,7 +816,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		authenticator := &authentication.MockAuthenticator{}
 		authenticator.On(
 			"ValidateLogin",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.HashedPassword,
 			helper.exampleLoginInput.Password,
 			helper.exampleUser.TwoFactorSecret,
@@ -830,7 +827,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"GetDefaultAccountIDForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
@@ -864,7 +861,7 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
 			"UserIsMemberOfAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			exampleInput.AccountID,
 		).Return(true, nil)
@@ -883,7 +880,7 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		helper.service.ChangeActiveAccountHandler(helper.res, helper.req)
 
@@ -945,7 +942,7 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
 			"UserIsMemberOfAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			exampleInput.AccountID,
 		).Return(false, errors.New("blah"))
@@ -976,7 +973,7 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
 			"UserIsMemberOfAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			exampleInput.AccountID,
 		).Return(false, nil)
@@ -1007,14 +1004,14 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
 			"UserIsMemberOfAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			exampleInput.AccountID,
 		).Return(true, nil)
 		helper.service.accountMembershipManager = accountMembershipManager
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.ChangeActiveAccountHandler(helper.res, helper.req)
@@ -1042,15 +1039,15 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
 			"UserIsMemberOfAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			exampleInput.AccountID,
 		).Return(true, nil)
 		helper.service.accountMembershipManager = accountMembershipManager
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.ChangeActiveAccountHandler(helper.res, helper.req)
@@ -1078,18 +1075,18 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
 			"UserIsMemberOfAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			exampleInput.AccountID,
 		).Return(true, nil)
 		helper.service.accountMembershipManager = accountMembershipManager
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(nil)
-		sm.On("Put", testutil.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
-		sm.On("Put", testutil.ContextMatcher, accountIDContextKey, exampleInput.AccountID)
-		sm.On("Commit", testutil.ContextMatcher).Return("", time.Now(), errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(nil)
+		sm.On("Put", testutils.ContextMatcher, userIDContextKey, helper.exampleUser.ID)
+		sm.On("Put", testutils.ContextMatcher, accountIDContextKey, exampleInput.AccountID)
+		sm.On("Commit", testutils.ContextMatcher).Return("", time.Now(), errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.ChangeActiveAccountHandler(helper.res, helper.req)
@@ -1117,15 +1114,15 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
 			"UserIsMemberOfAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			exampleInput.AccountID,
 		).Return(true, nil)
 		helper.service.accountMembershipManager = accountMembershipManager
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("RenewToken", testutil.ContextMatcher).Return(errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("RenewToken", testutils.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.ChangeActiveAccountHandler(helper.res, helper.req)
@@ -1153,7 +1150,7 @@ func TestAuthenticationService_ChangeActiveAccountHandler(T *testing.T) {
 		accountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountMembershipManager.On(
 			"UserIsMemberOfAccount",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			exampleInput.AccountID,
 		).Return(true, nil)
@@ -1187,7 +1184,7 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogLogoutEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID)
 		helper.service.auditLog = auditLog
 
@@ -1206,7 +1203,7 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		helper.service.EndSessionHandler(helper.res, helper.req)
 
@@ -1221,7 +1218,7 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(context.Background(), errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(context.Background(), errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.EndSessionHandler(helper.res, helper.req)
@@ -1239,8 +1236,8 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 
 		sm := &mockSessionManager{}
-		sm.On("Load", testutil.ContextMatcher, "").Return(helper.ctx, nil)
-		sm.On("Destroy", testutil.ContextMatcher).Return(errors.New("blah"))
+		sm.On("Load", testutils.ContextMatcher, "").Return(helper.ctx, nil)
+		sm.On("Destroy", testutils.ContextMatcher).Return(errors.New("blah"))
 		helper.service.sessionManager = sm
 
 		helper.service.EndSessionHandler(helper.res, helper.req)
@@ -1286,7 +1283,7 @@ func TestAuthenticationService_StatusHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		helper.service.StatusHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
@@ -1307,7 +1304,7 @@ func TestAuthenticationService_CycleSecretHandler(T *testing.T) {
 		auditLog := &mocktypes.AuditLogEntryDataManager{}
 		auditLog.On(
 			"LogCycleCookieSecretEvent",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID)
 		helper.service.auditLog = auditLog
 
@@ -1330,7 +1327,7 @@ func TestAuthenticationService_CycleSecretHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 		c := helper.req.Cookies()[0]
@@ -1401,7 +1398,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
 			"GetAPIClientByClientID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAPIClient.ClientID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientManager = apiClientDataManager
@@ -1409,7 +1406,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -1417,7 +1414,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"BuildSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(expected, nil)
 		helper.service.accountMembershipManager = membershipDB
@@ -1498,7 +1495,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
 			"GetAPIClientByClientID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAPIClient.ClientID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientManager = apiClientDataManager
@@ -1506,7 +1503,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -1514,7 +1511,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"BuildSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(expected, nil)
 		helper.service.accountMembershipManager = membershipDB
@@ -1681,7 +1678,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
 			"GetAPIClientByClientID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAPIClient.ClientID,
 		).Return((*types.APIClient)(nil), errors.New("blah"))
 		helper.service.apiClientManager = apiClientDataManager
@@ -1728,7 +1725,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
 			"GetAPIClientByClientID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAPIClient.ClientID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientManager = apiClientDataManager
@@ -1736,7 +1733,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return((*types.User)(nil), errors.New("blah"))
 		helper.service.userDataManager = userDataManager
@@ -1783,7 +1780,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
 			"GetAPIClientByClientID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAPIClient.ClientID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientManager = apiClientDataManager
@@ -1791,7 +1788,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -1799,7 +1796,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"BuildSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return((*types.SessionContextData)(nil), errors.New("blah"))
 		helper.service.accountMembershipManager = membershipDB
@@ -1846,7 +1843,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
 			"GetAPIClientByClientID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAPIClient.ClientID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientManager = apiClientDataManager
@@ -1891,7 +1888,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
 			"GetAPIClientByClientID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAPIClient.ClientID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientManager = apiClientDataManager
@@ -1899,7 +1896,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -1909,7 +1906,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"BuildSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.sessionCtxData, nil)
 		helper.service.accountMembershipManager = membershipDB
@@ -1954,7 +1951,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		apiClientDataManager := &mocktypes.APIClientDataManager{}
 		apiClientDataManager.On(
 			"GetAPIClientByClientID",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleAPIClient.ClientID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientManager = apiClientDataManager
@@ -1962,7 +1959,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		userDataManager := &mocktypes.UserDataManager{}
 		userDataManager.On(
 			"GetUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
@@ -1970,7 +1967,7 @@ func TestAuthenticationService_PASETOHandler(T *testing.T) {
 		membershipDB := &mocktypes.AccountUserMembershipDataManager{}
 		membershipDB.On(
 			"BuildSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.sessionCtxData, nil)
 		helper.service.accountMembershipManager = membershipDB

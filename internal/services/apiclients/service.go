@@ -9,9 +9,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 

@@ -14,12 +14,12 @@ func TestService_favicon(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodGet, "/favicon.svg", nil)
 
-		s.favicon(res, req)
+		s.service.favicon(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 	})

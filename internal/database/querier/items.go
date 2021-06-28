@@ -5,12 +5,11 @@ import (
 	"database/sql"
 	"errors"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -18,7 +17,7 @@ var (
 	_ types.ItemDataManager = (*SQLQuerier)(nil)
 )
 
-// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an Item struct.
+// scanItem takes a database Scanner (i.e. *sql.Row) and scans the result into an item struct.
 func (q *SQLQuerier) scanItem(ctx context.Context, scan database.Scanner, includeCounts bool) (x *types.Item, filteredCount, totalCount uint64, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
@@ -87,16 +86,18 @@ func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID uint64) (
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger
+
 	if itemID == 0 {
 		return false, ErrInvalidIDProvided
 	}
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	if accountID == 0 {
 		return false, ErrInvalidIDProvided
 	}
-
-	logger := q.logger.WithValue(keys.ItemIDKey, itemID).WithValue(keys.AccountIDKey, accountID)
-	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	query, args := q.sqlQueryBuilder.BuildItemExistsQuery(ctx, itemID, accountID)
@@ -114,21 +115,19 @@ func (q *SQLQuerier) GetItem(ctx context.Context, itemID, accountID uint64) (*ty
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	tracing.AttachItemIDToSpan(span, itemID)
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
-
-	logger := q.logger.WithValues(map[string]interface{}{
-		keys.ItemIDKey: itemID,
-		keys.UserIDKey: accountID,
-	})
 
 	query, args := q.sqlQueryBuilder.BuildGetItemQuery(ctx, itemID, accountID)
 	row := q.getOneRow(ctx, q.db, "item", query, args...)
@@ -208,14 +207,16 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID uint64, filter *typ
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger
+
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	x = &types.ItemList{}
-	logger := filter.AttachToLogger(q.logger).WithValue(keys.AccountIDKey, accountID)
-
-	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = filter.AttachToLogger(logger)
 	tracing.AttachQueryFilterToSpan(span, filter)
 
 	if filter != nil {
@@ -241,23 +242,24 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID uint64, limi
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger
+
 	if accountID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
 
-	logger := q.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey: accountID,
-		"limit":        limit,
-		"id_count":     len(ids),
+	logger = logger.WithValues(map[string]interface{}{
+		"limit":    limit,
+		"id_count": len(ids),
 	})
 
-	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, accountID, limit, ids, false)
+	query, args := q.sqlQueryBuilder.BuildGetItemsWithIDsQuery(ctx, accountID, limit, ids, true)
 
 	rows, err := q.performReadQuery(ctx, q.db, "items with IDs", query, args...)
 	if err != nil {
@@ -325,8 +327,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 	return x, nil
 }
 
-// UpdateItem updates a particular item. Note that UpdateItem expects the
-// provided input to have a valid ID.
+// UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, changedByUser uint64, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
@@ -374,27 +375,25 @@ func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archive
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger
+
 	if itemID == 0 {
 		return ErrInvalidIDProvided
 	}
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
+	tracing.AttachItemIDToSpan(span, itemID)
 
 	if accountID == 0 {
 		return ErrInvalidIDProvided
 	}
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	tracing.AttachAccountIDToSpan(span, accountID)
 
 	if archivedBy == 0 {
 		return ErrInvalidIDProvided
 	}
-
-	tracing.AttachAccountIDToSpan(span, accountID)
+	logger = logger.WithValue(keys.RequesterIDKey, archivedBy)
 	tracing.AttachUserIDToSpan(span, archivedBy)
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	logger := q.logger.WithValues(map[string]interface{}{
-		keys.ItemIDKey:    itemID,
-		keys.UserIDKey:    archivedBy,
-		keys.AccountIDKey: accountID,
-	})
 
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -427,11 +426,12 @@ func (q *SQLQuerier) GetAuditLogEntriesForItem(ctx context.Context, itemID uint6
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger
+
 	if itemID == 0 {
 		return nil, ErrInvalidIDProvided
 	}
-
-	logger := q.logger.WithValue(keys.ItemIDKey, itemID)
+	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
 	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForItemQuery(ctx, itemID)

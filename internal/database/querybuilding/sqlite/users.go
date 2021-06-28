@@ -4,11 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -40,13 +39,16 @@ func (b *Sqlite) BuildUserHasStatusQuery(ctx context.Context, userID uint64, sta
 				fmt.Sprintf("%s.%s", querybuilding.UsersTableName, querybuilding.ArchivedOnColumn): nil,
 			}).
 			Where(whereStatuses).
-			Suffix(querybuilding.ExistenceSuffix))
+			Suffix(querybuilding.ExistenceSuffix),
+	)
 }
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
 func (b *Sqlite) BuildGetUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -68,6 +70,8 @@ func (b *Sqlite) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Cont
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Select(querybuilding.UsersTableColumns...).
@@ -84,6 +88,8 @@ func (b *Sqlite) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Cont
 func (b *Sqlite) BuildGetUserByUsernameQuery(ctx context.Context, username string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUsernameToSpan(span, username)
 
 	return b.buildQuery(
 		span,
@@ -103,6 +109,8 @@ func (b *Sqlite) BuildGetUserByUsernameQuery(ctx context.Context, username strin
 func (b *Sqlite) BuildSearchForUserByUsernameQuery(ctx context.Context, usernameQuery string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachSearchQueryToSpan(span, usernameQuery)
 
 	return b.buildQuery(
 		span,
@@ -136,7 +144,7 @@ func (b *Sqlite) BuildGetAllUsersCountQuery(ctx context.Context) (query string) 
 }
 
 // BuildGetUsersQuery returns a SQL query (and arguments) for retrieving a slice of users who adhere
-// to a given filter's criteria.
+// to a given filter's criteria. It is assumed that this is only accessible to site administrators.
 func (b *Sqlite) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
@@ -145,13 +153,25 @@ func (b *Sqlite) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFilt
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	return b.buildListQuery(ctx, querybuilding.UsersTableName, "", querybuilding.UsersTableColumns, 0, false, filter)
+	return b.buildListQuery(
+		ctx,
+		querybuilding.UsersTableName,
+		nil,
+		nil,
+		"",
+		querybuilding.UsersTableColumns,
+		0,
+		false,
+		filter,
+	)
 }
 
 // BuildTestUserCreationQuery builds a query and arguments that creates a test user.
 func (b *Sqlite) BuildTestUserCreationQuery(ctx context.Context, testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUsernameToSpan(span, testUserConfig.Username)
 
 	serviceRole := authorization.ServiceUserRole
 	if testUserConfig.IsServiceAdmin {
@@ -191,6 +211,8 @@ func (b *Sqlite) BuildCreateUserQuery(ctx context.Context, input *types.UserData
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUsernameToSpan(span, input.Username)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
@@ -218,6 +240,9 @@ func (b *Sqlite) BuildUpdateUserQuery(ctx context.Context, input *types.User) (q
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, input.ID)
+	tracing.AttachUsernameToSpan(span, input.Username)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -239,6 +264,8 @@ func (b *Sqlite) BuildSetUserStatusQuery(ctx context.Context, input *types.UserR
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, input.TargetUserID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -255,6 +282,8 @@ func (b *Sqlite) BuildSetUserStatusQuery(ctx context.Context, input *types.UserR
 func (b *Sqlite) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64, newHash string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -275,6 +304,8 @@ func (b *Sqlite) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -291,6 +322,8 @@ func (b *Sqlite) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID
 func (b *Sqlite) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	return b.buildQuery(
 		span,
@@ -309,6 +342,8 @@ func (b *Sqlite) BuildArchiveUserQuery(ctx context.Context, userID uint64) (quer
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
+	tracing.AttachUserIDToSpan(span, userID)
+
 	return b.buildQuery(
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
@@ -320,10 +355,12 @@ func (b *Sqlite) BuildArchiveUserQuery(ctx context.Context, userID uint64) (quer
 	)
 }
 
-// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
 func (b *Sqlite) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachUserIDToSpan(span, userID)
 
 	userIDKey := fmt.Sprintf(
 		jsonPluckQuery,

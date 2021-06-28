@@ -3,10 +3,10 @@ package mock
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/stretchr/testify/mock"
 )
 
 var _ querybuilding.WebhookSQLQueryBuilder = (*WebhookSQLQueryBuilder)(nil)

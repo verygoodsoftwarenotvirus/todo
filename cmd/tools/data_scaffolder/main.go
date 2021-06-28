@@ -11,19 +11,18 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
 	flag "github.com/spf13/pflag"
 )
 
 var (
-	uri string
-	userCount,
-	dataCount uint16
+	uri            string
+	userCount      uint16
+	dataCount      uint16
 	debug          bool
 	singleUserMode bool
 
@@ -95,8 +94,7 @@ func main() {
 	for i := 0; i < int(userCount); i++ {
 		wg.Add(1)
 		go func(x int, wg *sync.WaitGroup) {
-			// create user.
-			createdUser, userCreationErr := testutil.CreateServiceUser(ctx, uri, "")
+			createdUser, userCreationErr := testutils.CreateServiceUser(ctx, uri, "")
 			if userCreationErr != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("creating user #%d: %w", x, userCreationErr))
 			}
@@ -114,7 +112,7 @@ func main() {
 
 			userLogger.Debug("created user")
 
-			cookie, cookieErr := testutil.GetLoginCookie(ctx, uri, createdUser)
+			cookie, cookieErr := testutils.GetLoginCookie(ctx, uri, createdUser)
 			if cookieErr != nil {
 				quitter.ComplainAndQuit(fmt.Errorf("getting cookie: %v", cookieErr))
 			}
@@ -196,7 +194,7 @@ func main() {
 						quitter.ComplainAndQuit(fmt.Errorf("creating item #%d: %w", j, itemCreationErr))
 					}
 
-					iterationLogger.WithValue(keys.WebhookIDKey, createdItem.ID).Debug("created item")
+					iterationLogger.WithValue(keys.ItemIDKey, createdItem.ID).Debug("created item")
 				}
 				wg.Done()
 			}(wg)

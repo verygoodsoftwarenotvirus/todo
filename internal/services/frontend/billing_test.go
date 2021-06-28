@@ -7,12 +7,12 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func Test_renderPrice(T *testing.T) {
@@ -51,7 +51,7 @@ func Test_service_handleCheckoutSessionStart(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 		examplePlanID := "example_plan"
 		exampleSessionID := "example_session"
 
@@ -59,10 +59,10 @@ func Test_service_handleCheckoutSessionStart(T *testing.T) {
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/whatever?plan=%s", examplePlanID), nil)
 
 		mpm := &capitalism.MockPaymentManager{}
-		mpm.On("CreateCheckoutSession", testutil.ContextMatcher, examplePlanID).Return(exampleSessionID, nil)
-		s.paymentManager = mpm
+		mpm.On("CreateCheckoutSession", testutils.ContextMatcher, examplePlanID).Return(exampleSessionID, nil)
+		s.service.paymentManager = mpm
 
-		s.handleCheckoutSessionStart(res, req)
+		s.service.handleCheckoutSessionStart(res, req)
 
 		assert.Equal(t, http.StatusOK, res.Code)
 		mock.AssertExpectationsForObjects(t, mpm)
@@ -71,12 +71,12 @@ func Test_service_handleCheckoutSessionStart(T *testing.T) {
 	T.Run("with missing plan ID", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/whatever", nil)
 
-		s.handleCheckoutSessionStart(res, req)
+		s.service.handleCheckoutSessionStart(res, req)
 
 		assert.Equal(t, http.StatusBadRequest, res.Code)
 	})
@@ -84,17 +84,17 @@ func Test_service_handleCheckoutSessionStart(T *testing.T) {
 	T.Run("with error creating checkout session", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 		examplePlanID := "example_plan"
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, fmt.Sprintf("/whatever?plan=%s", examplePlanID), nil)
 
 		mpm := &capitalism.MockPaymentManager{}
-		mpm.On("CreateCheckoutSession", testutil.ContextMatcher, examplePlanID).Return("", errors.New("blah"))
-		s.paymentManager = mpm
+		mpm.On("CreateCheckoutSession", testutils.ContextMatcher, examplePlanID).Return("", errors.New("blah"))
+		s.service.paymentManager = mpm
 
-		s.handleCheckoutSessionStart(res, req)
+		s.service.handleCheckoutSessionStart(res, req)
 
 		assert.Equal(t, http.StatusInternalServerError, res.Code)
 		mock.AssertExpectationsForObjects(t, mpm)
@@ -107,12 +107,12 @@ func Test_service_handleCheckoutSuccess(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/whatever", nil)
 
-		s.handleCheckoutSuccess(res, req)
+		s.service.handleCheckoutSuccess(res, req)
 
 		assert.Equal(t, http.StatusTooEarly, res.Code)
 	})
@@ -124,12 +124,12 @@ func Test_service_handleCheckoutCancel(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/whatever", nil)
 
-		s.handleCheckoutCancel(res, req)
+		s.service.handleCheckoutCancel(res, req)
 
 		assert.Equal(t, http.StatusTooEarly, res.Code)
 	})
@@ -141,12 +141,12 @@ func Test_service_handleCheckoutFailure(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 
 		res := httptest.NewRecorder()
 		req := httptest.NewRequest(http.MethodPost, "/whatever", nil)
 
-		s.handleCheckoutFailure(res, req)
+		s.service.handleCheckoutFailure(res, req)
 
 		assert.Equal(t, http.StatusTooEarly, res.Code)
 	})

@@ -4,12 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/stretchr/testify/mock"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestPostgres_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
@@ -118,8 +117,9 @@ func TestPostgres_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
 
 		q, _ := buildTestService(t)
 		ctx := context.Background()
-		exampleAPIClient := fakes.BuildFakeAPIClient()
+
 		exampleUser := fakes.BuildFakeUser()
+		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = $1 AND api_clients.id = $2"
 		expectedArgs := []interface{}{
@@ -202,14 +202,15 @@ func TestPostgres_BuildArchiveAPIClientQuery(T *testing.T) {
 		q, _ := buildTestService(t)
 		ctx := context.Background()
 
+		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
 		expectedQuery := "UPDATE api_clients SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1 AND id = $2"
 		expectedArgs := []interface{}{
-			exampleAPIClient.BelongsToUser,
+			exampleUser.ID,
 			exampleAPIClient.ID,
 		}
-		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(ctx, exampleAPIClient.ID, exampleAPIClient.BelongsToUser)
+		actualQuery, actualArgs := q.BuildArchiveAPIClientQuery(ctx, exampleAPIClient.ID, exampleUser.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

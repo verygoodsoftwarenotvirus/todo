@@ -4,21 +4,19 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -44,9 +42,6 @@ func TestFromConfig(T *testing.T) {
 				HTTPPort:        1234,
 				Debug:           false,
 				StartupDeadline: time.Minute,
-			},
-			AuditLog: audit.Config{
-				Enabled: true,
 			},
 			Meta: config.MetaSettings{
 				RunMode: config.DevelopmentRunMode,
@@ -99,6 +94,9 @@ func TestFromConfig(T *testing.T) {
 				Debug: false,
 			},
 			Services: config.ServicesConfigurations{
+				AuditLog: audit.Config{
+					Enabled: true,
+				},
 				Auth: authservice.Config{
 					Cookies: authservice.CookieConfig{
 						Name:     "todocookie",
@@ -111,9 +109,14 @@ func TestFromConfig(T *testing.T) {
 				},
 				Items: items.Config{
 					SearchIndexPath: "/items_index_path",
+					Logging: logging.Config{
+						Name:     "items",
+						Level:    logging.InfoLevel,
+						Provider: logging.ProviderZerolog,
+					},
 				},
 			},
-			Database: config2.Config{
+			Database: dbconfig.Config{
 				Provider:                  "postgres",
 				MetricsCollectionInterval: 2 * time.Second,
 				Debug:                     true,

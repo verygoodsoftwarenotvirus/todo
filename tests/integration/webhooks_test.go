@@ -3,14 +3,13 @@ package integration
 import (
 	"testing"
 
-	audit "gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func checkWebhookEquality(t *testing.T, expected, actual *types.Webhook) {
@@ -278,7 +277,7 @@ func (s *TestSuite) TestWebhooks_Auditing() {
 			assert.NoError(t, err)
 			assert.Len(t, actual, 2)
 
-			// Clean up item.
+			// Clean up webhook.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
 		}
 	})

@@ -3,10 +3,10 @@ package mock
 import (
 	"context"
 
-	"github.com/stretchr/testify/mock"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/stretchr/testify/mock"
 )
 
 var _ querybuilding.ItemSQLQueryBuilder = (*ItemSQLQueryBuilder)(nil)
@@ -45,15 +45,15 @@ func (m *ItemSQLQueryBuilder) BuildGetBatchOfItemsQuery(ctx context.Context, beg
 }
 
 // BuildGetItemsQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetItemsQuery(ctx context.Context, accountID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, accountID, forAdmin, filter)
+func (m *ItemSQLQueryBuilder) BuildGetItemsQuery(ctx context.Context, accountID uint64, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+	returnArgs := m.Called(ctx, accountID, includeArchived, filter)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetItemsWithIDsQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, forAdmin bool) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, accountID, limit, ids, forAdmin)
+func (m *ItemSQLQueryBuilder) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, restrictToAccount bool) (query string, args []interface{}) {
+	returnArgs := m.Called(ctx, accountID, limit, ids, restrictToAccount)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }

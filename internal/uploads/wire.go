@@ -1,9 +1,9 @@
 package uploads
 
 import (
-	"github.com/google/wire"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
+
+	"github.com/google/wire"
 )
 
 var (

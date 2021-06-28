@@ -33,14 +33,14 @@ type (
 		Pagination
 	}
 
-	// ItemCreationInput represents what a User could set as input for creating items.
+	// ItemCreationInput represents what a user could set as input for creating items.
 	ItemCreationInput struct {
 		Name             string `json:"name"`
 		Details          string `json:"details"`
 		BelongsToAccount uint64 `json:"-"`
 	}
 
-	// ItemUpdateInput represents what a User could set as input for updating items.
+	// ItemUpdateInput represents what a user could set as input for updating items.
 	ItemUpdateInput struct {
 		Name             string `json:"name"`
 		Details          string `json:"details"`
@@ -57,15 +57,15 @@ type (
 		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*Item, error)
 		CreateItem(ctx context.Context, input *ItemCreationInput, createdByUser uint64) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item, changedByUser uint64, changes []*FieldChangeSummary) error
-		ArchiveItem(ctx context.Context, itemID, belongsToAccount, archivedByUserID uint64) error
+		ArchiveItem(ctx context.Context, itemID, accountID, archivedBy uint64) error
 		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
 	}
 
 	// ItemDataService describes a structure capable of serving traffic related to items.
 	ItemDataService interface {
 		SearchHandler(res http.ResponseWriter, req *http.Request)
-		ListHandler(res http.ResponseWriter, req *http.Request)
 		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
+		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ExistenceHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
@@ -105,7 +105,9 @@ var _ validation.ValidatableWithContext = (*ItemCreationInput)(nil)
 
 // ValidateWithContext validates a ItemCreationInput.
 func (x *ItemCreationInput) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, x,
+	return validation.ValidateStructWithContext(
+		ctx,
+		x,
 		validation.Field(&x.Name, validation.Required),
 	)
 }
@@ -114,7 +116,9 @@ var _ validation.ValidatableWithContext = (*ItemUpdateInput)(nil)
 
 // ValidateWithContext validates a ItemUpdateInput.
 func (x *ItemUpdateInput) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, x,
+	return validation.ValidateStructWithContext(
+		ctx,
+		x,
 		validation.Field(&x.Name, validation.Required),
 	)
 }

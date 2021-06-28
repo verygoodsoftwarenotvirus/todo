@@ -6,15 +6,14 @@ import (
 	"math/rand"
 	"net/http"
 
-	httpclient2 "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
-
-	models "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	fakemodels "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 // fetchRandomItem retrieves a random item from the list of available items.
-func fetchRandomItem(ctx context.Context, c *httpclient2.Client) *models.Item {
+func fetchRandomItem(ctx context.Context, c *httpclient.Client) *types.Item {
 	itemsRes, err := c.GetItems(ctx, nil)
 	if err != nil || itemsRes == nil || len(itemsRes.Items) == 0 {
 		return nil
@@ -25,14 +24,14 @@ func fetchRandomItem(ctx context.Context, c *httpclient2.Client) *models.Item {
 	return itemsRes.Items[randIndex]
 }
 
-func buildItemActions(c *httpclient2.Client, builder *requests.Builder) map[string]*Action {
+func buildItemActions(c *httpclient.Client, builder *requests.Builder) map[string]*Action {
 	return map[string]*Action{
 		"CreateItem": {
 			Name: "CreateItem",
 			Action: func() (*http.Request, error) {
 				ctx := context.Background()
 
-				itemInput := fakemodels.BuildFakeItemCreationInput()
+				itemInput := fakes.BuildFakeItemCreationInput()
 
 				return builder.BuildCreateItemRequest(ctx, itemInput)
 			},
@@ -67,7 +66,7 @@ func buildItemActions(c *httpclient2.Client, builder *requests.Builder) map[stri
 				ctx := context.Background()
 
 				if randomItem := fetchRandomItem(ctx, c); randomItem != nil {
-					newItem := fakemodels.BuildFakeItemCreationInput()
+					newItem := fakes.BuildFakeItemCreationInput()
 					randomItem.Name = newItem.Name
 					randomItem.Details = newItem.Details
 					return builder.BuildUpdateItemRequest(ctx, randomItem)

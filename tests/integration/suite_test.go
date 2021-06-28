@@ -9,9 +9,8 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -110,5 +109,5 @@ func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
 	const totalExpectedTestCount = 69
 
 	s.checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats)
-	testutil.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
+	testutils.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
 }

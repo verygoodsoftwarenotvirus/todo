@@ -5,9 +5,7 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 
@@ -20,7 +18,7 @@ func TestService_SetupRoutes(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		s := buildTestService(t)
+		s := buildTestHelper(t)
 		obligatoryHandler := http.HandlerFunc(func(http.ResponseWriter, *http.Request) {})
 
 		authService := &mocktypes.AuthService{}
@@ -38,10 +36,10 @@ func TestService_SetupRoutes(T *testing.T) {
 			"UserAttributionMiddleware",
 			mock.IsType(obligatoryHandler),
 		).Return(http.Handler(obligatoryHandler))
-		s.authService = authService
+		s.service.authService = authService
 
 		router := chi.NewRouter(logging.NewNoopLogger())
 
-		s.SetupRoutes(router)
+		s.service.SetupRoutes(router)
 	})
 }

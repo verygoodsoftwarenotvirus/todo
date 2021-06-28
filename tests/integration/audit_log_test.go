@@ -1,9 +1,9 @@
 package integration
 
 import (
-	"github.com/stretchr/testify/assert"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func (s *TestSuite) TestAuditLogEntryListing() {

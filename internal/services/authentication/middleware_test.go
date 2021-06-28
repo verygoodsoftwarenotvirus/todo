@@ -10,10 +10,9 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-	testutil "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/google/uuid"
 	"github.com/o1egl/paseto"
@@ -147,16 +146,16 @@ func TestAuthenticationService_CookieAuthenticationMiddleware(T *testing.T) {
 		accountUserMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
 		accountUserMembershipDataManager.On(
 			"BuildSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.sessionCtxData, nil)
 		helper.service.accountMembershipManager = accountUserMembershipDataManager
 
-		mockHandler := &testutil.MockHTTPHandler{}
+		mockHandler := &testutils.MockHTTPHandler{}
 		mockHandler.On(
 			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
+			testutils.HTTPResponseWriterMatcher,
+			testutils.HTTPRequestMatcher,
 		).Return()
 
 		_, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
@@ -189,18 +188,18 @@ func TestAuthenticationService_UserAttributionMiddleware(T *testing.T) {
 		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		mockAccountMembershipManager.On(
 			"BuildSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(sessionCtxData, nil)
 		helper.service.accountMembershipManager = mockAccountMembershipManager
 
 		_, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
-		h := &testutil.MockHTTPHandler{}
+		h := &testutils.MockHTTPHandler{}
 		h.On(
 			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
+			testutils.HTTPResponseWriterMatcher,
+			testutils.HTTPRequestMatcher,
 		).Return()
 
 		helper.service.UserAttributionMiddleware(h).ServeHTTP(helper.res, helper.req)
@@ -218,14 +217,14 @@ func TestAuthenticationService_UserAttributionMiddleware(T *testing.T) {
 		mockAccountMembershipManager := &mocktypes.AccountUserMembershipDataManager{}
 		mockAccountMembershipManager.On(
 			"BuildSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return((*types.SessionContextData)(nil), errors.New("blah"))
 		helper.service.accountMembershipManager = mockAccountMembershipManager
 
 		_, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
-		mh := &testutil.MockHTTPHandler{}
+		mh := &testutils.MockHTTPHandler{}
 		helper.service.UserAttributionMiddleware(mh).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
@@ -243,11 +242,11 @@ func TestAuthenticationService_UserAttributionMiddleware(T *testing.T) {
 
 		helper.req.Header.Set(pasetoAuthorizationHeaderKey, tokenRes.Token)
 
-		h := &testutil.MockHTTPHandler{}
+		h := &testutils.MockHTTPHandler{}
 		h.On(
 			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
+			testutils.HTTPResponseWriterMatcher,
+			testutils.HTTPRequestMatcher,
 		).Return()
 
 		helper.service.UserAttributionMiddleware(h).ServeHTTP(helper.res, helper.req)
@@ -263,11 +262,11 @@ func TestAuthenticationService_UserAttributionMiddleware(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.req.Header.Set(pasetoAuthorizationHeaderKey, "blah")
 
-		h := &testutil.MockHTTPHandler{}
+		h := &testutils.MockHTTPHandler{}
 		h.On(
 			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
+			testutils.HTTPResponseWriterMatcher,
+			testutils.HTTPRequestMatcher,
 		).Return()
 
 		helper.service.UserAttributionMiddleware(h).ServeHTTP(helper.res, helper.req)
@@ -298,16 +297,16 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 		mockUserDataManager := &mocktypes.UserDataManager{}
 		mockUserDataManager.On(
 			"GetSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(sessionCtxData, nil)
 		helper.service.userDataManager = mockUserDataManager
 
-		h := &testutil.MockHTTPHandler{}
+		h := &testutils.MockHTTPHandler{}
 		h.On(
 			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
+			testutils.HTTPResponseWriterMatcher,
+			testutils.HTTPRequestMatcher,
 		).Return()
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, types.SessionContextDataKey, sessionCtxData))
@@ -341,21 +340,21 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 		mockUserDataManager := &mocktypes.UserDataManager{}
 		mockUserDataManager.On(
 			"GetSessionContextDataForUser",
-			testutil.ContextMatcher,
+			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(sessionCtxData, nil)
 		helper.service.userDataManager = mockUserDataManager
 
-		h := &testutil.MockHTTPHandler{}
+		h := &testutils.MockHTTPHandler{}
 		h.On(
 			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
+			testutils.HTTPResponseWriterMatcher,
+			testutils.HTTPRequestMatcher,
 		).Return()
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, types.SessionContextDataKey, sessionCtxData))
 
-		mh := &testutil.MockHTTPHandler{}
+		mh := &testutils.MockHTTPHandler{}
 		helper.service.AuthorizationMiddleware(mh).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusForbidden, helper.res.Code)
@@ -372,7 +371,7 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 			return nil, nil
 		}
 
-		mh := &testutil.MockHTTPHandler{}
+		mh := &testutils.MockHTTPHandler{}
 		helper.service.AuthorizationMiddleware(mh).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
@@ -403,7 +402,7 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, types.SessionContextDataKey, sessionCtxData))
 
-		helper.service.AuthorizationMiddleware(&testutil.MockHTTPHandler{}).ServeHTTP(helper.res, helper.req)
+		helper.service.AuthorizationMiddleware(&testutils.MockHTTPHandler{}).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 	})
@@ -433,11 +432,11 @@ func TestAuthenticationService_AdminMiddleware(T *testing.T) {
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
-		mockHandler := &testutil.MockHTTPHandler{}
+		mockHandler := &testutils.MockHTTPHandler{}
 		mockHandler.On(
 			"ServeHTTP",
-			testutil.HTTPResponseWriterMatcher,
-			testutil.HTTPRequestMatcher,
+			testutils.HTTPResponseWriterMatcher,
+			testutils.HTTPRequestMatcher,
 		).Return()
 
 		helper.service.ServiceAdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
@@ -453,7 +452,7 @@ func TestAuthenticationService_AdminMiddleware(T *testing.T) {
 		helper := buildTestHelper(t)
 
 		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
-		helper.service.sessionContextDataFetcher = testutil.BrokenSessionContextDataFetcher
+		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 
 		sessionCtxData := &types.SessionContextData{
 			Requester: types.RequesterInfo{
@@ -468,7 +467,7 @@ func TestAuthenticationService_AdminMiddleware(T *testing.T) {
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
-		mockHandler := &testutil.MockHTTPHandler{}
+		mockHandler := &testutils.MockHTTPHandler{}
 		helper.service.ServiceAdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
@@ -494,7 +493,7 @@ func TestAuthenticationService_AdminMiddleware(T *testing.T) {
 
 		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
 
-		mockHandler := &testutil.MockHTTPHandler{}
+		mockHandler := &testutils.MockHTTPHandler{}
 		helper.service.ServiceAdminMiddleware(mockHandler).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)

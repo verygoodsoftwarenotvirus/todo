@@ -20,20 +20,22 @@ import (
 
 type (
 	exampleType struct {
-		Name          string `json:"name"`
-		ID            uint64 `json:"id"`
-		BelongsToUser uint64 `json:"belongsToUser"`
+		Name          string
+		ID            uint64
+		BelongsToUser uint64
 	}
 
 	exampleTypeWithStringID struct {
-		ID            string `json:"id"`
-		Name          string `json:"name"`
-		BelongsToUser uint64 `json:"belongsToUser"`
+		ID            string
+		Name          string
+		BelongsToUser uint64
 	}
 )
 
-var _ suite.AfterTest = (*bleveIndexManagerTestSuite)(nil)
-var _ suite.BeforeTest = (*bleveIndexManagerTestSuite)(nil)
+var (
+	_ suite.AfterTest  = (*bleveIndexManagerTestSuite)(nil)
+	_ suite.BeforeTest = (*bleveIndexManagerTestSuite)(nil)
+)
 
 type bleveIndexManagerTestSuite struct {
 	suite.Suite

@@ -21,9 +21,6 @@ run:
   # from this option's value:
   #   	vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
   skip-dirs:
-    # javascript
-    - client/v1/frontend
-    # others
     - cmd/tools
     - cmd/playground
 
@@ -134,7 +131,7 @@ linters-settings:
   lll:
     # max line length, lines longer will be reported. Default is 120.
     # '\t' is counted as 1 character by default, and can be changed with the tab-width option
-    line-length: 250
+    line-length: 512
     # tab width in spaces. Default to 1.
     tab-width: 1
   misspell:
@@ -235,7 +232,6 @@ linters:
     # - gofumpt          # Gofumpt checks whether code was gofumpt-ed.
     - goheader         # Checks is file header matches to pattern
     - goimports        # Goimports does everything that gofmt does. Additionally it checks unused imports
-    - gomnd            # An analyzer to detect magic numbers.
     - gomoddirectives  # Manage the use of 'replace', 'retract', and 'excludes' directives in go.mod.
     - gomodguard       # Allow and block list linter for direct Go module dependencies. This is different from depguard where there are different block types for example version constraints and module recommendations.
     - goprintffuncname # Checks that printf-like functions are named with f at the end
@@ -259,7 +255,7 @@ linters:
     # - rowserrcheck     # checks whether Err of rows is checked successfully
     - sqlclosecheck    # Checks that sql.Rows and sql.Stmt are closed.
     # - stylecheck       # Stylecheck is a replacement for golint	style
-    # - tagliatelle      # Checks the struct tags.  # TODO: FUCK
+    # - tagliatelle      # Checks the struct tags.
     # - testpackage      # linter that makes you use a separate _test package
     - thelper          # thelper detects golang test helpers without t.Helper() call and checks the consistency of test helpers
     - tparallel        # tparallel detects inappropriate usage of t.Parallel() method in your Go test codes
@@ -278,6 +274,7 @@ linters:
     - dupl             # Tool for code clone detection
     - funlen           # Tool for detection of long functions
     - gofumpt          # Gofumpt checks whether code was gofumpt-ed.
+    - gomnd            # An analyzer to detect magic numbers.
     - nlreturn         # nlreturn checks for a new line before return and branch statements to increase code clarity
     - rowserrcheck     # checks whether Err of rows is checked successfully; lots of false positives
     - tagliatelle      # Checks the struct tags.
@@ -410,7 +407,7 @@ issues:
       linters:
         - lll
 
-    - path: tests/testutil/testutil.go
+    - path: tests/testutil/testutils.go
       linters:
         - goerr113
 
@@ -418,7 +415,7 @@ issues:
       linters:
         - goerr113
 
-    - path: internal/database/querybuilding/postgres/migrations.go # TODO: FIXME
+    - path: internal/database/querybuilding/postgres/migrations.go
       linters:
         - gocognit
         - gocyclo

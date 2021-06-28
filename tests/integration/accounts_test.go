@@ -5,18 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/converters"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
@@ -156,6 +153,14 @@ func (s *TestSuite) TestAccounts_Updating_Returns404ForNonexistentAccount() {
 	})
 }
 
+// convertAccountToAccountUpdateInput creates an AccountUpdateInput struct from an account.
+func convertAccountToAccountUpdateInput(x *types.Account) *types.AccountUpdateInput {
+	return &types.AccountUpdateInput{
+		Name:          x.Name,
+		BelongsToUser: x.BelongsToUser,
+	}
+}
+
 func (s *TestSuite) TestAccounts_Updating() {
 	s.runForEachClientExcept("should be possible to update an account", func(testClients *testClientWrapper) func() {
 		return func() {
@@ -171,7 +176,7 @@ func (s *TestSuite) TestAccounts_Updating() {
 			requireNotNilAndNoProblems(t, createdAccount, err)
 
 			// Change account.
-			createdAccount.Update(converters.ConvertAccountToAccountUpdateInput(exampleAccount))
+			createdAccount.Update(convertAccountToAccountUpdateInput(exampleAccount))
 			assert.NoError(t, testClients.main.UpdateAccount(ctx, createdAccount))
 
 			// Fetch account.

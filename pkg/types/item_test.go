@@ -2,10 +2,12 @@ package types
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestItem_Update(T *testing.T) {
@@ -13,7 +15,8 @@ func TestItem_Update(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
-		i := &Item{}
+
+		x := &Item{}
 
 		updated := &ItemUpdateInput{
 			Name:    fake.Word(),
@@ -23,20 +26,29 @@ func TestItem_Update(T *testing.T) {
 		expected := []*FieldChangeSummary{
 			{
 				FieldName: "Name",
-				OldValue:  i.Name,
+				OldValue:  x.Name,
 				NewValue:  updated.Name,
 			},
 			{
 				FieldName: "Details",
-				OldValue:  i.Details,
+				OldValue:  x.Details,
 				NewValue:  updated.Details,
 			},
 		}
-		actual := i.Update(updated)
-		assert.Equal(t, expected, actual, "expected and actual diff reports vary")
+		actual := x.Update(updated)
 
-		assert.Equal(t, updated.Name, i.Name)
-		assert.Equal(t, updated.Details, i.Details)
+		expectedJSONBytes, err := json.Marshal(expected)
+		require.NoError(t, err)
+
+		actualJSONBytes, err := json.Marshal(actual)
+		require.NoError(t, err)
+
+		expectedJSON, actualJSON := string(expectedJSONBytes), string(actualJSONBytes)
+
+		assert.Equal(t, expectedJSON, actualJSON)
+
+		assert.Equal(t, updated.Name, x.Name)
+		assert.Equal(t, updated.Details, x.Details)
 	})
 }
 
@@ -58,10 +70,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 	T.Run("with invalid structure", func(t *testing.T) {
 		t.Parallel()
 
-		x := &ItemCreationInput{
-			Name:    "",
-			Details: "",
-		}
+		x := &ItemCreationInput{}
 
 		actual := x.ValidateWithContext(context.Background())
 		assert.Error(t, actual)
@@ -86,10 +95,7 @@ func TestItemUpdateInput_Validate(T *testing.T) {
 	T.Run("with empty strings", func(t *testing.T) {
 		t.Parallel()
 
-		x := &ItemUpdateInput{
-			Name:    "",
-			Details: "",
-		}
+		x := &ItemUpdateInput{}
 
 		actual := x.ValidateWithContext(context.Background())
 		assert.Error(t, actual)

@@ -4,9 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
@@ -16,10 +15,12 @@ var (
 	_ querybuilding.AuditLogEntrySQLQueryBuilder = (*Sqlite)(nil)
 )
 
-// BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID belong to a user with a given ID.
+// BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID.
 func (b *Sqlite) BuildGetAuditLogEntryQuery(ctx context.Context, entryID uint64) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
+
+	tracing.AttachAuditLogEntryIDToSpan(span, entryID)
 
 	return b.buildQuery(
 		span,
@@ -70,15 +71,13 @@ func (b *Sqlite) BuildGetAuditLogEntriesQuery(ctx context.Context, filter *types
 		tracing.AttachFilterToSpan(span, filter.Page, filter.Limit, string(filter.SortBy))
 	}
 
-	countQueryBuilder := b.sqlBuilder.
-		Select(allCountQuery).
+	countQueryBuilder := b.sqlBuilder.Select(allCountQuery).
 		From(querybuilding.AuditLogEntriesTableName)
 
 	countQuery, countQueryArgs, err := countQueryBuilder.ToSql()
 	b.logQueryBuildingError(span, err)
 
-	builder := b.sqlBuilder.
-		Select(append(querybuilding.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
+	builder := b.sqlBuilder.Select(append(querybuilding.AuditLogEntriesTableColumns, fmt.Sprintf("(%s)", countQuery))...).
 		From(querybuilding.AuditLogEntriesTableName).
 		OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn))
 

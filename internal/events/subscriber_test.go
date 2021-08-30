@@ -33,7 +33,7 @@ func TestProvideSubscriber(T *testing.T) {
 		topic := mempubsub.NewTopic()
 		subscription := mempubsub.NewSubscription(topic, cfg.AckDeadline)
 
-		s, err := ProvideSubscriber(logger, subscription, cfg)
+		s, err := NewSubscriber(logger, subscription, cfg)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
 	})
@@ -44,7 +44,7 @@ func TestProvideSubscriber(T *testing.T) {
 		logger := logging.NewNoopLogger()
 		cfg := &Config{}
 
-		s, err := ProvideSubscriber(logger, nil, cfg)
+		s, err := NewSubscriber(logger, nil, cfg)
 		assert.Error(t, err)
 		assert.Nil(t, s)
 	})
@@ -56,7 +56,7 @@ func TestProvideSubscriber(T *testing.T) {
 		topic := mempubsub.NewTopic()
 		subscription := mempubsub.NewSubscription(topic, time.Second)
 
-		s, err := ProvideSubscriber(logger, subscription, nil)
+		s, err := NewSubscriber(logger, subscription, nil)
 		assert.Error(t, err)
 		assert.Nil(t, s)
 	})
@@ -72,7 +72,7 @@ func TestProvideSubscriber(T *testing.T) {
 		topic := mempubsub.NewTopic()
 		subscription := mempubsub.NewSubscription(topic, cfg.AckDeadline)
 
-		s, err := ProvideSubscriber(logger, subscription, cfg)
+		s, err := NewSubscriber(logger, subscription, cfg)
 		assert.NoError(t, err)
 		assert.NotNil(t, s)
 	})
@@ -98,7 +98,7 @@ func Test_subscriber_HandleEvents(T *testing.T) {
 		topic := mempubsub.NewTopic()
 		subscription := mempubsub.NewSubscription(topic, cfg.AckDeadline)
 
-		s, err := ProvideSubscriber(logger, subscription, cfg)
+		s, err := NewSubscriber(logger, subscription, cfg)
 		require.NoError(t, err)
 		require.NotNil(t, s)
 

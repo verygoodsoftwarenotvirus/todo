@@ -1,5 +1,5 @@
 # build stage
-FROM golang:stretch AS build-stage
+FROM golang:1.17-bullseye AS build-stage
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 

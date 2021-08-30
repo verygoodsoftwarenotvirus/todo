@@ -1,6 +1,13 @@
 version: "3.3"
 services:
+    events:
+        image: rabbitmq:3-management-alpine
+        container_name: 'rabbitmq'
+        ports:
+            - 5672:5672
+            - 15672:15672
     database:
+        container_name: database
         image: postgres:latest
         environment:
             POSTGRES_DB: 'todo'
@@ -9,17 +16,62 @@ services:
         logging:
             driver: none
         ports:
-            - 2345:5432
-    todo-server:
+            - "2345:5432"
+    workers:
+        container_name: workers
         environment:
+            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+            CONFIGURATION_FILEPATH: '/etc/config.toml'
+            JAEGER_DISABLED: 'false'
+        links:
+            #            - database
+            - events
+        #            - tracing-server
+        #            - prometheus
+        volumes:
+            - source: '../../environments/local/service.config'
+              target: '/etc/config.toml'
+              type: 'bind'
+            - source: '../../'
+              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
+              type: 'bind'
+        build:
+            context: '../../'
+            dockerfile: 'environments/local/workers.Dockerfile'
+#    eventload:
+#        container_name: eventload
+#        environment:
+#            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+#            CONFIGURATION_FILEPATH: '/etc/config.toml'
+#            JAEGER_DISABLED: 'false'
+#        links:
+#            #            - database
+#            - events
+#        #            - tracing-server
+#        #            - prometheus
+#        volumes:
+#            - source: '../../environments/local/service.config'
+#              target: '/etc/config.toml'
+#              type: 'bind'
+#            - source: '../../'
+#              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
+#              type: 'bind'
+#        build:
+#            context: '../../'
+#            dockerfile: 'environments/local/eventload.Dockerfile'
+    todo-server:
+        container_name: server
+        environment:
+            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
             CONFIGURATION_FILEPATH: '/etc/config.toml'
             JAEGER_DISABLED: 'false'
         ports:
-            - 8888:8888
+            - "8888:8888"
         links:
-#            - tracing-server
             - database
-#            - prometheus
+            - events
+        #            - tracing-server
+        #            - prometheus
         volumes:
             - source: '../../environments/local/service.config'
               target: '/etc/config.toml'

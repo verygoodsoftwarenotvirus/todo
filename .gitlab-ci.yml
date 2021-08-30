@@ -12,7 +12,7 @@ before_script:
 
 coverage:
   stage: quality
-  image: golang:stretch
+  image: golang:1.17-bullseye
   variables:
     GOPATH: "/go"
   script:
@@ -23,7 +23,7 @@ coverage:
 # FIXME:
 # dependency-injection-check:
 #   stage: quality
-#   image: golang:stretch
+#   image: golang:1.17-bullseye
 #   variables:
 #     GOPATH: "/go"
 #   script:
@@ -33,7 +33,7 @@ coverage:
 
 golang-format-check:
   stage: quality
-  image: golang:stretch
+  image: golang:1.17-bullseye
   variables:
     GOPATH: "/go"
   script:

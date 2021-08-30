@@ -1,4 +1,4 @@
-FROM golang:stretch
+FROM golang:1.17-bullseye
 
 RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 

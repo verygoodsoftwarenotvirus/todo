@@ -1,4 +1,4 @@
-FROM golang:stretch
+FROM golang:1.17-bullseye
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 

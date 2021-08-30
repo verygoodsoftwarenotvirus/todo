@@ -28,8 +28,8 @@ type (
 	}
 )
 
-// ProvideSubscriber provides an Subscriber.
-func ProvideSubscriber(logger logging.Logger, sub *pubsub.Subscription, cfg *Config) (Subscriber, error) {
+// NewSubscriber provides a Subscriber.
+func NewSubscriber(logger logging.Logger, sub *pubsub.Subscription, cfg *Config) (Subscriber, error) {
 	if sub == nil {
 		return nil, errNilSubscription
 	}
@@ -52,21 +52,14 @@ func ProvideSubscriber(logger logging.Logger, sub *pubsub.Subscription, cfg *Con
 }
 
 func (p *subscriber) HandleEvents(waitPeriod time.Duration, stopCh chan bool, handler func(body []byte)) {
-	ticker := time.NewTicker(waitPeriod)
-
 	for {
-		select {
-		case <-stopCh:
-			return
-		case <-ticker.C:
-			msg, err := p.subscription.Receive(context.Background())
-			if err != nil {
-				p.logger.Error(err, "receiving subscription message")
-			}
-
-			handler(msg.Body)
-			msg.Ack()
+		msg, err := p.subscription.Receive(context.Background())
+		if err != nil {
+			p.logger.Error(err, "receiving subscription message")
 		}
+
+		handler(msg.Body)
+		msg.Ack()
 	}
 }
 

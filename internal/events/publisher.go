@@ -62,12 +62,14 @@ func (p *publisher) PublishEvent(ctx context.Context, data interface{}, extraInf
 		return fmt.Errorf("marshaling provided data to JSON: %w", err)
 	}
 
-	err = p.topic.Send(ctx, &pubsub.Message{
+	if err = p.topic.Send(ctx, &pubsub.Message{
 		Body:     jsonBytes,
 		Metadata: extraInfo,
-	})
+	}); err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }
 
 // NoopEventPublisher is a Publisher that deliberately does nothing.

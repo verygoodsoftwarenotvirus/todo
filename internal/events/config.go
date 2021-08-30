@@ -213,7 +213,7 @@ func ProvideSubscription(ctx context.Context, cfg *Config) (*pubsub.Subscription
 		addrs := strings.Split(cfg.ConnectionURL, ",")
 		config := kafkapubsub.MinimalConfig()
 
-		return kafkapubsub.OpenSubscription(addrs, config, cfg.Topic, []string{cfg.SubscriptionIdentifier}, nil)
+		return kafkapubsub.OpenSubscription(addrs, config, cfg.Topic, strings.Split(cfg.SubscriptionIdentifier, ","), nil)
 	case ProviderRabbitMQ:
 		rabbitConn, err := amqp.Dial(cfg.ConnectionURL)
 		if err != nil {

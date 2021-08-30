@@ -6,6 +6,6 @@ var (
 	// Providers is what we offer up for dependency injection.
 	Providers = wire.NewSet(
 		ProvidePublisher,
-		ProvideSubscriber,
+		NewSubscriber,
 	)
 )

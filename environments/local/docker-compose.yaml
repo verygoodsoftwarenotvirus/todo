@@ -1,22 +1,40 @@
 version: "3.3"
 services:
+    nsqlookupd:
+        image: nsqio/nsq:v1.2.1
+        hostname: nsqlookupd
+        ports:
+            - "4160:4160"
+            - "4161:4161"
+        command: /nsqlookupd
     events:
-        image: rabbitmq:3-management-alpine
-        container_name: 'rabbitmq'
+        image: nsqio/nsq:v1.2.1
+        hostname: nsqd
+        links:
+            - nsqlookupd
         ports:
-            - 5672:5672
-            - 15672:15672
-    database:
-        container_name: database
-        image: postgres:latest
-        environment:
-            POSTGRES_DB: 'todo'
-            POSTGRES_PASSWORD: 'hunter2'
-            POSTGRES_USER: 'dbuser'
-        logging:
-            driver: none
+            - "4150:4150"
+            - "4151:4151"
+        command: /nsqd -broadcast-address=nsqd --lookupd-tcp-address=nsqlookupd:4160
+    nsqadmin:
+        image: nsqio/nsq:v1.2.1
+        hostname: nsqadmin
+        links:
+            - events
         ports:
-            - "2345:5432"
+            - "4171:4171"
+        command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+#    database:
+#        container_name: database
+#        image: postgres:latest
+#        environment:
+#            POSTGRES_DB: 'todo'
+#            POSTGRES_PASSWORD: 'hunter2'
+#            POSTGRES_USER: 'dbuser'
+#        logging:
+#            driver: none
+#        ports:
+#            - "2345:5432"
     workers:
         container_name: workers
         environment:
@@ -25,7 +43,7 @@ services:
             JAEGER_DISABLED: 'false'
         links:
             #            - database
-            - events
+            - nsqlookupd
         #            - tracing-server
         #            - prometheus
         volumes:
@@ -38,14 +56,27 @@ services:
         build:
             context: '../../'
             dockerfile: 'environments/local/workers.Dockerfile'
-#    eventload:
-#        container_name: eventload
+    eventload:
+        container_name: eventload
+        links:
+            - events
+        volumes:
+            - source: '../../'
+              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
+              type: 'bind'
+        build:
+            context: '../../'
+            dockerfile: 'environments/local/eventload.Dockerfile'
+#    todo-server:
+#        container_name: server
 #        environment:
 #            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
 #            CONFIGURATION_FILEPATH: '/etc/config.toml'
 #            JAEGER_DISABLED: 'false'
+#        ports:
+#            - "8888:8888"
 #        links:
-#            #            - database
+#            - database
 #            - events
 #        #            - tracing-server
 #        #            - prometheus
@@ -58,30 +89,7 @@ services:
 #              type: 'bind'
 #        build:
 #            context: '../../'
-#            dockerfile: 'environments/local/eventload.Dockerfile'
-    todo-server:
-        container_name: server
-        environment:
-            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
-            JAEGER_DISABLED: 'false'
-        ports:
-            - "8888:8888"
-        links:
-            - database
-            - events
-        #            - tracing-server
-        #            - prometheus
-        volumes:
-            - source: '../../environments/local/service.config'
-              target: '/etc/config.toml'
-              type: 'bind'
-            - source: '../../'
-              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
-              type: 'bind'
-        build:
-            context: '../../'
-            dockerfile: 'environments/local/Dockerfile'
+#            dockerfile: 'environments/local/Dockerfile'
 #    tracing-server:
 #        image: jaegertracing/all-in-one:1.22.0
 #        logging:

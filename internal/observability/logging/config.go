@@ -26,7 +26,10 @@ func ProvideLogger(cfg Config) Logger {
 	}
 
 	l.SetLevel(cfg.Level)
-	l = l.WithName(cfg.Name)
+
+	if cfg.Name != "" {
+		l = l.WithName(cfg.Name)
+	}
 
 	return l
 }

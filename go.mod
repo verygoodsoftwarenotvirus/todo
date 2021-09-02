@@ -25,6 +25,7 @@ require (
 	github.com/boombuler/barcode v1.0.1
 	github.com/brianvoe/gofakeit/v5 v5.11.2
 	github.com/carolynvs/magex v0.5.0
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/cznic/ql v1.2.0 // indirect
 	github.com/emicklei/hazana v1.9.6
 	github.com/felixge/httpsnoop v1.0.2 // indirect

@@ -7,6 +7,8 @@ services:
             - "4160:4160"
             - "4161:4161"
         command: /nsqlookupd
+        logging:
+            driver: none
     events:
         image: nsqio/nsq:v1.2.1
         hostname: nsqd
@@ -16,39 +18,39 @@ services:
             - "4150:4150"
             - "4151:4151"
         command: /nsqd -broadcast-address=nsqd --lookupd-tcp-address=nsqlookupd:4160
-    nsqadmin:
-        image: nsqio/nsq:v1.2.1
-        hostname: nsqadmin
-        links:
-            - events
-        ports:
-            - "4171:4171"
-        command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
-#    database:
-#        container_name: database
-#        image: postgres:latest
-#        environment:
-#            POSTGRES_DB: 'todo'
-#            POSTGRES_PASSWORD: 'hunter2'
-#            POSTGRES_USER: 'dbuser'
+        logging:
+            driver: none
+#    nsqadmin:
+#        image: nsqio/nsq:v1.2.1
+#        hostname: nsqadmin
+#        links:
+#            - events
+#        ports:
+#            - "4171:4171"
+#        command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
 #        logging:
 #            driver: none
-#        ports:
-#            - "2345:5432"
+    database:
+        container_name: database
+        image: postgres:latest
+        environment:
+            POSTGRES_DB: 'todo'
+            POSTGRES_PASSWORD: 'hunter2'
+            POSTGRES_USER: 'dbuser'
+        logging:
+            driver: none
+        ports:
+            - "2345:5432"
     workers:
         container_name: workers
-        environment:
-            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
-            JAEGER_DISABLED: 'false'
+        depends_on:
+            - todo-server
         links:
-            #            - database
+            - database
             - nsqlookupd
-        #            - tracing-server
-        #            - prometheus
         volumes:
             - source: '../../environments/local/service.config'
-              target: '/etc/config.toml'
+              target: '/etc/service.config'
               type: 'bind'
             - source: '../../'
               target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
@@ -56,40 +58,31 @@ services:
         build:
             context: '../../'
             dockerfile: 'environments/local/workers.Dockerfile'
-    eventload:
-        container_name: eventload
+    todo-server:
+        container_name: server
+        environment:
+            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+            CONFIGURATION_FILEPATH: '/etc/service.config'
+            JAEGER_DISABLED: 'false'
+        ports:
+            - "8888:8888"
+        depends_on:
+            - nsqlookupd
         links:
+            - database
             - events
+        #            - tracing-server
+        #            - prometheus
         volumes:
+            - source: '../../environments/local/service.config'
+              target: '/etc/service.config'
+              type: 'bind'
             - source: '../../'
               target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
               type: 'bind'
         build:
             context: '../../'
-            dockerfile: 'environments/local/eventload.Dockerfile'
-#    todo-server:
-#        container_name: server
-#        environment:
-#            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
-#            CONFIGURATION_FILEPATH: '/etc/config.toml'
-#            JAEGER_DISABLED: 'false'
-#        ports:
-#            - "8888:8888"
-#        links:
-#            - database
-#            - events
-#        #            - tracing-server
-#        #            - prometheus
-#        volumes:
-#            - source: '../../environments/local/service.config'
-#              target: '/etc/config.toml'
-#              type: 'bind'
-#            - source: '../../'
-#              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
-#              type: 'bind'
-#        build:
-#            context: '../../'
-#            dockerfile: 'environments/local/Dockerfile'
+            dockerfile: 'environments/local/Dockerfile'
 #    tracing-server:
 #        image: jaegertracing/all-in-one:1.22.0
 #        logging:

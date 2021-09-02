@@ -1,53 +1,51 @@
 package main
 
 import (
-	"log"
+	"github.com/nsqio/go-nsq"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"github.com/nsqio/go-nsq"
 )
 
-// MyHandler handles NSQ messages from the channel being subscribed to
-type MyHandler struct {
-}
-
-func (h *MyHandler) HandleMessage(message *nsq.Message) error {
-	log.Printf("Got a message: %s", string(message.Body))
-
-	return nil
-}
+const (
+	channel = "todo-service"
+)
 
 func main() {
 	const (
-		addr    = "nsqlookupd:4161"
-		topic   = "todo-events"
-		channel = "things.and.stuff"
+		addr = "nsqlookupd:4161"
 	)
 
+	logger := logging.ProvideLogger(logging.Config{
+		Provider: logging.ProviderZerolog,
+	})
+
 	// configure a new Consumer
-	config := nsq.NewConfig()
-	consumer, err := nsq.NewConsumer(topic, channel, config)
+	pendingWritesConsumer, err := events.NewTopicConsumer(addr, "pending_writes", func(message *nsq.Message) error {
+		logger.WithName("pending_writes_consumer").WithValue("message_body", string(message.Body)).Debug("Got a write message")
+		return nil
+	})
+
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
+	defer pendingWritesConsumer.Stop()
 
-	// register our message handler with the consumer
-	consumer.AddHandler(&MyHandler{})
-
-	// connect to NSQ and start receiving messages
-	//err = consumer.ConnectToNSQD("nsqd:4150")
-	if err = consumer.ConnectToNSQLookupd(addr); err != nil {
-		log.Fatal(err)
+	// configure a new Consumer
+	writesConsumer, err := events.NewTopicConsumer(addr, "writes", func(message *nsq.Message) error {
+		logger.WithName("writes_consumer").WithValue("message_body", string(message.Body)).Debug("Got a write message")
+		return nil
+	})
+	if err != nil {
+		logger.Fatal(err)
 	}
+	defer writesConsumer.Stop()
 
 	// wait for signal to exit
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigChan
-
-	// disconnect
-	consumer.Stop()
 }

@@ -2,7 +2,10 @@ package items
 
 import (
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"log"
 	"net/http"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -64,6 +67,21 @@ func ProvideService(
 		search:                    searchIndexManager,
 		tracer:                    tracing.NewTracer(serviceName),
 	}
+
+	// TODO: put this in config
+	const addr = "events:4150"
+	pendingWritesProducer, err := events.NewTopicProducer(logger, addr, "pending_writes")
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	go func() {
+		for range time.Tick(time.Second) {
+			if err = pendingWritesProducer.Publish(`{"things": "stuff"}`); err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
 
 	return svc, nil
 }

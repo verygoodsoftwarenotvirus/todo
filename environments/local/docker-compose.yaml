@@ -20,16 +20,6 @@ services:
         command: /nsqd -broadcast-address=nsqd --lookupd-tcp-address=nsqlookupd:4160
         logging:
             driver: none
-#    nsqadmin:
-#        image: nsqio/nsq:v1.2.1
-#        hostname: nsqadmin
-#        links:
-#            - events
-#        ports:
-#            - "4171:4171"
-#        command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
-#        logging:
-#            driver: none
     database:
         container_name: database
         image: postgres:latest
@@ -53,7 +43,7 @@ services:
               target: '/etc/service.config'
               type: 'bind'
             - source: '../../'
-              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
+              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo/cmd/workers'
               type: 'bind'
         build:
             context: '../../'
@@ -83,6 +73,16 @@ services:
         build:
             context: '../../'
             dockerfile: 'environments/local/Dockerfile'
+#    nsqadmin:
+#        image: nsqio/nsq:v1.2.1
+#        hostname: nsqadmin
+#        links:
+#            - events
+#        ports:
+#            - "4171:4171"
+#        command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+#        logging:
+#            driver: none
 #    tracing-server:
 #        image: jaegertracing/all-in-one:1.22.0
 #        logging:

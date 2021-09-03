@@ -2,12 +2,8 @@ package items
 
 import (
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
-	"log"
-	"net/http"
-	"time"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -15,6 +11,9 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"log"
+	"net/http"
+	"time"
 )
 
 const (
@@ -38,6 +37,7 @@ type (
 		itemCounter               metrics.UnitCounter
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
+		pendingWritesProducer     events.Producer
 		search                    SearchIndex
 	}
 )
@@ -51,33 +51,34 @@ func ProvideService(
 	counterProvider metrics.UnitCounterProvider,
 	searchIndexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
+	producerProvider events.ProducerProvider,
 ) (types.ItemDataService, error) {
 	searchIndexManager, err := searchIndexProvider(search.IndexPath(cfg.SearchIndexPath), "items", logger)
 	if err != nil {
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
+	// TODO: put topic in config
+	pendingWritesProducer, err := producerProvider.ProviderProducer("pending_writes")
+	if err != nil {
+		return nil, fmt.Errorf("setting up event producer: %w", err)
+	}
+
 	svc := &service{
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
-		itemIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, "item"),
+		itemIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, serviceName),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		itemDataManager:           itemDataManager,
+		pendingWritesProducer:     pendingWritesProducer,
 		encoderDecoder:            encoder,
 		itemCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		search:                    searchIndexManager,
 		tracer:                    tracing.NewTracer(serviceName),
 	}
 
-	// TODO: put this in config
-	const addr = "events:4150"
-	pendingWritesProducer, err := events.NewTopicProducer(logger, addr, "pending_writes")
-	if err != nil {
-		logger.Fatal(err)
-	}
-
 	go func() {
 		for range time.Tick(time.Second) {
-			if err = pendingWritesProducer.Publish(`{"things": "stuff"}`); err != nil {
+			if err = pendingWritesProducer.Publish([]byte(`{"things": "stuff"}`)); err != nil {
 				log.Fatal(err)
 			}
 		}

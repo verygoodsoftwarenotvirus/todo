@@ -17,6 +17,7 @@ var (
 			"Encoding",
 			"Uploads",
 			"Search",
+			"Events",
 			"Server",
 			"Services",
 		),

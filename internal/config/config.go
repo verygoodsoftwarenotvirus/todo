@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"os"
 	"strings"
 	"time"
@@ -67,6 +68,7 @@ type (
 
 	// InstanceConfig configures an instance of the service. It is composed of all the other setting structs.
 	InstanceConfig struct {
+		Events        events.ProducerConfig  `json:"events" mapstructure:"events" toml:"events,omitempty"`
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"encoding,omitempty"`
 		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`

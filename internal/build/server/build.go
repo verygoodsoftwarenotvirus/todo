@@ -1,3 +1,4 @@
+//go:build wireinject
 // +build wireinject
 
 package server
@@ -12,6 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
@@ -45,6 +47,7 @@ func Build(
 		config.Providers,
 		database.Providers,
 		dbconfig.Providers,
+		events.Providers,
 		encoding.Providers,
 		server.Providers,
 		metrics.Providers,

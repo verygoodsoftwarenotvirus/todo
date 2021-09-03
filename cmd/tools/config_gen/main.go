@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"log"
 	"os"
 	"path/filepath"
@@ -60,6 +61,8 @@ const (
 	defaultPASETOLifetime = 1 * time.Minute
 
 	contentTypeJSON = "application/json"
+
+	eventsServerAddress = "events:4150"
 )
 
 var (
@@ -175,6 +178,9 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
+		Events: events.ProducerConfig{
+			Address: eventsServerAddress,
+		},
 		Server: localServer,
 		Database: dbconfig.Config{
 			Debug:                     true,
@@ -260,6 +266,9 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
+		Events: events.ProducerConfig{
+			Address: eventsServerAddress,
+		},
 		Server: localServer,
 		Database: dbconfig.Config{
 			Debug:                     true,
@@ -335,6 +344,9 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			Meta: config.MetaSettings{
 				Debug:   false,
 				RunMode: testingEnv,
+			},
+			Events: events.ProducerConfig{
+				Address: eventsServerAddress,
 			},
 			Encoding: encoding.Config{
 				ContentType: contentTypeJSON,

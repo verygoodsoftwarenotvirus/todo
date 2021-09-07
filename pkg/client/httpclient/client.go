@@ -47,7 +47,7 @@ type Client struct {
 	unauthenticatedClient *http.Client
 	authedClient          *http.Client
 	authMethod            *authMethod
-	accountID             uint64
+	accountID             string
 	debug                 bool
 }
 
@@ -219,6 +219,14 @@ func (c *Client) IsUp(ctx context.Context) bool {
 	return res.StatusCode == http.StatusOK
 }
 
+func (c *Client) logRequest(logger logging.Logger, res *http.Response) {
+	if bdump, err := httputil.DumpResponse(res, true); err == nil {
+		logger = logger.WithValue("response_body", string(bdump))
+	}
+
+	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
+}
+
 // fetchResponseToRequest takes a given *http.Request and executes it with the provided.
 // client, alongside some debugging logging.
 func (c *Client) fetchResponseToRequest(ctx context.Context, client *http.Client, req *http.Request) (*http.Response, error) {
@@ -237,13 +245,6 @@ func (c *Client) fetchResponseToRequest(ctx context.Context, client *http.Client
 		return nil, observability.PrepareError(err, logger, span, "executing request")
 	}
 
-	var bdump []byte
-	if bdump, err = httputil.DumpResponse(res, true); err == nil {
-		logger = logger.WithValue("response_body", string(bdump))
-	}
-
-	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
-
 	return res, nil
 }
 
@@ -259,8 +260,6 @@ func (c *Client) executeAndUnmarshal(ctx context.Context, req *http.Request, htt
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "executing request")
 	}
-
-	logger.WithValue(keys.ResponseStatusKey, res.StatusCode).Debug("request executed")
 
 	if err = errorFromResponse(res); err != nil {
 		return observability.PrepareError(err, logger, span, "executing request")

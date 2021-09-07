@@ -10,3 +10,12 @@ services:
               type: 'bind'
     test:
         container_name: 'sqlite_integration_tests'
+#    workers:
+#      container_name: workers
+#      depends_on:
+#        - todo-server
+#      links:
+#        - nsqlookupd
+#      build:
+#        context: '../../../../'
+#        dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'

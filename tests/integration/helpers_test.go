@@ -44,7 +44,7 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 	user, err := testutils.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
 	require.NoError(t, err)
 
-	t.Logf("created user #%d: %q", user.ID, user.Username)
+	t.Logf("created user %q: %q", user.ID, user.Username)
 
 	cookie, err = testutils.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
@@ -173,7 +173,7 @@ func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookie
 	return cClient, PASETOClient
 }
 
-func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID uint64, key string) {
+func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID, key string) {
 	t.Helper()
 
 	expectedEventTypes := []string{}
@@ -186,7 +186,7 @@ func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*typ
 	for _, e := range actualEntries {
 		actualEventTypes = append(actualEventTypes, e.EventType)
 
-		if relevantID != 0 && key != "" {
+		if relevantID != "" && key != "" {
 			if assert.Contains(t, e.Context, key) {
 				assert.EqualValues(t, relevantID, e.Context[key])
 			}

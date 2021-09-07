@@ -18,7 +18,7 @@ var (
 )
 
 // BuildUserHasStatusQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (b *Postgres) BuildUserHasStatusQuery(ctx context.Context, userID uint64, statuses ...string) (query string, args []interface{}) {
+func (b *Postgres) BuildUserHasStatusQuery(ctx context.Context, userID string, statuses ...string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (b *Postgres) BuildUserHasStatusQuery(ctx context.Context, userID uint64, s
 }
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (b *Postgres) BuildGetUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildGetUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -66,7 +66,7 @@ func (b *Postgres) BuildGetUserQuery(ctx context.Context, userID uint64) (query 
 
 // BuildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
-func (b *Postgres) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -160,7 +160,7 @@ func (b *Postgres) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFi
 		nil,
 		"",
 		querybuilding.UsersTableColumns,
-		0,
+		"",
 		false,
 		filter,
 	)
@@ -182,7 +182,7 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.UsersTableUsernameColumn,
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
@@ -191,24 +191,23 @@ func (b *Postgres) BuildTestUserCreationQuery(ctx context.Context, testUserConfi
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				testUserConfig.ID,
 				testUserConfig.Username,
 				testUserConfig.HashedPassword,
 				querybuilding.DefaultTestUserTwoFactorSecret,
 				types.GoodStandingAccountStatus,
 				serviceRole.String(),
 				currentUnixTimeQuery,
-			).
-			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
+			),
 	)
 }
 
-// BuildCreateUserQuery returns a SQL query (and arguments) that would create a given Requester.
+// BuildUserCreationQuery returns a SQL query (and arguments) that would create a given Requester.
 // NOTE: we always default is_admin to false, on the assumption that
 // admins have DB access and will change that value via SQL query.
 // There should be no way to update a user via this structure
 // such that they would have admin privileges.
-func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (b *Postgres) BuildUserCreationQuery(ctx context.Context, input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -218,7 +217,7 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.UsersTableUsernameColumn,
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
@@ -226,14 +225,13 @@ func (b *Postgres) BuildCreateUserQuery(ctx context.Context, input *types.UserDa
 				querybuilding.UsersTableServiceRolesColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				input.ID,
 				input.Username,
 				input.HashedPassword,
 				input.TwoFactorSecret,
 				types.UnverifiedAccountStatus,
 				authorization.ServiceUserRole.String(),
-			).
-			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
+			),
 	)
 }
 
@@ -281,7 +279,7 @@ func (b *Postgres) BuildSetUserStatusQuery(ctx context.Context, input *types.Use
 }
 
 // BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's passwords.
-func (b *Postgres) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64, newHash string) (query string, args []interface{}) {
+func (b *Postgres) BuildUpdateUserPasswordQuery(ctx context.Context, userID, newHash string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -302,7 +300,7 @@ func (b *Postgres) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint
 }
 
 // BuildUpdateUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (b *Postgres) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID uint64, newSecret string) (query string, args []interface{}) {
+func (b *Postgres) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID, newSecret string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -321,7 +319,7 @@ func (b *Postgres) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, user
 }
 
 // BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (b *Postgres) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -340,7 +338,7 @@ func (b *Postgres) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, user
 }
 
 // BuildArchiveUserQuery builds a SQL query that marks a user as archived.
-func (b *Postgres) BuildArchiveUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildArchiveUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -358,7 +356,7 @@ func (b *Postgres) BuildArchiveUserQuery(ctx context.Context, userID uint64) (qu
 }
 
 // BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
-func (b *Postgres) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

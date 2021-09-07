@@ -14,7 +14,7 @@ import (
 func TestBuilder_BuildGetWebhookRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/webhooks/%d"
+	const expectedPathFormat = "/api/v1/webhooks/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -35,7 +35,7 @@ func TestBuilder_BuildGetWebhookRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetWebhookRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetWebhookRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -140,7 +140,7 @@ func TestBuilder_BuildCreateWebhookRequest(T *testing.T) {
 func TestBuilder_BuildUpdateWebhookRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/webhooks/%d"
+	const expectedPathFormat = "/api/v1/webhooks/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -182,7 +182,7 @@ func TestBuilder_BuildUpdateWebhookRequest(T *testing.T) {
 func TestBuilder_BuildArchiveWebhookRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/webhooks/%d"
+	const expectedPathFormat = "/api/v1/webhooks/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -203,7 +203,7 @@ func TestBuilder_BuildArchiveWebhookRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildArchiveWebhookRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildArchiveWebhookRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -224,7 +224,7 @@ func TestBuilder_BuildArchiveWebhookRequest(T *testing.T) {
 func TestBuilder_BuildGetAuditLogForWebhookRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/webhooks/%d/audit"
+	const expectedPath = "/api/v1/webhooks/%s/audit"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -245,7 +245,7 @@ func TestBuilder_BuildGetAuditLogForWebhookRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetAuditLogForWebhookRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetAuditLogForWebhookRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

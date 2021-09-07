@@ -17,7 +17,7 @@ var (
 )
 
 // BuildGetAccountQuery constructs a SQL query for fetching an account with a given ID belong to a user with a given ID.
-func (b *Sqlite) BuildGetAccountQuery(ctx context.Context, accountID, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetAccountQuery(ctx context.Context, accountID, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -79,7 +79,7 @@ func (b *Sqlite) BuildGetBatchOfAccountsQuery(ctx context.Context, beginID, endI
 
 // BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (b *Sqlite) BuildGetAccountsQuery(ctx context.Context, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetAccountsQuery(ctx context.Context, userID string, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -146,7 +146,7 @@ func (b *Sqlite) BuildAccountCreationQuery(ctx context.Context, input *types.Acc
 		span,
 		b.sqlBuilder.Insert(querybuilding.AccountsTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.AccountsTableNameColumn,
 				querybuilding.AccountsTableBillingStatusColumn,
 				querybuilding.AccountsTableContactEmailColumn,
@@ -154,7 +154,7 @@ func (b *Sqlite) BuildAccountCreationQuery(ctx context.Context, input *types.Acc
 				querybuilding.AccountsTableUserOwnershipColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				input.ID,
 				input.Name,
 				types.UnpaidAccountBillingStatus,
 				input.ContactEmail,
@@ -187,7 +187,7 @@ func (b *Sqlite) BuildUpdateAccountQuery(ctx context.Context, input *types.Accou
 }
 
 // BuildArchiveAccountQuery returns a SQL query which marks a given account belonging to a given user as archived.
-func (b *Sqlite) BuildArchiveAccountQuery(ctx context.Context, accountID, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildArchiveAccountQuery(ctx context.Context, accountID, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -208,7 +208,7 @@ func (b *Sqlite) BuildArchiveAccountQuery(ctx context.Context, accountID, userID
 }
 
 // BuildGetAuditLogEntriesForAccountQuery constructs a SQL query for fetching audit log entries belong to an account with a given ID.
-func (b *Sqlite) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

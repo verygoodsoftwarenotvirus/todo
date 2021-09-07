@@ -6,14 +6,14 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/segmentio/ksuid"
 )
 
 // BuildFakeWebhook builds a faked Webhook.
 func BuildFakeWebhook() *types.Webhook {
 	return &types.Webhook{
-		ID:               uint64(fake.Uint32()),
-		ExternalID:       fake.UUID(),
-		Name:             fake.Word(),
+		ID:               ksuid.New().String(),
+		Name:             fake.UUID(),
 		ContentType:      "application/json",
 		URL:              fake.URL(),
 		Method:           http.MethodPost,
@@ -22,7 +22,7 @@ func BuildFakeWebhook() *types.Webhook {
 		Topics:           []string{fake.Word()},
 		CreatedOn:        uint64(uint32(fake.Date().Unix())),
 		ArchivedOn:       nil,
-		BelongsToAccount: fake.Uint64(),
+		BelongsToAccount: fake.UUID(),
 	}
 }
 
@@ -82,6 +82,7 @@ func BuildFakeWebhookCreationInput() *types.WebhookCreationInput {
 // BuildFakeWebhookCreationInputFromWebhook builds a faked WebhookCreationInput.
 func BuildFakeWebhookCreationInputFromWebhook(webhook *types.Webhook) *types.WebhookCreationInput {
 	return &types.WebhookCreationInput{
+		ID:               webhook.ID,
 		Name:             webhook.Name,
 		ContentType:      webhook.ContentType,
 		URL:              webhook.URL,

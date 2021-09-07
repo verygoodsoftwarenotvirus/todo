@@ -18,7 +18,7 @@ var (
 )
 
 // BuildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
-func (b *Sqlite) BuildGetWebhookQuery(ctx context.Context, webhookID, accountID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetWebhookQuery(ctx context.Context, webhookID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -68,7 +68,7 @@ func (b *Sqlite) BuildGetBatchOfWebhooksQuery(ctx context.Context, beginID, endI
 }
 
 // BuildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
-func (b *Sqlite) BuildGetWebhooksQuery(ctx context.Context, accountID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetWebhooksQuery(ctx context.Context, accountID string, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -97,7 +97,7 @@ func (b *Sqlite) BuildCreateWebhookQuery(ctx context.Context, x *types.WebhookCr
 		span,
 		b.sqlBuilder.Insert(querybuilding.WebhooksTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.WebhooksTableNameColumn,
 				querybuilding.WebhooksTableContentTypeColumn,
 				querybuilding.WebhooksTableURLColumn,
@@ -108,7 +108,7 @@ func (b *Sqlite) BuildCreateWebhookQuery(ctx context.Context, x *types.WebhookCr
 				querybuilding.WebhooksTableOwnershipColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				x.ID,
 				x.Name,
 				x.ContentType,
 				x.URL,
@@ -149,7 +149,7 @@ func (b *Sqlite) BuildUpdateWebhookQuery(ctx context.Context, input *types.Webho
 }
 
 // BuildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
-func (b *Sqlite) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accountID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -170,7 +170,7 @@ func (b *Sqlite) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accoun
 }
 
 // BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a webhook with a given ID.
-func (b *Sqlite) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

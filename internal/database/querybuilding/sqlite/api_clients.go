@@ -67,7 +67,7 @@ func (b *Sqlite) BuildGetAllAPIClientsCountQuery(ctx context.Context) string {
 
 // BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of API clients that
 // meet the given filter's criteria (if relevant) and belong to a given account.
-func (b *Sqlite) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetAPIClientsQuery(ctx context.Context, userID string, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -91,7 +91,7 @@ func (b *Sqlite) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, fil
 }
 
 // BuildGetAPIClientByDatabaseIDQuery returns a SQL query which requests a given API client by its database ID.
-func (b *Sqlite) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -119,14 +119,14 @@ func (b *Sqlite) BuildCreateAPIClientQuery(ctx context.Context, input *types.API
 		span,
 		b.sqlBuilder.Insert(querybuilding.APIClientsTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.APIClientsTableNameColumn,
 				querybuilding.APIClientsTableClientIDColumn,
 				querybuilding.APIClientsTableSecretKeyColumn,
 				querybuilding.APIClientsTableOwnershipColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				input.ID,
 				input.Name,
 				input.ClientID,
 				input.ClientSecret,
@@ -158,7 +158,7 @@ func (b *Sqlite) BuildUpdateAPIClientQuery(ctx context.Context, input *types.API
 }
 
 // BuildArchiveAPIClientQuery returns a SQL query (and arguments) that will mark an API client as archived.
-func (b *Sqlite) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -179,7 +179,7 @@ func (b *Sqlite) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userI
 }
 
 // BuildGetAuditLogEntriesForAPIClientQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
-func (b *Sqlite) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

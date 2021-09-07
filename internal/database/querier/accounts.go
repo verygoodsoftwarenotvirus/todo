@@ -13,6 +13,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 var (
@@ -35,7 +37,6 @@ func (q *SQLQuerier) scanAccount(ctx context.Context, scan database.Scanner, inc
 
 	targetVars := []interface{}{
 		&account.ID,
-		&account.ExternalID,
 		&account.Name,
 		&account.BillingStatus,
 		&account.ContactEmail,
@@ -119,11 +120,11 @@ func (q *SQLQuerier) scanAccounts(ctx context.Context, rows database.ResultItera
 }
 
 // GetAccount fetches an account from the database.
-func (q *SQLQuerier) GetAccount(ctx context.Context, accountID, userID uint64) (*types.Account, error) {
+func (q *SQLQuerier) GetAccount(ctx context.Context, accountID, userID string) (*types.Account, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 || userID == 0 {
+	if accountID == "" || userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -225,11 +226,11 @@ func (q *SQLQuerier) GetAllAccounts(ctx context.Context, results chan []*types.A
 }
 
 // GetAccounts fetches a list of accounts from the database that meet a particular filter.
-func (q *SQLQuerier) GetAccounts(ctx context.Context, userID uint64, filter *types.QueryFilter) (x *types.AccountList, err error) {
+func (q *SQLQuerier) GetAccounts(ctx context.Context, userID string, filter *types.QueryFilter) (x *types.AccountList, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -269,7 +270,7 @@ func (q *SQLQuerier) GetAccountsForAdmin(ctx context.Context, filter *types.Quer
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(ctx, 0, true, filter)
+	query, args := q.sqlQueryBuilder.BuildGetAccountsQuery(ctx, "", true, filter)
 
 	rows, err := q.performReadQuery(ctx, q.db, "accounts for admin", query, args...)
 	if err != nil {
@@ -284,11 +285,11 @@ func (q *SQLQuerier) GetAccountsForAdmin(ctx context.Context, filter *types.Quer
 }
 
 // CreateAccount creates an account in the database.
-func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCreationInput, createdByUser uint64) (*types.Account, error) {
+func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCreationInput, createdByUser string) (*types.Account, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if createdByUser == 0 {
+	if createdByUser == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -307,16 +308,13 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, input)
 
 	// create the account.
-	id, err := q.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
-	if err != nil {
+	if writeErr := q.performWriteQueryIgnoringReturn(ctx, tx, "account creation", accountCreationQuery, accountCreationArgs); writeErr != nil {
 		q.rollbackTransaction(ctx, tx)
-		return nil, observability.PrepareError(err, logger, span, "creating account")
+		return nil, observability.PrepareError(writeErr, logger, span, "creating account")
 	}
 
-	logger = logger.WithValue(keys.AccountIDKey, id)
-
 	account := &types.Account{
-		ID:            id,
+		ID:            input.ID,
 		Name:          input.Name,
 		BelongsToUser: input.BelongsToUser,
 		BillingStatus: types.UnpaidAccountBillingStatus,
@@ -331,6 +329,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 	}
 
 	addInput := &types.AddUserToAccountInput{
+		ID:           ksuid.New().String(),
 		UserID:       input.BelongsToUser,
 		AccountID:    account.ID,
 		Reason:       "account creation",
@@ -359,11 +358,11 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 }
 
 // UpdateAccount updates a particular account. Note that UpdateAccount expects the provided input to have a valid ID.
-func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, changedByUser uint64, changes []*types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, changedByUser string, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if changedByUser == 0 {
+	if changedByUser == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -402,11 +401,11 @@ func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account, 
 }
 
 // ArchiveAccount archives an account from the database by its ID.
-func (q *SQLQuerier) ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser uint64) error {
+func (q *SQLQuerier) ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 || userID == 0 || archivedByUser == 0 {
+	if accountID == "" || userID == "" || archivedByUser == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -446,11 +445,11 @@ func (q *SQLQuerier) ArchiveAccount(ctx context.Context, accountID, userID, arch
 }
 
 // GetAuditLogEntriesForAccount fetches a list of audit log entries from the database that relate to a given account.
-func (q *SQLQuerier) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
+func (q *SQLQuerier) GetAuditLogEntriesForAccount(ctx context.Context, accountID string) ([]*types.AuditLogEntry, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 

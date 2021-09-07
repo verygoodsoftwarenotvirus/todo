@@ -13,7 +13,7 @@ import (
 func TestBuilder_BuildGetAuditLogEntryRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/admin/audit_log/%d"
+	const expectedPath = "/api/v1/admin/audit_log/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()

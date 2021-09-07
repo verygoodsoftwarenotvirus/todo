@@ -24,8 +24,9 @@ func buildTestService(t *testing.T) *service {
 
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On(
-		"BuildRouteParamIDFetcher",
-		mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+		"BuildRouteParamStringIDFetcher",
+		UserIDURIParamKey,
+	).Return(func(*http.Request) string { return "" })
 
 	s := ProvideService(
 		logger,
@@ -56,8 +57,9 @@ func TestProvideAdminService(T *testing.T) {
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+			"BuildRouteParamStringIDFetcher",
+			UserIDURIParamKey,
+		).Return(func(*http.Request) string { return "" })
 
 		s := ProvideService(
 			logger,

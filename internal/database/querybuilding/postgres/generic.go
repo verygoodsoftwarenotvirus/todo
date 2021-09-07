@@ -23,6 +23,10 @@ func joinIDs(ids []uint64) string {
 	return strings.Join(out, ",")
 }
 
+func joinStringIDs(ids []string) string {
+	return strings.Join(ids, ",")
+}
+
 // BuildQueryOnly builds a given query, handles whatever errs and returns just the query and args.
 func (b *Postgres) buildQueryOnly(span tracing.Span, builder squirrel.Sqlizer) string {
 	query, _, err := builder.ToSql()
@@ -41,7 +45,7 @@ func (b *Postgres) buildQuery(span tracing.Span, builder squirrel.Sqlizer) (quer
 	return query, args
 }
 
-func (b *Postgres) buildTotalCountQuery(ctx context.Context, tableName string, joins []string, where squirrel.Eq, ownershipColumn string, userID uint64, forAdmin, includeArchived bool) (query string, args []interface{}) {
+func (b *Postgres) buildTotalCountQuery(ctx context.Context, tableName string, joins []string, where squirrel.Eq, ownershipColumn, userID string, forAdmin, includeArchived bool) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -59,7 +63,7 @@ func (b *Postgres) buildTotalCountQuery(ctx context.Context, tableName string, j
 	}
 
 	if !forAdmin {
-		if userID != 0 && ownershipColumn != "" {
+		if userID != "" && ownershipColumn != "" {
 			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = userID
 		}
 
@@ -75,7 +79,7 @@ func (b *Postgres) buildTotalCountQuery(ctx context.Context, tableName string, j
 	return b.buildQuery(span, totalCountQueryBuilder)
 }
 
-func (b *Postgres) buildFilteredCountQuery(ctx context.Context, tableName string, joins []string, where squirrel.Eq, ownershipColumn string, userID uint64, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Postgres) buildFilteredCountQuery(ctx context.Context, tableName string, joins []string, where squirrel.Eq, ownershipColumn, userID string, forAdmin, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -97,7 +101,7 @@ func (b *Postgres) buildFilteredCountQuery(ctx context.Context, tableName string
 	}
 
 	if !forAdmin {
-		if userID != 0 && ownershipColumn != "" {
+		if userID != "" && ownershipColumn != "" {
 			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = userID
 		}
 
@@ -119,7 +123,17 @@ func (b *Postgres) buildFilteredCountQuery(ctx context.Context, tableName string
 
 // BuildListQuery builds a SQL query selecting rows that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (b *Postgres) buildListQuery(ctx context.Context, tableName string, joins []string, where squirrel.Eq, ownershipColumn string, columns []string, ownerID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Postgres) buildListQuery(
+	ctx context.Context,
+	tableName string,
+	joins []string,
+	where squirrel.Eq,
+	ownershipColumn string,
+	columns []string,
+	ownerID string,
+	forAdmin bool,
+	filter *types.QueryFilter,
+) (query string, args []interface{}) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -153,7 +167,7 @@ func (b *Postgres) buildListQuery(ctx context.Context, tableName string, joins [
 		}
 		where[fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn)] = nil
 
-		if ownershipColumn != "" && ownerID != 0 {
+		if ownershipColumn != "" && ownerID != "" {
 			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = ownerID
 		}
 

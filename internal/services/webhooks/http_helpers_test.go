@@ -41,7 +41,7 @@ func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {
 	helper.exampleCreationInput = fakes.BuildFakeWebhookCreationInputFromWebhook(helper.exampleWebhook)
 	helper.exampleUpdateInput = fakes.BuildFakeWebhookUpdateInputFromWebhook(helper.exampleWebhook)
 
-	helper.service.webhookIDFetcher = func(*http.Request) uint64 {
+	helper.service.webhookIDFetcher = func(*http.Request) string {
 		return helper.exampleWebhook.ID
 	}
 
@@ -53,7 +53,7 @@ func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {
 			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 		},
 		ActiveAccountID: helper.exampleAccount.ID,
-		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+		AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
 			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	}

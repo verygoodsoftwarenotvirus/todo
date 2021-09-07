@@ -7,11 +7,6 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
-const (
-	// APIClientKey is a ContextKey for use with contexts involving API clients.
-	APIClientKey ContextKey = "api_client"
-)
-
 type (
 	// APIClient represents a user-authorized API client.
 	APIClient struct {
@@ -19,11 +14,10 @@ type (
 		ArchivedOn    *uint64 `json:"archivedOn"`
 		Name          string  `json:"name"`
 		ClientID      string  `json:"clientID"`
-		ExternalID    string  `json:"externalID"`
+		ID            string  `json:"id"`
+		BelongsToUser string  `json:"belongsToUser"`
 		ClientSecret  []byte  `json:"-"`
 		CreatedOn     uint64  `json:"createdOn"`
-		ID            uint64  `json:"id"`
-		BelongsToUser uint64  `json:"belongsToUser"`
 	}
 
 	// APIClientList is a response struct containing a list of API clients.
@@ -35,29 +29,30 @@ type (
 	// APIClientCreationInput is a struct for use when creating API clients.
 	APIClientCreationInput struct {
 		UserLoginInput
+		ID            string `json:"-"`
 		Name          string `json:"clientName"`
 		ClientID      string `json:"-"`
+		BelongsToUser string `json:"-"`
 		ClientSecret  []byte `json:"-"`
-		BelongsToUser uint64 `json:"-"`
 	}
 
 	// APIClientCreationResponse is a struct for informing users of what their API client's secret key is.
 	APIClientCreationResponse struct {
 		ClientID     string `json:"clientID"`
 		ClientSecret string `json:"clientSecret"`
-		ID           uint64 `json:"id"`
+		ID           string `json:"id"`
 	}
 
 	// APIClientDataManager handles API clients.
 	APIClientDataManager interface {
 		GetAPIClientByClientID(ctx context.Context, clientID string) (*APIClient, error)
-		GetAPIClientByDatabaseID(ctx context.Context, clientID, ownerUserID uint64) (*APIClient, error)
+		GetAPIClientByDatabaseID(ctx context.Context, clientID, owneruserID string) (*APIClient, error)
 		GetAllAPIClients(ctx context.Context, resultChannel chan []*APIClient, bucketSize uint16) error
 		GetTotalAPIClientCount(ctx context.Context) (uint64, error)
-		GetAPIClients(ctx context.Context, ownerUserID uint64, filter *QueryFilter) (*APIClientList, error)
-		CreateAPIClient(ctx context.Context, input *APIClientCreationInput, createdByUser uint64) (*APIClient, error)
-		ArchiveAPIClient(ctx context.Context, clientID, ownerUserID, archivedByUser uint64) error
-		GetAuditLogEntriesForAPIClient(ctx context.Context, clientID uint64) ([]*AuditLogEntry, error)
+		GetAPIClients(ctx context.Context, owneruserID string, filter *QueryFilter) (*APIClientList, error)
+		CreateAPIClient(ctx context.Context, input *APIClientCreationInput, createdByUser string) (*APIClient, error)
+		ArchiveAPIClient(ctx context.Context, clientID, ownerUserID, archivedByUser string) error
+		GetAuditLogEntriesForAPIClient(ctx context.Context, clientID string) ([]*AuditLogEntry, error)
 	}
 
 	// APIClientDataService describes a structure capable of serving traffic related to API clients.

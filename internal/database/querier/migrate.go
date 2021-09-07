@@ -7,6 +7,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 // Migrate is a simple wrapper around the core querier Migrate call.
@@ -30,16 +32,24 @@ func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserCon
 
 		_, _, _, err := q.scanUser(ctx, userRow, false)
 		if err != nil {
+			if testUserConfig.ID == "" {
+				testUserConfig.ID = ksuid.New().String()
+			}
+
 			testUserCreationQuery, testUserCreationArgs := q.sqlQueryBuilder.BuildTestUserCreationQuery(ctx, testUserConfig)
 
 			// these structs will be fleshed out by createUser
-			user := &types.User{Username: testUserConfig.Username}
-			account := &types.Account{}
-
-			if err = q.createUser(ctx, user, account, testUserCreationQuery, testUserCreationArgs); err != nil {
-				observability.AcknowledgeError(err, q.logger, span, "creating test user")
+			user := &types.User{
+				ID:       testUserConfig.ID,
+				Username: testUserConfig.Username,
+			}
+			account := &types.Account{
+				ID: ksuid.New().String(),
 			}
 
+			if err = q.createUser(ctx, user, account, testUserCreationQuery, testUserCreationArgs); err != nil {
+				return observability.PrepareError(err, q.logger, span, "creating test user")
+			}
 			q.logger.WithValue(keys.UsernameKey, testUserConfig.Username).Debug("created test user and account")
 		}
 	}

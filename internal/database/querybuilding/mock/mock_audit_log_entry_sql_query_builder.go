@@ -17,7 +17,7 @@ type AuditLogEntrySQLQueryBuilder struct {
 }
 
 // BuildGetAuditLogEntryQuery implements our interface.
-func (m *AuditLogEntrySQLQueryBuilder) BuildGetAuditLogEntryQuery(ctx context.Context, entryID uint64) (query string, args []interface{}) {
+func (m *AuditLogEntrySQLQueryBuilder) BuildGetAuditLogEntryQuery(ctx context.Context, entryID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, entryID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

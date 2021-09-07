@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
@@ -24,7 +25,7 @@ func buildTestService() *service {
 		logger:          logging.NewNoopLogger(),
 		itemCounter:     &mockmetrics.UnitCounter{},
 		itemDataManager: &mocktypes.ItemDataManager{},
-		itemIDFetcher:   func(req *http.Request) uint64 { return 0 },
+		itemIDFetcher:   func(req *http.Request) string { return "" },
 		encoderDecoder:  mockencoding.NewMockEncoderDecoder(),
 		search:          &mocksearch.IndexManager{},
 		tracer:          tracing.NewTracer("test"),
@@ -43,11 +44,12 @@ func TestProvideItemsService(T *testing.T) {
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNoopLogger()),
+			"BuildRouteParamStringIDFetcher",
 			ItemIDURIParamKey,
-			"item",
-		).Return(func(*http.Request) uint64 { return 0 })
+		).Return(func(*http.Request) string { return "" })
+
+		pp := &events.MockProducerProvider{}
+		pp.On("ProviderProducer", "pending_writes").Return(&events.MockProducer{}, nil)
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
@@ -59,6 +61,7 @@ func TestProvideItemsService(T *testing.T) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			rpm,
+			pp,
 		)
 
 		assert.NotNil(t, s)
@@ -74,6 +77,9 @@ func TestProvideItemsService(T *testing.T) {
 			return &mockmetrics.UnitCounter{}
 		}
 
+		pp := &events.MockProducerProvider{}
+		pp.On("ProviderProducer", "pending_writes").Return(&events.MockProducer{}, nil)
+
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
 			Config{SearchIndexPath: "example/path"},
@@ -84,6 +90,7 @@ func TestProvideItemsService(T *testing.T) {
 				return nil, errors.New("blah")
 			},
 			mockrouting.NewRouteParamManager(),
+			pp,
 		)
 
 		assert.Nil(t, s)

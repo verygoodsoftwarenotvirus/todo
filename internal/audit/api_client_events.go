@@ -2,6 +2,8 @@ package audit
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -17,8 +19,9 @@ const (
 )
 
 // BuildAPIClientCreationEventEntry builds an entry creation input for when an API client is created.
-func BuildAPIClientCreationEventEntry(client *types.APIClient, createdBy uint64) *types.AuditLogEntryCreationInput {
+func BuildAPIClientCreationEventEntry(client *types.APIClient, createdBy string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: APIClientCreationEvent,
 		Context: map[string]interface{}{
 			APIClientAssignmentKey: client.ID,
@@ -29,8 +32,9 @@ func BuildAPIClientCreationEventEntry(client *types.APIClient, createdBy uint64)
 }
 
 // BuildAPIClientArchiveEventEntry builds an entry creation input for when an API client is archived.
-func BuildAPIClientArchiveEventEntry(accountID, clientID, archivedBy uint64) *types.AuditLogEntryCreationInput {
+func BuildAPIClientArchiveEventEntry(accountID, clientID, archivedBy string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: APIClientArchiveEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:     archivedBy,

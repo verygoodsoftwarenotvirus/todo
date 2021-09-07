@@ -1,9 +1,5 @@
 package events
 
-import (
-//
-)
-
 type (
 	// EventQueueAddress is a simple string alias for the location of our event queue server.
 	EventQueueAddress string

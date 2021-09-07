@@ -2,6 +2,8 @@ package audit
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -23,8 +25,9 @@ const (
 )
 
 // BuildUserCreationEventEntry builds an entry creation input for when a user is created.
-func BuildUserCreationEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildUserCreationEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserCreationEvent,
 		Context: map[string]interface{}{
 			UserAssignmentKey: userID,
@@ -33,8 +36,9 @@ func BuildUserCreationEventEntry(userID uint64) *types.AuditLogEntryCreationInpu
 }
 
 // BuildUserVerifyTwoFactorSecretEventEntry builds an entry creation input for when a user verifies their two factor secret.
-func BuildUserVerifyTwoFactorSecretEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildUserVerifyTwoFactorSecretEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserVerifyTwoFactorSecretEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
@@ -43,8 +47,9 @@ func BuildUserVerifyTwoFactorSecretEventEntry(userID uint64) *types.AuditLogEntr
 }
 
 // BuildUserUpdateTwoFactorSecretEventEntry builds an entry creation input for when a user updates their two factor secret.
-func BuildUserUpdateTwoFactorSecretEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildUserUpdateTwoFactorSecretEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserUpdateTwoFactorSecretEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
@@ -53,8 +58,9 @@ func BuildUserUpdateTwoFactorSecretEventEntry(userID uint64) *types.AuditLogEntr
 }
 
 // BuildUserUpdatePasswordEventEntry builds an entry creation input for when a user updates their passwords.
-func BuildUserUpdatePasswordEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildUserUpdatePasswordEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserUpdatePasswordEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
@@ -63,8 +69,9 @@ func BuildUserUpdatePasswordEventEntry(userID uint64) *types.AuditLogEntryCreati
 }
 
 // BuildUserUpdateEventEntry builds an entry creation input for when a user is updated.
-func BuildUserUpdateEventEntry(userID uint64, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildUserUpdateEventEntry(userID string, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserUpdateEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:   userID,
@@ -74,8 +81,9 @@ func BuildUserUpdateEventEntry(userID uint64, changes []*types.FieldChangeSummar
 }
 
 // BuildUserArchiveEventEntry builds an entry creation input for when a user is archived.
-func BuildUserArchiveEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildUserArchiveEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserArchiveEvent,
 		Context: map[string]interface{}{
 			UserAssignmentKey:  userID,

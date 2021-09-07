@@ -105,7 +105,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleAccount.Members[0].DefaultAccount = true
 
-		examplePermsMap := map[uint64]*types.UserAccountMembershipInfo{}
+		examplePermsMap := map[string]*types.UserAccountMembershipInfo{}
 		for _, membership := range exampleAccount.Members {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
 				AccountName:  exampleAccount.Name,
@@ -114,7 +114,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 			}
 		}
 
-		exampleAccountPermissionsMap := map[uint64]authorization.AccountRolePermissionsChecker{}
+		exampleAccountPermissionsMap := map[string]authorization.AccountRolePermissionsChecker{}
 		for _, membership := range exampleAccount.Members {
 			exampleAccountPermissionsMap[membership.BelongsToAccount] = authorization.NewAccountRolePermissionChecker(membership.AccountRoles...)
 		}
@@ -173,7 +173,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.BuildSessionContextDataForUser(ctx, 0)
+		actual, err := c.BuildSessionContextDataForUser(ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -185,7 +185,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		examplePermsMap := map[uint64]*types.UserAccountMembershipInfo{}
+		examplePermsMap := map[string]*types.UserAccountMembershipInfo{}
 		for _, membership := range exampleAccount.Members {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
 				AccountName:  exampleAccount.Name,
@@ -224,7 +224,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		examplePermsMap := map[uint64]*types.UserAccountMembershipInfo{}
+		examplePermsMap := map[string]*types.UserAccountMembershipInfo{}
 		for _, membership := range exampleAccount.Members {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
 				AccountName:  exampleAccount.Name,
@@ -233,7 +233,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 			}
 		}
 
-		exampleAccountPermissionsMap := map[uint64]authorization.AccountRolePermissionsChecker{}
+		exampleAccountPermissionsMap := map[string]authorization.AccountRolePermissionsChecker{}
 		for _, membership := range exampleAccount.Members {
 			exampleAccountPermissionsMap[membership.BelongsToAccount] = authorization.NewAccountRolePermissionChecker(membership.AccountRoles...)
 		}
@@ -280,7 +280,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		examplePermsMap := map[uint64]*types.UserAccountMembershipInfo{}
+		examplePermsMap := map[string]*types.UserAccountMembershipInfo{}
 		for _, membership := range exampleAccount.Members {
 			examplePermsMap[membership.BelongsToAccount] = &types.UserAccountMembershipInfo{
 				AccountName:  exampleAccount.Name,
@@ -289,7 +289,7 @@ func TestQuerier_BuildSessionContextDataForUser(T *testing.T) {
 			}
 		}
 
-		exampleAccountPermissionsMap := map[uint64]authorization.AccountRolePermissionsChecker{}
+		exampleAccountPermissionsMap := map[string]authorization.AccountRolePermissionsChecker{}
 		for _, membership := range exampleAccount.Members {
 			exampleAccountPermissionsMap[membership.BelongsToAccount] = authorization.NewAccountRolePermissionChecker(membership.AccountRoles...)
 		}
@@ -369,7 +369,7 @@ func TestQuerier_GetDefaultAccountIDForUser(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetDefaultAccountIDForUser(ctx, 0)
+		actual, err := c.GetDefaultAccountIDForUser(ctx, "")
 		assert.Error(t, err)
 		assert.Zero(t, actual)
 	})
@@ -429,7 +429,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -447,7 +447,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.MarkAccountAsUserDefault(ctx, 0, exampleAccount.ID, exampleUser.ID))
+		assert.Error(t, c.MarkAccountAsUserDefault(ctx, "", exampleAccount.ID, exampleUser.ID))
 	})
 
 	T.Run("with invalid account ID", func(t *testing.T) {
@@ -458,7 +458,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.MarkAccountAsUserDefault(ctx, exampleUser.ID, 0, exampleUser.ID))
+		assert.Error(t, c.MarkAccountAsUserDefault(ctx, exampleUser.ID, "", exampleUser.ID))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -528,7 +528,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -560,7 +560,7 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -609,7 +609,7 @@ func TestQuerier_UserIsMemberOfAccount(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		actual, err := c.UserIsMemberOfAccount(ctx, 0, exampleAccount.ID)
+		actual, err := c.UserIsMemberOfAccount(ctx, "", exampleAccount.ID)
 		assert.False(t, actual)
 		assert.Error(t, err)
 	})
@@ -622,7 +622,7 @@ func TestQuerier_UserIsMemberOfAccount(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		actual, err := c.UserIsMemberOfAccount(ctx, exampleUser.ID, 0)
+		actual, err := c.UserIsMemberOfAccount(ctx, exampleUser.ID, "")
 		assert.False(t, actual)
 		assert.Error(t, err)
 	})
@@ -684,13 +684,13 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit()
 
-		assert.NoError(t, c.ModifyUserPermissions(ctx, exampleUser.ID, exampleAccount.ID, exampleUser.ID, exampleInput))
+		assert.NoError(t, c.ModifyUserPermissions(ctx, exampleAccount.ID, exampleUser.ID, exampleUser.ID, exampleInput))
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -703,7 +703,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ModifyUserPermissions(ctx, 0, exampleAccount.ID, exampleUser.ID, exampleInput))
+		assert.Error(t, c.ModifyUserPermissions(ctx, exampleAccount.ID, "", exampleUser.ID, exampleInput))
 	})
 
 	T.Run("with invalid account id", func(t *testing.T) {
@@ -715,7 +715,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ModifyUserPermissions(ctx, exampleUser.ID, 0, exampleUser.ID, exampleInput))
+		assert.Error(t, c.ModifyUserPermissions(ctx, "", exampleUser.ID, exampleUser.ID, exampleInput))
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -727,7 +727,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ModifyUserPermissions(ctx, exampleUser.ID, exampleAccount.ID, exampleUser.ID, nil))
+		assert.Error(t, c.ModifyUserPermissions(ctx, exampleAccount.ID, exampleUser.ID, exampleUser.ID, nil))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -742,7 +742,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 
 		db.ExpectBegin().WillReturnError(errors.New("blah"))
 
-		assert.Error(t, c.ModifyUserPermissions(ctx, exampleUser.ID, exampleAccount.ID, exampleUser.ID, exampleInput))
+		assert.Error(t, c.ModifyUserPermissions(ctx, exampleAccount.ID, exampleUser.ID, exampleUser.ID, exampleInput))
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
@@ -774,7 +774,7 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 
 		db.ExpectRollback()
 
-		assert.Error(t, c.ModifyUserPermissions(ctx, exampleUser.ID, exampleAccount.ID, exampleUser.ID, exampleInput))
+		assert.Error(t, c.ModifyUserPermissions(ctx, exampleAccount.ID, exampleUser.ID, exampleUser.ID, exampleInput))
 	})
 
 	T.Run("with error writing audit log entry", func(t *testing.T) {
@@ -802,13 +802,13 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
 		db.ExpectRollback()
 
-		assert.Error(t, c.ModifyUserPermissions(ctx, exampleUser.ID, exampleAccount.ID, exampleUser.ID, exampleInput))
+		assert.Error(t, c.ModifyUserPermissions(ctx, exampleAccount.ID, exampleUser.ID, exampleUser.ID, exampleInput))
 	})
 
 	T.Run("with error committing transaction", func(t *testing.T) {
@@ -836,13 +836,13 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
 		db.ExpectCommit().WillReturnError(errors.New("blah"))
 
-		assert.Error(t, c.ModifyUserPermissions(ctx, exampleUser.ID, exampleAccount.ID, exampleUser.ID, exampleInput))
+		assert.Error(t, c.ModifyUserPermissions(ctx, exampleAccount.ID, exampleUser.ID, exampleUser.ID, exampleInput))
 	})
 }
 
@@ -874,7 +874,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountTransferQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountTransferArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
@@ -887,7 +887,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountMembershipsTransferQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountMembershipsTransferArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -907,7 +907,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.TransferAccountOwnership(ctx, 0, exampleUser.ID, exampleInput))
+		assert.Error(t, c.TransferAccountOwnership(ctx, "", exampleUser.ID, exampleInput))
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -996,7 +996,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountTransferQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountTransferArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
@@ -1045,7 +1045,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountTransferQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountTransferArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
@@ -1058,7 +1058,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountMembershipsTransferQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountMembershipsTransferArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1094,7 +1094,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountTransferQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountTransferArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
@@ -1107,7 +1107,7 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountMembershipsTransferQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountMembershipsTransferArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1152,7 +1152,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
 			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountUserMembership.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccountUserMembership.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1182,7 +1182,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.AddUserToAccount(ctx, exampleInput, 0))
+		assert.Error(t, c.AddUserToAccount(ctx, exampleInput, ""))
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -1293,7 +1293,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
 			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountUserMembership.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccountUserMembership.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1336,7 +1336,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
 			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccountUserMembership.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccountUserMembership.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1376,7 +1376,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1394,7 +1394,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(ctx, 0, exampleAccount.ID, exampleUser.ID, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(ctx, "", exampleAccount.ID, exampleUser.ID, t.Name()))
 	})
 
 	T.Run("with invalid account ID", func(t *testing.T) {
@@ -1405,7 +1405,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(ctx, exampleUser.ID, 0, exampleUser.ID, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(ctx, exampleUser.ID, "", exampleUser.ID, t.Name()))
 	})
 
 	T.Run("with invalid actor ID", func(t *testing.T) {
@@ -1417,7 +1417,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(ctx, exampleUser.ID, exampleAccount.ID, 0, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(ctx, exampleUser.ID, exampleAccount.ID, "", t.Name()))
 	})
 
 	T.Run("with empty reason", func(t *testing.T) {
@@ -1443,7 +1443,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1519,7 +1519,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1551,7 +1551,7 @@ func TestQuerier_RemoveUserFromAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 

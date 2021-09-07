@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	exampleAdminUserID uint64 = 321
-	exampleUserID      uint64 = 123
+	exampleAdminUserID = "321"
+	exampleUserID      = "123"
 )
 
 func TestBuildUserCreationEventEntry(t *testing.T) {

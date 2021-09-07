@@ -1,9 +1,10 @@
 package events
 
 import (
-	"github.com/nsqio/go-nsq"
 	"log"
 	"time"
+
+	"github.com/nsqio/go-nsq"
 )
 
 const (
@@ -14,10 +15,12 @@ type obligatoryNSQHandler struct {
 	f func(message *nsq.Message) error
 }
 
+// HandleMessage implements the message handler interface.
 func (h *obligatoryNSQHandler) HandleMessage(message *nsq.Message) error {
 	return h.f(message)
 }
 
+// NewTopicConsumer builds a new NSQ consumer for a given address and topic.
 func NewTopicConsumer(addr, topic string, handler func(*nsq.Message) error) (*nsq.Consumer, error) {
 	const (
 		maxConnectionAttempts  = 50

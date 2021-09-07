@@ -43,7 +43,7 @@ func buildTestHelper(t *testing.T) *accountsServiceHTTPRoutesTestHelper {
 			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 		},
 		ActiveAccountID: helper.exampleAccount.ID,
-		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+		AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
 			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	}
@@ -52,10 +52,10 @@ func buildTestHelper(t *testing.T) *accountsServiceHTTPRoutesTestHelper {
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
-	helper.service.accountIDFetcher = func(req *http.Request) uint64 {
+	helper.service.accountIDFetcher = func(req *http.Request) string {
 		return helper.exampleAccount.ID
 	}
-	helper.service.userIDFetcher = func(req *http.Request) uint64 {
+	helper.service.userIDFetcher = func(req *http.Request) string {
 		return helper.exampleUser.ID
 	}
 

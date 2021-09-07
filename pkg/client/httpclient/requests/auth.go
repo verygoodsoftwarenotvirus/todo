@@ -119,11 +119,11 @@ func (b *Builder) BuildCycleTwoFactorSecretRequest(ctx context.Context, cookie *
 }
 
 // BuildVerifyTOTPSecretRequest builds a request to validate a 2FA secret.
-func (b *Builder) BuildVerifyTOTPSecretRequest(ctx context.Context, userID uint64, token string) (*http.Request, error) {
+func (b *Builder) BuildVerifyTOTPSecretRequest(ctx context.Context, userID, token string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 

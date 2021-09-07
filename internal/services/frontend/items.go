@@ -188,7 +188,7 @@ func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 
 		tmplFuncMap := map[string]interface{}{
 			"componentTitle": func(x *types.Item) string {
-				return fmt.Sprintf("Item #%d", x.ID)
+				return fmt.Sprintf("Item %s", x.ID)
 			},
 		}
 
@@ -197,7 +197,7 @@ func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
-				Title:       fmt.Sprintf("Item #%d", item.ID),
+				Title:       fmt.Sprintf("Item %s", item.ID),
 				ContentData: item,
 			}
 			if sessionCtxData != nil {
@@ -263,11 +263,11 @@ func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Item) template.URL {
 				// #nosec G203
-				return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
+				return template.URL(fmt.Sprintf("/dashboard_pages/items/%s", x.ID))
 			},
 			"pushURL": func(x *types.Item) template.URL {
 				// #nosec G203
-				return template.URL(fmt.Sprintf("/items/%d", x.ID))
+				return template.URL(fmt.Sprintf("/items/%s", x.ID))
 			},
 		}
 
@@ -359,7 +359,7 @@ func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 
 	tmplFuncMap := map[string]interface{}{
 		"componentTitle": func(x *types.Item) string {
-			return fmt.Sprintf("Item #%d", x.ID)
+			return fmt.Sprintf("Item %s", x.ID)
 		},
 	}
 
@@ -402,11 +402,11 @@ func (s *service) handleItemArchiveRequest(res http.ResponseWriter, req *http.Re
 	tmplFuncMap := map[string]interface{}{
 		"individualURL": func(x *types.Item) template.URL {
 			// #nosec G203
-			return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
+			return template.URL(fmt.Sprintf("/dashboard_pages/items/%s", x.ID))
 		},
 		"pushURL": func(x *types.Item) template.URL {
 			// #nosec G203
-			return template.URL(fmt.Sprintf("/items/%d", x.ID))
+			return template.URL(fmt.Sprintf("/items/%s", x.ID))
 		},
 	}
 

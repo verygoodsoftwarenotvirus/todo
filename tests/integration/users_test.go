@@ -148,7 +148,7 @@ func (s *TestSuite) TestUsers_Searching() {
 			exampleUsername := fakes.BuildFakeUser().Username
 
 			// create users
-			createdUserIDs := []uint64{}
+			createdUserIDs := []string{}
 			for i := 0; i < 5; i++ {
 				user, err := testutils.CreateServiceUser(ctx, urlToUse, fmt.Sprintf("%s%d", exampleUsername, i))
 				require.NoError(t, err)
@@ -292,7 +292,7 @@ func (s *TestSuite) TestUsers_Auditing() {
 				{EventType: audit.UserAddedToAccountEvent},
 				{EventType: audit.AccountCreationEvent},
 			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, 0, "")
+			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, "", "")
 
 			// Clean up user.
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))

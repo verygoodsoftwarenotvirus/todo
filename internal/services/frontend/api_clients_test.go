@@ -24,7 +24,7 @@ func TestService_fetchAPIClient(T *testing.T) {
 		s := buildTestHelper(t)
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		s.service.apiClientIDFetcher = func(*http.Request) uint64 {
+		s.service.apiClientIDFetcher = func(*http.Request) string {
 			return exampleAPIClient.ID
 		}
 
@@ -65,7 +65,7 @@ func TestService_fetchAPIClient(T *testing.T) {
 		s := buildTestHelper(t)
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		s.service.apiClientIDFetcher = func(*http.Request) uint64 {
+		s.service.apiClientIDFetcher = func(*http.Request) string {
 			return exampleAPIClient.ID
 		}
 
@@ -97,7 +97,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 		s := buildTestHelper(t)
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		s.service.apiClientIDFetcher = func(*http.Request) uint64 {
+		s.service.apiClientIDFetcher = func(*http.Request) string {
 			return exampleAPIClient.ID
 		}
 
@@ -126,7 +126,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 		s := buildTestHelper(t)
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		s.service.apiClientIDFetcher = func(*http.Request) uint64 {
+		s.service.apiClientIDFetcher = func(*http.Request) string {
 			return exampleAPIClient.ID
 		}
 
@@ -172,7 +172,7 @@ func TestService_buildAPIClientEditorView(T *testing.T) {
 		s := buildTestHelper(t)
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		s.service.apiClientIDFetcher = func(*http.Request) uint64 {
+		s.service.apiClientIDFetcher = func(*http.Request) string {
 			return exampleAPIClient.ID
 		}
 

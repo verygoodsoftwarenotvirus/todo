@@ -11,6 +11,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/segmentio/ksuid"
 )
 
 var (
@@ -22,7 +23,7 @@ const (
 )
 
 // BuildGetDefaultAccountIDForUserQuery does .
-func (b *Postgres) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -49,7 +50,7 @@ func (b *Postgres) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, use
 }
 
 // BuildGetAccountMembershipsForUserQuery does .
-func (b *Postgres) BuildGetAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildGetAccountMembershipsForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -76,7 +77,7 @@ func (b *Postgres) BuildGetAccountMembershipsForUserQuery(ctx context.Context, u
 }
 
 // BuildUserIsMemberOfAccountQuery builds a query that checks to see if the user is the member of a given account.
-func (b *Postgres) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -110,11 +111,13 @@ func (b *Postgres) BuildAddUserToAccountQuery(ctx context.Context, input *types.
 		span,
 		b.sqlBuilder.Insert(querybuilding.AccountsUserMembershipTableName).
 			Columns(
+				querybuilding.IDColumn,
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
 			).
 			Values(
+				input.ID,
 				input.UserID,
 				input.AccountID,
 				strings.Join(input.AccountRoles, accountMemberRolesSeparator),
@@ -123,7 +126,7 @@ func (b *Postgres) BuildAddUserToAccountQuery(ctx context.Context, input *types.
 }
 
 // BuildMarkAccountAsUserDefaultQuery builds a query that marks a user's account as their primary.
-func (b *Postgres) BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -148,7 +151,7 @@ func (b *Postgres) BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userI
 }
 
 // BuildModifyUserPermissionsQuery builds.
-func (b *Postgres) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, newRoles []string) (query string, args []interface{}) {
+func (b *Postgres) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID string, newRoles []string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -167,7 +170,7 @@ func (b *Postgres) BuildModifyUserPermissionsQuery(ctx context.Context, userID, 
 }
 
 // BuildTransferAccountOwnershipQuery does .
-func (b *Postgres) BuildTransferAccountOwnershipQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildTransferAccountOwnershipQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -187,7 +190,7 @@ func (b *Postgres) BuildTransferAccountOwnershipQuery(ctx context.Context, curre
 }
 
 // BuildTransferAccountMembershipsQuery does .
-func (b *Postgres) BuildTransferAccountMembershipsQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildTransferAccountMembershipsQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -207,7 +210,7 @@ func (b *Postgres) BuildTransferAccountMembershipsQuery(ctx context.Context, cur
 }
 
 // BuildCreateMembershipForNewUserQuery builds a query that .
-func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, userID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -218,12 +221,14 @@ func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, use
 		span,
 		b.sqlBuilder.Insert(querybuilding.AccountsUserMembershipTableName).
 			Columns(
+				querybuilding.IDColumn,
 				querybuilding.AccountsUserMembershipTableUserOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
 				querybuilding.AccountsUserMembershipTableDefaultUserAccountColumn,
 				querybuilding.AccountsUserMembershipTableAccountRolesColumn,
 			).
 			Values(
+				ksuid.New().String(),
 				userID,
 				accountID,
 				true,
@@ -233,7 +238,7 @@ func (b *Postgres) BuildCreateMembershipForNewUserQuery(ctx context.Context, use
 }
 
 // BuildRemoveUserFromAccountQuery builds a query that removes a user from an account.
-func (b *Postgres) BuildRemoveUserFromAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildRemoveUserFromAccountQuery(ctx context.Context, userID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -252,7 +257,7 @@ func (b *Postgres) BuildRemoveUserFromAccountQuery(ctx context.Context, userID, 
 }
 
 // BuildArchiveAccountMembershipsForUserQuery does .
-func (b *Postgres) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

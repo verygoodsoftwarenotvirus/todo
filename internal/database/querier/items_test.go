@@ -31,7 +31,6 @@ func buildMockRowsFromItems(includeCounts bool, filteredCount uint64, items ...*
 	for _, x := range items {
 		rowValues := []driver.Value{
 			x.ID,
-			x.ExternalID,
 			x.Name,
 			x.Details,
 			x.CreatedOn,
@@ -127,7 +126,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		actual, err := c.ItemExists(ctx, 0, exampleAccountID)
+		actual, err := c.ItemExists(ctx, "", exampleAccountID)
 		assert.Error(t, err)
 		assert.False(t, actual)
 	})
@@ -141,7 +140,7 @@ func TestQuerier_ItemExists(T *testing.T) {
 
 		c, db := buildTestClient(t)
 
-		actual, err := c.ItemExists(ctx, exampleItem.ID, 0)
+		actual, err := c.ItemExists(ctx, exampleItem.ID, "")
 		assert.Error(t, err)
 		assert.False(t, actual)
 
@@ -255,7 +254,7 @@ func TestQuerier_GetItem(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetItem(ctx, 0, exampleAccountID)
+		actual, err := c.GetItem(ctx, "", exampleAccountID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -268,7 +267,7 @@ func TestQuerier_GetItem(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetItem(ctx, exampleItem.ID, 0)
+		actual, err := c.GetItem(ctx, exampleItem.ID, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -634,7 +633,7 @@ func TestQuerier_GetItems(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetItems(ctx, 0, filter)
+		actual, err := c.GetItems(ctx, "", filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -713,7 +712,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
 
-		var exampleIDs []uint64
+		var exampleIDs []string
 		for _, x := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, x.ID)
 		}
@@ -749,7 +748,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		t.Parallel()
 
 		exampleItemList := fakes.BuildFakeItemList()
-		var exampleIDs []uint64
+		var exampleIDs []string
 		for _, x := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, x.ID)
 		}
@@ -757,7 +756,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetItemsWithIDs(ctx, 0, defaultLimit, exampleIDs)
+		actual, err := c.GetItemsWithIDs(ctx, "", defaultLimit, exampleIDs)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -767,7 +766,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 
 		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
-		var exampleIDs []uint64
+		var exampleIDs []string
 		for _, x := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, x.ID)
 		}
@@ -804,7 +803,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 
 		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
-		var exampleIDs []uint64
+		var exampleIDs []string
 		for _, x := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, x.ID)
 		}
@@ -841,7 +840,7 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 
 		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
-		var exampleIDs []uint64
+		var exampleIDs []string
 		for _, x := range exampleItemList.Items {
 			exampleIDs = append(exampleIDs, x.ID)
 		}
@@ -882,7 +881,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.ExternalID = ""
+		exampleItem.ID = "1"
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
@@ -901,7 +900,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -923,8 +922,6 @@ func TestQuerier_CreateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.ExternalID = ""
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -938,13 +935,12 @@ func TestQuerier_CreateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.ExternalID = ""
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.CreateItem(ctx, exampleInput, 0)
+		actual, err := c.CreateItem(ctx, exampleInput, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -954,7 +950,6 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.ExternalID = ""
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
@@ -1012,7 +1007,6 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.ExternalID = ""
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
@@ -1031,7 +1025,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1049,7 +1043,6 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
-		exampleItem.ExternalID = ""
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
@@ -1068,7 +1061,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1110,7 +1103,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
 			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 		c.sqlQueryBuilder = mockQueryBuilder
@@ -1141,7 +1134,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.UpdateItem(ctx, exampleItem, 0, nil))
+		assert.Error(t, c.UpdateItem(ctx, exampleItem, "", nil))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -1211,7 +1204,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
 			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1245,7 +1238,7 @@ func TestQuerier_UpdateItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
 			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1286,7 +1279,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1308,7 +1301,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveItem(ctx, 0, exampleAccountID, exampleUserID))
+		assert.Error(t, c.ArchiveItem(ctx, "", exampleAccountID, exampleUserID))
 	})
 
 	T.Run("with invalid account ID", func(t *testing.T) {
@@ -1320,7 +1313,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, 0, exampleUserID))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, "", exampleUserID))
 	})
 
 	T.Run("with invalid actor ID", func(t *testing.T) {
@@ -1332,7 +1325,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID, 0))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID, ""))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -1409,7 +1402,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1446,7 +1439,7 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleItem.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1499,7 +1492,7 @@ func TestQuerier_GetAuditLogEntriesForItem(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAuditLogEntriesForItem(ctx, 0)
+		actual, err := c.GetAuditLogEntriesForItem(ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

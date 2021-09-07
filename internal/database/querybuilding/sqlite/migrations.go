@@ -30,8 +30,7 @@ var (
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				event_type TEXT NOT NULL,
 				context JSON NOT NULL,
 				created_on BIGINT NOT NULL DEFAULT (strftime('%s','now'))
@@ -42,8 +41,7 @@ var (
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				username TEXT NOT NULL,
 				avatar_src TEXT,
 				hashed_password TEXT NOT NULL,
@@ -65,15 +63,14 @@ var (
 			Description: "create accounts table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS accounts (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
 				billing_status TEXT NOT NULL DEFAULT 'unpaid',
 				contact_email TEXT NOT NULL DEFAULT '',
 				contact_phone TEXT NOT NULL DEFAULT '',
-				payment_processor_customer_id TEXT NOT NULL DEFAULT '',
+				payment_processor_customer_id CHAR(27) NOT NULL DEFAULT '',
 				subscription_plan_id TEXT,
-				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				belongs_to_user TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
@@ -85,9 +82,9 @@ var (
 			Description: "create account user memberships table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_user_memberships (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				id CHAR(27) NOT NULL PRIMARY KEY,
+				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+				belongs_to_user TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				account_roles TEXT NOT NULL DEFAULT 'account_user',
 				default_account BOOLEAN NOT NULL DEFAULT 'false',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
@@ -101,17 +98,16 @@ var (
 			Description: "create API clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS api_clients (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				name TEXT DEFAULT '',
-				client_id TEXT NOT NULL,
+				client_id CHAR(27) NOT NULL,
 				secret_key TEXT NOT NULL,
 				permissions INTEGER NOT NULL DEFAULT 0,
 				admin_permissions INTEGER NOT NULL DEFAULT 0,
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
-				belongs_to_user INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE
+				belongs_to_user TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE
 			);`,
 		},
 		{
@@ -119,8 +115,7 @@ var (
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
 				content_type TEXT NOT NULL,
 				url TEXT NOT NULL,
@@ -131,7 +126,7 @@ var (
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
-				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 		{
@@ -139,14 +134,13 @@ var (
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
-				id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
 				details TEXT NOT NULL DEFAULT '',
 				created_on INTEGER NOT NULL DEFAULT (strftime('%s','now')),
 				last_updated_on INTEGER DEFAULT NULL,
 				archived_on INTEGER DEFAULT NULL,
-				belongs_to_account INTEGER NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 	}

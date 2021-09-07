@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -28,10 +27,6 @@ type Builder struct {
 
 	encoder  encoding.ClientEncoder
 	panicker panicking.Panicker
-}
-
-func id(x uint64) string {
-	return strconv.FormatUint(x, 10)
 }
 
 // NewBuilder builds a new API client for us.

@@ -11,11 +11,11 @@ type (
 	AccountUserMembership struct {
 		ArchivedOn       *uint64  `json:"archivedOn"`
 		LastUpdatedOn    *uint64  `json:"lastUpdatedOn"`
+		ID               string   `json:"id"`
+		BelongsToUser    string   `json:"belongsToUser"`
+		BelongsToAccount string   `json:"belongsToAccount"`
 		AccountRoles     []string `json:"accountRole"`
-		BelongsToUser    uint64   `json:"belongsToUser"`
-		BelongsToAccount uint64   `json:"belongsToAccount"`
 		CreatedOn        uint64   `json:"createdOn"`
-		ID               uint64   `json:"id"`
 		DefaultAccount   bool     `json:"defaultAccount"`
 	}
 
@@ -27,29 +27,31 @@ type (
 
 	// AccountUserMembershipCreationInput represents what a User could set as input for creating account user memberships.
 	AccountUserMembershipCreationInput struct {
-		BelongsToUser    uint64 `json:"belongsToUser"`
-		BelongsToAccount uint64 `json:"belongsToAccount"`
+		ID               string `json:"-"`
+		BelongsToUser    string `json:"belongsToUser"`
+		BelongsToAccount string `json:"belongsToAccount"`
 	}
 
 	// AccountUserMembershipUpdateInput represents what a User could set as input for updating account user memberships.
 	AccountUserMembershipUpdateInput struct {
-		BelongsToUser    uint64 `json:"belongsToUser"`
-		BelongsToAccount uint64 `json:"belongsToAccount"`
+		BelongsToUser    string `json:"belongsToUser"`
+		BelongsToAccount string `json:"belongsToAccount"`
 	}
 
 	// AddUserToAccountInput represents what a User could set as input for updating account user memberships.
 	AddUserToAccountInput struct {
+		ID           string   `json:"-"`
 		Reason       string   `json:"reason"`
+		UserID       string   `json:"userID"`
+		AccountID    string   `json:"accountID"`
 		AccountRoles []string `json:"accountRole"`
-		UserID       uint64   `json:"userID"`
-		AccountID    uint64   `json:"accountID"`
 	}
 
 	// AccountOwnershipTransferInput represents what a User could set as input for updating account user memberships.
 	AccountOwnershipTransferInput struct {
 		Reason       string `json:"reason"`
-		CurrentOwner uint64 `json:"currentOwner"`
-		NewOwner     uint64 `json:"newOwner"`
+		CurrentOwner string `json:"currentOwner"`
+		NewOwner     string `json:"newOwner"`
 	}
 
 	// ModifyUserPermissionsInput  represents what a User could set as input for updating account user memberships.
@@ -60,14 +62,14 @@ type (
 
 	// AccountUserMembershipDataManager describes a structure capable of storing accountUserMemberships permanently.
 	AccountUserMembershipDataManager interface {
-		BuildSessionContextDataForUser(ctx context.Context, userID uint64) (*SessionContextData, error)
-		GetDefaultAccountIDForUser(ctx context.Context, userID uint64) (uint64, error)
-		MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser uint64) error
-		UserIsMemberOfAccount(ctx context.Context, userID, accountID uint64) (bool, error)
-		ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser uint64, input *ModifyUserPermissionsInput) error
-		TransferAccountOwnership(ctx context.Context, accountID uint64, transferredBy uint64, input *AccountOwnershipTransferInput) error
-		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput, addedByUser uint64) error
-		RemoveUserFromAccount(ctx context.Context, userID, accountID, removedByUser uint64, reason string) error
+		BuildSessionContextDataForUser(ctx context.Context, userID string) (*SessionContextData, error)
+		GetDefaultAccountIDForUser(ctx context.Context, userID string) (string, error)
+		MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser string) error
+		UserIsMemberOfAccount(ctx context.Context, userID, accountID string) (bool, error)
+		ModifyUserPermissions(ctx context.Context, accountID string, userID, changedByUser string, input *ModifyUserPermissionsInput) error
+		TransferAccountOwnership(ctx context.Context, accountID, transferredBy string, input *AccountOwnershipTransferInput) error
+		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput, addedByUser string) error
+		RemoveUserFromAccount(ctx context.Context, userID, accountID string, removedByUser, reason string) error
 	}
 )
 

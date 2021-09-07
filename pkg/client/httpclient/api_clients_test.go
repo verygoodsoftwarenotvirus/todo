@@ -41,7 +41,7 @@ func (s *apiClientsTestSuite) SetupTest() {
 }
 
 func (s *apiClientsTestSuite) TestClient_GetAPIClient() {
-	const expectedPathFormat = "/api/v1/api_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -61,7 +61,7 @@ func (s *apiClientsTestSuite) TestClient_GetAPIClient() {
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAPIClient.ID)
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClient)
 
-		actual, err := c.GetAPIClient(s.ctx, 0)
+		actual, err := c.GetAPIClient(s.ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -182,7 +182,7 @@ func (s *apiClientsTestSuite) TestClient_CreateAPIClient() {
 }
 
 func (s *apiClientsTestSuite) TestClient_ArchiveAPIClient() {
-	const expectedPathFormat = "/api/v1/api_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -199,7 +199,7 @@ func (s *apiClientsTestSuite) TestClient_ArchiveAPIClient() {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
-		assert.Error(t, c.ArchiveAPIClient(s.ctx, 0), "no error should be returned")
+		assert.Error(t, c.ArchiveAPIClient(s.ctx, ""), "no error should be returned")
 	})
 
 	s.Run("with error building request", func() {
@@ -220,7 +220,7 @@ func (s *apiClientsTestSuite) TestClient_ArchiveAPIClient() {
 
 func (s *apiClientsTestSuite) TestClient_GetAuditLogForAPIClient() {
 	const (
-		expectedPath   = "/api/v1/api_clients/%d/audit"
+		expectedPath   = "/api/v1/api_clients/%s/audit"
 		expectedMethod = http.MethodGet
 	)
 
@@ -246,7 +246,7 @@ func (s *apiClientsTestSuite) TestClient_GetAuditLogForAPIClient() {
 
 		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
 
-		actual, err := c.GetAuditLogForAPIClient(s.ctx, 0)
+		actual, err := c.GetAuditLogForAPIClient(s.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

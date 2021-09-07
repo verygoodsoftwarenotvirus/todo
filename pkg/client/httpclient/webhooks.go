@@ -10,11 +10,11 @@ import (
 )
 
 // GetWebhook retrieves a webhook.
-func (c *Client) GetWebhook(ctx context.Context, webhookID uint64) (*types.Webhook, error) {
+func (c *Client) GetWebhook(ctx context.Context, webhookID string) (*types.Webhook, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == 0 {
+	if webhookID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -110,11 +110,11 @@ func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) erro
 }
 
 // ArchiveWebhook archives a webhook.
-func (c *Client) ArchiveWebhook(ctx context.Context, webhookID uint64) error {
+func (c *Client) ArchiveWebhook(ctx context.Context, webhookID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == 0 {
+	if webhookID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -133,11 +133,11 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID uint64) error {
 }
 
 // GetAuditLogForWebhook retrieves a list of audit log entries pertaining to a webhook.
-func (c *Client) GetAuditLogForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
+func (c *Client) GetAuditLogForWebhook(ctx context.Context, webhookID string) ([]*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == 0 {
+	if webhookID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 

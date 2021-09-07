@@ -19,6 +19,7 @@ import (
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
 	"github.com/pquerna/otp/totp"
+	"github.com/segmentio/ksuid"
 	passwordvalidator "github.com/wagslane/go-password-validator"
 )
 
@@ -34,7 +35,7 @@ const (
 
 // validateCredentialChangeRequest takes a user's credentials and determines
 // if they match what is on record.
-func (s *service) validateCredentialChangeRequest(ctx context.Context, userID uint64, password, totpToken string) (user *types.User, httpStatus int) {
+func (s *service) validateCredentialChangeRequest(ctx context.Context, userID, password, totpToken string) (user *types.User, httpStatus int) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -123,6 +124,7 @@ func (s *service) RegisterUser(ctx context.Context, registrationInput *types.Use
 	}
 
 	input := &types.UserDataStoreCreationInput{
+		ID:              ksuid.New().String(),
 		Username:        registrationInput.Username,
 		HashedPassword:  hp,
 		TwoFactorSecret: "",
@@ -582,7 +584,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	internalPath := fmt.Sprintf("avatar_%d", sessionCtxData.Requester.UserID)
+	internalPath := fmt.Sprintf("avatar_%s", sessionCtxData.Requester.UserID)
 	logger = logger.WithValue("file_size", len(img.Data)).WithValue("internal_path", internalPath)
 
 	if err = s.uploadManager.SaveFile(ctx, internalPath, img.Data); err != nil {

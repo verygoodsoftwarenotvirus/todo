@@ -16,26 +16,26 @@ type UserDataManager struct {
 }
 
 // UserHasStatus is a mock function.
-func (m *UserDataManager) UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (bool, error) {
+func (m *UserDataManager) UserHasStatus(ctx context.Context, userID string, statuses ...string) (bool, error) {
 	args := m.Called(ctx, userID, statuses)
 
 	return args.Bool(0), args.Error(1)
 }
 
 // GetUser is a mock function.
-func (m *UserDataManager) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
+func (m *UserDataManager) GetUser(ctx context.Context, userID string) (*types.User, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).(*types.User), args.Error(1)
 }
 
 // GetUserWithUnverifiedTwoFactorSecret is a mock function.
-func (m *UserDataManager) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
+func (m *UserDataManager) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID string) (*types.User, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).(*types.User), args.Error(1)
 }
 
 // MarkUserTwoFactorSecretAsVerified is a mock function.
-func (m *UserDataManager) MarkUserTwoFactorSecretAsVerified(ctx context.Context, userID uint64) error {
+func (m *UserDataManager) MarkUserTwoFactorSecretAsVerified(ctx context.Context, userID string) error {
 	args := m.Called(ctx, userID)
 	return args.Error(0)
 }
@@ -76,17 +76,17 @@ func (m *UserDataManager) UpdateUser(ctx context.Context, updated *types.User, c
 }
 
 // UpdateUserPassword is a mock function.
-func (m *UserDataManager) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+func (m *UserDataManager) UpdateUserPassword(ctx context.Context, userID, newHash string) error {
 	return m.Called(ctx, userID, newHash).Error(0)
 }
 
 // ArchiveUser is a mock function.
-func (m *UserDataManager) ArchiveUser(ctx context.Context, userID uint64) error {
+func (m *UserDataManager) ArchiveUser(ctx context.Context, userID string) error {
 	return m.Called(ctx, userID).Error(0)
 }
 
 // GetAuditLogEntriesForUser is a mock function.
-func (m *UserDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
+func (m *UserDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID string) ([]*types.AuditLogEntry, error) {
 	args := m.Called(ctx, userID)
 	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

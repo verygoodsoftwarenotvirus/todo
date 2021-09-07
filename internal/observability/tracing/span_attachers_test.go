@@ -108,7 +108,7 @@ func TestAttachAuditLogEntryIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachAuditLogEntryIDToSpan(span, 123)
+		AttachAuditLogEntryIDToSpan(span, "123")
 	})
 }
 
@@ -132,7 +132,7 @@ func TestAttachAccountIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachAccountIDToSpan(span, 123)
+		AttachAccountIDToSpan(span, "123")
 	})
 }
 
@@ -144,7 +144,7 @@ func TestAttachRequestingUserIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachRequestingUserIDToSpan(span, 123)
+		AttachRequestingUserIDToSpan(span, "123")
 	})
 }
 
@@ -178,7 +178,7 @@ func TestAttachSessionContextDataToSpan(T *testing.T) {
 			Requester: types.RequesterInfo{
 				ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 			},
-			ActiveAccountID: 0,
+			ActiveAccountID: "",
 		})
 	})
 }
@@ -191,7 +191,7 @@ func TestAttachAPIClientDatabaseIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachAPIClientDatabaseIDToSpan(span, 123)
+		AttachAPIClientDatabaseIDToSpan(span, "123")
 	})
 }
 
@@ -228,7 +228,7 @@ func TestAttachUserIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachUserIDToSpan(span, 123)
+		AttachUserIDToSpan(span, "123")
 	})
 }
 
@@ -252,7 +252,7 @@ func TestAttachWebhookIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachWebhookIDToSpan(span, 123)
+		AttachWebhookIDToSpan(span, "123")
 	})
 }
 
@@ -389,6 +389,6 @@ func TestAttachItemIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachItemIDToSpan(span, 123)
+		AttachItemIDToSpan(span, "123")
 	})
 }

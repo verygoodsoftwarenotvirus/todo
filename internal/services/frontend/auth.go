@@ -5,7 +5,6 @@ import (
 	_ "embed"
 	"html/template"
 	"net/http"
-	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -172,7 +171,7 @@ var successfulRegistrationResponse string
 
 type totpVerificationPrompt struct {
 	TwoFactorQRCode template.URL
-	UserID          uint64
+	UserID          string
 }
 
 // parseFormEncodedRegistrationRequest checks a request for a registration form, and returns the parsed login data if relevant.
@@ -248,17 +247,14 @@ func (s *service) parseFormEncodedTOTPSecretVerificationRequest(ctx context.Cont
 		return nil
 	}
 
-	userID, err := strconv.ParseUint(form.Get(userIDFormKey), 10, 64)
-	if err != nil {
-		return nil
-	}
+	userID := form.Get(userIDFormKey)
 
 	input := &types.TOTPSecretVerificationInput{
 		UserID:    userID,
 		TOTPToken: form.Get(totpTokenFormKey),
 	}
 
-	if input.TOTPToken != "" && input.UserID != 0 {
+	if input.TOTPToken != "" && input.UserID != "" {
 		return input
 	}
 

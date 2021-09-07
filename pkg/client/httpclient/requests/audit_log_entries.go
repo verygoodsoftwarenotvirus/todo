@@ -15,7 +15,7 @@ const (
 )
 
 // BuildGetAuditLogEntryRequest builds an HTTP request for fetching a given audit log entry.
-func (b *Builder) BuildGetAuditLogEntryRequest(ctx context.Context, entryID uint64) (*http.Request, error) {
+func (b *Builder) BuildGetAuditLogEntryRequest(ctx context.Context, entryID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -27,7 +27,7 @@ func (b *Builder) BuildGetAuditLogEntryRequest(ctx context.Context, entryID uint
 		nil,
 		adminBasePath,
 		auditLogBasePath,
-		id(entryID),
+		entryID,
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 

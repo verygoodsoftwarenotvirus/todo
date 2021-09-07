@@ -28,7 +28,6 @@ func (q *SQLQuerier) scanAPIClient(ctx context.Context, scan database.Scanner, i
 
 	targetVars := []interface{}{
 		&client.ID,
-		&client.ExternalID,
 		&client.Name,
 		&client.ClientID,
 		&client.ClientSecret,
@@ -110,11 +109,11 @@ func (q *SQLQuerier) GetAPIClientByClientID(ctx context.Context, clientID string
 }
 
 // GetAPIClientByDatabaseID gets an API client from the database.
-func (q *SQLQuerier) GetAPIClientByDatabaseID(ctx context.Context, clientID, userID uint64) (*types.APIClient, error) {
+func (q *SQLQuerier) GetAPIClientByDatabaseID(ctx context.Context, clientID, userID string) (*types.APIClient, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if clientID == 0 || userID == 0 {
+	if clientID == "" || userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -204,11 +203,11 @@ func (q *SQLQuerier) GetAllAPIClients(ctx context.Context, results chan []*types
 }
 
 // GetAPIClients gets a list of API clients.
-func (q *SQLQuerier) GetAPIClients(ctx context.Context, userID uint64, filter *types.QueryFilter) (x *types.APIClientList, err error) {
+func (q *SQLQuerier) GetAPIClients(ctx context.Context, userID string, filter *types.QueryFilter) (x *types.APIClientList, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -240,11 +239,11 @@ func (q *SQLQuerier) GetAPIClients(ctx context.Context, userID uint64, filter *t
 }
 
 // CreateAPIClient creates an API client.
-func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClientCreationInput, createdByUser uint64) (*types.APIClient, error) {
+func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClientCreationInput, createdByUser string) (*types.APIClient, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if createdByUser == 0 {
+	if createdByUser == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -265,16 +264,15 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 
 	query, args := q.sqlQueryBuilder.BuildCreateAPIClientQuery(ctx, input)
 
-	id, err := q.performWriteQuery(ctx, tx, false, "API client creation", query, args)
-	if err != nil {
+	if writeErr := q.performWriteQueryIgnoringReturn(ctx, tx, "API client creation", query, args); writeErr != nil {
 		q.rollbackTransaction(ctx, tx)
-		return nil, observability.PrepareError(err, logger, span, "creating API client")
+		return nil, observability.PrepareError(writeErr, logger, span, "creating API client")
 	}
 
-	tracing.AttachAPIClientDatabaseIDToSpan(span, id)
+	tracing.AttachAPIClientDatabaseIDToSpan(span, input.ID)
 
 	client := &types.APIClient{
-		ID:            id,
+		ID:            input.ID,
 		Name:          input.Name,
 		ClientID:      input.ClientID,
 		ClientSecret:  input.ClientSecret,
@@ -297,11 +295,11 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 }
 
 // ArchiveAPIClient archives an API client.
-func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, archivedByUser uint64) error {
+func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, archivedByUser string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if clientID == 0 || accountID == 0 || archivedByUser == 0 {
+	if clientID == "" || accountID == "" || archivedByUser == "" {
 		return ErrNilInputProvided
 	}
 
@@ -320,7 +318,7 @@ func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, 
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	query, args := q.sqlQueryBuilder.BuildArchiveAPIClientQuery(ctx, clientID, accountID)
+	query, args := q.sqlQueryBuilder.BuildArchiveAPIClientQuery(ctx, clientID, archivedByUser)
 
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "API client archive", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -342,11 +340,11 @@ func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, 
 }
 
 // GetAuditLogEntriesForAPIClient fetches a list of audit log entries from the database that relate to a given client.
-func (q *SQLQuerier) GetAuditLogEntriesForAPIClient(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
+func (q *SQLQuerier) GetAuditLogEntriesForAPIClient(ctx context.Context, clientID string) ([]*types.AuditLogEntry, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if clientID == 0 {
+	if clientID == "" {
 		return nil, ErrNilInputProvided
 	}
 

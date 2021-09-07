@@ -17,14 +17,14 @@ type ItemSQLQueryBuilder struct {
 }
 
 // BuildItemExistsQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildItemExistsQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
+func (m *ItemSQLQueryBuilder) BuildItemExistsQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, itemID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetItemQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetItemQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
+func (m *ItemSQLQueryBuilder) BuildGetItemQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, itemID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -45,14 +45,14 @@ func (m *ItemSQLQueryBuilder) BuildGetBatchOfItemsQuery(ctx context.Context, beg
 }
 
 // BuildGetItemsQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetItemsQuery(ctx context.Context, accountID uint64, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (m *ItemSQLQueryBuilder) BuildGetItemsQuery(ctx context.Context, accountID string, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, accountID, includeArchived, filter)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetItemsWithIDsQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, restrictToAccount bool) (query string, args []interface{}) {
+func (m *ItemSQLQueryBuilder) BuildGetItemsWithIDsQuery(ctx context.Context, accountID string, limit uint8, ids []string, restrictToAccount bool) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, accountID, limit, ids, restrictToAccount)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -66,7 +66,7 @@ func (m *ItemSQLQueryBuilder) BuildCreateItemQuery(ctx context.Context, input *t
 }
 
 // BuildGetAuditLogEntriesForItemQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID uint64) (query string, args []interface{}) {
+func (m *ItemSQLQueryBuilder) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, itemID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -80,7 +80,7 @@ func (m *ItemSQLQueryBuilder) BuildUpdateItemQuery(ctx context.Context, input *t
 }
 
 // BuildArchiveItemQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildArchiveItemQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
+func (m *ItemSQLQueryBuilder) BuildArchiveItemQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, itemID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

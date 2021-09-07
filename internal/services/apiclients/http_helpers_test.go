@@ -38,6 +38,7 @@ func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
 	helper.exampleAPIClient = fakes.BuildFakeAPIClient()
 	helper.exampleAPIClient.BelongsToUser = helper.exampleUser.ID
 	helper.exampleInput = fakes.BuildFakeAPIClientCreationInputFromClient(helper.exampleAPIClient)
+	helper.exampleAPIClient.ID = helper.exampleInput.ID
 
 	sessionCtxData := &types.SessionContextData{
 		Requester: types.RequesterInfo{
@@ -47,7 +48,7 @@ func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
 			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 		},
 		ActiveAccountID: helper.exampleAccount.ID,
-		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+		AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
 			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	}
@@ -56,7 +57,7 @@ func buildTestHelper(t *testing.T) *apiClientsServiceHTTPRoutesTestHelper {
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
-	helper.service.urlClientIDExtractor = func(*http.Request) uint64 {
+	helper.service.urlClientIDExtractor = func(*http.Request) string {
 		return helper.exampleAPIClient.ID
 	}
 

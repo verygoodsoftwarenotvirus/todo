@@ -1,10 +1,15 @@
 package audit
 
-import "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+import (
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
+)
 
 // BuildUserBanEventEntry builds an entry creation input for when a user is banned.
-func BuildUserBanEventEntry(banGiver, banRecipient uint64, reason string) *types.AuditLogEntryCreationInput {
+func BuildUserBanEventEntry(banGiver, banRecipient, reason string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserBannedEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: banGiver,
@@ -15,8 +20,9 @@ func BuildUserBanEventEntry(banGiver, banRecipient uint64, reason string) *types
 }
 
 // BuildAccountTerminationEventEntry builds an entry creation input for when an account is terminated.
-func BuildAccountTerminationEventEntry(terminator, terminee uint64, reason string) *types.AuditLogEntryCreationInput {
+func BuildAccountTerminationEventEntry(terminator, terminee, reason string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: AccountTerminatedEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: terminator,

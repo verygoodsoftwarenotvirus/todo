@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
-	"strconv"
 	"testing"
 	"time"
 
@@ -25,8 +24,8 @@ func buildArbitraryPASETO(t *testing.T, helper *authServiceHTTPRoutesTestHelper,
 	t.Helper()
 
 	jsonToken := paseto.JSONToken{
-		Audience:   strconv.FormatUint(helper.exampleAPIClient.BelongsToUser, 10),
-		Subject:    strconv.FormatUint(helper.exampleAPIClient.BelongsToUser, 10),
+		Audience:   helper.exampleAPIClient.BelongsToUser,
+		Subject:    helper.exampleAPIClient.BelongsToUser,
 		Jti:        uuid.NewString(),
 		Issuer:     helper.service.config.PASETO.Issuer,
 		IssuedAt:   issueTime,
@@ -395,7 +394,7 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 			AccountPermissions: helper.examplePermCheckers,
 		}
 
-		sessionCtxData.AccountPermissions = map[uint64]authorization.AccountRolePermissionsChecker{}
+		sessionCtxData.AccountPermissions = map[string]authorization.AccountRolePermissionsChecker{}
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return sessionCtxData, nil
 		}

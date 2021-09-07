@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
-	"strconv"
 	"strings"
 	"testing"
 
@@ -445,7 +444,7 @@ func buildFormFromTOTPSecretVerificationRequest(input *types.TOTPSecretVerificat
 	form := url.Values{}
 
 	form.Set(totpTokenFormKey, input.TOTPToken)
-	form.Set(userIDFormKey, strconv.FormatUint(input.UserID, 10))
+	form.Set(userIDFormKey, input.UserID)
 
 	return form
 }

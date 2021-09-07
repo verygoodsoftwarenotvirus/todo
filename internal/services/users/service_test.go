@@ -62,8 +62,9 @@ func TestProvideUsersService(T *testing.T) {
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+			"BuildRouteParamStringIDFetcher",
+			UserIDURIParamKey,
+		).Return(func(*http.Request) string { return "" })
 
 		s := ProvideUsersService(
 			&authservice.Config{},

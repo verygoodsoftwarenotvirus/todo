@@ -5,16 +5,16 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/segmentio/ksuid"
 )
 
 // BuildFakeAuditLogEntry builds a faked audit log entry.
 func BuildFakeAuditLogEntry() *types.AuditLogEntry {
 	return &types.AuditLogEntry{
-		ID:         uint64(fake.Uint32()),
-		ExternalID: fake.UUID(),
-		EventType:  audit.SuccessfulLoginEvent,
-		Context:    map[string]interface{}{"fakes": "true"},
-		CreatedOn:  uint64(uint32(fake.Date().Unix())),
+		ID:        ksuid.New().String(),
+		EventType: audit.SuccessfulLoginEvent,
+		Context:   map[string]interface{}{"fakes": "true"},
+		CreatedOn: uint64(uint32(fake.Date().Unix())),
 	}
 }
 
@@ -45,6 +45,7 @@ func BuildFakeAuditLogEntryCreationInput() *types.AuditLogEntryCreationInput {
 // BuildFakeAuditLogEntryCreationInputFromAuditLogEntry builds a faked AuditLogEntryCreationInput from an audit log entry.
 func BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(entry *types.AuditLogEntry) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        entry.ID,
 		EventType: entry.EventType,
 		Context:   entry.Context,
 	}

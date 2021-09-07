@@ -18,7 +18,7 @@ var (
 )
 
 // BuildUserHasStatusQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (b *Sqlite) BuildUserHasStatusQuery(ctx context.Context, userID uint64, statuses ...string) (query string, args []interface{}) {
+func (b *Sqlite) BuildUserHasStatusQuery(ctx context.Context, userID string, statuses ...string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (b *Sqlite) BuildUserHasStatusQuery(ctx context.Context, userID uint64, sta
 }
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (b *Sqlite) BuildGetUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -66,7 +66,7 @@ func (b *Sqlite) BuildGetUserQuery(ctx context.Context, userID uint64) (query st
 
 // BuildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
-func (b *Sqlite) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -160,7 +160,7 @@ func (b *Sqlite) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFilt
 		nil,
 		"",
 		querybuilding.UsersTableColumns,
-		0,
+		"",
 		false,
 		filter,
 	)
@@ -182,7 +182,7 @@ func (b *Sqlite) BuildTestUserCreationQuery(ctx context.Context, testUserConfig 
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.UsersTableUsernameColumn,
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
@@ -191,7 +191,7 @@ func (b *Sqlite) BuildTestUserCreationQuery(ctx context.Context, testUserConfig 
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				testUserConfig.ID,
 				testUserConfig.Username,
 				testUserConfig.HashedPassword,
 				querybuilding.DefaultTestUserTwoFactorSecret,
@@ -202,12 +202,12 @@ func (b *Sqlite) BuildTestUserCreationQuery(ctx context.Context, testUserConfig 
 	)
 }
 
-// BuildCreateUserQuery returns a SQL query (and arguments) that would create a given Requester.
+// BuildUserCreationQuery returns a SQL query (and arguments) that would create a given Requester.
 // NOTE: we always default is_admin to false, on the assumption that
 // admins have DB access and will change that value via SQL query.
 // There should be no way to update a user via this structure
 // such that they would have admin privileges.
-func (b *Sqlite) BuildCreateUserQuery(ctx context.Context, input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (b *Sqlite) BuildUserCreationQuery(ctx context.Context, input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -217,7 +217,7 @@ func (b *Sqlite) BuildCreateUserQuery(ctx context.Context, input *types.UserData
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.UsersTableUsernameColumn,
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
@@ -225,7 +225,7 @@ func (b *Sqlite) BuildCreateUserQuery(ctx context.Context, input *types.UserData
 				querybuilding.UsersTableServiceRolesColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				input.ID,
 				input.Username,
 				input.HashedPassword,
 				input.TwoFactorSecret,
@@ -279,7 +279,7 @@ func (b *Sqlite) BuildSetUserStatusQuery(ctx context.Context, input *types.UserR
 }
 
 // BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's passwords.
-func (b *Sqlite) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64, newHash string) (query string, args []interface{}) {
+func (b *Sqlite) BuildUpdateUserPasswordQuery(ctx context.Context, userID, newHash string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -300,7 +300,7 @@ func (b *Sqlite) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64
 }
 
 // BuildUpdateUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (b *Sqlite) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID uint64, newSecret string) (query string, args []interface{}) {
+func (b *Sqlite) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID, newSecret string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -319,7 +319,7 @@ func (b *Sqlite) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID
 }
 
 // BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (b *Sqlite) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -338,7 +338,7 @@ func (b *Sqlite) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID
 }
 
 // BuildArchiveUserQuery builds a SQL query that marks a user as archived.
-func (b *Sqlite) BuildArchiveUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildArchiveUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -356,7 +356,7 @@ func (b *Sqlite) BuildArchiveUserQuery(ctx context.Context, userID uint64) (quer
 }
 
 // BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
-func (b *Sqlite) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *Sqlite) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

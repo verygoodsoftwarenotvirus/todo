@@ -18,7 +18,7 @@ var (
 )
 
 // BuildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
-func (b *Postgres) BuildGetWebhookQuery(ctx context.Context, webhookID, accountID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildGetWebhookQuery(ctx context.Context, webhookID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -68,7 +68,7 @@ func (b *Postgres) BuildGetBatchOfWebhooksQuery(ctx context.Context, beginID, en
 }
 
 // BuildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
-func (b *Postgres) BuildGetWebhooksQuery(ctx context.Context, accountID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *Postgres) BuildGetWebhooksQuery(ctx context.Context, accountID string, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -97,7 +97,7 @@ func (b *Postgres) BuildCreateWebhookQuery(ctx context.Context, x *types.Webhook
 		span,
 		b.sqlBuilder.Insert(querybuilding.WebhooksTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.WebhooksTableNameColumn,
 				querybuilding.WebhooksTableContentTypeColumn,
 				querybuilding.WebhooksTableURLColumn,
@@ -108,7 +108,7 @@ func (b *Postgres) BuildCreateWebhookQuery(ctx context.Context, x *types.Webhook
 				querybuilding.WebhooksTableOwnershipColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				x.ID,
 				x.Name,
 				x.ContentType,
 				x.URL,
@@ -117,8 +117,7 @@ func (b *Postgres) BuildCreateWebhookQuery(ctx context.Context, x *types.Webhook
 				strings.Join(x.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
 				strings.Join(x.Topics, querybuilding.WebhooksTableTopicsSeparator),
 				x.BelongsToAccount,
-			).
-			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
+			),
 	)
 }
 
@@ -150,7 +149,7 @@ func (b *Postgres) BuildUpdateWebhookQuery(ctx context.Context, input *types.Web
 }
 
 // BuildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
-func (b *Postgres) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accountID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -171,7 +170,7 @@ func (b *Postgres) BuildArchiveWebhookQuery(ctx context.Context, webhookID, acco
 }
 
 // BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a webhook with a given ID.
-func (b *Postgres) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

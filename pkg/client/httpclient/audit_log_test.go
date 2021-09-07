@@ -37,7 +37,7 @@ func (s *auditLogEntriesTestSuite) SetupTest() {
 }
 
 func (s *auditLogEntriesTestSuite) TestClient_GetAuditLogEntry() {
-	const expectedPath = "/api/v1/admin/audit_log/%d"
+	const expectedPath = "/api/v1/admin/audit_log/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -55,7 +55,7 @@ func (s *auditLogEntriesTestSuite) TestClient_GetAuditLogEntry() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.GetAuditLogEntry(s.ctx, 0)
+		actual, err := c.GetAuditLogEntry(s.ctx, "")
 		assert.Error(t, err, " error should be returned")
 		assert.Nil(t, actual)
 	})

@@ -17,14 +17,14 @@ type AccountSQLQueryBuilder struct {
 }
 
 // BuildTransferAccountOwnershipQuery implements our interface.
-func (m *AccountSQLQueryBuilder) BuildTransferAccountOwnershipQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+func (m *AccountSQLQueryBuilder) BuildTransferAccountOwnershipQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, currentOwnerID, newOwnerID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetAccountQuery implements our interface.
-func (m *AccountSQLQueryBuilder) BuildGetAccountQuery(ctx context.Context, accountID, userID uint64) (query string, args []interface{}) {
+func (m *AccountSQLQueryBuilder) BuildGetAccountQuery(ctx context.Context, accountID, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, accountID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -45,7 +45,7 @@ func (m *AccountSQLQueryBuilder) BuildGetBatchOfAccountsQuery(ctx context.Contex
 }
 
 // BuildGetAccountsQuery implements our interface.
-func (m *AccountSQLQueryBuilder) BuildGetAccountsQuery(ctx context.Context, userID uint64, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (m *AccountSQLQueryBuilder) BuildGetAccountsQuery(ctx context.Context, userID string, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, forAdmin, filter)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -66,14 +66,14 @@ func (m *AccountSQLQueryBuilder) BuildUpdateAccountQuery(ctx context.Context, in
 }
 
 // BuildArchiveAccountQuery implements our interface.
-func (m *AccountSQLQueryBuilder) BuildArchiveAccountQuery(ctx context.Context, accountID, userID uint64) (query string, args []interface{}) {
+func (m *AccountSQLQueryBuilder) BuildArchiveAccountQuery(ctx context.Context, accountID, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, accountID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetAuditLogEntriesForAccountQuery implements our interface.
-func (m *AccountSQLQueryBuilder) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID uint64) (query string, args []interface{}) {
+func (m *AccountSQLQueryBuilder) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

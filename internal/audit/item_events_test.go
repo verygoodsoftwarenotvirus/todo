@@ -10,13 +10,13 @@ import (
 )
 
 const (
-	exampleItemID uint64 = 123
+	exampleItemID = "123"
 )
 
 func TestBuildItemCreationEventEntry(t *testing.T) {
 	t.Parallel()
 
-	assert.NotNil(t, audit.BuildItemCreationEventEntry(&types.Item{}, exampleAccountID))
+	assert.NotNil(t, audit.BuildItemCreationEventEntry(&types.Item{}, exampleUserID))
 }
 
 func TestBuildItemUpdateEventEntry(t *testing.T) {
@@ -28,5 +28,5 @@ func TestBuildItemUpdateEventEntry(t *testing.T) {
 func TestBuildItemArchiveEventEntry(t *testing.T) {
 	t.Parallel()
 
-	assert.NotNil(t, audit.BuildItemArchiveEventEntry(exampleUserID, exampleItemID, exampleAccountID))
+	assert.NotNil(t, audit.BuildItemArchiveEventEntry(exampleUserID, exampleAccountID, exampleItemID))
 }

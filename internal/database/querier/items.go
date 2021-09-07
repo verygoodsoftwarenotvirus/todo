@@ -28,7 +28,6 @@ func (q *SQLQuerier) scanItem(ctx context.Context, scan database.Scanner, includ
 
 	targetVars := []interface{}{
 		&x.ID,
-		&x.ExternalID,
 		&x.Name,
 		&x.Details,
 		&x.CreatedOn,
@@ -82,19 +81,19 @@ func (q *SQLQuerier) scanItems(ctx context.Context, rows database.ResultIterator
 }
 
 // ItemExists fetches whether an item exists from the database.
-func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID uint64) (exists bool, err error) {
+func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID string) (exists bool, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := q.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return false, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	if accountID == 0 {
+	if accountID == "" {
 		return false, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -111,19 +110,19 @@ func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID uint64) (
 }
 
 // GetItem fetches an item from the database.
-func (q *SQLQuerier) GetItem(ctx context.Context, itemID, accountID uint64) (*types.Item, error) {
+func (q *SQLQuerier) GetItem(ctx context.Context, itemID, accountID string) (*types.Item, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := q.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -203,13 +202,13 @@ func (q *SQLQuerier) GetAllItems(ctx context.Context, results chan []*types.Item
 }
 
 // GetItems fetches a list of items from the database that meet a particular filter.
-func (q *SQLQuerier) GetItems(ctx context.Context, accountID uint64, filter *types.QueryFilter) (x *types.ItemList, err error) {
+func (q *SQLQuerier) GetItems(ctx context.Context, accountID string, filter *types.QueryFilter) (x *types.ItemList, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := q.logger
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -238,13 +237,13 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID uint64, filter *typ
 }
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
-func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*types.Item, error) {
+func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limit uint8, ids []string) ([]*types.Item, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := q.logger
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
@@ -275,7 +274,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID uint64, limi
 }
 
 // CreateItem creates an item in the database.
-func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationInput, createdByUser uint64) (*types.Item, error) {
+func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationInput, createdByUser string) (*types.Item, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -283,7 +282,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 		return nil, ErrNilInputProvided
 	}
 
-	if createdByUser == 0 {
+	if createdByUser == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -298,14 +297,14 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 	query, args := q.sqlQueryBuilder.BuildCreateItemQuery(ctx, input)
 
 	// create the item.
-	id, err := q.performWriteQuery(ctx, tx, false, "item creation", query, args)
+	err = q.performWriteQueryIgnoringReturn(ctx, tx, "item creation", query, args)
 	if err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return nil, observability.PrepareError(err, logger, span, "creating item")
 	}
 
 	x := &types.Item{
-		ID:               id,
+		ID:               input.ID,
 		Name:             input.Name,
 		Details:          input.Details,
 		BelongsToAccount: input.BelongsToAccount,
@@ -328,7 +327,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationIn
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
-func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, changedByUser uint64, changes []*types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, changedByUser string, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -336,7 +335,7 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, change
 		return ErrNilInputProvided
 	}
 
-	if changedByUser == 0 {
+	if changedByUser == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -371,25 +370,25 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, change
 }
 
 // ArchiveItem archives an item from the database by its ID.
-func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archivedBy uint64) error {
+func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archivedBy string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := q.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 	tracing.AttachItemIDToSpan(span, itemID)
 
-	if accountID == 0 {
+	if accountID == "" {
 		return ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	if archivedBy == 0 {
+	if archivedBy == "" {
 		return ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.RequesterIDKey, archivedBy)
@@ -422,13 +421,13 @@ func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archive
 }
 
 // GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.
-func (q *SQLQuerier) GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
+func (q *SQLQuerier) GetAuditLogEntriesForItem(ctx context.Context, itemID string) ([]*types.AuditLogEntry, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := q.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)

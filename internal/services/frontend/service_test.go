@@ -14,8 +14,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func dummyIDFetcher(*http.Request) uint64 {
-	return 0
+func dummyIDFetcher(*http.Request) string {
+	return ""
 }
 
 func TestProvideService(t *testing.T) {
@@ -28,10 +28,10 @@ func TestProvideService(t *testing.T) {
 	dataManager := database.BuildMockDatabase()
 
 	rpm := mockrouting.NewRouteParamManager()
-	rpm.On("BuildRouteParamIDFetcher", mock.IsType(logger), apiClientIDURLParamKey, "API client").Return(dummyIDFetcher)
-	rpm.On("BuildRouteParamIDFetcher", mock.IsType(logger), accountIDURLParamKey, "account").Return(dummyIDFetcher)
-	rpm.On("BuildRouteParamIDFetcher", mock.IsType(logger), webhookIDURLParamKey, "webhook").Return(dummyIDFetcher)
-	rpm.On("BuildRouteParamIDFetcher", mock.IsType(logger), itemIDURLParamKey, "item").Return(dummyIDFetcher)
+	rpm.On("BuildRouteParamStringIDFetcher", apiClientIDURLParamKey).Return(dummyIDFetcher)
+	rpm.On("BuildRouteParamStringIDFetcher", accountIDURLParamKey).Return(dummyIDFetcher)
+	rpm.On("BuildRouteParamStringIDFetcher", webhookIDURLParamKey).Return(dummyIDFetcher)
+	rpm.On("BuildRouteParamStringIDFetcher", itemIDURLParamKey).Return(dummyIDFetcher)
 
 	s := ProvideService(
 		cfg,

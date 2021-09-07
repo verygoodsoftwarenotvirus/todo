@@ -27,7 +27,7 @@ func TestService_fetchItem(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -69,7 +69,7 @@ func TestService_fetchItem(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -182,6 +182,7 @@ func TestService_parseFormEncodedItemCreationInput(T *testing.T) {
 		s := buildTestHelper(t)
 
 		expected := fakes.BuildFakeItemCreationInput()
+		expected.ID = ""
 		expected.BelongsToAccount = s.exampleAccount.ID
 		req := attachItemCreationInputToRequest(expected)
 
@@ -226,11 +227,12 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput.ID = ""
 		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
 
 		res := httptest.NewRecorder()
@@ -260,7 +262,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -284,11 +286,12 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput.ID = ""
 		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
 
 		res := httptest.NewRecorder()
@@ -317,11 +320,12 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput.ID = ""
 		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
 
 		res := httptest.NewRecorder()
@@ -354,7 +358,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -384,7 +388,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -431,7 +435,7 @@ func TestService_buildItemEditorView(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -638,7 +642,7 @@ func TestService_parseFormEncodedItemUpdateInput(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -688,7 +692,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -728,7 +732,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -768,7 +772,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -800,7 +804,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -844,7 +848,7 @@ func TestService_handleItemArchiveRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -902,7 +906,7 @@ func TestService_handleItemArchiveRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 
@@ -933,7 +937,7 @@ func TestService_handleItemArchiveRequest(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) uint64 {
+		s.service.itemIDFetcher = func(*http.Request) string {
 			return exampleItem.ID
 		}
 

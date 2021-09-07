@@ -2,6 +2,8 @@ package audit
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -37,8 +39,9 @@ const (
 )
 
 // BuildCycleCookieSecretEvent builds an entry creation input for when a cookie secret is cycled.
-func BuildCycleCookieSecretEvent(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildCycleCookieSecretEvent(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: CycleCookieSecretEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
@@ -47,8 +50,9 @@ func BuildCycleCookieSecretEvent(userID uint64) *types.AuditLogEntryCreationInpu
 }
 
 // BuildSuccessfulLoginEventEntry builds an entry creation input for when a user successfully logs in.
-func BuildSuccessfulLoginEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildSuccessfulLoginEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: SuccessfulLoginEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
@@ -57,8 +61,9 @@ func BuildSuccessfulLoginEventEntry(userID uint64) *types.AuditLogEntryCreationI
 }
 
 // BuildBannedUserLoginAttemptEventEntry builds an entry creation input for when a user successfully logs in.
-func BuildBannedUserLoginAttemptEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildBannedUserLoginAttemptEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: BannedUserLoginAttemptEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
@@ -67,8 +72,9 @@ func BuildBannedUserLoginAttemptEventEntry(userID uint64) *types.AuditLogEntryCr
 }
 
 // BuildUnsuccessfulLoginBadPasswordEventEntry builds an entry creation input for when a user fails to log in because of a bad passwords.
-func BuildUnsuccessfulLoginBadPasswordEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildUnsuccessfulLoginBadPasswordEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UnsuccessfulLoginBadPasswordEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
@@ -77,8 +83,9 @@ func BuildUnsuccessfulLoginBadPasswordEventEntry(userID uint64) *types.AuditLogE
 }
 
 // BuildUnsuccessfulLoginBad2FATokenEventEntry builds an entry creation input for when a user fails to log in because of a bad two factor token.
-func BuildUnsuccessfulLoginBad2FATokenEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildUnsuccessfulLoginBad2FATokenEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UnsuccessfulLoginBad2FATokenEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,
@@ -87,8 +94,9 @@ func BuildUnsuccessfulLoginBad2FATokenEventEntry(userID uint64) *types.AuditLogE
 }
 
 // BuildLogoutEventEntry builds an entry creation input for when a user logs out.
-func BuildLogoutEventEntry(userID uint64) *types.AuditLogEntryCreationInput {
+func BuildLogoutEventEntry(userID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: LogoutEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey: userID,

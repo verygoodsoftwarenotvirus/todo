@@ -12,6 +12,16 @@ services:
             driver: none
         ports:
             - 3306:3306
+#    workers:
+#        container_name: workers
+#        depends_on:
+#            - todo-server
+#        links:
+#            - database
+#            - nsqlookupd
+#        build:
+#            context: '../../../../'
+#            dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'
     todo-server:
         links:
             - database

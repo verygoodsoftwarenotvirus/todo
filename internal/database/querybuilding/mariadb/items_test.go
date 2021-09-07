@@ -5,11 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestMariaDB_BuildItemExistsQuery(T *testing.T) {
@@ -49,7 +47,7 @@ func TestMariaDB_BuildGetItemQuery(T *testing.T) {
 		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id = ?"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id = ?"
 		expectedArgs := []interface{}{
 			exampleAccountID,
 			exampleItem.ID,
@@ -90,7 +88,7 @@ func TestMariaDB_BuildGetBatchOfItemsQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.id > ? AND items.id < ?"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.id > ? AND items.id < ?"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -115,7 +113,7 @@ func TestMariaDB_BuildGetItemsQuery(T *testing.T) {
 		exampleAccountID := fakes.BuildFakeID()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ?) as total_count, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) as filtered_count FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? GROUP BY items.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ?) as total_count, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ?) as filtered_count FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.created_on > ? AND items.created_on < ? AND items.last_updated_on > ? AND items.last_updated_on < ? GROUP BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleAccountID,
 			filter.CreatedAfter,
@@ -147,13 +145,13 @@ func TestMariaDB_BuildGetItemsWithIDsQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleIDs := []uint64{
-			789,
-			123,
-			456,
+		exampleIDs := []string{
+			"789",
+			"123",
+			"456",
 		}
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id IN (?,?,?) ORDER BY CASE items.id WHEN 789 THEN 0 WHEN 123 THEN 1 WHEN 456 THEN 2 END LIMIT 20"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id IN (?,?,?) ORDER BY CASE items.id WHEN '789' THEN 0 WHEN '123' THEN 1 WHEN '456' THEN 2 END LIMIT 20"
 		expectedArgs := []interface{}{
 			exampleAccountID,
 			exampleIDs[0],
@@ -180,13 +178,9 @@ func TestMariaDB_BuildCreateItemQuery(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleItem.ExternalID)
-		q.externalIDGenerator = exIDGen
-
-		expectedQuery := "INSERT INTO items (external_id,name,details,belongs_to_account) VALUES (?,?,?,?)"
+		expectedQuery := "INSERT INTO items (id,name,details,belongs_to_account) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
-			exampleItem.ExternalID,
+			exampleItem.ID,
 			exampleItem.Name,
 			exampleItem.Details,
 			exampleItem.BelongsToAccount,
@@ -196,8 +190,6 @@ func TestMariaDB_BuildCreateItemQuery(T *testing.T) {
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
-
-		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }
 
@@ -263,7 +255,7 @@ func TestMariaDB_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%d', '$.item_id') ORDER BY audit_log.created_on", exampleItem.ID)
+		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%q', '$.item_id') ORDER BY audit_log.created_on", exampleItem.ID)
 		expectedArgs := []interface{}(nil)
 		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForItemQuery(ctx, exampleItem.ID)
 

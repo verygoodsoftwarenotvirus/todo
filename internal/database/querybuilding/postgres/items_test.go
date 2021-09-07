@@ -4,11 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestPostgres_BuildItemExistsQuery(T *testing.T) {
@@ -48,7 +46,7 @@ func TestPostgres_BuildGetItemQuery(T *testing.T) {
 		exampleAccountID := fakes.BuildFakeID()
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1 AND items.id = $2"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1 AND items.id = $2"
 		expectedArgs := []interface{}{
 			exampleAccountID,
 			exampleItem.ID,
@@ -89,7 +87,7 @@ func TestPostgres_BuildGetBatchOfItemsQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.id > $1 AND items.id < $2"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.id > $1 AND items.id < $2"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -114,7 +112,7 @@ func TestPostgres_BuildGetItemsQuery(T *testing.T) {
 		exampleAccountID := fakes.BuildFakeID()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1) as total_count, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $2 AND items.created_on > $3 AND items.created_on < $4 AND items.last_updated_on > $5 AND items.last_updated_on < $6) as filtered_count FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $7 AND items.created_on > $8 AND items.created_on < $9 AND items.last_updated_on > $10 AND items.last_updated_on < $11 GROUP BY items.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1) as total_count, (SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $2 AND items.created_on > $3 AND items.created_on < $4 AND items.last_updated_on > $5 AND items.last_updated_on < $6) as filtered_count FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $7 AND items.created_on > $8 AND items.created_on < $9 AND items.last_updated_on > $10 AND items.last_updated_on < $11 GROUP BY items.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleAccountID,
 			filter.CreatedAfter,
@@ -146,13 +144,13 @@ func TestPostgres_BuildGetItemsWithIDsQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleIDs := []uint64{
-			789,
-			123,
-			456,
+		exampleIDs := []string{
+			"789",
+			"123",
+			"456",
 		}
 
-		expectedQuery := "SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM (SELECT items.id, items.external_id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items JOIN unnest('{789,123,456}'::int[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT 20) AS items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1 AND items.id IN ($2,$3,$4)"
+		expectedQuery := "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM (SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items JOIN unnest('{789,123,456}'::text[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT 20) AS items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1 AND items.id IN ($2,$3,$4)"
 		expectedArgs := []interface{}{
 			exampleAccountID,
 			exampleIDs[0],
@@ -179,13 +177,9 @@ func TestPostgres_BuildCreateItemQuery(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 
-		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleItem.ExternalID)
-		q.externalIDGenerator = exIDGen
-
-		expectedQuery := "INSERT INTO items (external_id,name,details,belongs_to_account) VALUES ($1,$2,$3,$4) RETURNING id"
+		expectedQuery := "INSERT INTO items (id,name,details,belongs_to_account) VALUES ($1,$2,$3,$4)"
 		expectedArgs := []interface{}{
-			exampleItem.ExternalID,
+			exampleItem.ID,
 			exampleItem.Name,
 			exampleItem.Details,
 			exampleItem.BelongsToAccount,
@@ -195,8 +189,6 @@ func TestPostgres_BuildCreateItemQuery(T *testing.T) {
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
-
-		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }
 
@@ -262,7 +254,7 @@ func TestPostgres_BuildGetAuditLogEntriesForItemQuery(T *testing.T) {
 
 		exampleItem := fakes.BuildFakeItem()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->'item_id' = $1 ORDER BY audit_log.created_on"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->>'item_id' = $1 ORDER BY audit_log.created_on"
 		expectedArgs := []interface{}{
 			exampleItem.ID,
 		}

@@ -39,10 +39,9 @@ var _ querybuilding.SQLQueryBuilder = (*Sqlite)(nil)
 type (
 	// Sqlite is our main Sqlite interaction db.
 	Sqlite struct {
-		logger              logging.Logger
-		tracer              tracing.Tracer
-		sqlBuilder          squirrel.StatementBuilderType
-		externalIDGenerator querybuilding.ExternalIDGenerator
+		logger     logging.Logger
+		tracer     tracing.Tracer
+		sqlBuilder squirrel.StatementBuilderType
 	}
 )
 
@@ -75,10 +74,9 @@ func ProvideSqliteDB(logger logging.Logger, connectionDetails database.Connectio
 // ProvideSqlite provides a sqlite db controller.
 func ProvideSqlite(logger logging.Logger) *Sqlite {
 	return &Sqlite{
-		logger:              logging.EnsureLogger(logger).WithName(loggerName),
-		tracer:              tracing.NewTracer("sqlite_query_builder"),
-		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
-		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
+		logger:     logging.EnsureLogger(logger).WithName(loggerName),
+		tracer:     tracing.NewTracer("sqlite_query_builder"),
+		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Question),
 	}
 }
 

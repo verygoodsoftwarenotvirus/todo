@@ -19,7 +19,7 @@ import (
 func TestBuilder_BuildGetUserRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/users/%d"
+	const expectedPathFormat = "/api/v1/users/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -39,7 +39,7 @@ func TestBuilder_BuildGetUserRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetUserRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetUserRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -174,7 +174,7 @@ func TestBuilder_BuildCreateUserRequest(T *testing.T) {
 func TestBuilder_BuildArchiveUserRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/users/%d"
+	const expectedPathFormat = "/api/v1/users/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -194,7 +194,7 @@ func TestBuilder_BuildArchiveUserRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildArchiveUserRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildArchiveUserRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -325,7 +325,7 @@ func TestBuilder_BuildAvatarUploadRequest(T *testing.T) {
 func TestBuilder_BuildGetAuditLogForUserRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/users/%d/audit"
+	const expectedPath = "/api/v1/users/%s/audit"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -345,7 +345,7 @@ func TestBuilder_BuildGetAuditLogForUserRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetAuditLogForUserRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetAuditLogForUserRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

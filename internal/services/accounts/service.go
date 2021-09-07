@@ -30,8 +30,8 @@ type (
 		logger                       logging.Logger
 		accountDataManager           types.AccountDataManager
 		accountMembershipDataManager types.AccountUserMembershipDataManager
-		accountIDFetcher             func(*http.Request) uint64
-		userIDFetcher                func(*http.Request) uint64
+		accountIDFetcher             func(*http.Request) string
+		userIDFetcher                func(*http.Request) string
 		sessionContextDataFetcher    func(*http.Request) (*types.SessionContextData, error)
 		accountCounter               metrics.UnitCounter
 		encoderDecoder               encoding.ServerEncoderDecoder
@@ -50,8 +50,8 @@ func ProvideService(
 ) types.AccountDataService {
 	return &service{
 		logger:                       logging.EnsureLogger(logger).WithName(serviceName),
-		accountIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
-		userIDFetcher:                routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		accountIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(AccountIDURIParamKey),
+		userIDFetcher:                routeParamManager.BuildRouteParamStringIDFetcher(UserIDURIParamKey),
 		sessionContextDataFetcher:    authservice.FetchContextFromRequest,
 		accountDataManager:           accountDataManager,
 		accountMembershipDataManager: accountMembershipDataManager,

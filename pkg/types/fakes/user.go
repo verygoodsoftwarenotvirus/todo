@@ -11,14 +11,14 @@ import (
 
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/pquerna/otp/totp"
+	"github.com/segmentio/ksuid"
 )
 
 // BuildFakeUser builds a faked User.
 func BuildFakeUser() *types.User {
 	return &types.User{
-		ID:         uint64(fake.Uint32()),
-		ExternalID: fake.UUID(),
-		Username:   fake.Password(true, true, true, false, false, 32),
+		ID:       ksuid.New().String(),
+		Username: fake.Password(true, true, true, false, false, 32),
 		// HashedPassword: "",
 		// Salt:           []byte(fakes.Word()),
 		ServiceAccountStatus:      types.GoodStandingAccountStatus,
@@ -89,6 +89,7 @@ func BuildFakeUserRegistrationInputFromUser(user *types.User) *types.UserRegistr
 // BuildFakeUserDataStoreCreationInputFromUser builds a faked UserDataStoreCreationInput.
 func BuildFakeUserDataStoreCreationInputFromUser(user *types.User) *types.UserDataStoreCreationInput {
 	return &types.UserDataStoreCreationInput{
+		ID:              user.ID,
 		Username:        user.Username,
 		HashedPassword:  user.HashedPassword,
 		TwoFactorSecret: user.TwoFactorSecret,
@@ -98,7 +99,7 @@ func BuildFakeUserDataStoreCreationInputFromUser(user *types.User) *types.UserDa
 // BuildFakeUserReputationUpdateInputFromUser builds a faked UserReputationUpdateInput.
 func BuildFakeUserReputationUpdateInputFromUser(user *types.User) *types.UserReputationUpdateInput {
 	return &types.UserReputationUpdateInput{
-		TargetUserID:  fake.Uint64(),
+		TargetUserID:  ksuid.New().String(),
 		NewReputation: user.ServiceAccountStatus,
 		Reason:        fake.Sentence(10),
 	}

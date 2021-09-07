@@ -27,12 +27,10 @@ func TestQuerier_Migrate(T *testing.T) {
 		exampleCreationTime := fakes.BuildFakeTime()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.ExternalID = ""
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.CreatedOn = exampleCreationTime
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		exampleAccount.ExternalID = ""
 		exampleAccountCreationInput := &types.AccountCreationInput{
 			Name:          fmt.Sprintf("%s_default", exampleUser.Username),
 			BelongsToUser: exampleUser.ID,
@@ -91,7 +89,7 @@ func TestQuerier_Migrate(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeTestUserCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeTestUserCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
 		// create audit log entry for created TestUser
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
@@ -110,12 +108,12 @@ func TestQuerier_Migrate(T *testing.T) {
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildAccountCreationQuery",
 			testutils.ContextMatcher,
-			exampleAccountCreationInput,
+			mock.MatchedBy(accountCreationInputMatcher(t, exampleAccountCreationInput)),
 		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -133,12 +131,13 @@ func TestQuerier_Migrate(T *testing.T) {
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildCreateMembershipForNewUserQuery",
 			testutils.ContextMatcher,
-			exampleUser.ID, exampleAccount.ID,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -168,7 +167,6 @@ func TestQuerier_Migrate(T *testing.T) {
 		exampleCreationTime := fakes.BuildFakeTime()
 
 		exampleUser := fakes.BuildFakeUser()
-		exampleUser.ExternalID = ""
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.CreatedOn = exampleCreationTime
 
@@ -222,7 +220,7 @@ func TestQuerier_Migrate(T *testing.T) {
 		// expect transaction begin
 		db.ExpectBegin().WillReturnError(errors.New("blah"))
 
-		assert.NoError(t, c.Migrate(ctx, 1, exampleInput))
+		assert.Error(t, c.Migrate(ctx, 1, exampleInput))
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

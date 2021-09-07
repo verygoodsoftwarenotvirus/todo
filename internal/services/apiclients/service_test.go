@@ -29,7 +29,7 @@ func buildTestService(t *testing.T) *service {
 		encoderDecoder:            mockencoding.NewMockEncoderDecoder(),
 		authenticator:             &authentication.MockAuthenticator{},
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
-		urlClientIDExtractor:      func(req *http.Request) uint64 { return 0 },
+		urlClientIDExtractor:      func(req *http.Request) string { return "" },
 		apiClientCounter:          &mockmetrics.UnitCounter{},
 		secretGenerator:           &random.MockGenerator{},
 		tracer:                    tracing.NewTracer(serviceName),
@@ -46,11 +46,9 @@ func TestProvideAPIClientsService(T *testing.T) {
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNoopLogger()),
+			"BuildRouteParamStringIDFetcher",
 			APIClientIDURIParamKey,
-			"api client",
-		).Return(func(*http.Request) uint64 { return 0 })
+		).Return(func(*http.Request) string { return "" })
 
 		s := ProvideAPIClientsService(
 			logging.NewNoopLogger(),

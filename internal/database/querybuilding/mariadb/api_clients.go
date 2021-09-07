@@ -67,7 +67,7 @@ func (b *MariaDB) BuildGetAllAPIClientsCountQuery(ctx context.Context) string {
 
 // BuildGetAPIClientsQuery returns a SQL query (and arguments) that will retrieve a list of API clients that
 // meet the given filter's criteria (if relevant) and belong to a given account.
-func (b *MariaDB) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetAPIClientsQuery(ctx context.Context, userID string, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -91,7 +91,7 @@ func (b *MariaDB) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, fi
 }
 
 // BuildGetAPIClientByDatabaseIDQuery returns a SQL query which requests a given API client by its database ID.
-func (b *MariaDB) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -119,14 +119,14 @@ func (b *MariaDB) BuildCreateAPIClientQuery(ctx context.Context, input *types.AP
 		span,
 		b.sqlBuilder.Insert(querybuilding.APIClientsTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.APIClientsTableNameColumn,
 				querybuilding.APIClientsTableClientIDColumn,
 				querybuilding.APIClientsTableSecretKeyColumn,
 				querybuilding.APIClientsTableOwnershipColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				input.ID,
 				input.Name,
 				input.ClientID,
 				input.ClientSecret,
@@ -158,7 +158,7 @@ func (b *MariaDB) BuildUpdateAPIClientQuery(ctx context.Context, input *types.AP
 }
 
 // BuildArchiveAPIClientQuery returns a SQL query (and arguments) that will mark an API client as archived.
-func (b *MariaDB) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -179,7 +179,7 @@ func (b *MariaDB) BuildArchiveAPIClientQuery(ctx context.Context, clientID, user
 }
 
 // BuildGetAuditLogEntriesForAPIClientQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
-func (b *MariaDB) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

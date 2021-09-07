@@ -59,20 +59,20 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 }
 
 // scanAccountUserMemberships takes some database rows and turns them into a slice of memberships.
-func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (defaultAccount uint64, accountRolesMap map[uint64][]string, err error) {
+func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows database.ResultIterator) (defaultAccount string, accountRolesMap map[string][]string, err error) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	accountRolesMap = map[uint64][]string{}
+	accountRolesMap = map[string][]string{}
 	logger := q.logger
 
 	for rows.Next() {
 		x, scanErr := q.scanAccountUserMembership(ctx, rows)
 		if scanErr != nil {
-			return 0, nil, scanErr
+			return "", nil, scanErr
 		}
 
-		if x.DefaultAccount && defaultAccount == 0 {
+		if x.DefaultAccount && defaultAccount == "" {
 			defaultAccount = x.BelongsToAccount
 		}
 
@@ -80,18 +80,18 @@ func (q *SQLQuerier) scanAccountUserMemberships(ctx context.Context, rows databa
 	}
 
 	if err = q.checkRowsForErrorAndClose(ctx, rows); err != nil {
-		return 0, nil, observability.PrepareError(err, logger, span, "handling rows")
+		return "", nil, observability.PrepareError(err, logger, span, "handling rows")
 	}
 
 	return defaultAccount, accountRolesMap, nil
 }
 
 // BuildSessionContextDataForUser does .
-func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID uint64) (*types.SessionContextData, error) {
+func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID string) (*types.SessionContextData, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -115,7 +115,7 @@ func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID 
 		return nil, observability.PrepareError(err, logger, span, "scanning user's memberships from database")
 	}
 
-	actualAccountRolesMap := map[uint64]authorization.AccountRolePermissionsChecker{}
+	actualAccountRolesMap := map[string]authorization.AccountRolePermissionsChecker{}
 	for accountID, roles := range accountRolesMap {
 		actualAccountRolesMap[accountID] = authorization.NewAccountRolePermissionChecker(roles...)
 	}
@@ -135,31 +135,31 @@ func (q *SQLQuerier) BuildSessionContextDataForUser(ctx context.Context, userID 
 }
 
 // GetDefaultAccountIDForUser does .
-func (q *SQLQuerier) GetDefaultAccountIDForUser(ctx context.Context, userID uint64) (uint64, error) {
+func (q *SQLQuerier) GetDefaultAccountIDForUser(ctx context.Context, userID string) (string, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
-		return 0, ErrInvalidIDProvided
+	if userID == "" {
+		return "", ErrInvalidIDProvided
 	}
 
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 	query, args := q.sqlQueryBuilder.BuildGetDefaultAccountIDForUserQuery(ctx, userID)
 
-	var id uint64
+	var id string
 	if err := q.getOneRow(ctx, q.db, "default account ID query", query, args...).Scan(&id); err != nil {
-		return 0, observability.PrepareError(err, logger, span, "executing id query")
+		return "", observability.PrepareError(err, logger, span, "executing default account ID query")
 	}
 
 	return id, nil
 }
 
 // MarkAccountAsUserDefault does a thing.
-func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser uint64) error {
+func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 || accountID == 0 || changedByUser == 0 {
+	if userID == "" || accountID == "" || changedByUser == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -186,7 +186,7 @@ func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accou
 		return observability.PrepareError(err, logger, span, "assigning user default account")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserMarkedAccountAsDefaultEventEntry(userID, accountID, changedByUser)); err != nil {
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserMarkedAccountAsDefaultEventEntry(userID, changedByUser, accountID)); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "account not found for user")
 	}
@@ -201,11 +201,11 @@ func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accou
 }
 
 // UserIsMemberOfAccount does a thing.
-func (q *SQLQuerier) UserIsMemberOfAccount(ctx context.Context, userID, accountID uint64) (bool, error) {
+func (q *SQLQuerier) UserIsMemberOfAccount(ctx context.Context, userID, accountID string) (bool, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 || accountID == 0 {
+	if userID == "" || accountID == "" {
 		return false, ErrInvalidIDProvided
 	}
 
@@ -228,11 +228,11 @@ func (q *SQLQuerier) UserIsMemberOfAccount(ctx context.Context, userID, accountI
 }
 
 // ModifyUserPermissions does a thing.
-func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, userID, accountID, changedByUser uint64, input *types.ModifyUserPermissionsInput) error {
+func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser string, input *types.ModifyUserPermissionsInput) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 || userID == 0 || changedByUser == 0 {
+	if accountID == "" || userID == "" || changedByUser == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -279,11 +279,11 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, userID, accountI
 }
 
 // TransferAccountOwnership does a thing.
-func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, transferredBy uint64, input *types.AccountOwnershipTransferInput) error {
+func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, transferredBy string, input *types.AccountOwnershipTransferInput) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 || transferredBy == 0 {
+	if accountID == "" || transferredBy == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -338,11 +338,11 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, tr
 }
 
 // AddUserToAccount does a thing.
-func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser uint64) error {
+func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if addedByUser == 0 {
+	if addedByUser == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -388,11 +388,11 @@ func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserT
 }
 
 // RemoveUserFromAccount removes a user's membership to an account.
-func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountID, removedByUser uint64, reason string) error {
+func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountID, removedByUser, reason string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 || accountID == 0 || removedByUser == 0 {
+	if userID == "" || accountID == "" || removedByUser == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -424,7 +424,7 @@ func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountI
 		return observability.PrepareError(err, logger, span, "removing user from account")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserRemovedFromAccountEventEntry(userID, accountID, removedByUser, reason)); err != nil {
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserRemovedFromAccountEventEntry(removedByUser, userID, accountID, reason)); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing remove user from account audit log entry")
 	}

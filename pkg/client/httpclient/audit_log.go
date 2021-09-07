@@ -10,11 +10,11 @@ import (
 )
 
 // GetAuditLogEntry retrieves an entry.
-func (c *Client) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
+func (c *Client) GetAuditLogEntry(ctx context.Context, entryID string) (*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if entryID == 0 {
+	if entryID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 

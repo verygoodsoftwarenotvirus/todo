@@ -9,7 +9,6 @@ import (
 	"errors"
 	"math"
 	"net/http"
-	"strconv"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
@@ -23,7 +22,7 @@ import (
 	"github.com/o1egl/paseto"
 )
 
-func (s *service) issueSessionManagedCookie(ctx context.Context, accountID, requesterID uint64) (cookie *http.Cookie, err error) {
+func (s *service) issueSessionManagedCookie(ctx context.Context, accountID, requesterID string) (cookie *http.Cookie, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -350,7 +349,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	requestedAccount := input.AccountID
 	logger = logger.WithValue(keys.APIClientClientIDKey, input.ClientID)
 
-	if requestedAccount != 0 {
+	if requestedAccount != "" {
 		logger = logger.WithValue("requested_account", requestedAccount)
 	}
 
@@ -405,9 +404,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var requestedAccountID uint64
+	var requestedAccountID string
 
-	if requestedAccount != 0 {
+	if requestedAccount != "" {
 		if _, isMember := sessionCtxData.AccountPermissions[requestedAccount]; !isMember {
 			logger.Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -445,8 +444,8 @@ func (s *service) buildPASETOToken(ctx context.Context, sessionCtxData *types.Se
 	expiry := now.Add(lifetime)
 
 	jsonToken := paseto.JSONToken{
-		Audience:   strconv.FormatUint(client.BelongsToUser, 10),
-		Subject:    strconv.FormatUint(client.BelongsToUser, 10),
+		Audience:   client.BelongsToUser,
+		Subject:    client.BelongsToUser,
 		Jti:        uuid.NewString(),
 		Issuer:     s.config.PASETO.Issuer,
 		IssuedAt:   now,

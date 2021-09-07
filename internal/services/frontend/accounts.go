@@ -63,7 +63,7 @@ func (s *service) buildAccountEditorView(includeBaseTemplate bool) func(http.Res
 
 		templateFuncMap := map[string]interface{}{
 			"componentTitle": func(x *types.Account) string {
-				return fmt.Sprintf("Account #%d", x.ID)
+				return fmt.Sprintf("Account %s", x.ID)
 			},
 		}
 
@@ -72,7 +72,7 @@ func (s *service) buildAccountEditorView(includeBaseTemplate bool) func(http.Res
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
-				Title:       fmt.Sprintf("Account #%d", account.ID),
+				Title:       fmt.Sprintf("Account %s", account.ID),
 				ContentData: account,
 			}
 			if sessionCtxData != nil {
@@ -139,11 +139,11 @@ func (s *service) buildAccountsTableView(includeBaseTemplate bool) func(http.Res
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Account) template.URL {
 				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/accounts/%d", x.ID))
+				return template.URL(fmt.Sprintf("/accounts/%s", x.ID))
 			},
 			"pushURL": func(x *types.Account) template.URL {
 				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/accounts/%d", x.ID))
+				return template.URL(fmt.Sprintf("/accounts/%s", x.ID))
 			},
 		}
 

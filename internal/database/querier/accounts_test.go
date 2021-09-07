@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -34,7 +33,6 @@ func buildMockRowsFromAccounts(includeCounts bool, filteredCount uint64, account
 		for _, y := range x.Members {
 			rowValues := []driver.Value{
 				x.ID,
-				x.ExternalID,
 				x.Name,
 				x.BillingStatus,
 				x.ContactEmail,
@@ -144,7 +142,7 @@ func TestQuerier_GetAccount(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAccount(ctx, 0, exampleUser.ID)
+		actual, err := c.GetAccount(ctx, "", exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -160,7 +158,7 @@ func TestQuerier_GetAccount(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAccount(ctx, exampleAccount.ID, 0)
+		actual, err := c.GetAccount(ctx, exampleAccount.ID, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -548,7 +546,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAccounts(ctx, 0, filter)
+		actual, err := c.GetAccounts(ctx, "", filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -668,7 +666,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
 			testutils.ContextMatcher,
-			uint64(0),
+			"",
 			true,
 			filter,
 		).Return(fakeQuery, fakeArgs)
@@ -701,7 +699,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
 			testutils.ContextMatcher,
-			uint64(0),
+			"",
 			true,
 			filter,
 		).Return(fakeQuery, fakeArgs)
@@ -732,7 +730,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
 			testutils.ContextMatcher,
-			uint64(0),
+			"",
 			true,
 			filter,
 		).Return(fakeQuery, fakeArgs)
@@ -763,7 +761,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
 			"BuildGetAccountsQuery",
 			testutils.ContextMatcher,
-			uint64(0),
+			"",
 			true,
 			filter,
 		).Return(fakeQuery, fakeArgs)
@@ -789,18 +787,12 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ExternalID = ""
 		exampleAccount.BillingStatus = types.UnpaidAccountBillingStatus
 		exampleAccount.PaymentProcessorCustomerID = ""
+		exampleAccount.ID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:       "account creation",
-			UserID:       exampleUser.ID,
-			AccountID:    exampleAccount.ID,
-			AccountRoles: []string{authorization.AccountAdminRole.String()},
-		}
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -818,7 +810,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -835,12 +827,12 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
 			testutils.ContextMatcher,
-			exampleAccountAdditionInput,
+			mock.IsType(&types.AddUserToAccountInput{}),
 		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountAdditionArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -862,6 +854,9 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		actual, err := c.CreateAccount(ctx, exampleCreationInput, exampleUser.ID)
 		assert.NoError(t, err)
+		assert.NotEmpty(t, actual.ID)
+		actual.ID = ""
+
 		assert.Equal(t, exampleAccount, actual)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
@@ -872,7 +867,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ExternalID = ""
+		exampleAccount.ID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
@@ -880,7 +875,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.CreateAccount(ctx, exampleCreationInput, 0)
+		actual, err := c.CreateAccount(ctx, exampleCreationInput, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -903,7 +898,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ExternalID = ""
+		exampleAccount.ID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
@@ -925,6 +920,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccount.ID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership{}
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
@@ -966,7 +962,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ExternalID = ""
+		exampleAccount.ID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
@@ -987,7 +983,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -1019,16 +1015,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ExternalID = ""
+		exampleAccount.ID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:       "account creation",
-			UserID:       exampleUser.ID,
-			AccountID:    exampleAccount.ID,
-			AccountRoles: []string{authorization.AccountAdminRole.String()},
-		}
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1046,7 +1036,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -1063,7 +1053,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
 			testutils.ContextMatcher,
-			exampleAccountAdditionInput,
+			mock.IsType(&types.AddUserToAccountInput{}),
 		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionQuery)).
@@ -1089,16 +1079,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ExternalID = ""
+		exampleAccount.ID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:       "account creation",
-			UserID:       exampleUser.ID,
-			AccountID:    exampleAccount.ID,
-			AccountRoles: []string{authorization.AccountAdminRole.String()},
-		}
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1116,7 +1100,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -1133,12 +1117,12 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
 			testutils.ContextMatcher,
-			exampleAccountAdditionInput,
+			mock.IsType(&types.AddUserToAccountInput{}),
 		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountAdditionArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -1170,16 +1154,10 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ExternalID = ""
+		exampleAccount.ID = ""
 		exampleAccount.BelongsToUser = exampleUser.ID
 		exampleAccount.Members = []*types.AccountUserMembership(nil)
 		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-		exampleAccountAdditionInput := &types.AddUserToAccountInput{
-			Reason:       "account creation",
-			UserID:       exampleUser.ID,
-			AccountID:    exampleAccount.ID,
-			AccountRoles: []string{authorization.AccountAdminRole.String()},
-		}
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1197,7 +1175,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeCreationAuditLogEntryQuery, fakeCreationAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -1214,12 +1192,12 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
 			"BuildAddUserToAccountQuery",
 			testutils.ContextMatcher,
-			exampleAccountAdditionInput,
+			mock.IsType(&types.AddUserToAccountInput{}),
 		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountAdditionArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		fakeAccountAdditionAuditLogEntryQuery, fakeAccountAdditionAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
@@ -1274,7 +1252,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1308,7 +1286,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.UpdateAccount(ctx, exampleAccount, 0, nil))
+		assert.Error(t, c.UpdateAccount(ctx, exampleAccount, "", nil))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -1385,7 +1363,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1420,7 +1398,7 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1459,7 +1437,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1480,7 +1458,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveAccount(ctx, 0, exampleUser.ID, exampleUser.ID))
+		assert.Error(t, c.ArchiveAccount(ctx, "", exampleUser.ID, exampleUser.ID))
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -1493,7 +1471,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveAccount(ctx, exampleAccount.ID, 0, exampleUser.ID))
+		assert.Error(t, c.ArchiveAccount(ctx, exampleAccount.ID, "", exampleUser.ID))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -1568,7 +1546,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1603,7 +1581,7 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1654,7 +1632,7 @@ func TestQuerier_GetAuditLogEntriesForAccount(T *testing.T) {
 
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAuditLogEntriesForAccount(ctx, 0)
+		actual, err := c.GetAuditLogEntriesForAccount(ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

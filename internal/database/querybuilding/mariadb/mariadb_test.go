@@ -39,6 +39,17 @@ func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 	}
 }
 
+func assertArgumentsSkippingIndex(t *testing.T, expectedArgs []interface{}, skipIndex int) {
+	t.Helper()
+
+	for i, x := range expectedArgs {
+		if i == skipIndex {
+			continue
+		}
+		assert.Equal(t, expectedArgs[i], x)
+	}
+}
+
 func TestProvideMariaDB(T *testing.T) {
 	T.Parallel()
 

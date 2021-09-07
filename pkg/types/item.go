@@ -19,12 +19,11 @@ type (
 	Item struct {
 		ArchivedOn       *uint64 `json:"archivedOn"`
 		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
-		ExternalID       string  `json:"externalID"`
 		Name             string  `json:"name"`
 		Details          string  `json:"details"`
+		ID               string  `json:"id"`
+		BelongsToAccount string  `json:"belongsToAccount"`
 		CreatedOn        uint64  `json:"createdOn"`
-		ID               uint64  `json:"id"`
-		BelongsToAccount uint64  `json:"belongsToAccount"`
 	}
 
 	// ItemList represents a list of items.
@@ -35,30 +34,31 @@ type (
 
 	// ItemCreationInput represents what a user could set as input for creating items.
 	ItemCreationInput struct {
+		ID               string `json:"-"`
 		Name             string `json:"name"`
 		Details          string `json:"details"`
-		BelongsToAccount uint64 `json:"-"`
+		BelongsToAccount string `json:"-"`
 	}
 
 	// ItemUpdateInput represents what a user could set as input for updating items.
 	ItemUpdateInput struct {
 		Name             string `json:"name"`
 		Details          string `json:"details"`
-		BelongsToAccount uint64 `json:"-"`
+		BelongsToAccount string `json:"-"`
 	}
 
 	// ItemDataManager describes a structure capable of storing items permanently.
 	ItemDataManager interface {
-		ItemExists(ctx context.Context, itemID, accountID uint64) (bool, error)
-		GetItem(ctx context.Context, itemID, accountID uint64) (*Item, error)
+		ItemExists(ctx context.Context, itemID, accountID string) (bool, error)
+		GetItem(ctx context.Context, itemID, accountID string) (*Item, error)
 		GetAllItemsCount(ctx context.Context) (uint64, error)
 		GetAllItems(ctx context.Context, resultChannel chan []*Item, bucketSize uint16) error
-		GetItems(ctx context.Context, accountID uint64, filter *QueryFilter) (*ItemList, error)
-		GetItemsWithIDs(ctx context.Context, accountID uint64, limit uint8, ids []uint64) ([]*Item, error)
-		CreateItem(ctx context.Context, input *ItemCreationInput, createdByUser uint64) (*Item, error)
-		UpdateItem(ctx context.Context, updated *Item, changedByUser uint64, changes []*FieldChangeSummary) error
-		ArchiveItem(ctx context.Context, itemID, accountID, archivedBy uint64) error
-		GetAuditLogEntriesForItem(ctx context.Context, itemID uint64) ([]*AuditLogEntry, error)
+		GetItems(ctx context.Context, accountID string, filter *QueryFilter) (*ItemList, error)
+		GetItemsWithIDs(ctx context.Context, accountID string, limit uint8, ids []string) ([]*Item, error)
+		CreateItem(ctx context.Context, input *ItemCreationInput, createdByUser string) (*Item, error)
+		UpdateItem(ctx context.Context, updated *Item, changedByUser string, changes []*FieldChangeSummary) error
+		ArchiveItem(ctx context.Context, itemID, accountID, archivedBy string) error
+		GetAuditLogEntriesForItem(ctx context.Context, itemID string) ([]*AuditLogEntry, error)
 	}
 
 	// ItemDataService describes a structure capable of serving traffic related to items.

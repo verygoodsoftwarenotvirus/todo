@@ -16,17 +16,12 @@ type AuditLogEntryDataManager struct {
 }
 
 // LogUserBanEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogUserBanEvent(ctx context.Context, banGiver, banReceiver uint64, reason string) {
+func (m *AuditLogEntryDataManager) LogUserBanEvent(ctx context.Context, banGiver, banReceiver, reason string) {
 	m.Called(ctx, banGiver, banReceiver, reason)
 }
 
-// LogAccountTerminationEvent implements our interface.
-func (m *AuditLogEntryDataManager) LogAccountTerminationEvent(ctx context.Context, adminID, accountID uint64, reason string) {
-	m.Called(ctx, adminID, accountID, reason)
-}
-
 // GetAuditLogEntry is a mock function.
-func (m *AuditLogEntryDataManager) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
+func (m *AuditLogEntryDataManager) GetAuditLogEntry(ctx context.Context, entryID string) (*types.AuditLogEntry, error) {
 	args := m.Called(ctx, entryID)
 	return args.Get(0).(*types.AuditLogEntry), args.Error(1)
 }

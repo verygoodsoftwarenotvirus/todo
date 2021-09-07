@@ -2,6 +2,8 @@ package items
 
 import (
 	"fmt"
+	"net/http"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -11,9 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"log"
-	"net/http"
-	"time"
 )
 
 const (
@@ -32,7 +31,7 @@ type (
 	service struct {
 		logger                    logging.Logger
 		itemDataManager           types.ItemDataManager
-		itemIDFetcher             func(*http.Request) uint64
+		itemIDFetcher             func(*http.Request) string
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		itemCounter               metrics.UnitCounter
 		encoderDecoder            encoding.ServerEncoderDecoder
@@ -58,7 +57,6 @@ func ProvideService(
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
-	// TODO: put topic in config
 	pendingWritesProducer, err := producerProvider.ProviderProducer("pending_writes")
 	if err != nil {
 		return nil, fmt.Errorf("setting up event producer: %w", err)
@@ -66,7 +64,7 @@ func ProvideService(
 
 	svc := &service{
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
-		itemIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, serviceName),
+		itemIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(ItemIDURIParamKey),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		itemDataManager:           itemDataManager,
 		pendingWritesProducer:     pendingWritesProducer,
@@ -75,14 +73,6 @@ func ProvideService(
 		search:                    searchIndexManager,
 		tracer:                    tracing.NewTracer(serviceName),
 	}
-
-	go func() {
-		for range time.Tick(time.Second) {
-			if err = pendingWritesProducer.Publish([]byte(`{"things": "stuff"}`)); err != nil {
-				log.Fatal(err)
-			}
-		}
-	}()
 
 	return svc, nil
 }

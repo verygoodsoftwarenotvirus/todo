@@ -41,7 +41,7 @@ func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
 	helper.exampleCreationInput = fakes.BuildFakeItemCreationInputFromItem(helper.exampleItem)
 	helper.exampleUpdateInput = fakes.BuildFakeItemUpdateInputFromItem(helper.exampleItem)
 
-	helper.service.itemIDFetcher = func(*http.Request) uint64 {
+	helper.service.itemIDFetcher = func(*http.Request) string {
 		return helper.exampleItem.ID
 	}
 
@@ -53,7 +53,7 @@ func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
 			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 		},
 		ActiveAccountID: helper.exampleAccount.ID,
-		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+		AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
 			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	}

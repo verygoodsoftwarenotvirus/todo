@@ -6,20 +6,20 @@ import (
 )
 
 var (
-	belongsToAccountWithMandatedRestrictionRegexp    = regexp.MustCompile(`\+belongsToAccount:\d+`)
-	belongsToAccountWithoutMandatedRestrictionRegexp = regexp.MustCompile(`belongsToAccount:\d+`)
+	belongsToAccountWithMandatedRestrictionRegexp    = regexp.MustCompile(`\+belongsToAccount:[0-9a-zA-Z]+`)
+	belongsToAccountWithoutMandatedRestrictionRegexp = regexp.MustCompile(`belongsToAccount:[0-9a-zA-Z]+`)
 )
 
-// ensureQueryIsRestrictedToUser takes a query and userID and ensures that query
+// ensureQueryIsRestrictedToAccount takes a query and userID and ensures that query
 // asks that results be restricted to a given user.
-func ensureQueryIsRestrictedToUser(query string, userID uint64) string {
+func ensureQueryIsRestrictedToAccount(query, accountID string) string {
 	switch {
 	case belongsToAccountWithMandatedRestrictionRegexp.MatchString(query):
 		return query
 	case belongsToAccountWithoutMandatedRestrictionRegexp.MatchString(query):
-		query = belongsToAccountWithoutMandatedRestrictionRegexp.ReplaceAllString(query, fmt.Sprintf("+belongsToAccount:%d", userID))
+		query = belongsToAccountWithoutMandatedRestrictionRegexp.ReplaceAllString(query, fmt.Sprintf("+belongsToAccount:%s", accountID))
 	case !belongsToAccountWithMandatedRestrictionRegexp.MatchString(query):
-		query = fmt.Sprintf("%s +belongsToAccount:%d", query, userID)
+		query = fmt.Sprintf("%s +belongsToAccount:%s", query, accountID)
 	}
 
 	return query

@@ -20,6 +20,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var auditLogCreationInputMatcher interface{} = mock.MatchedBy(func(*types.AuditLogEntryCreationInput) bool {
+	return true
+})
+
 func prepareForAuditLogEntryCreation(t *testing.T, exampleAuditLogEntry *types.AuditLogEntryCreationInput, mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
 	t.Helper()
 
@@ -27,7 +31,7 @@ func prepareForAuditLogEntryCreation(t *testing.T, exampleAuditLogEntry *types.A
 	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
 		"BuildCreateAuditLogEntryQuery",
 		testutils.ContextMatcher,
-		exampleAuditLogEntry,
+		auditLogCreationInputMatcher,
 	).Return(fakeQuery, fakeArgs)
 
 	db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -47,7 +51,6 @@ func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*typ
 	for _, x := range auditLogEntries {
 		rowValues := []driver.Value{
 			x.ID,
-			x.ExternalID,
 			x.EventType,
 			x.Context,
 			x.CreatedOn,
@@ -132,7 +135,7 @@ func TestQuerier_GetAuditLogEntry(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAuditLogEntry(ctx, 0)
+		actual, err := c.GetAuditLogEntry(ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

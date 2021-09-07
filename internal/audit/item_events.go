@@ -2,6 +2,8 @@ package audit
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -16,8 +18,9 @@ const (
 )
 
 // BuildItemCreationEventEntry builds an entry creation input for when an item is created.
-func BuildItemCreationEventEntry(item *types.Item, createdByUser uint64) *types.AuditLogEntryCreationInput {
+func BuildItemCreationEventEntry(item *types.Item, createdByUser string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: ItemCreationEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:    createdByUser,
@@ -29,8 +32,9 @@ func BuildItemCreationEventEntry(item *types.Item, createdByUser uint64) *types.
 }
 
 // BuildItemUpdateEventEntry builds an entry creation input for when an item is updated.
-func BuildItemUpdateEventEntry(changedByUser, itemID, accountID uint64, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildItemUpdateEventEntry(changedByUser, itemID, accountID string, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: ItemUpdateEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:   changedByUser,
@@ -42,8 +46,9 @@ func BuildItemUpdateEventEntry(changedByUser, itemID, accountID uint64, changes 
 }
 
 // BuildItemArchiveEventEntry builds an entry creation input for when an item is archived.
-func BuildItemArchiveEventEntry(archivedByUser, accountID, itemID uint64) *types.AuditLogEntryCreationInput {
+func BuildItemArchiveEventEntry(archivedByUser, accountID, itemID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: ItemArchiveEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:   archivedByUser,

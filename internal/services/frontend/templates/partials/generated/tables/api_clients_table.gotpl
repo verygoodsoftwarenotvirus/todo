@@ -9,7 +9,6 @@
     <tr>
         <th>ID</th>
         <th>Name</th>
-        <th>External ID</th>
         <th>Client ID</th>
         <th>Belongs To User</th>
         <th>Created On</th>
@@ -20,7 +19,6 @@
         <td><button class="btn btn-sm btn-outline-dark" hx-push-url="{{ pushURL . }}" hx-get="{{ individualURL . }}" hx-target="#content">{{ $x.ID }}</button></td>
         <td>{{ $x.ID }}</td>
         <td>{{ $x.Name }}</td>
-        <td>{{ $x.ExternalID }}</td>
         <td>{{ $x.ClientID }}</td>
         <td>{{ $x.BelongsToUser }}</td>
         <td>{{ $x.CreatedOn }}</td>

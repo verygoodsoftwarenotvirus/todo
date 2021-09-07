@@ -29,7 +29,7 @@ type (
 		webhookCounter            metrics.UnitCounter
 		webhookDataManager        types.WebhookDataManager
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		webhookIDFetcher          func(*http.Request) uint64
+		webhookIDFetcher          func(*http.Request) string
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
 	}
@@ -49,7 +49,7 @@ func ProvideWebhooksService(
 		encoderDecoder:            encoder,
 		webhookCounter:            metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
-		webhookIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, WebhookIDURIParamKey, "webhook"),
+		webhookIDFetcher:          routeParamManager.BuildRouteParamStringIDFetcher(WebhookIDURIParamKey),
 		tracer:                    tracing.NewTracer(serviceName),
 	}
 }

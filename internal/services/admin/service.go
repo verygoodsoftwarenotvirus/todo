@@ -29,7 +29,7 @@ type (
 		encoderDecoder            encoding.ServerEncoderDecoder
 		sessionManager            *scs.SessionManager
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		userIDFetcher             func(*http.Request) uint64
+		userIDFetcher             func(*http.Request) string
 		tracer                    tracing.Tracer
 	}
 )
@@ -54,7 +54,7 @@ func ProvideService(
 		authenticator:             authenticator,
 		sessionManager:            sessionManager,
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
-		userIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		userIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(UserIDURIParamKey),
 		tracer:                    tracing.NewTracer(serviceName),
 	}
 	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime

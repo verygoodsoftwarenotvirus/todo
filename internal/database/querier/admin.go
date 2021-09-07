@@ -13,7 +13,7 @@ import (
 var _ types.AdminUserDataManager = (*SQLQuerier)(nil)
 
 // UpdateUserReputation updates a user's account status.
-func (q *SQLQuerier) UpdateUserReputation(ctx context.Context, userID uint64, input *types.UserReputationUpdateInput) error {
+func (q *SQLQuerier) UpdateUserReputation(ctx context.Context, userID string, input *types.UserReputationUpdateInput) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -32,7 +32,7 @@ func (q *SQLQuerier) UpdateUserReputation(ctx context.Context, userID uint64, in
 }
 
 // LogUserBanEvent saves a UserBannedEvent in the audit log table.
-func (q *SQLQuerier) LogUserBanEvent(ctx context.Context, banGiver, banRecipient uint64, reason string) {
+func (q *SQLQuerier) LogUserBanEvent(ctx context.Context, banGiver, banRecipient, reason string) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -41,18 +41,8 @@ func (q *SQLQuerier) LogUserBanEvent(ctx context.Context, banGiver, banRecipient
 	q.createAuditLogEntry(ctx, q.db, audit.BuildUserBanEventEntry(banGiver, banRecipient, reason))
 }
 
-// LogAccountTerminationEvent saves a UserBannedEvent in the audit log table.
-func (q *SQLQuerier) LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, terminee)
-
-	q.createAuditLogEntry(ctx, q.db, audit.BuildAccountTerminationEventEntry(terminator, terminee, reason))
-}
-
 // LogCycleCookieSecretEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogCycleCookieSecretEvent(ctx context.Context, userID uint64) {
+func (q *SQLQuerier) LogCycleCookieSecretEvent(ctx context.Context, userID string) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -62,7 +52,7 @@ func (q *SQLQuerier) LogCycleCookieSecretEvent(ctx context.Context, userID uint6
 }
 
 // LogSuccessfulLoginEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogSuccessfulLoginEvent(ctx context.Context, userID uint64) {
+func (q *SQLQuerier) LogSuccessfulLoginEvent(ctx context.Context, userID string) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -72,7 +62,7 @@ func (q *SQLQuerier) LogSuccessfulLoginEvent(ctx context.Context, userID uint64)
 }
 
 // LogBannedUserLoginAttemptEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64) {
+func (q *SQLQuerier) LogBannedUserLoginAttemptEvent(ctx context.Context, userID string) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -82,7 +72,7 @@ func (q *SQLQuerier) LogBannedUserLoginAttemptEvent(ctx context.Context, userID 
 }
 
 // LogUnsuccessfulLoginBadPasswordEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64) {
+func (q *SQLQuerier) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID string) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -92,7 +82,7 @@ func (q *SQLQuerier) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, u
 }
 
 // LogUnsuccessfulLoginBad2FATokenEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64) {
+func (q *SQLQuerier) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID string) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -102,7 +92,7 @@ func (q *SQLQuerier) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, u
 }
 
 // LogLogoutEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogLogoutEvent(ctx context.Context, userID uint64) {
+func (q *SQLQuerier) LogLogoutEvent(ctx context.Context, userID string) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 

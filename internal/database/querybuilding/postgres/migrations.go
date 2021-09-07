@@ -30,8 +30,7 @@ var (
 			Description: "create audit log table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS audit_log (
-				id BIGSERIAL NOT NULL PRIMARY KEY,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				event_type TEXT NOT NULL,
 				context JSONB NOT NULL,
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW())
@@ -42,8 +41,7 @@ var (
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
-				id BIGSERIAL NOT NULL PRIMARY KEY,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				username TEXT NOT NULL,
 				avatar_src TEXT,
 				hashed_password TEXT NOT NULL,
@@ -65,8 +63,7 @@ var (
 			Description: "create accounts table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS accounts (
-				id BIGSERIAL NOT NULL PRIMARY KEY,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
 				billing_status TEXT NOT NULL DEFAULT 'unpaid',
 				contact_email TEXT NOT NULL DEFAULT '',
@@ -76,7 +73,7 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				belongs_to_user CHAR(27) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				UNIQUE("belongs_to_user", "name")
 			);`,
 		},
@@ -85,9 +82,9 @@ var (
 			Description: "create account user memberships table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_user_memberships (
-				id BIGSERIAL NOT NULL PRIMARY KEY,
-				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+				id CHAR(27) NOT NULL PRIMARY KEY,
+				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+				belongs_to_user CHAR(27) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
 				default_account BOOLEAN NOT NULL DEFAULT 'false',
 				account_roles TEXT NOT NULL DEFAULT 'account_user',
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
@@ -101,8 +98,7 @@ var (
 			Description: "create API clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS api_clients (
-				id BIGSERIAL NOT NULL PRIMARY KEY,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				name TEXT DEFAULT '',
 				client_id TEXT NOT NULL,
 				secret_key BYTEA NOT NULL,
@@ -111,7 +107,7 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_user BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE
+				belongs_to_user CHAR(27) NOT NULL REFERENCES users(id) ON DELETE CASCADE
 			);`,
 		},
 		{
@@ -119,8 +115,7 @@ var (
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
-				id BIGSERIAL NOT NULL PRIMARY KEY,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
 				content_type TEXT NOT NULL,
 				url TEXT NOT NULL,
@@ -131,7 +126,7 @@ var (
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 		{
@@ -139,14 +134,13 @@ var (
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (
-				id BIGSERIAL NOT NULL PRIMARY KEY,
-				external_id TEXT NOT NULL,
+				id CHAR(27) NOT NULL PRIMARY KEY,
 				name TEXT NOT NULL,
 				details TEXT NOT NULL DEFAULT '',
 				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
 				last_updated_on BIGINT DEFAULT NULL,
 				archived_on BIGINT DEFAULT NULL,
-				belongs_to_account BIGINT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
 			);`,
 		},
 	}

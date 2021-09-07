@@ -1684,7 +1684,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		um.On(
 			"SaveFile",
 			testutils.ContextMatcher,
-			fmt.Sprintf("avatar_%d", helper.exampleUser.ID),
+			fmt.Sprintf("avatar_%s", helper.exampleUser.ID),
 			returnImage.Data,
 		).Return(nil)
 		helper.service.uploadManager = um
@@ -1816,7 +1816,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		um.On(
 			"SaveFile",
 			testutils.ContextMatcher,
-			fmt.Sprintf("avatar_%d", helper.exampleUser.ID),
+			fmt.Sprintf("avatar_%s", helper.exampleUser.ID),
 			returnImage.Data,
 		).Return(errors.New("blah"))
 		helper.service.uploadManager = um
@@ -1869,7 +1869,7 @@ func TestService_AvatarUploadHandler(T *testing.T) {
 		um.On(
 			"SaveFile",
 			testutils.ContextMatcher,
-			fmt.Sprintf("avatar_%d", helper.exampleUser.ID),
+			fmt.Sprintf("avatar_%s", helper.exampleUser.ID),
 			returnImage.Data,
 		).Return(nil)
 		helper.service.uploadManager = um

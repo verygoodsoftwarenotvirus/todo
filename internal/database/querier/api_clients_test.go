@@ -31,7 +31,6 @@ func buildMockRowsFromAPIClients(includeCounts bool, filteredCount uint64, clien
 	for _, c := range clients {
 		rowValues := []driver.Value{
 			c.ID,
-			c.ExternalID,
 			c.Name,
 			c.ClientID,
 			c.ClientSecret,
@@ -229,7 +228,7 @@ func TestQuerier_GetAPIClientByDatabaseID(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAPIClientByDatabaseID(ctx, 0, exampleUser.ID)
+		actual, err := c.GetAPIClientByDatabaseID(ctx, "", exampleUser.ID)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -242,7 +241,7 @@ func TestQuerier_GetAPIClientByDatabaseID(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAPIClientByDatabaseID(ctx, exampleAPIClient.ID, 0)
+		actual, err := c.GetAPIClientByDatabaseID(ctx, exampleAPIClient.ID, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -621,7 +620,7 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAPIClients(ctx, 0, filter)
+		actual, err := c.GetAPIClients(ctx, "", filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -747,6 +746,10 @@ func TestQuerier_GetAPIClients(T *testing.T) {
 	})
 }
 
+var apiClientCreationInputMatcher interface{} = mock.MatchedBy(func(input *types.APIClientCreationInput) bool {
+	return true
+})
+
 func TestQuerier_CreateAPIClient(T *testing.T) {
 	T.Parallel()
 
@@ -755,9 +758,9 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ExternalID = ""
 		exampleAPIClient.ClientSecret = nil
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
+		exampleAPIClient.ID = exampleInput.ID
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -770,12 +773,12 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildCreateAPIClientQuery",
 			testutils.ContextMatcher,
-			exampleInput,
+			apiClientCreationInputMatcher,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -797,14 +800,13 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		t.Parallel()
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ExternalID = ""
 		exampleAPIClient.ClientSecret = nil
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.CreateAPIClient(ctx, exampleInput, 0)
+		actual, err := c.CreateAPIClient(ctx, exampleInput, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -827,7 +829,6 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ExternalID = ""
 		exampleAPIClient.ClientSecret = nil
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
@@ -861,7 +862,7 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildCreateAPIClientQuery",
 			testutils.ContextMatcher,
-			exampleInput,
+			apiClientCreationInputMatcher,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -887,7 +888,6 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ExternalID = ""
 		exampleAPIClient.ClientSecret = nil
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
@@ -902,12 +902,12 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildCreateAPIClientQuery",
 			testutils.ContextMatcher,
-			exampleInput,
+			apiClientCreationInputMatcher,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -930,7 +930,6 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ExternalID = ""
 		exampleAPIClient.ClientSecret = nil
 		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
@@ -945,12 +944,12 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildCreateAPIClientQuery",
 			testutils.ContextMatcher,
-			exampleInput,
+			apiClientCreationInputMatcher,
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -990,13 +989,13 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildArchiveAPIClientQuery",
 			testutils.ContextMatcher,
-			exampleAPIClient.ID,
-			exampleAccount.ID,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1018,7 +1017,7 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveAPIClient(ctx, 0, exampleAccount.ID, exampleUser.ID))
+		assert.Error(t, c.ArchiveAPIClient(ctx, "", exampleAccount.ID, exampleUser.ID))
 	})
 
 	T.Run("with invalid account ID", func(t *testing.T) {
@@ -1030,7 +1029,7 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, 0, exampleUser.ID))
+		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, "", exampleUser.ID))
 	})
 
 	T.Run("with invalid actor ID", func(t *testing.T) {
@@ -1042,7 +1041,7 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID, 0))
+		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID, ""))
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -1080,8 +1079,8 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildArchiveAPIClientQuery",
 			testutils.ContextMatcher,
-			exampleAPIClient.ID,
-			exampleAccount.ID,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
@@ -1115,13 +1114,13 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildArchiveAPIClientQuery",
 			testutils.ContextMatcher,
-			exampleAPIClient.ID,
-			exampleAccount.ID,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
 
@@ -1152,13 +1151,13 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		mockQueryBuilder.APIClientSQLQueryBuilder.On(
 			"BuildArchiveAPIClientQuery",
 			testutils.ContextMatcher,
-			exampleAPIClient.ID,
-			exampleAccount.ID,
+			mock.AnythingOfType("string"),
+			mock.AnythingOfType("string"),
 		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleAPIClient.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
 
 		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
 
@@ -1214,7 +1213,7 @@ func TestQuerier_GetAuditLogEntriesForAPIClient(T *testing.T) {
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		actual, err := c.GetAuditLogEntriesForAPIClient(ctx, 0)
+		actual, err := c.GetAuditLogEntriesForAPIClient(ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

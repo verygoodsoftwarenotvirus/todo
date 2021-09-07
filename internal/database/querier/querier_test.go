@@ -71,6 +71,10 @@ func newSuccessfulDatabaseResult(returnID uint64) driver.Result {
 	return sqlmock.NewResult(int64(returnID), 1)
 }
 
+func newArbitraryDatabaseResult(_ string) driver.Result {
+	return sqlmock.NewResult(1, 1)
+}
+
 func formatQueryForSQLMock(query string) string {
 	return strings.NewReplacer(
 		"$", `\$`,

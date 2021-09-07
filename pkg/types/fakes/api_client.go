@@ -6,17 +6,17 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/segmentio/ksuid"
 )
 
 // BuildFakeAPIClient builds a faked APIClient.
 func BuildFakeAPIClient() *types.APIClient {
 	return &types.APIClient{
-		ID:            uint64(fake.Uint32()),
-		ExternalID:    fake.UUID(),
+		ID:            ksuid.New().String(),
 		Name:          fake.Password(true, true, true, false, false, 32),
-		ClientID:      fake.UUID(),
+		ClientID:      ksuid.New().String(),
 		ClientSecret:  []byte(fake.Password(true, true, true, true, true, 32)),
-		BelongsToUser: fake.Uint64(),
+		BelongsToUser: fake.UUID(),
 		CreatedOn:     uint64(uint32(fake.Date().Unix())),
 	}
 }
@@ -67,6 +67,7 @@ func BuildFakeAPIClientCreationInput() *types.APIClientCreationInput {
 // BuildFakeAPIClientCreationInputFromClient builds a faked APIClientCreationInput.
 func BuildFakeAPIClientCreationInputFromClient(client *types.APIClient) *types.APIClientCreationInput {
 	return &types.APIClientCreationInput{
+		ID: client.ID,
 		UserLoginInput: types.UserLoginInput{
 			Username:  fake.Username(),
 			Password:  fake.Password(true, true, true, true, true, 32),

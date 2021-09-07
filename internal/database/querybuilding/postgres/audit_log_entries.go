@@ -16,7 +16,7 @@ var (
 )
 
 // BuildGetAuditLogEntryQuery constructs a SQL query for fetching an audit log entry with a given ID.
-func (b *Postgres) BuildGetAuditLogEntryQuery(ctx context.Context, entryID uint64) (query string, args []interface{}) {
+func (b *Postgres) BuildGetAuditLogEntryQuery(ctx context.Context, entryID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -102,15 +102,14 @@ func (b *Postgres) BuildCreateAuditLogEntryQuery(ctx context.Context, input *typ
 		span,
 		b.sqlBuilder.Insert(querybuilding.AuditLogEntriesTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.AuditLogEntriesTableEventTypeColumn,
 				querybuilding.AuditLogEntriesTableContextColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				input.ID,
 				input.EventType,
 				input.Context,
-			).
-			Suffix(fmt.Sprintf("RETURNING %s", querybuilding.IDColumn)),
+			),
 	)
 }

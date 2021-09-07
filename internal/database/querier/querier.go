@@ -186,24 +186,28 @@ func (q *SQLQuerier) getOneRow(ctx context.Context, querier database.Querier, qu
 
 	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s single row fetch query", queryDescription), query, args)
 
-	return querier.QueryRowContext(ctx, query, args...)
+	row := querier.QueryRowContext(ctx, query, args...)
+
+	q.logger.WithValue("query", query).WithValue("args", args).Debug("query executed")
+
+	return row
 }
 
 func (q *SQLQuerier) performReadQuery(ctx context.Context, querier database.Querier, queryDescription, query string, args ...interface{}) (*sql.Rows, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	logger := q.logger.WithValue("query", query)
+	logger := q.logger.WithValue("query", query).WithValue("args", args)
 
 	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s fetch query", queryDescription), query, args)
 
 	rows, err := querier.QueryContext(ctx, query, args...)
 	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "scanning user")
+		return nil, observability.PrepareError(err, logger, span, "executing query")
 	}
 
 	if rowsErr := rows.Err(); rowsErr != nil {
-		return nil, observability.PrepareError(rowsErr, logger, span, "scanning user")
+		return nil, observability.PrepareError(rowsErr, logger, span, "scanning results")
 	}
 
 	return rows, nil
@@ -263,8 +267,6 @@ func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Que
 			return 0, observability.PrepareError(err, logger, span, "executing %s query", queryDescription)
 		}
 
-		logger.Debug("query executed successfully")
-
 		return id, nil
 	} else if q.idStrategy == ReturningStatementIDRetrievalStrategy {
 		res, err := querier.ExecContext(ctx, query, args...)
@@ -283,8 +285,6 @@ func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Que
 			return 0, sql.ErrNoRows
 		}
 
-		logger.Debug("query executed successfully")
-
 		return 0, nil
 	}
 
@@ -301,8 +301,6 @@ func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Que
 			return 0, sql.ErrNoRows
 		}
 	}
-
-	logger.Debug("query executed successfully")
 
 	return q.getIDFromResult(ctx, res), nil
 }

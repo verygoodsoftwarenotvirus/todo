@@ -26,7 +26,6 @@ func (q *SQLQuerier) scanAuditLogEntry(ctx context.Context, scan database.Scanne
 
 	targetVars := []interface{}{
 		&entry.ID,
-		&entry.ExternalID,
 		&entry.EventType,
 		&entry.Context,
 		&entry.CreatedOn,
@@ -73,11 +72,11 @@ func (q *SQLQuerier) scanAuditLogEntries(ctx context.Context, rows database.Resu
 }
 
 // GetAuditLogEntry fetches an audit log entry from the database.
-func (q *SQLQuerier) GetAuditLogEntry(ctx context.Context, entryID uint64) (*types.AuditLogEntry, error) {
+func (q *SQLQuerier) GetAuditLogEntry(ctx context.Context, entryID string) (*types.AuditLogEntry, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if entryID == 0 {
+	if entryID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -239,12 +238,11 @@ func (q *SQLQuerier) createAuditLogEntry(ctx context.Context, querier database.Q
 	query, args := q.sqlQueryBuilder.BuildCreateAuditLogEntryQuery(ctx, input)
 
 	// create the audit log entry.
-	id, err := q.performWriteQuery(ctx, querier, true, "audit log entry creation", query, args)
-	if err != nil {
-		logger.Error(err, "executing audit log entry creation query")
+	if writeErr := q.performWriteQueryIgnoringReturn(ctx, querier, "audit log entry creation", query, args); writeErr != nil {
+		logger.Error(writeErr, "executing audit log entry creation query")
 	}
 
-	tracing.AttachAuditLogEntryIDToSpan(span, id)
+	tracing.AttachAuditLogEntryIDToSpan(span, input.ID)
 
 	logger.Info("audit log entry created")
 }

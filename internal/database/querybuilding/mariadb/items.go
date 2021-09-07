@@ -15,7 +15,7 @@ import (
 var _ querybuilding.ItemSQLQueryBuilder = (*MariaDB)(nil)
 
 // BuildItemExistsQuery constructs a SQL query for checking if an item with a given ID belong to a user with a given ID exists.
-func (b *MariaDB) BuildItemExistsQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildItemExistsQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -37,7 +37,7 @@ func (b *MariaDB) BuildItemExistsQuery(ctx context.Context, itemID, accountID ui
 }
 
 // BuildGetItemQuery constructs a SQL query for fetching an item with a given ID belong to a user with a given ID.
-func (b *MariaDB) BuildGetItemQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetItemQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -92,7 +92,7 @@ func (b *MariaDB) BuildGetBatchOfItemsQuery(ctx context.Context, beginID, endID 
 
 // BuildGetItemsQuery builds a SQL query selecting items that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID string, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -124,13 +124,13 @@ func (b *MariaDB) BuildGetItemsQuery(ctx context.Context, accountID uint64, incl
 // slice of uint64s instead of a slice of strings in order to ensure all the provided strings
 // are valid database IDs, because there's no way in squirrel to escape them in the unnest join,
 // and if we accept strings we could leave ourselves vulnerable to SQL injection attacks.
-func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID uint64, limit uint8, ids []uint64, restrictToAccount bool) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID string, limit uint8, ids []string, restrictToAccount bool) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	whenThenStatement := joinIDs(ids)
+	whenThenStatement := joinStringIDs(ids)
 	where := squirrel.Eq{
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.IDColumn):         ids,
 		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
@@ -159,13 +159,13 @@ func (b *MariaDB) BuildCreateItemQuery(ctx context.Context, input *types.ItemCre
 		span,
 		b.sqlBuilder.Insert(querybuilding.ItemsTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.ItemsTableNameColumn,
 				querybuilding.ItemsTableDetailsColumn,
 				querybuilding.ItemsTableAccountOwnershipColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				input.ID,
 				input.Name,
 				input.Details,
 				input.BelongsToAccount,
@@ -196,7 +196,7 @@ func (b *MariaDB) BuildUpdateItemQuery(ctx context.Context, input *types.Item) (
 }
 
 // BuildArchiveItemQuery returns a SQL query which marks a given item belonging to a given account as archived.
-func (b *MariaDB) BuildArchiveItemQuery(ctx context.Context, itemID, accountID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildArchiveItemQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -217,7 +217,7 @@ func (b *MariaDB) BuildArchiveItemQuery(ctx context.Context, itemID, accountID u
 }
 
 // BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries relating to an item with a given ID.
-func (b *MariaDB) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

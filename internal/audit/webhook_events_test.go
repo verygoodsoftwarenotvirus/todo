@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	exampleWebhookID uint64 = 123
+	exampleWebhookID = "123"
 )
 
 func TestBuildWebhookCreationEventEntry(t *testing.T) {

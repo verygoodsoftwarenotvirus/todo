@@ -56,13 +56,6 @@ var creatorConfigs = map[string]*basicCreatorTemplateConfig{
 				InputType:       "text",
 				Required:        true,
 			},
-			{
-				LabelName:       "external ID",
-				FormName:        "external_id",
-				StructFieldName: "ExternalID",
-				InputType:       "text",
-				Required:        true,
-			},
 		},
 	},
 	"internal/services/frontend/templates/partials/generated/creators/webhook_creator.gotpl": {

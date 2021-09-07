@@ -295,7 +295,7 @@ func Test_router_BuildRouteParamIDFetcher(T *testing.T) {
 		assert.NoError(t, err)
 		require.NotNil(t, req)
 
-		expected := fakes.BuildFakeUser().ID
+		expected := fakes.BuildFakeNumericID()
 
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
 			URLParams: chi.RouteParams{
@@ -345,8 +345,7 @@ func Test_router_BuildRouteParamStringIDFetcher(T *testing.T) {
 		assert.NoError(t, err)
 		require.NotNil(t, req)
 
-		exampleID := fakes.BuildFakeUser().ID
-		expected := strconv.FormatUint(exampleID, 10)
+		expected := fakes.BuildFakeUser().ID
 
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
 			URLParams: chi.RouteParams{

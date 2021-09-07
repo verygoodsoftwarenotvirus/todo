@@ -2,6 +2,8 @@ package audit
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -17,8 +19,9 @@ const (
 )
 
 // BuildWebhookCreationEventEntry builds an entry creation input for when a webhook is created.
-func BuildWebhookCreationEventEntry(webhook *types.Webhook, createdByUser uint64) *types.AuditLogEntryCreationInput {
+func BuildWebhookCreationEventEntry(webhook *types.Webhook, createdByUser string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: WebhookCreationEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:    createdByUser,
@@ -30,8 +33,9 @@ func BuildWebhookCreationEventEntry(webhook *types.Webhook, createdByUser uint64
 }
 
 // BuildWebhookUpdateEventEntry builds an entry creation input for when a webhook is updated.
-func BuildWebhookUpdateEventEntry(changedByUser, accountID, webhookID uint64, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
+func BuildWebhookUpdateEventEntry(changedByUser, accountID, webhookID string, changes []*types.FieldChangeSummary) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: WebhookUpdateEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:   changedByUser,
@@ -43,8 +47,9 @@ func BuildWebhookUpdateEventEntry(changedByUser, accountID, webhookID uint64, ch
 }
 
 // BuildWebhookArchiveEventEntry builds an entry creation input for when a webhook is archived.
-func BuildWebhookArchiveEventEntry(archivedByUser, accountID, webhookID uint64) *types.AuditLogEntryCreationInput {
+func BuildWebhookArchiveEventEntry(archivedByUser, accountID, webhookID string) *types.AuditLogEntryCreationInput {
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: WebhookArchiveEvent,
 		Context: map[string]interface{}{
 			ActorAssignmentKey:   archivedByUser,

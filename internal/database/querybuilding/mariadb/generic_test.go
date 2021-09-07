@@ -57,7 +57,17 @@ func TestMariaDB_BuildListQuery(T *testing.T) {
 			"key": "value",
 		}
 
-		actualQuery, actualArgs := q.buildListQuery(ctx, exampleTableName, exampleJoins, exampleWhere, exampleOwnershipColumn, exampleColumns, exampleUser.ID, false, filter)
+		actualQuery, actualArgs := q.buildListQuery(
+			ctx,
+			exampleTableName,
+			exampleJoins,
+			exampleWhere,
+			exampleOwnershipColumn,
+			exampleColumns,
+			exampleUser.ID,
+			false,
+			filter,
+		)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

@@ -43,7 +43,7 @@ func TestQuerier_UpdateUserReputation(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(exampleUser.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
 		assert.NoError(t, c.UpdateUserReputation(ctx, exampleUser.ID, exampleInput))
 
@@ -103,31 +103,6 @@ func TestQuerier_LogUserBanEvent(T *testing.T) {
 		c.sqlQueryBuilder = mockQueryBuilder
 
 		c.LogUserBanEvent(ctx, exampleServiceAdmin.ID, exampleUser.ID, exampleReason)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-}
-
-func TestQuerier_LogAccountTerminationEvent(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		exampleServiceAdmin := fakes.BuildFakeUser()
-		exampleUser := fakes.BuildFakeUser()
-		exampleReason := "smells bad"
-		exampleAuditLogEntry := audit.BuildAccountTerminationEventEntry(exampleServiceAdmin.ID, exampleUser.ID, exampleReason)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		prepareForAuditLogEntryCreation(t, exampleAuditLogEntry, mockQueryBuilder, db)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		c.LogAccountTerminationEvent(ctx, exampleServiceAdmin.ID, exampleUser.ID, exampleReason)
 
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})

@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	exampleAPIClientDatabaseID uint64 = 123
+	exampleAPIClientDatabaseID = "123"
 )
 
 func TestBuildAPIClientCreationEventEntry(t *testing.T) {

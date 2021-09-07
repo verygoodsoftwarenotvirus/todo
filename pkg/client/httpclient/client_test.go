@@ -338,7 +338,7 @@ func TestClient_fetchAndUnmarshal(T *testing.T) {
 	})
 }
 
-func TestClient_executeRawRequest(T *testing.T) {
+func TestClient_fetchResponseToRequest(T *testing.T) {
 	T.Parallel()
 
 	T.Run("with error", func(t *testing.T) {
@@ -356,6 +356,20 @@ func TestClient_executeRawRequest(T *testing.T) {
 		res, err := c.fetchResponseToRequest(ctx, &http.Client{Timeout: time.Second}, req)
 		assert.Nil(t, res)
 		assert.Error(t, err)
+	})
+}
+
+func TestClient_logRequest(T *testing.T) {
+	T.Parallel()
+
+	T.Run("with error", func(t *testing.T) {
+		t.Parallel()
+
+		c, _ := buildSimpleTestClient(t)
+		logger := logging.NewNoopLogger()
+		res := &http.Response{}
+
+		c.logRequest(logger, res)
 	})
 }
 

@@ -40,7 +40,7 @@ type itemsTestSuite struct {
 }
 
 func (s *itemsTestSuite) TestClient_ItemExists() {
-	const expectedPathFormat = "/api/v1/items/%d"
+	const expectedPathFormat = "/api/v1/items/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -58,7 +58,7 @@ func (s *itemsTestSuite) TestClient_ItemExists() {
 		t := s.T()
 
 		c, _ := buildSimpleTestClient(t)
-		actual, err := c.ItemExists(s.ctx, 0)
+		actual, err := c.ItemExists(s.ctx, "")
 
 		assert.Error(t, err)
 		assert.False(t, actual)
@@ -86,7 +86,7 @@ func (s *itemsTestSuite) TestClient_ItemExists() {
 }
 
 func (s *itemsTestSuite) TestClient_GetItem() {
-	const expectedPathFormat = "/api/v1/items/%d"
+	const expectedPathFormat = "/api/v1/items/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -104,7 +104,7 @@ func (s *itemsTestSuite) TestClient_GetItem() {
 		t := s.T()
 
 		c, _ := buildSimpleTestClient(t)
-		actual, err := c.GetItem(s.ctx, 0)
+		actual, err := c.GetItem(s.ctx, "")
 
 		require.Nil(t, actual)
 		assert.Error(t, err)
@@ -236,7 +236,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeItemCreationInput()
-		exampleInput.BelongsToAccount = 0
+		exampleInput.BelongsToAccount = ""
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
@@ -294,7 +294,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 }
 
 func (s *itemsTestSuite) TestClient_UpdateItem() {
-	const expectedPathFormat = "/api/v1/items/%d"
+	const expectedPathFormat = "/api/v1/items/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -335,7 +335,7 @@ func (s *itemsTestSuite) TestClient_UpdateItem() {
 }
 
 func (s *itemsTestSuite) TestClient_ArchiveItem() {
-	const expectedPathFormat = "/api/v1/items/%d"
+	const expectedPathFormat = "/api/v1/items/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -352,7 +352,7 @@ func (s *itemsTestSuite) TestClient_ArchiveItem() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		err := c.ArchiveItem(s.ctx, 0)
+		err := c.ArchiveItem(s.ctx, "")
 		assert.Error(t, err)
 	})
 
@@ -377,7 +377,7 @@ func (s *itemsTestSuite) TestClient_ArchiveItem() {
 
 func (s *itemsTestSuite) TestClient_GetAuditLogForItem() {
 	const (
-		expectedPath   = "/api/v1/items/%d/audit"
+		expectedPath   = "/api/v1/items/%s/audit"
 		expectedMethod = http.MethodGet
 	)
 
@@ -400,7 +400,7 @@ func (s *itemsTestSuite) TestClient_GetAuditLogForItem() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.GetAuditLogForItem(s.ctx, 0)
+		actual, err := c.GetAuditLogForItem(s.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

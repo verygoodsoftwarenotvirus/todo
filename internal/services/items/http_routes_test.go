@@ -565,7 +565,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	exampleQuery := "whatever"
 	exampleLimit := uint8(123)
 	exampleItemList := fakes.BuildFakeItemList()
-	exampleItemIDs := []uint64{}
+	exampleItemIDs := []string{}
 	for _, x := range exampleItemList.Items {
 		exampleItemIDs = append(exampleItemIDs, x.ID)
 	}
@@ -652,7 +652,7 @@ func TestItemsService_SearchHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			exampleQuery,
 			helper.exampleAccount.ID,
-		).Return([]uint64{}, errors.New("blah"))
+		).Return([]string{}, errors.New("blah"))
 		helper.service.search = indexManager
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()

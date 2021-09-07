@@ -17,21 +17,21 @@ type UserSQLQueryBuilder struct {
 }
 
 // BuildUserHasStatusQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildUserHasStatusQuery(ctx context.Context, userID uint64, statuses ...string) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildUserHasStatusQuery(ctx context.Context, userID string, statuses ...string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, statuses)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetUserQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildGetUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildGetUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetUserWithUnverifiedTwoFactorSecretQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -51,8 +51,8 @@ func (m *UserSQLQueryBuilder) BuildGetAllUsersCountQuery(ctx context.Context) (q
 	return returnArgs.String(0)
 }
 
-// BuildCreateUserQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildCreateUserQuery(ctx context.Context, input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
+// BuildUserCreationQuery implements our interface.
+func (m *UserSQLQueryBuilder) BuildUserCreationQuery(ctx context.Context, input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -66,35 +66,35 @@ func (m *UserSQLQueryBuilder) BuildUpdateUserQuery(ctx context.Context, input *t
 }
 
 // BuildUpdateUserPasswordQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64, newHash string) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildUpdateUserPasswordQuery(ctx context.Context, userID, newHash string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, newHash)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildUpdateUserTwoFactorSecretQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID uint64, newSecret string) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID, newSecret string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, newSecret)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildVerifyUserTwoFactorSecretQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildArchiveUserQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildArchiveUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildArchiveUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetAuditLogEntriesForUserQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (m *UserSQLQueryBuilder) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

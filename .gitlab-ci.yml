@@ -12,28 +12,26 @@ before_script:
 
 coverage:
   stage: quality
-  image: golang:1.17-bullseye
+  image: golang:1.17-stretch
   variables:
     GOPATH: "/go"
   script:
     - apt-get update -y && apt-get install -y make git gcc musl-dev
-    - go run mage.go ensureMage
-    - mage vendor coverage
+    - make vendor coverage
 
-# FIXME:
-# dependency-injection-check:
-#   stage: quality
-#   image: golang:1.17-bullseye
-#   variables:
-#     GOPATH: "/go"
-#   script:
-#     - apt-get update -y && apt-get install -y make git gcc musl-dev
-#     - go run mage.go ensureMage
-#     - mage rewire
+dependency-injection-check:
+  stage: quality
+  image: golang:1.17-stretch
+  variables:
+    GOPATH: "/go"
+  script:
+    - apt-get update -y && apt-get install -y make git gcc musl-dev
+    - go install github.com/google/wire/cmd/wire@latest
+    - make rewire
 
 golang-format-check:
   stage: quality
-  image: golang:1.17-bullseye
+  image: golang:1.17-stretch
   variables:
     GOPATH: "/go"
   script:

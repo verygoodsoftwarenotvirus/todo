@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	exampleAccountID uint64 = 123
+	exampleAccountID = "123"
 )
 
 func TestBuildAccountCreationEventEntry(t *testing.T) {

@@ -705,7 +705,7 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		accountMembershipDataManager.On(
 			"AddUserToAccount",
 			testutils.ContextMatcher,
-			exampleInput,
+			mock.IsType(&types.AddUserToAccountInput{}),
 			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
@@ -791,7 +791,7 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		accountMembershipDataManager.On(
 			"AddUserToAccount",
 			testutils.ContextMatcher,
-			exampleInput,
+			mock.IsType(&types.AddUserToAccountInput{}),
 			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.accountMembershipDataManager = accountMembershipDataManager

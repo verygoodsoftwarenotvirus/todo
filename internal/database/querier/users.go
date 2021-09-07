@@ -13,6 +13,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 var (
@@ -34,7 +36,6 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 
 	targetVars := []interface{}{
 		&user.ID,
-		&user.ExternalID,
 		&user.Username,
 		&user.AvatarSrc,
 		&user.HashedPassword,
@@ -99,11 +100,11 @@ func (q *SQLQuerier) scanUsers(ctx context.Context, rows database.ResultIterator
 }
 
 // getUser fetches a user.
-func (q *SQLQuerier) getUser(ctx context.Context, userID uint64, withVerifiedTOTPSecret bool) (*types.User, error) {
+func (q *SQLQuerier) getUser(ctx context.Context, userID string, withVerifiedTOTPSecret bool) (*types.User, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -138,20 +139,21 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 
 	logger := q.logger.WithValue("username", user.Username)
 
+	if user.ID == "" {
+		return ErrEmptyInputProvided
+	}
+	account.BelongsToUser = user.ID
+	logger = logger.WithValue(keys.UserIDKey, user.ID)
+
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
 	}
 
-	userID, err := q.performWriteQuery(ctx, tx, false, "user creation", userCreationQuery, userCreationArgs)
-	if err != nil {
+	if writeErr := q.performWriteQueryIgnoringReturn(ctx, tx, "user creation", userCreationQuery, userCreationArgs); writeErr != nil {
 		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "creating user")
+		return observability.PrepareError(writeErr, logger, span, "creating user")
 	}
-
-	user.ID = userID
-	account.BelongsToUser = user.ID
-	logger = logger.WithValue(keys.UserIDKey, userID)
 
 	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); err != nil {
 		q.rollbackTransaction(ctx, tx)
@@ -160,23 +162,22 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 
 	// create the account.
 	accountCreationInput := types.AccountCreationInputForNewUser(user)
+	accountCreationInput.ID = account.ID
 	accountCreationQuery, accountCreationArgs := q.sqlQueryBuilder.BuildAccountCreationQuery(ctx, accountCreationInput)
 
-	accountID, err := q.performWriteQuery(ctx, tx, false, "account creation", accountCreationQuery, accountCreationArgs)
-	if err != nil {
+	if writeErr := q.performWriteQueryIgnoringReturn(ctx, tx, "account creation", accountCreationQuery, accountCreationArgs); writeErr != nil {
 		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "create account")
+		return observability.PrepareError(writeErr, logger, span, "create account")
 	}
 
-	account.ID = accountID
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	logger = logger.WithValue(keys.AccountIDKey, account.ID)
 
 	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing account creation audit log entry")
 	}
 
-	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(ctx, userID, accountID)
+	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(ctx, user.ID, account.ID)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing account user membership creation audit log entry")
@@ -189,7 +190,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 		Reason:       "account creation",
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(userID, addToAccountInput)); err != nil {
+	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(user.ID, addToAccountInput)); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
 	}
@@ -207,11 +208,11 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 }
 
 // UserHasStatus fetches whether an user has a particular status.
-func (q *SQLQuerier) UserHasStatus(ctx context.Context, userID uint64, statuses ...string) (banned bool, err error) {
+func (q *SQLQuerier) UserHasStatus(ctx context.Context, userID string, statuses ...string) (banned bool, err error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return false, ErrInvalidIDProvided
 	}
 
@@ -233,11 +234,11 @@ func (q *SQLQuerier) UserHasStatus(ctx context.Context, userID uint64, statuses 
 }
 
 // GetUser fetches a user.
-func (q *SQLQuerier) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
+func (q *SQLQuerier) GetUser(ctx context.Context, userID string) (*types.User, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -247,11 +248,11 @@ func (q *SQLQuerier) GetUser(ctx context.Context, userID uint64) (*types.User, e
 }
 
 // GetUserWithUnverifiedTwoFactorSecret fetches a user with an unverified 2FA secret.
-func (q *SQLQuerier) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID uint64) (*types.User, error) {
+func (q *SQLQuerier) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, userID string) (*types.User, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -374,9 +375,10 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 	logger := q.logger.WithValue(keys.UsernameKey, input.Username)
 
 	// create the user.
-	userCreationQuery, userCreationArgs := q.sqlQueryBuilder.BuildCreateUserQuery(ctx, input)
+	userCreationQuery, userCreationArgs := q.sqlQueryBuilder.BuildUserCreationQuery(ctx, input)
 
 	user := &types.User{
+		ID:              input.ID,
 		Username:        input.Username,
 		HashedPassword:  input.HashedPassword,
 		TwoFactorSecret: input.TwoFactorSecret,
@@ -385,6 +387,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 	}
 
 	account := &types.Account{
+		ID:                 ksuid.New().String(),
 		Name:               input.Username,
 		SubscriptionPlanID: nil,
 		CreatedOn:          q.currentTime(),
@@ -436,11 +439,11 @@ func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, change
 }
 
 // UpdateUserPassword updates a user's passwords hash in the database.
-func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID uint64, newHash string) error {
+func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID, newHash string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -478,11 +481,11 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID uint64, newH
 }
 
 // UpdateUserTwoFactorSecret marks a user's two factor secret as validated.
-func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID uint64, newSecret string) error {
+func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID, newSecret string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -520,11 +523,11 @@ func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID uint6
 }
 
 // MarkUserTwoFactorSecretAsVerified marks a user's two factor secret as validated.
-func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, userID uint64) error {
+func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, userID string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -558,11 +561,11 @@ func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, user
 }
 
 // ArchiveUser archives a user.
-func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID uint64) error {
+func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -603,11 +606,11 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID uint64) error {
 }
 
 // GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.
-func (q *SQLQuerier) GetAuditLogEntriesForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
+func (q *SQLQuerier) GetAuditLogEntriesForUser(ctx context.Context, userID string) ([]*types.AuditLogEntry, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 

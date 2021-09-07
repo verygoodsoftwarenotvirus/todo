@@ -10,13 +10,13 @@ import (
 )
 
 // ItemExists retrieves whether an item exists.
-func (c *Client) ItemExists(ctx context.Context, itemID uint64) (bool, error) {
+func (c *Client) ItemExists(ctx context.Context, itemID string) (bool, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return false, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -29,20 +29,20 @@ func (c *Client) ItemExists(ctx context.Context, itemID uint64) (bool, error) {
 
 	exists, err := c.responseIsOK(ctx, req)
 	if err != nil {
-		return false, observability.PrepareError(err, logger, span, "checking existence for item #%d", itemID)
+		return false, observability.PrepareError(err, logger, span, "checking existence for item %s", itemID)
 	}
 
 	return exists, nil
 }
 
 // GetItem gets an item.
-func (c *Client) GetItem(ctx context.Context, itemID uint64) (*types.Item, error) {
+func (c *Client) GetItem(ctx context.Context, itemID string) (*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -159,20 +159,20 @@ func (c *Client) UpdateItem(ctx context.Context, item *types.Item) error {
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, &item); err != nil {
-		return observability.PrepareError(err, logger, span, "updating item #%d", item.ID)
+		return observability.PrepareError(err, logger, span, "updating item %s", item.ID)
 	}
 
 	return nil
 }
 
 // ArchiveItem archives an item.
-func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
+func (c *Client) ArchiveItem(ctx context.Context, itemID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -184,20 +184,20 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return observability.PrepareError(err, logger, span, "archiving item #%d", itemID)
+		return observability.PrepareError(err, logger, span, "archiving item %s", itemID)
 	}
 
 	return nil
 }
 
 // GetAuditLogForItem retrieves a list of audit log entries pertaining to an item.
-func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
+func (c *Client) GetAuditLogForItem(ctx context.Context, itemID string) ([]*types.AuditLogEntry, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)

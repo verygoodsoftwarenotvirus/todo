@@ -25,7 +25,7 @@ const (
 	// allCountQuery is a generic counter query used in a few query builders.
 	allCountQuery = `COUNT(*)`
 	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
-	jsonPluckQuery = `%s.%s->'%s'`
+	jsonPluckQuery = "%s.%s->>'%s'"
 )
 
 var (
@@ -38,10 +38,9 @@ var _ querybuilding.SQLQueryBuilder = (*Postgres)(nil)
 type (
 	// Postgres is our main Postgres interaction db.
 	Postgres struct {
-		logger              logging.Logger
-		tracer              tracing.Tracer
-		sqlBuilder          squirrel.StatementBuilderType
-		externalIDGenerator querybuilding.ExternalIDGenerator
+		logger     logging.Logger
+		tracer     tracing.Tracer
+		sqlBuilder squirrel.StatementBuilderType
 	}
 )
 
@@ -74,10 +73,9 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 // ProvidePostgres provides a postgres db controller.
 func ProvidePostgres(logger logging.Logger) *Postgres {
 	pg := &Postgres{
-		logger:              logging.EnsureLogger(logger).WithName(loggerName),
-		tracer:              tracing.NewTracer("postgres_query_builder"),
-		sqlBuilder:          squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
-		externalIDGenerator: querybuilding.UUIDExternalIDGenerator{},
+		logger:     logging.EnsureLogger(logger).WithName(loggerName),
+		tracer:     tracing.NewTracer("postgres_query_builder"),
+		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 
 	return pg

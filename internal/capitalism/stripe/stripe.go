@@ -63,7 +63,7 @@ func ProvideStripePaymentManager(logger logging.Logger, cfg *capitalism.StripeCo
 }
 
 func buildCustomerName(account *types.Account) string {
-	return fmt.Sprintf("%s (%d)", account.Name, account.ID)
+	return fmt.Sprintf("%s (%s)", account.Name, account.ID)
 }
 
 func buildGetCustomerParams(a *types.Account) *stripe.CustomerParams {
@@ -73,7 +73,6 @@ func buildGetCustomerParams(a *types.Account) *stripe.CustomerParams {
 		Phone:   stripe.String(a.ContactPhone),
 		Address: &stripe.AddressParams{},
 	}
-	p.AddMetadata(keys.AccountIDKey, a.ExternalID)
 
 	return p
 }

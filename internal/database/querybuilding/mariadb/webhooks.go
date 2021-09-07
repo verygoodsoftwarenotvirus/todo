@@ -18,7 +18,7 @@ var (
 )
 
 // BuildGetWebhookQuery returns a SQL query (and arguments) for retrieving a given webhook.
-func (b *MariaDB) BuildGetWebhookQuery(ctx context.Context, webhookID, accountID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetWebhookQuery(ctx context.Context, webhookID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -68,7 +68,7 @@ func (b *MariaDB) BuildGetBatchOfWebhooksQuery(ctx context.Context, beginID, end
 }
 
 // BuildGetWebhooksQuery returns a SQL query (and arguments) that would return a list of webhooks.
-func (b *MariaDB) BuildGetWebhooksQuery(ctx context.Context, accountID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetWebhooksQuery(ctx context.Context, accountID string, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -97,7 +97,7 @@ func (b *MariaDB) BuildCreateWebhookQuery(ctx context.Context, x *types.WebhookC
 		span,
 		b.sqlBuilder.Insert(querybuilding.WebhooksTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.WebhooksTableNameColumn,
 				querybuilding.WebhooksTableContentTypeColumn,
 				querybuilding.WebhooksTableURLColumn,
@@ -108,7 +108,7 @@ func (b *MariaDB) BuildCreateWebhookQuery(ctx context.Context, x *types.WebhookC
 				querybuilding.WebhooksTableOwnershipColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				x.ID,
 				x.Name,
 				x.ContentType,
 				x.URL,
@@ -149,7 +149,7 @@ func (b *MariaDB) BuildUpdateWebhookQuery(ctx context.Context, input *types.Webh
 }
 
 // BuildArchiveWebhookQuery returns a SQL query (and arguments) that will mark a webhook as archived.
-func (b *MariaDB) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accountID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accountID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -170,7 +170,7 @@ func (b *MariaDB) BuildArchiveWebhookQuery(ctx context.Context, webhookID, accou
 }
 
 // BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a webhook with a given ID.
-func (b *MariaDB) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

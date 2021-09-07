@@ -21,11 +21,10 @@ type (
 
 	// AuditLogEntry represents an event we might want to log for audit purposes.
 	AuditLogEntry struct {
-		Context    AuditLogContext `json:"context"`
-		ExternalID string          `json:"externalID"`
-		EventType  string          `json:"eventType"`
-		ID         uint64          `json:"id"`
-		CreatedOn  uint64          `json:"createdOn"`
+		Context   AuditLogContext `json:"context"`
+		EventType string          `json:"eventType"`
+		ID        string          `json:"id"`
+		CreatedOn uint64          `json:"createdOn"`
 	}
 
 	// AuditLogEntryList represents a list of audit log entries.
@@ -36,13 +35,14 @@ type (
 
 	// AuditLogEntryCreationInput represents input for creating audit log entries.
 	AuditLogEntryCreationInput struct {
+		ID        string          `json:"-"`
 		Context   AuditLogContext `json:"context"`
 		EventType string          `json:"eventType"`
 	}
 
 	// AuditLogEntryDataManager describes a structure capable of managing audit log entries.
 	AuditLogEntryDataManager interface {
-		GetAuditLogEntry(ctx context.Context, eventID uint64) (*AuditLogEntry, error)
+		GetAuditLogEntry(ctx context.Context, eventID string) (*AuditLogEntry, error)
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
 		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*AuditLogEntry, bucketSize uint16) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)

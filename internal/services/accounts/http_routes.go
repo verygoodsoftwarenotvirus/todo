@@ -9,6 +9,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -92,7 +94,9 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	requester := sessionCtxData.Requester.UserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
+
 	input.BelongsToUser = requester
+	input.ID = ksuid.New().String()
 
 	// create account in database.
 	account, err := s.accountDataManager.CreateAccount(ctx, input, requester)
@@ -282,6 +286,7 @@ func (s *service) AddMemberHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 		return
 	}
+	input.ID = ksuid.New().String()
 
 	if err = input.ValidateWithContext(ctx); err != nil {
 		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
@@ -347,10 +352,10 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 
 	userID := s.userIDFetcher(req)
 	logger = logger.WithValue(keys.UserIDKey, userID)
-	tracing.AttachAccountIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, userID)
 
 	// create account in database.
-	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, userID, accountID, requester, input); err != nil {
+	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, userID, requester, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "modifying user permissions")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

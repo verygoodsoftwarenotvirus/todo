@@ -12,29 +12,29 @@ type (
 	Webhook struct {
 		LastUpdatedOn    *uint64  `json:"lastUpdatedOn"`
 		ArchivedOn       *uint64  `json:"archivedOn"`
-		ExternalID       string   `json:"externalID"`
 		Name             string   `json:"name"`
 		URL              string   `json:"url"`
 		Method           string   `json:"method"`
 		ContentType      string   `json:"contentType"`
+		ID               string   `json:"id"`
+		BelongsToAccount string   `json:"belongsToAccount"`
 		Events           []string `json:"events"`
 		DataTypes        []string `json:"dataTypes"`
 		Topics           []string `json:"topics"`
-		ID               uint64   `json:"id"`
 		CreatedOn        uint64   `json:"createdOn"`
-		BelongsToAccount uint64   `json:"belongsToAccount"`
 	}
 
 	// WebhookCreationInput represents what a User could set as input for creating a webhook.
 	WebhookCreationInput struct {
+		ID               string   `json:"-"`
 		Name             string   `json:"name"`
 		ContentType      string   `json:"contentType"`
 		URL              string   `json:"url"`
 		Method           string   `json:"method"`
+		BelongsToAccount string   `json:"-"`
 		Events           []string `json:"events"`
 		DataTypes        []string `json:"dataTypes"`
 		Topics           []string `json:"topics"`
-		BelongsToAccount uint64   `json:"-"`
 	}
 
 	// WebhookUpdateInput represents what a User could set as input for updating a webhook.
@@ -43,10 +43,10 @@ type (
 		ContentType      string   `json:"contentType"`
 		URL              string   `json:"url"`
 		Method           string   `json:"method"`
+		BelongsToAccount string   `json:"-"`
 		Events           []string `json:"events"`
 		DataTypes        []string `json:"dataTypes"`
 		Topics           []string `json:"topics"`
-		BelongsToAccount uint64   `json:"-"`
 	}
 
 	// WebhookList represents a list of webhooks.
@@ -57,14 +57,14 @@ type (
 
 	// WebhookDataManager describes a structure capable of storing webhooks.
 	WebhookDataManager interface {
-		GetWebhook(ctx context.Context, webhookID, accountID uint64) (*Webhook, error)
+		GetWebhook(ctx context.Context, webhookID, accountID string) (*Webhook, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
 		GetAllWebhooks(ctx context.Context, resultChannel chan []*Webhook, bucketSize uint16) error
-		GetWebhooks(ctx context.Context, accountID uint64, filter *QueryFilter) (*WebhookList, error)
-		CreateWebhook(ctx context.Context, input *WebhookCreationInput, createdByUser uint64) (*Webhook, error)
-		UpdateWebhook(ctx context.Context, updated *Webhook, changedByUser uint64, changes []*FieldChangeSummary) error
-		ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID uint64) error
-		GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*AuditLogEntry, error)
+		GetWebhooks(ctx context.Context, accountID string, filter *QueryFilter) (*WebhookList, error)
+		CreateWebhook(ctx context.Context, input *WebhookCreationInput, createdByUser string) (*Webhook, error)
+		UpdateWebhook(ctx context.Context, updated *Webhook, changedByUser string, changes []*FieldChangeSummary) error
+		ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID string) error
+		GetAuditLogEntriesForWebhook(ctx context.Context, webhookID string) ([]*AuditLogEntry, error)
 	}
 
 	// WebhookDataService describes a structure capable of serving traffic related to webhooks.

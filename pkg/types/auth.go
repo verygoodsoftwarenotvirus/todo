@@ -34,15 +34,15 @@ type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
 		AccountName  string   `json:"name"`
+		AccountID    string   `json:"accountID"`
 		AccountRoles []string `json:"-"`
-		AccountID    uint64   `json:"accountID"`
 	}
 
 	// SessionContextData represents what we encode in our passwords cookies.
 	SessionContextData struct {
-		AccountPermissions map[uint64]authorization.AccountRolePermissionsChecker `json:"-"`
+		AccountPermissions map[string]authorization.AccountRolePermissionsChecker `json:"-"`
 		Requester          RequesterInfo                                          `json:"-"`
-		ActiveAccountID    uint64                                                 `json:"-"`
+		ActiveAccountID    string                                                 `json:"-"`
 	}
 
 	// RequesterInfo contains data relevant to the user making a request.
@@ -50,26 +50,26 @@ type (
 		ServicePermissions    authorization.ServiceRolePermissionChecker `json:"-"`
 		Reputation            accountStatus                              `json:"-"`
 		ReputationExplanation string                                     `json:"-"`
-		UserID                uint64                                     `json:"-"`
+		UserID                string                                     `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
 		UserReputation            accountStatus `json:"accountStatus,omitempty"`
 		UserReputationExplanation string        `json:"reputationExplanation"`
-		ActiveAccount             uint64        `json:"activeAccount,omitempty"`
+		ActiveAccount             string        `json:"activeAccount,omitempty"`
 		UserIsAuthenticated       bool          `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
 	ChangeActiveAccountInput struct {
-		AccountID uint64 `json:"accountID"`
+		AccountID string `json:"accountID"`
 	}
 
 	// PASETOCreationInput is used to create a PASETO.
 	PASETOCreationInput struct {
 		ClientID          string `json:"clientID"`
-		AccountID         uint64 `json:"accountID"`
+		AccountID         string `json:"accountID"`
 		RequestTime       int64  `json:"requestTime"`
 		RequestedLifetime uint64 `json:"requestedLifetime,omitempty"`
 	}
@@ -101,12 +101,12 @@ type (
 
 	// AuthAuditManager describes a structure capable of auditing auth events.
 	AuthAuditManager interface {
-		LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
-		LogSuccessfulLoginEvent(ctx context.Context, userID uint64)
-		LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64)
-		LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64)
-		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64)
-		LogLogoutEvent(ctx context.Context, userID uint64)
+		LogCycleCookieSecretEvent(ctx context.Context, userID string)
+		LogSuccessfulLoginEvent(ctx context.Context, userID string)
+		LogBannedUserLoginAttemptEvent(ctx context.Context, userID string)
+		LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID string)
+		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID string)
+		LogLogoutEvent(ctx context.Context, userID string)
 	}
 )
 

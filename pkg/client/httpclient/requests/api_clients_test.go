@@ -13,7 +13,7 @@ import (
 func TestBuilder_BuildGetAPIClientRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/api_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -34,7 +34,7 @@ func TestBuilder_BuildGetAPIClientRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetAPIClientRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetAPIClientRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -139,7 +139,7 @@ func TestBuilder_BuildCreateAPIClientRequest(T *testing.T) {
 func TestBuilder_BuildArchiveAPIClientRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/api_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -160,7 +160,7 @@ func TestBuilder_BuildArchiveAPIClientRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildArchiveAPIClientRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildArchiveAPIClientRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -181,7 +181,7 @@ func TestBuilder_BuildArchiveAPIClientRequest(T *testing.T) {
 func TestBuilder_BuildGetAuditLogForAPIClientRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/api_clients/%d/audit"
+	const expectedPath = "/api/v1/api_clients/%s/audit"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -202,7 +202,7 @@ func TestBuilder_BuildGetAuditLogForAPIClientRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetAuditLogForAPIClientRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetAuditLogForAPIClientRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

@@ -21,13 +21,13 @@ func (s *service) overrideSessionContextDataValuesWithSessionData(ctx context.Co
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if activeAccount, ok := s.sessionManager.Get(ctx, accountIDContextKey).(uint64); ok {
+	if activeAccount, ok := s.sessionManager.Get(ctx, accountIDContextKey).(string); ok {
 		sessionCtxData.ActiveAccountID = activeAccount
 	}
 }
 
 // getUserIDFromCookie takes a request object and fetches the cookie data if it is present.
-func (s *service) getUserIDFromCookie(ctx context.Context, req *http.Request) (context.Context, uint64, error) {
+func (s *service) getUserIDFromCookie(ctx context.Context, req *http.Request) (context.Context, string, error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -41,23 +41,23 @@ func (s *service) getUserIDFromCookie(ctx context.Context, req *http.Request) (c
 
 		if err = s.cookieManager.Decode(s.config.Cookies.Name, cookie.Value, &token); err != nil {
 			logger = logger.WithValue("cookie", cookie.Value)
-			return nil, 0, observability.PrepareError(err, logger, span, "retrieving session context data")
+			return nil, "", observability.PrepareError(err, logger, span, "retrieving session context data")
 		}
 
 		ctx, err = s.sessionManager.Load(ctx, token)
 		if err != nil {
-			return nil, 0, observability.PrepareError(err, logger, span, "loading session")
+			return nil, "", observability.PrepareError(err, logger, span, "loading session")
 		}
 
-		if userID, ok := s.sessionManager.Get(ctx, userIDContextKey).(uint64); ok {
+		if userID, ok := s.sessionManager.Get(ctx, userIDContextKey).(string); ok {
 			logger.WithValue(keys.UserIDKey, userID).Debug("determined userID from request cookie")
 			return ctx, userID, nil
 		}
 
-		return nil, 0, observability.PrepareError(errNoUserIDFoundInSession, logger, span, "determining user ID from cookie")
+		return nil, "", observability.PrepareError(errNoUserIDFoundInSession, logger, span, "determining user ID from cookie")
 	}
 
-	return nil, 0, http.ErrNoCookie
+	return nil, "", http.ErrNoCookie
 }
 
 // determineUserFromRequestCookie takes a request object and fetches the cookie, and then the user for that cookie.

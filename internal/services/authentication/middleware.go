@@ -93,7 +93,7 @@ func (s *service) UserAttributionMiddleware(next http.Handler) http.Handler {
 		logger := s.logger.WithRequest(req)
 
 		// handle cookies if relevant.
-		if cookieContext, userID, err := s.getUserIDFromCookie(ctx, req); err == nil && userID != 0 {
+		if cookieContext, userID, err := s.getUserIDFromCookie(ctx, req); err == nil && userID != "" {
 			ctx = cookieContext
 
 			tracing.AttachRequestingUserIDToSpan(span, userID)

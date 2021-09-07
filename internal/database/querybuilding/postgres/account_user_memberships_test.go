@@ -79,8 +79,9 @@ func TestPostgres_BuildAddUserToAccountQuery(T *testing.T) {
 			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		}
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,account_roles) VALUES ($1,$2,$3)"
+		expectedQuery := "INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,account_roles) VALUES ($1,$2,$3,$4)"
 		expectedArgs := []interface{}{
+			exampleInput.ID,
 			exampleInput.UserID,
 			exampleAccount.ID,
 			strings.Join(exampleInput.AccountRoles, accountMemberRolesSeparator),
@@ -153,8 +154,9 @@ func TestPostgres_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account,account_roles) VALUES ($1,$2,$3,$4)"
+		expectedQuery := "INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,default_account,account_roles) VALUES ($1,$2,$3,$4,$5)"
 		expectedArgs := []interface{}{
+			"",
 			exampleUser.ID,
 			exampleAccount.ID,
 			true,
@@ -164,7 +166,8 @@ func TestPostgres_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
+
+		assertArgumentsSkippingIndex(t, expectedArgs, 0)
 	})
 }
 

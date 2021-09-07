@@ -29,11 +29,10 @@ type (
 		ContactEmail               string                   `json:"contactEmail"`
 		ContactPhone               string                   `json:"contactPhone"`
 		PaymentProcessorCustomerID string                   `json:"paymentProcessorCustomer"`
-		ExternalID                 string                   `json:"externalID"`
+		BelongsToUser              string                   `json:"belongsToUser"`
+		ID                         string                   `json:"id"`
 		Members                    []*AccountUserMembership `json:"members"`
 		CreatedOn                  uint64                   `json:"createdOn"`
-		ID                         uint64                   `json:"id"`
-		BelongsToUser              uint64                   `json:"belongsToUser"`
 	}
 
 	// AccountList represents a list of accounts.
@@ -44,10 +43,11 @@ type (
 
 	// AccountCreationInput represents what a User could set as input for creating accounts.
 	AccountCreationInput struct {
+		ID            string `json:"-"`
 		Name          string `json:"name"`
 		ContactEmail  string `json:"contactEmail"`
 		ContactPhone  string `json:"contactPhone"`
-		BelongsToUser uint64 `json:"-"`
+		BelongsToUser string `json:"-"`
 	}
 
 	// AccountUpdateInput represents what a User could set as input for updating accounts.
@@ -55,20 +55,20 @@ type (
 		Name          string `json:"name"`
 		ContactEmail  string `json:"contactEmail"`
 		ContactPhone  string `json:"contactPhone"`
-		BelongsToUser uint64 `json:"-"`
+		BelongsToUser string `json:"-"`
 	}
 
 	// AccountDataManager describes a structure capable of storing accounts permanently.
 	AccountDataManager interface {
-		GetAccount(ctx context.Context, accountID, userID uint64) (*Account, error)
+		GetAccount(ctx context.Context, accountID, userID string) (*Account, error)
 		GetAllAccountsCount(ctx context.Context) (uint64, error)
 		GetAllAccounts(ctx context.Context, resultChannel chan []*Account, bucketSize uint16) error
-		GetAccounts(ctx context.Context, userID uint64, filter *QueryFilter) (*AccountList, error)
+		GetAccounts(ctx context.Context, userID string, filter *QueryFilter) (*AccountList, error)
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
-		CreateAccount(ctx context.Context, input *AccountCreationInput, createdByUser uint64) (*Account, error)
-		UpdateAccount(ctx context.Context, updated *Account, changedByUser uint64, changes []*FieldChangeSummary) error
-		ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser uint64) error
-		GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*AuditLogEntry, error)
+		CreateAccount(ctx context.Context, input *AccountCreationInput, createdByUser string) (*Account, error)
+		UpdateAccount(ctx context.Context, updated *Account, changedByUser string, changes []*FieldChangeSummary) error
+		ArchiveAccount(ctx context.Context, accountID string, userID, archivedByUser string) error
+		GetAuditLogEntriesForAccount(ctx context.Context, accountID string) ([]*AuditLogEntry, error)
 	}
 
 	// AccountDataService describes a structure capable of serving traffic related to accounts.

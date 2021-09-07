@@ -61,44 +61,6 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, userDataManager, auditLog)
 	})
 
-	T.Run("terminating users", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-
-		helper.exampleInput.NewReputation = types.TerminatedUserReputation
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, helper.exampleInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		userDataManager := &mocktypes.AdminUserDataManager{}
-		userDataManager.On(
-			"UpdateUserReputation",
-			testutils.ContextMatcher,
-			helper.exampleInput.TargetUserID,
-			helper.exampleInput,
-		).Return(nil)
-		helper.service.userDB = userDataManager
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogAccountTerminationEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason,
-		).Return()
-		helper.service.auditLog = auditLog
-
-		helper.service.UserReputationChangeHandler(helper.res, helper.req)
-		assert.Equal(t, http.StatusAccepted, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, userDataManager, auditLog)
-	})
-
 	T.Run("back in good standing", func(t *testing.T) {
 		t.Parallel()
 

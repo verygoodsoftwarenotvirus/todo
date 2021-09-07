@@ -22,14 +22,15 @@ type (
 	}
 )
 
+// TopicProducer produces messages on a topic.
 type TopicProducer struct {
-	topic    string
 	logger   logging.Logger
 	tracer   tracing.Tracer
 	producer *nsq.Producer
+	topic    string
 }
 
-//Publish publishes a message onto a topic queue.
+// Publish publishes a message onto a topic queue.
 func (w *TopicProducer) Publish(message []byte) error {
 	w.logger.Debug("publishing message")
 

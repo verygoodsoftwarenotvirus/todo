@@ -4,11 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestSqlite_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
@@ -22,7 +20,7 @@ func TestSqlite_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.id > ? AND api_clients.id < ?"
+		expectedQuery := "SELECT api_clients.id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.id > ? AND api_clients.id < ?"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -46,7 +44,7 @@ func TestSqlite_BuildGetAPIClientQuery(T *testing.T) {
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.client_id = ?"
+		expectedQuery := "SELECT api_clients.id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.client_id = ?"
 		expectedArgs := []interface{}{
 			exampleAPIClient.ClientID,
 		}
@@ -87,7 +85,7 @@ func TestSqlite_BuildGetAPIClientsQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user, (SELECT COUNT(api_clients.id) FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ?) as total_count, (SELECT COUNT(api_clients.id) FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.created_on > ? AND api_clients.created_on < ? AND api_clients.last_updated_on > ? AND api_clients.last_updated_on < ?) as filtered_count FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.created_on > ? AND api_clients.created_on < ? AND api_clients.last_updated_on > ? AND api_clients.last_updated_on < ? GROUP BY api_clients.id LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT api_clients.id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user, (SELECT COUNT(api_clients.id) FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ?) as total_count, (SELECT COUNT(api_clients.id) FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.created_on > ? AND api_clients.created_on < ? AND api_clients.last_updated_on > ? AND api_clients.last_updated_on < ?) as filtered_count FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.created_on > ? AND api_clients.created_on < ? AND api_clients.last_updated_on > ? AND api_clients.last_updated_on < ? GROUP BY api_clients.id LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			filter.CreatedAfter,
@@ -121,7 +119,7 @@ func TestSqlite_BuildGetAPIClientByDatabaseIDQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		expectedQuery := "SELECT api_clients.id, api_clients.external_id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.id = ?"
+		expectedQuery := "SELECT api_clients.id, api_clients.name, api_clients.client_id, api_clients.secret_key, api_clients.created_on, api_clients.last_updated_on, api_clients.archived_on, api_clients.belongs_to_user FROM api_clients WHERE api_clients.archived_on IS NULL AND api_clients.belongs_to_user = ? AND api_clients.id = ?"
 		expectedArgs := []interface{}{
 			exampleUser.ID,
 			exampleAPIClient.ID,
@@ -146,13 +144,9 @@ func TestSqlite_BuildCreateAPIClientQuery(T *testing.T) {
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 		exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
 
-		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleAPIClient.ExternalID)
-		q.externalIDGenerator = exIDGen
-
-		expectedQuery := "INSERT INTO api_clients (external_id,name,client_id,secret_key,belongs_to_user) VALUES (?,?,?,?,?)"
+		expectedQuery := "INSERT INTO api_clients (id,name,client_id,secret_key,belongs_to_user) VALUES (?,?,?,?,?)"
 		expectedArgs := []interface{}{
-			exampleAPIClient.ExternalID,
+			exampleAPIClientInput.ID,
 			exampleAPIClient.Name,
 			exampleAPIClient.ClientID,
 			exampleAPIClient.ClientSecret,
@@ -163,8 +157,6 @@ func TestSqlite_BuildCreateAPIClientQuery(T *testing.T) {
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
-
-		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }
 
@@ -229,7 +221,7 @@ func TestSqlite_BuildGetAuditLogEntriesForAPIClientQuery(T *testing.T) {
 
 		exampleAPIClient := fakes.BuildFakeAPIClient()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE json_extract(audit_log.context, '$.api_client_id') = ? ORDER BY audit_log.created_on"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE json_extract(audit_log.context, '$.api_client_id') = ? ORDER BY audit_log.created_on"
 		expectedArgs := []interface{}{
 			exampleAPIClient.ID,
 		}

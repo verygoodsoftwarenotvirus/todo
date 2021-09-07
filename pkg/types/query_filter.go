@@ -21,8 +21,6 @@ const (
 	SearchQueryKey = "q"
 	// LimitQueryKey is the query param key to specify a limit in a query.
 	LimitQueryKey = "limit"
-	// AdminQueryKey is the query param key to specify a limit is on behalf of a service admin.
-	AdminQueryKey = "admin"
 
 	pageQueryKey            = "page"
 	createdBeforeQueryKey   = "createdBefore"

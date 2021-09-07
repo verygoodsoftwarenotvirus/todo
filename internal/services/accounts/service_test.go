@@ -22,7 +22,7 @@ func buildTestService() *service {
 		accountCounter:               &mockmetrics.UnitCounter{},
 		accountDataManager:           &mocktypes.AccountDataManager{},
 		accountMembershipDataManager: &mocktypes.AccountUserMembershipDataManager{},
-		accountIDFetcher:             func(req *http.Request) uint64 { return 0 },
+		accountIDFetcher:             func(req *http.Request) string { return "" },
 		encoderDecoder:               mockencoding.NewMockEncoderDecoder(),
 		tracer:                       tracing.NewTracer("test"),
 	}
@@ -35,15 +35,15 @@ func TestProvideAccountsService(t *testing.T) {
 		return &mockmetrics.UnitCounter{}
 	}
 
-	l := logging.NewNoopLogger()
-
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On(
-		"BuildRouteParamIDFetcher",
-		mock.IsType(l), AccountIDURIParamKey, "account").Return(func(*http.Request) uint64 { return 0 })
+		"BuildRouteParamStringIDFetcher",
+		AccountIDURIParamKey,
+	).Return(func(*http.Request) string { return "" })
 	rpm.On(
-		"BuildRouteParamIDFetcher",
-		mock.IsType(l), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+		"BuildRouteParamStringIDFetcher",
+		UserIDURIParamKey,
+	).Return(func(*http.Request) string { return "" })
 
 	s := ProvideService(
 		logging.NewNoopLogger(),

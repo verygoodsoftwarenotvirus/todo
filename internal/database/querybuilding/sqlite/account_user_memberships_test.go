@@ -73,14 +73,16 @@ func TestSqlite_BuildAddUserToAccountQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 		exampleInput := &types.AddUserToAccountInput{
+			ID:           fakes.BuildFakeID(),
 			UserID:       exampleUser.ID,
 			AccountID:    exampleAccount.ID,
 			Reason:       t.Name(),
 			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		}
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,account_roles) VALUES (?,?,?)"
+		expectedQuery := "INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,account_roles) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{
+			exampleInput.ID,
 			exampleInput.UserID,
 			exampleAccount.ID,
 			strings.Join(exampleInput.AccountRoles, accountMemberRolesSeparator),
@@ -153,8 +155,9 @@ func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleAccount := fakes.BuildFakeAccount()
 
-		expectedQuery := "INSERT INTO account_user_memberships (belongs_to_user,belongs_to_account,default_account,account_roles) VALUES (?,?,?,?)"
+		expectedQuery := "INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,default_account,account_roles) VALUES (?,?,?,?,?)"
 		expectedArgs := []interface{}{
+			"",
 			exampleUser.ID,
 			exampleAccount.ID,
 			true,
@@ -164,7 +167,8 @@ func TestSqlite_BuildCreateMembershipForNewUserQuery(T *testing.T) {
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
+
+		assertArgumentsSkippingIndex(t, expectedArgs, 0)
 	})
 }
 

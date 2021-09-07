@@ -42,7 +42,6 @@ var tableConfigs = map[string]*basicTableTemplateConfig{
 		Columns: []string{
 			"ID",
 			"Name",
-			"External ID",
 			"Client ID",
 			"Belongs To User",
 			"Created On",
@@ -50,7 +49,6 @@ var tableConfigs = map[string]*basicTableTemplateConfig{
 		CellFields: []string{
 			"ID",
 			"Name",
-			"ExternalID",
 			"ClientID",
 			"BelongsToUser",
 			"CreatedOn",
@@ -66,14 +64,12 @@ var tableConfigs = map[string]*basicTableTemplateConfig{
 		Columns: []string{
 			"ID",
 			"Name",
-			"External ID",
 			"Belongs To User",
 			"Last Updated On",
 			"Created On",
 		},
 		CellFields: []string{
 			"Name",
-			"ExternalID",
 			"BelongsToUser",
 		},
 		RowDataFieldName:     "Accounts",

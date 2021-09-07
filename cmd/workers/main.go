@@ -1,16 +1,14 @@
 package main
 
 import (
-	"github.com/nsqio/go-nsq"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"os"
 	"os/signal"
 	"syscall"
-)
 
-const (
-	channel = "todo-service"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+
+	"github.com/nsqio/go-nsq"
 )
 
 func main() {

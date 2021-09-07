@@ -17,49 +17,49 @@ type AccountUserMembershipSQLQueryBuilder struct {
 }
 
 // BuildGetDefaultAccountIDForUserQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildGetDefaultAccountIDForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildTransferAccountMembershipsQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildTransferAccountMembershipsQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID uint64) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildTransferAccountMembershipsQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, currentOwnerID, newOwnerID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildArchiveAccountMembershipsForUserQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildArchiveAccountMembershipsForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetAccountMembershipsForUserQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAccountMembershipsForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildGetAccountMembershipsForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildMarkAccountAsUserDefaultQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildMarkAccountAsUserDefaultQuery(ctx context.Context, userID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildCreateMembershipForNewUserQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildCreateMembershipForNewUserQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildCreateMembershipForNewUserQuery(ctx context.Context, userID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildUserIsMemberOfAccountQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildUserIsMemberOfAccountQuery(ctx context.Context, userID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -73,14 +73,14 @@ func (m *AccountUserMembershipSQLQueryBuilder) BuildAddUserToAccountQuery(ctx co
 }
 
 // BuildRemoveUserFromAccountQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildRemoveUserFromAccountQuery(ctx context.Context, userID, accountID uint64) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildRemoveUserFromAccountQuery(ctx context.Context, userID, accountID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, accountID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildModifyUserPermissionsQuery implements our interface.
-func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID uint64, newRoles []string) (query string, args []interface{}) {
+func (m *AccountUserMembershipSQLQueryBuilder) BuildModifyUserPermissionsQuery(ctx context.Context, userID, accountID string, newRoles []string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, accountID, newRoles)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

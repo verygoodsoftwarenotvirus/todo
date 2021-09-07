@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
@@ -18,9 +17,6 @@ import (
 )
 
 const (
-	base    = 10
-	bitSize = 64
-
 	// testingSearchIndexName is an index name that is only valid for testing's sake.
 	testingSearchIndexName search.IndexName = "example_index_name"
 )
@@ -78,17 +74,17 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 }
 
 // Index implements our IndexManager interface.
-func (sm *bleveIndexManager) Index(ctx context.Context, id uint64, value interface{}) error {
+func (sm *bleveIndexManager) Index(ctx context.Context, id string, value interface{}) error {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
 	sm.logger.WithValue("id", id).Debug("adding to index")
 
-	return sm.index.Index(strconv.FormatUint(id, base), value)
+	return sm.index.Index(id, value)
 }
 
 // search executes search queries.
-func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID uint64, forServiceAdmin bool) (ids []uint64, err error) {
+func (sm *bleveIndexManager) search(ctx context.Context, query, accountID string, forServiceAdmin bool) (ids []string, err error) {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -99,7 +95,7 @@ func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID
 		return nil, search.ErrEmptyQueryProvided
 	}
 
-	if !forServiceAdmin && accountID != 0 {
+	if !forServiceAdmin && accountID != "" {
 		logger = logger.WithValue(keys.AccountIDKey, accountID)
 	}
 
@@ -112,36 +108,30 @@ func (sm *bleveIndexManager) search(ctx context.Context, query string, accountID
 	}
 
 	for _, result := range searchResults.Hits {
-		x, parseErr := strconv.ParseUint(result.ID, base, bitSize)
-		if parseErr != nil {
-			// this should literally never happen
-			return nil, observability.PrepareError(parseErr, logger, span, "parsing integer stored in search index for #%s", result.ID)
-		}
-
-		ids = append(ids, x)
+		ids = append(ids, result.ID)
 	}
 
 	return ids, nil
 }
 
 // Search implements our IndexManager interface.
-func (sm *bleveIndexManager) Search(ctx context.Context, query string, accountID uint64) (ids []uint64, err error) {
+func (sm *bleveIndexManager) Search(ctx context.Context, query, accountID string) (ids []string, err error) {
 	return sm.search(ctx, query, accountID, false)
 }
 
 // SearchForAdmin implements our IndexManager interface.
-func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (ids []uint64, err error) {
-	return sm.search(ctx, query, 0, true)
+func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (ids []string, err error) {
+	return sm.search(ctx, query, "", true)
 }
 
 // Delete implements our IndexManager interface.
-func (sm *bleveIndexManager) Delete(ctx context.Context, id uint64) error {
+func (sm *bleveIndexManager) Delete(ctx context.Context, id string) error {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := sm.logger.WithValue("id", id)
 
-	if err := sm.index.Delete(strconv.FormatUint(id, base)); err != nil {
+	if err := sm.index.Delete(id); err != nil {
 		return observability.PrepareError(err, logger, span, "removing from index")
 	}
 

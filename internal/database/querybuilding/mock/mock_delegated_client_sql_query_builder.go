@@ -31,7 +31,7 @@ func (m *APIClientSQLQueryBuilder) BuildGetAPIClientByClientIDQuery(ctx context.
 }
 
 // BuildGetAPIClientByDatabaseIDQuery implements our interface.
-func (m *APIClientSQLQueryBuilder) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{}) {
+func (m *APIClientSQLQueryBuilder) BuildGetAPIClientByDatabaseIDQuery(ctx context.Context, clientID, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, clientID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -45,7 +45,7 @@ func (m *APIClientSQLQueryBuilder) BuildGetAllAPIClientsCountQuery(ctx context.C
 }
 
 // BuildGetAPIClientsQuery implements our interface.
-func (m *APIClientSQLQueryBuilder) BuildGetAPIClientsQuery(ctx context.Context, userID uint64, filter *types.QueryFilter) (query string, args []interface{}) {
+func (m *APIClientSQLQueryBuilder) BuildGetAPIClientsQuery(ctx context.Context, userID string, filter *types.QueryFilter) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, userID, filter)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
@@ -66,14 +66,14 @@ func (m *APIClientSQLQueryBuilder) BuildUpdateAPIClientQuery(ctx context.Context
 }
 
 // BuildArchiveAPIClientQuery implements our interface.
-func (m *APIClientSQLQueryBuilder) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID uint64) (query string, args []interface{}) {
+func (m *APIClientSQLQueryBuilder) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, clientID, userID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
 // BuildGetAuditLogEntriesForAPIClientQuery implements our interface.
-func (m *APIClientSQLQueryBuilder) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID uint64) (query string, args []interface{}) {
+func (m *APIClientSQLQueryBuilder) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, clientID)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

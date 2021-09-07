@@ -18,7 +18,7 @@ var (
 )
 
 // BuildUserHasStatusQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (b *MariaDB) BuildUserHasStatusQuery(ctx context.Context, userID uint64, statuses ...string) (query string, args []interface{}) {
+func (b *MariaDB) BuildUserHasStatusQuery(ctx context.Context, userID string, statuses ...string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -44,7 +44,7 @@ func (b *MariaDB) BuildUserHasStatusQuery(ctx context.Context, userID uint64, st
 }
 
 // BuildGetUserQuery returns a SQL query (and argument) for retrieving a user by their database ID.
-func (b *MariaDB) BuildGetUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -66,7 +66,7 @@ func (b *MariaDB) BuildGetUserQuery(ctx context.Context, userID uint64) (query s
 
 // BuildGetUserWithUnverifiedTwoFactorSecretQuery returns a SQL query (and argument) for retrieving a user
 // by their database ID, who has an unverified two factor secret.
-func (b *MariaDB) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetUserWithUnverifiedTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -160,7 +160,7 @@ func (b *MariaDB) BuildGetUsersQuery(ctx context.Context, filter *types.QueryFil
 		nil,
 		"",
 		querybuilding.UsersTableColumns,
-		0,
+		"",
 		false,
 		filter,
 	)
@@ -182,7 +182,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.UsersTableUsernameColumn,
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
@@ -191,7 +191,7 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 				querybuilding.UsersTableTwoFactorVerifiedOnColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				testUserConfig.ID,
 				testUserConfig.Username,
 				testUserConfig.HashedPassword,
 				querybuilding.DefaultTestUserTwoFactorSecret,
@@ -202,12 +202,12 @@ func (b *MariaDB) BuildTestUserCreationQuery(ctx context.Context, testUserConfig
 	)
 }
 
-// BuildCreateUserQuery returns a SQL query (and arguments) that would create a given Requester.
+// BuildUserCreationQuery returns a SQL query (and arguments) that would create a given Requester.
 // NOTE: we always default is_admin to false, on the assumption that
 // admins have DB access and will change that value via SQL query.
 // There should be no way to update a user via this structure
 // such that they would have admin privileges.
-func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
+func (b *MariaDB) BuildUserCreationQuery(ctx context.Context, input *types.UserDataStoreCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -217,7 +217,7 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 		span,
 		b.sqlBuilder.Insert(querybuilding.UsersTableName).
 			Columns(
-				querybuilding.ExternalIDColumn,
+				querybuilding.IDColumn,
 				querybuilding.UsersTableUsernameColumn,
 				querybuilding.UsersTableHashedPasswordColumn,
 				querybuilding.UsersTableTwoFactorSekretColumn,
@@ -225,7 +225,7 @@ func (b *MariaDB) BuildCreateUserQuery(ctx context.Context, input *types.UserDat
 				querybuilding.UsersTableServiceRolesColumn,
 			).
 			Values(
-				b.externalIDGenerator.NewExternalID(),
+				input.ID,
 				input.Username,
 				input.HashedPassword,
 				input.TwoFactorSecret,
@@ -279,7 +279,7 @@ func (b *MariaDB) BuildSetUserStatusQuery(ctx context.Context, input *types.User
 }
 
 // BuildUpdateUserPasswordQuery returns a SQL query (and arguments) that would update the given user's passwords.
-func (b *MariaDB) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint64, newHash string) (query string, args []interface{}) {
+func (b *MariaDB) BuildUpdateUserPasswordQuery(ctx context.Context, userID, newHash string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -300,7 +300,7 @@ func (b *MariaDB) BuildUpdateUserPasswordQuery(ctx context.Context, userID uint6
 }
 
 // BuildUpdateUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (b *MariaDB) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID uint64, newSecret string) (query string, args []interface{}) {
+func (b *MariaDB) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID, newSecret string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -319,7 +319,7 @@ func (b *MariaDB) BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userI
 }
 
 // BuildVerifyUserTwoFactorSecretQuery returns a SQL query (and arguments) that would update a given user's two factor secret.
-func (b *MariaDB) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -338,7 +338,7 @@ func (b *MariaDB) BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userI
 }
 
 // BuildArchiveUserQuery builds a SQL query that marks a user as archived.
-func (b *MariaDB) BuildArchiveUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildArchiveUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -356,7 +356,7 @@ func (b *MariaDB) BuildArchiveUserQuery(ctx context.Context, userID uint64) (que
 }
 
 // BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
-func (b *MariaDB) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID uint64) (query string, args []interface{}) {
+func (b *MariaDB) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

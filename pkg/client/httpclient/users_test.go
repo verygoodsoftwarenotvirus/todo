@@ -57,7 +57,7 @@ type usersTestSuite struct {
 }
 
 func (s *usersTestSuite) TestClient_GetUser() {
-	const expectedPathFormat = "/api/v1/users/%d"
+	const expectedPathFormat = "/api/v1/users/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -75,7 +75,7 @@ func (s *usersTestSuite) TestClient_GetUser() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.GetUser(s.ctx, 0)
+		actual, err := c.GetUser(s.ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -232,7 +232,7 @@ func (s *usersTestSuite) TestClient_CreateUser() {
 }
 
 func (s *usersTestSuite) TestClient_ArchiveUser() {
-	const expectedPathFormat = "/api/v1/users/%d"
+	const expectedPathFormat = "/api/v1/users/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -249,7 +249,7 @@ func (s *usersTestSuite) TestClient_ArchiveUser() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		err := c.ArchiveUser(s.ctx, 0)
+		err := c.ArchiveUser(s.ctx, "")
 		assert.Error(t, err)
 	})
 
@@ -274,7 +274,7 @@ func (s *usersTestSuite) TestClient_ArchiveUser() {
 
 func (s *usersTestSuite) TestClient_GetAuditLogForUser() {
 	const (
-		expectedPath   = "/api/v1/users/%d/audit"
+		expectedPath   = "/api/v1/users/%s/audit"
 		expectedMethod = http.MethodGet
 	)
 
@@ -295,7 +295,7 @@ func (s *usersTestSuite) TestClient_GetAuditLogForUser() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.GetAuditLogForUser(s.ctx, 0)
+		actual, err := c.GetAuditLogForUser(s.ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

@@ -239,7 +239,7 @@ func TestBuilder_BuildVerifyTOTPSecretRequest(T *testing.T) {
 		helper := buildTestHelper()
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(helper.exampleUser)
 
-		actual, err := helper.builder.BuildVerifyTOTPSecretRequest(helper.ctx, 0, exampleInput.TOTPToken)
+		actual, err := helper.builder.BuildVerifyTOTPSecretRequest(helper.ctx, "", exampleInput.TOTPToken)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

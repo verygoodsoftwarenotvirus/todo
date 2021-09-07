@@ -4,11 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestMariaDB_BuildGetAuditLogEntryQuery(T *testing.T) {
@@ -22,7 +20,7 @@ func TestMariaDB_BuildGetAuditLogEntryQuery(T *testing.T) {
 
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = ?"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id = ?"
 		expectedArgs := []interface{}{
 			exampleAuditLogEntry.ID,
 		}
@@ -62,7 +60,7 @@ func TestMariaDB_BuildGetBatchOfAuditLogEntriesQuery(T *testing.T) {
 
 		beginID, endID := uint64(1), uint64(1000)
 
-		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id > ? AND audit_log.id < ?"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.id > ? AND audit_log.id < ?"
 		expectedArgs := []interface{}{
 			beginID,
 			endID,
@@ -86,7 +84,7 @@ func TestMariaDB_BuildGetAuditLogEntriesQuery(T *testing.T) {
 
 		filter := fakes.BuildFleshedOutQueryFilter()
 
-		expectedQuery := "SELECT audit_log.id, audit_log.external_id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log) FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ? ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
+		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on, (SELECT COUNT(*) FROM audit_log) FROM audit_log WHERE audit_log.created_on > ? AND audit_log.created_on < ? AND audit_log.last_updated_on > ? AND audit_log.last_updated_on < ? ORDER BY audit_log.created_on LIMIT 20 OFFSET 180"
 		expectedArgs := []interface{}{
 			filter.CreatedAfter,
 			filter.CreatedBefore,
@@ -113,13 +111,9 @@ func TestMariaDB_BuildCreateAuditLogEntryQuery(T *testing.T) {
 		exampleAuditLogEntry := fakes.BuildFakeAuditLogEntry()
 		exampleInput := fakes.BuildFakeAuditLogEntryCreationInputFromAuditLogEntry(exampleAuditLogEntry)
 
-		exIDGen := &querybuilding.MockExternalIDGenerator{}
-		exIDGen.On("NewExternalID").Return(exampleAuditLogEntry.ExternalID)
-		q.externalIDGenerator = exIDGen
-
-		expectedQuery := "INSERT INTO audit_log (external_id,event_type,context) VALUES (?,?,?)"
+		expectedQuery := "INSERT INTO audit_log (id,event_type,context) VALUES (?,?,?)"
 		expectedArgs := []interface{}{
-			exampleAuditLogEntry.ExternalID,
+			exampleAuditLogEntry.ID,
 			exampleAuditLogEntry.EventType,
 			exampleAuditLogEntry.Context,
 		}
@@ -128,7 +122,5 @@ func TestMariaDB_BuildCreateAuditLogEntryQuery(T *testing.T) {
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)
 		assert.Equal(t, expectedArgs, actualArgs)
-
-		mock.AssertExpectationsForObjects(t, exIDGen)
 	})
 }

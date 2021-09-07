@@ -150,7 +150,7 @@ func (r *router) WithMiddleware(middleware ...routing.Middleware) routing.Router
 
 // LogRoutes logs the described routes.
 func (r *router) LogRoutes() {
-	if err := chi.Walk(r.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+	if err := chi.Walk(r.router, func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
 		r.logger.WithValues(map[string]interface{}{
 			"method": method,
 			"route":  route,

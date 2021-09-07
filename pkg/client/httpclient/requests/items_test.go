@@ -14,7 +14,7 @@ import (
 func TestBuilder_BuildItemExistsRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/items/%d"
+	const expectedPathFormat = "/api/v1/items/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -35,7 +35,7 @@ func TestBuilder_BuildItemExistsRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildItemExistsRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildItemExistsRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -57,7 +57,7 @@ func TestBuilder_BuildItemExistsRequest(T *testing.T) {
 func TestBuilder_BuildGetItemRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/items/%d"
+	const expectedPathFormat = "/api/v1/items/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -79,7 +79,7 @@ func TestBuilder_BuildGetItemRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetItemRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetItemRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -223,7 +223,7 @@ func TestBuilder_BuildCreateItemRequest(T *testing.T) {
 func TestBuilder_BuildUpdateItemRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/items/%d"
+	const expectedPathFormat = "/api/v1/items/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -267,7 +267,7 @@ func TestBuilder_BuildUpdateItemRequest(T *testing.T) {
 func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/items/%d"
+	const expectedPathFormat = "/api/v1/items/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -289,7 +289,7 @@ func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildArchiveItemRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildArchiveItemRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -311,7 +311,7 @@ func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
 func TestBuilder_BuildGetAuditLogForItemRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPath = "/api/v1/items/%d/audit"
+	const expectedPath = "/api/v1/items/%s/audit"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -333,7 +333,7 @@ func TestBuilder_BuildGetAuditLogForItemRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetAuditLogForItemRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetAuditLogForItemRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

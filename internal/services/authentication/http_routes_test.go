@@ -555,7 +555,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 			"GetDefaultAccountIDForUser",
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
-		).Return(uint64(0), errors.New("blah"))
+		).Return("", errors.New("blah"))
 		helper.service.accountMembershipManager = membershipDB
 
 		helper.service.BeginSessionHandler(helper.res, helper.req)

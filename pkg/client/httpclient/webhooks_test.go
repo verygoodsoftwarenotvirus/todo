@@ -35,7 +35,7 @@ func (s *webhooksTestSuite) SetupTest() {
 }
 
 func (s *webhooksTestSuite) TestClient_GetWebhook() {
-	const expectedPathFormat = "/api/v1/webhooks/%d"
+	const expectedPathFormat = "/api/v1/webhooks/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -53,7 +53,7 @@ func (s *webhooksTestSuite) TestClient_GetWebhook() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.GetWebhook(s.ctx, 0)
+		actual, err := c.GetWebhook(s.ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -121,7 +121,8 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 		t := s.T()
 
 		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(s.exampleWebhook)
-		exampleInput.BelongsToAccount = 0
+		exampleInput.ID = ""
+		exampleInput.BelongsToAccount = ""
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 		c := buildTestClientWithRequestBodyValidation(t, spec, &types.WebhookCreationInput{}, exampleInput, s.exampleWebhook)
@@ -175,7 +176,7 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 }
 
 func (s *webhooksTestSuite) TestClient_UpdateWebhook() {
-	const expectedPathFormat = "/api/v1/webhooks/%d"
+	const expectedPathFormat = "/api/v1/webhooks/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -216,7 +217,7 @@ func (s *webhooksTestSuite) TestClient_UpdateWebhook() {
 }
 
 func (s *webhooksTestSuite) TestClient_ArchiveWebhook() {
-	const expectedPathFormat = "/api/v1/webhooks/%d"
+	const expectedPathFormat = "/api/v1/webhooks/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -233,7 +234,7 @@ func (s *webhooksTestSuite) TestClient_ArchiveWebhook() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		err := c.ArchiveWebhook(s.ctx, 0)
+		err := c.ArchiveWebhook(s.ctx, "")
 		assert.Error(t, err)
 	})
 
@@ -258,7 +259,7 @@ func (s *webhooksTestSuite) TestClient_ArchiveWebhook() {
 
 func (s *webhooksTestSuite) TestClient_GetAuditLogForWebhook() {
 	const (
-		expectedPath   = "/api/v1/webhooks/%d/audit"
+		expectedPath   = "/api/v1/webhooks/%s/audit"
 		expectedMethod = http.MethodGet
 	)
 
@@ -280,7 +281,7 @@ func (s *webhooksTestSuite) TestClient_GetAuditLogForWebhook() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.GetAuditLogForWebhook(s.ctx, 0)
+		actual, err := c.GetAuditLogForWebhook(s.ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})

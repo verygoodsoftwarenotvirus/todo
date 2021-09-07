@@ -142,6 +142,10 @@ func TestAPIClientsService_ListHandler(T *testing.T) {
 	})
 }
 
+var apiClientCreationInputMatcher interface{} = mock.MatchedBy(func(input *types.APIClientCreationInput) bool {
+	return true
+})
+
 func TestAPIClientsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
@@ -193,7 +197,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
 			testutils.ContextMatcher,
-			helper.exampleInput,
+			apiClientCreationInputMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
@@ -303,7 +307,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
 			testutils.ContextMatcher,
-			helper.exampleInput,
+			apiClientCreationInputMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
@@ -348,7 +352,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
 			testutils.ContextMatcher,
-			helper.exampleInput,
+			apiClientCreationInputMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
@@ -413,7 +417,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
 			testutils.ContextMatcher,
-			helper.exampleInput,
+			apiClientCreationInputMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 
@@ -474,7 +478,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
 			testutils.ContextMatcher,
-			helper.exampleInput,
+			apiClientCreationInputMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
@@ -532,7 +536,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
 			testutils.ContextMatcher,
-			helper.exampleInput,
+			apiClientCreationInputMatcher,
 			helper.exampleUser.ID,
 		).Return((*types.APIClient)(nil), errors.New("blah"))
 

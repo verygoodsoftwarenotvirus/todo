@@ -17,13 +17,13 @@ const (
 )
 
 // BuildItemExistsRequest builds an HTTP request for checking the existence of an item.
-func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := b.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -33,7 +33,7 @@ func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*h
 		ctx,
 		nil,
 		itemsBasePath,
-		id(itemID),
+		itemID,
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
@@ -46,13 +46,13 @@ func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID uint64) (*h
 }
 
 // BuildGetItemRequest builds an HTTP request for fetching an item.
-func (b *Builder) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+func (b *Builder) BuildGetItemRequest(ctx context.Context, itemID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := b.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -62,7 +62,7 @@ func (b *Builder) BuildGetItemRequest(ctx context.Context, itemID uint64) (*http
 		ctx,
 		nil,
 		itemsBasePath,
-		id(itemID),
+		itemID,
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
@@ -172,7 +172,7 @@ func (b *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) 
 		ctx,
 		nil,
 		itemsBasePath,
-		strconv.FormatUint(item.ID, 10),
+		item.ID,
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
@@ -185,13 +185,13 @@ func (b *Builder) BuildUpdateItemRequest(ctx context.Context, item *types.Item) 
 }
 
 // BuildArchiveItemRequest builds an HTTP request for archiving an item.
-func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := b.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -201,7 +201,7 @@ func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*
 		ctx,
 		nil,
 		itemsBasePath,
-		id(itemID),
+		itemID,
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
@@ -214,13 +214,13 @@ func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID uint64) (*
 }
 
 // BuildGetAuditLogForItemRequest builds an HTTP request for fetching a list of audit log entries pertaining to an item.
-func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uint64) (*http.Request, error) {
+func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := b.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -230,7 +230,7 @@ func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID uin
 		ctx,
 		nil,
 		itemsBasePath,
-		id(itemID),
+		itemID,
 		"audit",
 	)
 	tracing.AttachRequestURIToSpan(span, uri)

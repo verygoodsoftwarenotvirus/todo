@@ -91,7 +91,7 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 	case types.BannedUserAccountStatus:
 		s.auditLog.LogUserBanEvent(ctx, requester, input.TargetUserID, input.Reason)
 	case types.TerminatedUserReputation:
-		s.auditLog.LogAccountTerminationEvent(ctx, requester, input.TargetUserID, input.Reason)
+		break
 	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
 		// the appropriate audit log entry is already written, the above are supplementary
 	}

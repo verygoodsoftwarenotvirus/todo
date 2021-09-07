@@ -35,7 +35,6 @@ func (q *SQLQuerier) scanWebhook(ctx context.Context, scan database.Scanner, inc
 
 	targetVars := []interface{}{
 		&webhook.ID,
-		&webhook.ExternalID,
 		&webhook.Name,
 		&webhook.ContentType,
 		&webhook.URL,
@@ -110,11 +109,11 @@ func (q *SQLQuerier) scanWebhooks(ctx context.Context, rows database.ResultItera
 }
 
 // GetWebhook fetches a webhook from the database.
-func (q *SQLQuerier) GetWebhook(ctx context.Context, webhookID, accountID uint64) (*types.Webhook, error) {
+func (q *SQLQuerier) GetWebhook(ctx context.Context, webhookID, accountID string) (*types.Webhook, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == 0 || accountID == 0 {
+	if webhookID == "" || accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -153,11 +152,11 @@ func (q *SQLQuerier) GetAllWebhooksCount(ctx context.Context) (uint64, error) {
 }
 
 // GetWebhooks fetches a list of webhooks from the database that meet a particular filter.
-func (q *SQLQuerier) GetWebhooks(ctx context.Context, accountID uint64, filter *types.QueryFilter) (*types.WebhookList, error) {
+func (q *SQLQuerier) GetWebhooks(ctx context.Context, accountID string, filter *types.QueryFilter) (*types.WebhookList, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -238,7 +237,7 @@ func (q *SQLQuerier) GetAllWebhooks(ctx context.Context, resultChannel chan []*t
 }
 
 // CreateWebhook creates a webhook in a database.
-func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput, createdByUser uint64) (*types.Webhook, error) {
+func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput, createdByUser string) (*types.Webhook, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -256,14 +255,13 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 	}
 
 	query, args := q.sqlQueryBuilder.BuildCreateWebhookQuery(ctx, input)
-	id, err := q.performWriteQuery(ctx, tx, false, "webhook creation", query, args)
-	if err != nil {
+	if writeErr := q.performWriteQueryIgnoringReturn(ctx, tx, "webhook creation", query, args); writeErr != nil {
 		q.rollbackTransaction(ctx, tx)
-		return nil, observability.PrepareError(err, logger, span, "creating webhook")
+		return nil, observability.PrepareError(writeErr, logger, span, "creating webhook")
 	}
 
 	x := &types.Webhook{
-		ID:               id,
+		ID:               input.ID,
 		Name:             input.Name,
 		ContentType:      input.ContentType,
 		URL:              input.URL,
@@ -294,11 +292,11 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 
 // UpdateWebhook updates a particular webhook.
 // NOTE: this function expects the provided input to have a non-zero ID.
-func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser uint64, changes []*types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser string, changes []*types.FieldChangeSummary) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if changedByUser == 0 {
+	if changedByUser == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -345,11 +343,11 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, 
 }
 
 // ArchiveWebhook archives a webhook from the database.
-func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID uint64) error {
+func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == 0 || accountID == 0 || archivedByUserID == 0 {
+	if webhookID == "" || accountID == "" || archivedByUserID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -390,11 +388,11 @@ func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, a
 }
 
 // GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.
-func (q *SQLQuerier) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID uint64) ([]*types.AuditLogEntry, error) {
+func (q *SQLQuerier) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID string) ([]*types.AuditLogEntry, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == 0 {
+	if webhookID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 

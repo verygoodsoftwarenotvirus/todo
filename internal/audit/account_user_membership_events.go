@@ -2,6 +2,8 @@ package audit
 
 import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -18,7 +20,7 @@ const (
 )
 
 // BuildUserAddedToAccountEventEntry builds an entry creation input for when a membership is created.
-func BuildUserAddedToAccountEventEntry(addedBy uint64, input *types.AddUserToAccountInput) *types.AuditLogEntryCreationInput {
+func BuildUserAddedToAccountEventEntry(addedBy string, input *types.AddUserToAccountInput) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   addedBy,
 		AccountAssignmentKey: input.AccountID,
@@ -30,13 +32,14 @@ func BuildUserAddedToAccountEventEntry(addedBy uint64, input *types.AddUserToAcc
 	}
 
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserAddedToAccountEvent,
 		Context:   contextMap,
 	}
 }
 
 // BuildUserRemovedFromAccountEventEntry builds an entry creation input for when a membership is archived.
-func BuildUserRemovedFromAccountEventEntry(removedBy, removed, accountID uint64, reason string) *types.AuditLogEntryCreationInput {
+func BuildUserRemovedFromAccountEventEntry(removedBy, removed, accountID, reason string) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   removedBy,
 		AccountAssignmentKey: accountID,
@@ -48,13 +51,14 @@ func BuildUserRemovedFromAccountEventEntry(removedBy, removed, accountID uint64,
 	}
 
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserRemovedFromAccountEvent,
 		Context:   contextMap,
 	}
 }
 
 // BuildUserMarkedAccountAsDefaultEventEntry builds an entry creation input for when a membership is created.
-func BuildUserMarkedAccountAsDefaultEventEntry(performedBy, userID, accountID uint64) *types.AuditLogEntryCreationInput {
+func BuildUserMarkedAccountAsDefaultEventEntry(performedBy, userID, accountID string) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   performedBy,
 		UserAssignmentKey:    userID,
@@ -62,13 +66,14 @@ func BuildUserMarkedAccountAsDefaultEventEntry(performedBy, userID, accountID ui
 	}
 
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: AccountMarkedAsDefaultEvent,
 		Context:   contextMap,
 	}
 }
 
 // BuildModifyUserPermissionsEventEntry builds an entry creation input for when a membership is created.
-func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, newRoles []string, reason string) *types.AuditLogEntryCreationInput {
+func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy string, newRoles []string, reason string) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   modifiedBy,
 		AccountAssignmentKey: accountID,
@@ -81,13 +86,14 @@ func BuildModifyUserPermissionsEventEntry(userID, accountID, modifiedBy uint64, 
 	}
 
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: UserAccountPermissionsModifiedEvent,
 		Context:   contextMap,
 	}
 }
 
 // BuildTransferAccountOwnershipEventEntry builds an entry creation input for when a membership is created.
-func BuildTransferAccountOwnershipEventEntry(accountID, changedBy uint64, input *types.AccountOwnershipTransferInput) *types.AuditLogEntryCreationInput {
+func BuildTransferAccountOwnershipEventEntry(accountID, changedBy string, input *types.AccountOwnershipTransferInput) *types.AuditLogEntryCreationInput {
 	contextMap := map[string]interface{}{
 		ActorAssignmentKey:   changedBy,
 		"old_owner":          input.CurrentOwner,
@@ -100,6 +106,7 @@ func BuildTransferAccountOwnershipEventEntry(accountID, changedBy uint64, input 
 	}
 
 	return &types.AuditLogEntryCreationInput{
+		ID:        ksuid.New().String(),
 		EventType: AccountTransferredEvent,
 		Context:   contextMap,
 	}

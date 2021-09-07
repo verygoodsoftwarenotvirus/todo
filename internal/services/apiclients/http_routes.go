@@ -10,6 +10,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/segmentio/ksuid"
 )
 
 var _ types.APIClientDataService = (*service)(nil)
@@ -143,6 +145,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
+	input.ID = ksuid.New().String()
 	input.BelongsToUser = user.ID
 
 	// create the client.

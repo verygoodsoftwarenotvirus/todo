@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
@@ -17,11 +16,11 @@ const (
 )
 
 // BuildSwitchActiveAccountRequest builds an HTTP request for switching active accounts.
-func (b *Builder) BuildSwitchActiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+func (b *Builder) BuildSwitchActiveAccountRequest(ctx context.Context, accountID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -37,11 +36,11 @@ func (b *Builder) BuildSwitchActiveAccountRequest(ctx context.Context, accountID
 }
 
 // BuildGetAccountRequest builds an HTTP request for fetching an account.
-func (b *Builder) BuildGetAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+func (b *Builder) BuildGetAccountRequest(ctx context.Context, accountID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -52,7 +51,7 @@ func (b *Builder) BuildGetAccountRequest(ctx context.Context, accountID uint64) 
 		ctx,
 		nil,
 		accountsBasePath,
-		id(accountID),
+		accountID,
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
@@ -117,7 +116,7 @@ func (b *Builder) BuildUpdateAccountRequest(ctx context.Context, account *types.
 		ctx,
 		nil,
 		accountsBasePath,
-		strconv.FormatUint(account.ID, 10),
+		account.ID,
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
@@ -125,11 +124,11 @@ func (b *Builder) BuildUpdateAccountRequest(ctx context.Context, account *types.
 }
 
 // BuildArchiveAccountRequest builds an HTTP request for archiving an account.
-func (b *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+func (b *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -139,7 +138,7 @@ func (b *Builder) BuildArchiveAccountRequest(ctx context.Context, accountID uint
 		ctx,
 		nil,
 		accountsBasePath,
-		id(accountID),
+		accountID,
 	)
 	tracing.AttachRequestURIToSpan(span, uri)
 
@@ -166,24 +165,24 @@ func (b *Builder) BuildAddUserRequest(ctx context.Context, input *types.AddUserT
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, strconv.FormatUint(input.AccountID, 10), "member")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, input.AccountID, "member")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // BuildMarkAsDefaultRequest builds a request that marks a given account as the default for a given user.
-func (b *Builder) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+func (b *Builder) BuildMarkAsDefaultRequest(ctx context.Context, accountID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
 	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, id(accountID), "default")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, accountID, "default")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, uri, nil)
@@ -195,11 +194,11 @@ func (b *Builder) BuildMarkAsDefaultRequest(ctx context.Context, accountID uint6
 }
 
 // BuildRemoveUserRequest builds a request that removes a user from an account.
-func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID uint64, reason string) (*http.Request, error) {
+func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID, reason string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 || userID == 0 {
+	if accountID == "" || userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -207,7 +206,7 @@ func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID 
 		WithValue(keys.UserIDKey, userID).
 		WithValue(keys.ReasonKey, reason)
 
-	u := b.buildAPIV1URL(ctx, nil, accountsBasePath, id(accountID), "members", id(userID))
+	u := b.buildAPIV1URL(ctx, nil, accountsBasePath, accountID, "members", userID)
 
 	if reason != "" {
 		q := u.Query()
@@ -226,11 +225,11 @@ func (b *Builder) BuildRemoveUserRequest(ctx context.Context, accountID, userID 
 }
 
 // BuildModifyMemberPermissionsRequest builds a request that modifies a given user's permissions for a given account.
-func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID, userID uint64, input *types.ModifyUserPermissionsInput) (*http.Request, error) {
+func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accountID, userID string, input *types.ModifyUserPermissionsInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 || userID == 0 {
+	if accountID == "" || userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -244,18 +243,18 @@ func (b *Builder) BuildModifyMemberPermissionsRequest(ctx context.Context, accou
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, id(accountID), "members", id(userID), "permissions")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, accountID, "members", userID, "permissions")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPatch, uri, input)
 }
 
 // BuildTransferAccountOwnershipRequest builds a request that transfers ownership of an account to a given user.
-func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, accountID uint64, input *types.AccountOwnershipTransferInput) (*http.Request, error) {
+func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, accountID string, input *types.AccountOwnershipTransferInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, fmt.Errorf("accountID: %w", ErrInvalidIDProvided)
 	}
 
@@ -269,24 +268,24 @@ func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, acco
 		return nil, observability.PrepareError(err, logger, span, "validating input")
 	}
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, id(accountID), "transfer")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, accountID, "transfer")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
 // BuildGetAuditLogForAccountRequest builds an HTTP request for fetching a list of audit log entries pertaining to an account.
-func (b *Builder) BuildGetAuditLogForAccountRequest(ctx context.Context, accountID uint64) (*http.Request, error) {
+func (b *Builder) BuildGetAuditLogForAccountRequest(ctx context.Context, accountID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
 	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
 
-	uri := b.BuildURL(ctx, nil, accountsBasePath, id(accountID), "audit")
+	uri := b.BuildURL(ctx, nil, accountsBasePath, accountID, "audit")
 	tracing.AttachRequestURIToSpan(span, uri)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)

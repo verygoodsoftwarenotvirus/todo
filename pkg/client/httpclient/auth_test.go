@@ -350,7 +350,7 @@ func (s *authTestSuite) TestClient_VerifyTOTPSecret() {
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
 		c, _ := buildSimpleTestClient(t)
 
-		err := c.VerifyTOTPSecret(s.ctx, 0, exampleInput.TOTPToken)
+		err := c.VerifyTOTPSecret(s.ctx, "", exampleInput.TOTPToken)
 		assert.Error(t, err)
 	})
 

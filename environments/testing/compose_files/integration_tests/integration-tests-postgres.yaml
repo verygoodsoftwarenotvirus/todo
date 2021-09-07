@@ -1,7 +1,7 @@
 version: "3.3"
 services:
     database:
-        image: postgres:latest
+        image: postgres:13
         environment:
             POSTGRES_DB: 'todo'
             POSTGRES_PASSWORD: 'hunter2'
@@ -10,6 +10,16 @@ services:
             driver: none
         ports:
             - 2345:5432
+#    workers:
+#        container_name: workers
+#        depends_on:
+#            - todo-server
+#        links:
+#            - database
+#            - nsqlookupd
+#        build:
+#            context: '../../../../'
+#            dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'
     todo-server:
         environment:
             TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='

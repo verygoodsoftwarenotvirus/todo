@@ -1,7 +1,11 @@
 package events
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -12,7 +16,7 @@ import (
 type (
 	// Producer produces events onto a queue.
 	Producer interface {
-		Publish(message []byte) error
+		Publish(ctx context.Context, data interface{}) error
 		Stop()
 	}
 
@@ -26,15 +30,24 @@ type (
 type TopicProducer struct {
 	logger   logging.Logger
 	tracer   tracing.Tracer
+	encoder  encoding.ClientEncoder
 	producer *nsq.Producer
 	topic    string
 }
 
 // Publish publishes a message onto a topic queue.
-func (w *TopicProducer) Publish(message []byte) error {
+func (w *TopicProducer) Publish(ctx context.Context, data interface{}) error {
+	ctx, span := w.tracer.StartSpan(ctx)
+	defer span.End()
+
 	w.logger.Debug("publishing message")
 
-	return w.producer.Publish(w.topic, message)
+	var b bytes.Buffer
+	if err := w.encoder.Encode(ctx, &b, data); err != nil {
+		return observability.PrepareError(err, w.logger, span, "encoding topic message")
+	}
+
+	return w.producer.Publish(w.topic, b.Bytes())
 }
 
 // Stop stops the producer.
@@ -55,9 +68,12 @@ func (p *producerProvider) ProviderProducer(topic string) (Producer, error) {
 		return nil, err
 	}
 
+	logger := logging.EnsureLogger(p.logger).WithValue("topic", topic)
+
 	tw := &TopicProducer{
 		topic:    topic,
-		logger:   logging.EnsureLogger(p.logger).WithValue("topic", topic),
+		encoder:  encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
+		logger:   logger,
 		tracer:   tracing.NewTracer(fmt.Sprintf("%s_writer", topic)),
 		producer: producer,
 	}

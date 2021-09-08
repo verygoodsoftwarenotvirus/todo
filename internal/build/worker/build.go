@@ -1,0 +1,37 @@
+//go:build wireinject
+// +build wireinject
+
+package worker
+
+import (
+	"context"
+
+	"github.com/google/wire"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+)
+
+// Build builds a worker.
+func Build(
+	ctx context.Context,
+	cfg *config.InstanceConfig,
+	logger logging.Logger,
+) (*server.HTTPServer, error) {
+	wire.Build(
+		database.Providers,
+		dbconfig.Providers,
+		events.Providers,
+		encoding.Providers,
+		observability.Providers,
+		authentication.Providers,
+	)
+
+	return nil, nil
+}

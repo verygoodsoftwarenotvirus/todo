@@ -66,6 +66,12 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
+	if err = s.pendingWritesProducer.Publish(ctx, input); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item pending write")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
+	}
+
 	// create item in database.
 	item, err := s.itemDataManager.CreateItem(ctx, input, sessionCtxData.Requester.UserID)
 	if err != nil {

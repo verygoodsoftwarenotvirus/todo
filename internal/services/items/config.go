@@ -10,8 +10,9 @@ import (
 
 // Config configures the service.
 type Config struct {
-	Logging         logging.Config `json:"logging" mapstructure:"logging" toml:"logging,omitempty"`
-	SearchIndexPath string         `json:"searchIndexPath" mapstructure:"search_index_path" toml:"search_index_path,omitempty"`
+	Logging            logging.Config `json:"logging" mapstructure:"logging" toml:"logging,omitempty"`
+	PendingWritesTopic string         `json:"pending_writes_topic" mapstructure:"pending_writes_topic" toml:"pending_writes_topic,omitempty"`
+	SearchIndexPath    string         `json:"searchIndexPath" mapstructure:"search_index_path" toml:"search_index_path,omitempty"`
 }
 
 var _ validation.ValidatableWithContext = (*Config)(nil)

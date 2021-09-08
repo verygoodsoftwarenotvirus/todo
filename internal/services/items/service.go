@@ -57,7 +57,7 @@ func ProvideService(
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
-	pendingWritesProducer, err := producerProvider.ProviderProducer("pending_writes")
+	pendingWritesProducer, err := producerProvider.ProviderProducer(cfg.PendingWritesTopic)
 	if err != nil {
 		return nil, fmt.Errorf("setting up event producer: %w", err)
 	}

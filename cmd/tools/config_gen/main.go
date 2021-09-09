@@ -244,7 +244,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				Enabled: false,
 			},
 			Items: itemsservice.Config{
-				PendingWritesTopicName: "pending_item_writes",
+				PendingWritesTopicName: "pending_writes",
 				SearchIndexPath:        fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 				Logging: logging.Config{
 					Name:     "items",
@@ -322,7 +322,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 			Items: itemsservice.Config{
 				SearchIndexPath:        fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
-				PendingWritesTopicName: "pending_item_writes",
+				PendingWritesTopicName: "pending_writes",
 				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
@@ -422,7 +422,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					Enabled: false,
 				},
 				Items: itemsservice.Config{
-					PendingWritesTopicName: "pending_item_writes",
+					PendingWritesTopicName: "pending_writes",
 					SearchIndexPath:        fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 					Logging: logging.Config{
 						Name:     "items",

@@ -31,6 +31,11 @@ type (
 		Message string `json:"message"`
 		Code    int    `json:"code"`
 	}
+
+	// PendingWriteResponse is what we respond with when the data requested to be written has not yet been written.
+	PendingWriteResponse struct {
+		ID string `json:"id"`
+	}
 )
 
 var _ error = (*ErrorResponse)(nil)

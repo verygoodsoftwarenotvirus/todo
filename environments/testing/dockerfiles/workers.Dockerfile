@@ -1,12 +1,18 @@
 # build stage
-FROM golang:1.17-stretch
+FROM golang:1.17-stretch AS build-stage
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
-RUN	apt-get update && apt-get install -y \
-	--no-install-recommends \
-	entr \
-	&& rm -rf /var/lib/apt/lists/*
-ENV ENTR_INOTIFY_WORKAROUND=true
+RUN apt-get update -y && apt-get install -y make git gcc musl-dev
 
-ENTRYPOINT echo "please wait for workers to start" && sleep 15 && find . -type f \( -iname "*.go*" ! -iname "*_test.go" \) | entr -r go run gitlab.com/verygoodsoftwarenotvirus/todo/cmd/workers
+COPY . .
+
+# we need the `-tags json1` so sqlite can support JSON columns.
+RUN go build -tags json1 -trimpath -o /workers -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/workers
+
+# final stage
+FROM debian:bullseye
+
+COPY --from=build-stage /workers /workers
+
+ENTRYPOINT ["/workers"]

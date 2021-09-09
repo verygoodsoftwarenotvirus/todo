@@ -29,6 +29,7 @@ func NewTopicConsumer(addr, topic string, handler func(*nsq.Message) error) (*ns
 
 	// configure a new Consumer
 	config := nsq.NewConfig()
+	config.LookupdPollInterval = connectionWaitInterval
 	consumer, err := nsq.NewConsumer(topic, channel, config)
 	if err != nil {
 		return nil, err

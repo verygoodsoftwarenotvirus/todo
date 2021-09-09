@@ -113,31 +113,31 @@ func (c *Client) GetItems(ctx context.Context, filter *types.QueryFilter) (*type
 }
 
 // CreateItem creates an item.
-func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (*types.Item, error) {
+func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger
 
 	if input == nil {
-		return nil, ErrNilInputProvided
+		return "", ErrNilInputProvided
 	}
 
 	if err := input.ValidateWithContext(ctx); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "validating input")
+		return "", observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateItemRequest(ctx, input)
 	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building create item request")
+		return "", observability.PrepareError(err, logger, span, "building create item request")
 	}
 
-	var item *types.Item
-	if err = c.fetchAndUnmarshal(ctx, req, &item); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "creating item")
+	var pwr *types.PendingWriteResponse
+	if err = c.fetchAndUnmarshal(ctx, req, &pwr); err != nil {
+		return "", observability.PrepareError(err, logger, span, "creating item")
 	}
 
-	return item, nil
+	return pwr.ID, nil
 }
 
 // UpdateItem updates an item.

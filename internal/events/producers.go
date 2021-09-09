@@ -3,6 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
+	"encoding/gob"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -43,7 +44,7 @@ func (w *TopicProducer) Publish(ctx context.Context, data interface{}) error {
 	w.logger.Debug("publishing message")
 
 	var b bytes.Buffer
-	if err := w.encoder.Encode(ctx, &b, data); err != nil {
+	if err := gob.NewEncoder(&b).Encode(data); err != nil {
 		return observability.PrepareError(err, w.logger, span, "encoding topic message")
 	}
 

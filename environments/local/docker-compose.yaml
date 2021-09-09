@@ -46,31 +46,31 @@ services:
         build:
             context: '../../'
             dockerfile: 'environments/local/workers.Dockerfile'
-#    todo-server:
-#        container_name: server
-#        environment:
-#            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
-#            CONFIGURATION_FILEPATH: '/etc/service.config'
-#            JAEGER_DISABLED: 'false'
-#        ports:
-#            - "8888:8888"
-#        depends_on:
-#            - nsqlookupd
-#        links:
-#            - database
-#            - events
-#        #            - tracing-server
-#        #            - prometheus
-#        volumes:
-#            - source: '../../environments/local/service.config'
-#              target: '/etc/service.config'
-#              type: 'bind'
-#            - source: '../../'
-#              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
-#              type: 'bind'
-#        build:
-#            context: '../../'
-#            dockerfile: 'environments/local/Dockerfile'
+    todo-server:
+        container_name: server
+        environment:
+            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+            CONFIGURATION_FILEPATH: '/etc/service.config'
+            JAEGER_DISABLED: 'false'
+        ports:
+            - "8888:8888"
+        depends_on:
+            - nsqlookupd
+        links:
+            - database
+            - events
+        #            - tracing-server
+        #            - prometheus
+        volumes:
+            - source: '../../environments/local/service.config'
+              target: '/etc/service.config'
+              type: 'bind'
+            - source: '../../'
+              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
+              type: 'bind'
+        build:
+            context: '../../'
+            dockerfile: 'environments/local/Dockerfile'
 #    nsqadmin:
 #        image: nsqio/nsq:v1.2.1
 #        hostname: nsqadmin

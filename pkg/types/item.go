@@ -2,6 +2,7 @@ package types
 
 import (
 	"context"
+	"encoding/gob"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
@@ -13,6 +14,13 @@ const (
 	// ItemsSearchIndexName is the name of the index used to search through items.
 	ItemsSearchIndexName search.IndexName = "items"
 )
+
+func init() {
+	gob.Register(new(Item))
+	gob.Register(new(ItemList))
+	gob.Register(new(ItemCreationInput))
+	gob.Register(new(ItemUpdateInput))
+}
 
 type (
 	// Item represents an item.

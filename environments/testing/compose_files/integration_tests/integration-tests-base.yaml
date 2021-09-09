@@ -40,6 +40,16 @@ services:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-tests.Dockerfile'
         container_name: 'integration_tests'
+    nsqadmin:
+        image: nsqio/nsq:v1.2.1
+        hostname: nsqadmin
+        links:
+            - events
+        ports:
+            - "4171:4171"
+        command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+        logging:
+            driver: none
 #    tracing-server:
 #        image: jaegertracing/all-in-one:1.22.0
 #        logging:

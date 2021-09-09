@@ -3,6 +3,7 @@ package items
 import (
 	"database/sql"
 	"errors"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"net/http"
 	"strings"
 
@@ -66,30 +67,37 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
-	if err = s.pendingWritesProducer.Publish(ctx, input); err != nil {
+	pendingWrite := &workers.PendingWriteMessage{
+		MessageType:          "item",
+		Item:                 input,
+		AttributableToUserID: sessionCtxData.Requester.UserID,
+	}
+	if err = s.pendingWritesProducer.Publish(ctx, pendingWrite); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item pending write")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	// create item in database.
-	item, err := s.itemDataManager.CreateItem(ctx, input, sessionCtxData.Requester.UserID)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "creating item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
+	//// create item in database.
+	//item, err := s.itemDataManager.CreateItem(ctx, input, sessionCtxData.Requester.UserID)
+	//if err != nil {
+	//	observability.AcknowledgeError(err, logger, span, "creating item")
+	//	s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+	//	return
+	//}
+	//
+	//tracing.AttachItemIDToSpan(span, item.ID)
+	//logger = logger.WithValue(keys.ItemIDKey, item.ID)
+	//
+	//// notify interested parties.
+	//if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
+	//	observability.AcknowledgeError(err, logger, span, "adding item to search index")
+	//}
+	//s.itemCounter.Increment(ctx)
 
-	tracing.AttachItemIDToSpan(span, item.ID)
-	logger = logger.WithValue(keys.ItemIDKey, item.ID)
+	pwr := types.PendingWriteResponse{ID: input.ID}
 
-	// notify interested parties.
-	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
-		observability.AcknowledgeError(err, logger, span, "adding item to search index")
-	}
-	s.itemCounter.Increment(ctx)
-
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, item, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusCreated)
 }
 
 // ReadHandler returns a GET handler that returns an item.

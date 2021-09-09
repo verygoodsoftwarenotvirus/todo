@@ -11,6 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
@@ -71,6 +72,14 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		unitCounter.On("Increment", testutils.ContextMatcher).Return()
 		helper.service.itemCounter = unitCounter
 
+		mockEventProducer := &events.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
+			testutils.ContextMatcher,
+			mock.MatchedBy(func(x *types.ItemCreationInput) bool { return true }),
+		).Return(nil)
+		helper.service.pendingWritesProducer = mockEventProducer
+
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Index",
@@ -84,7 +93,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, indexManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, mockEventProducer, indexManager)
 	})
 
 	T.Run("without input attached", func(t *testing.T) {
@@ -166,11 +175,48 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		).Return((*types.Item)(nil), errors.New("blah"))
 		helper.service.itemDataManager = itemDataManager
 
+		mockEventProducer := &events.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
+			testutils.ContextMatcher,
+			mock.MatchedBy(func(x *types.ItemCreationInput) bool { return true }),
+		).Return(nil)
+		helper.service.pendingWritesProducer = mockEventProducer
+
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
+	})
+
+	T.Run("with error publishing event", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
+
+		exampleCreationInput := fakes.BuildFakeItemCreationInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		mockEventProducer := &events.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
+			testutils.ContextMatcher,
+			mock.MatchedBy(func(x *types.ItemCreationInput) bool { return true }),
+		).Return(errors.New("blah"))
+		helper.service.pendingWritesProducer = mockEventProducer
+
+		helper.service.CreateHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})
 
 	T.Run("with error indexing item", func(t *testing.T) {
@@ -200,6 +246,14 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		unitCounter.On("Increment", testutils.ContextMatcher).Return()
 		helper.service.itemCounter = unitCounter
 
+		mockEventProducer := &events.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
+			testutils.ContextMatcher,
+			mock.MatchedBy(func(x *types.ItemCreationInput) bool { return true }),
+		).Return(nil)
+		helper.service.pendingWritesProducer = mockEventProducer
+
 		indexManager := &mocksearch.IndexManager{}
 		indexManager.On(
 			"Index",
@@ -213,7 +267,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, indexManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, mockEventProducer, indexManager)
 	})
 }
 

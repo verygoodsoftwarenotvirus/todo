@@ -48,12 +48,14 @@ func TestProvideItemsService(T *testing.T) {
 			ItemIDURIParamKey,
 		).Return(func(*http.Request) string { return "" })
 
+		cfg := Config{SearchIndexPath: "example/path"}
+
 		pp := &events.MockProducerProvider{}
-		pp.On("ProviderProducer", "pending_writes").Return(&events.MockProducer{}, nil)
+		pp.On("ProviderProducer", cfg.PendingWritesTopicName).Return(&events.MockProducer{}, nil)
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
-			Config{SearchIndexPath: "example/path"},
+			cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,
@@ -77,12 +79,14 @@ func TestProvideItemsService(T *testing.T) {
 			return &mockmetrics.UnitCounter{}
 		}
 
+		cfg := Config{SearchIndexPath: "example/path"}
+
 		pp := &events.MockProducerProvider{}
-		pp.On("ProviderProducer", "pending_writes").Return(&events.MockProducer{}, nil)
+		pp.On("ProviderProducer", cfg.PendingWritesTopicName).Return(&events.MockProducer{}, nil)
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
-			Config{SearchIndexPath: "example/path"},
+			cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,

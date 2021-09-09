@@ -1,8 +1,12 @@
 package events
 
 import (
+	"context"
+
 	"github.com/stretchr/testify/mock"
 )
+
+var _ Producer = (*MockProducer)(nil)
 
 // MockProducer implements our interface.
 type MockProducer struct {
@@ -10,8 +14,8 @@ type MockProducer struct {
 }
 
 // Publish implements our interface.
-func (m *MockProducer) Publish(message []byte) error {
-	return m.Called(message).Error(0)
+func (m *MockProducer) Publish(ctx context.Context, data interface{}) error {
+	return m.Called(ctx, data).Error(0)
 }
 
 // Stop implements our interface.

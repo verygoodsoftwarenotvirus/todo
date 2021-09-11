@@ -1,13 +1,13 @@
 package mariadb
 
 import (
-	"database/sql"
 	"fmt"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 
 	"github.com/GuiaBolso/darwin"
+	"github.com/jmoiron/sqlx"
 )
 
 func buildCreationTriggerScript(tableName string) string {
@@ -224,9 +224,9 @@ var (
 
 // BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a maria DB database.
-func (b *MariaDB) BuildMigrationFunc(db *sql.DB) func() {
+func (b *MariaDB) BuildMigrationFunc(db *sqlx.DB) func() {
 	return func() {
-		driver := darwin.NewGenericDriver(db, darwin.MySQLDialect{})
+		driver := darwin.NewGenericDriver(db.DB, darwin.MySQLDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
 			panic(fmt.Errorf("migrating database: %w", err))
 		}

@@ -14,6 +14,7 @@ import (
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -60,7 +61,7 @@ func TestQuerier_Migrate(T *testing.T) {
 		// expect BuildMigrationFunc to be called
 		mockQueryBuilder.On(
 			"BuildMigrationFunc",
-			mock.IsType(&sql.DB{})).
+			mock.IsType(&sqlx.DB{})).
 			Return(func() {
 				migrationFuncCalled = true
 			})
@@ -192,7 +193,7 @@ func TestQuerier_Migrate(T *testing.T) {
 		// expect BuildMigrationFunc to be called
 		mockQueryBuilder.On(
 			"BuildMigrationFunc",
-			mock.IsType(&sql.DB{})).
+			mock.IsType(&sqlx.DB{})).
 			Return(func() {})
 
 		// expect TestUser to be queried for

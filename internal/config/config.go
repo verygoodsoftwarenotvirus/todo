@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -32,6 +31,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -161,7 +161,7 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 // NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
-func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *InstanceConfig) (database.DataManager, error) {
+func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sqlx.DB, cfg *InstanceConfig) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
 	}

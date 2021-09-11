@@ -16,6 +16,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type idRetrievalStrategy int
@@ -38,7 +40,7 @@ var _ database.DataManager = (*SQLQuerier)(nil)
 // SQLQuerier is the primary database querying client. All tracing/logging/query execution happens here. Query building generally happens elsewhere.
 type SQLQuerier struct {
 	config          *dbconfig.Config
-	db              *sql.DB
+	db              *sqlx.DB
 	sqlQueryBuilder querybuilding.SQLQueryBuilder
 	timeFunc        func() uint64
 	logger          logging.Logger
@@ -51,7 +53,7 @@ type SQLQuerier struct {
 func ProvideDatabaseClient(
 	ctx context.Context,
 	logger logging.Logger,
-	db *sql.DB,
+	db *sqlx.DB,
 	cfg *dbconfig.Config,
 	sqlQueryBuilder querybuilding.SQLQueryBuilder,
 	shouldCreateTestUser bool,
@@ -180,7 +182,7 @@ func (q *SQLQuerier) getIDFromResult(ctx context.Context, res sql.Result) uint64
 	return uint64(id)
 }
 
-func (q *SQLQuerier) getOneRow(ctx context.Context, querier database.Querier, queryDescription, query string, args ...interface{}) *sql.Row {
+func (q *SQLQuerier) getOneRow(ctx context.Context, querier database.SQLQueryExecutor, queryDescription, query string, args ...interface{}) *sql.Row {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -193,7 +195,7 @@ func (q *SQLQuerier) getOneRow(ctx context.Context, querier database.Querier, qu
 	return row
 }
 
-func (q *SQLQuerier) performReadQuery(ctx context.Context, querier database.Querier, queryDescription, query string, args ...interface{}) (*sql.Rows, error) {
+func (q *SQLQuerier) performReadQuery(ctx context.Context, querier database.SQLQueryExecutor, queryDescription, query string, args ...interface{}) (*sql.Rows, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -213,7 +215,7 @@ func (q *SQLQuerier) performReadQuery(ctx context.Context, querier database.Quer
 	return rows, nil
 }
 
-func (q *SQLQuerier) performCountQuery(ctx context.Context, querier database.Querier, query, queryDesc string) (uint64, error) {
+func (q *SQLQuerier) performCountQuery(ctx context.Context, querier database.SQLQueryExecutor, query, queryDesc string) (uint64, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -227,7 +229,7 @@ func (q *SQLQuerier) performCountQuery(ctx context.Context, querier database.Que
 	return count, nil
 }
 
-func (q *SQLQuerier) performBooleanQuery(ctx context.Context, querier database.Querier, query string, args []interface{}) (bool, error) {
+func (q *SQLQuerier) performBooleanQuery(ctx context.Context, querier database.SQLQueryExecutor, query string, args []interface{}) (bool, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -247,13 +249,13 @@ func (q *SQLQuerier) performBooleanQuery(ctx context.Context, querier database.Q
 	return exists, nil
 }
 
-func (q *SQLQuerier) performWriteQueryIgnoringReturn(ctx context.Context, querier database.Querier, queryDescription, query string, args []interface{}) error {
+func (q *SQLQuerier) performWriteQueryIgnoringReturn(ctx context.Context, querier database.SQLQueryExecutor, queryDescription, query string, args []interface{}) error {
 	_, err := q.performWriteQuery(ctx, querier, true, queryDescription, query, args)
 
 	return err
 }
 
-func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Querier, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
+func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.SQLQueryExecutor, ignoreReturn bool, queryDescription, query string, args []interface{}) (uint64, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 

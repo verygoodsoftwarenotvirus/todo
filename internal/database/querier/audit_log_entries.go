@@ -216,7 +216,7 @@ func (q *SQLQuerier) createAuditLogEntryInTransaction(ctx context.Context, trans
 }
 
 // createAuditLogEntry creates an audit log entry in the database.
-func (q *SQLQuerier) createAuditLogEntry(ctx context.Context, querier database.Querier, input *types.AuditLogEntryCreationInput) {
+func (q *SQLQuerier) createAuditLogEntry(ctx context.Context, querier database.SQLQueryExecutor, input *types.AuditLogEntryCreationInput) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 

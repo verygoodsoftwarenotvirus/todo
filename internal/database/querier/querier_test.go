@@ -18,6 +18,7 @@ import (
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -113,8 +114,10 @@ func (e *sqlmockExpecterWrapper) AssertExpectations(t mock.TestingT) bool {
 func buildTestClient(t *testing.T) (*SQLQuerier, *sqlmockExpecterWrapper) {
 	t.Helper()
 
-	db, sqlMock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+	mockDB, sqlMock, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 	require.NoError(t, err)
+
+	db := sqlx.NewDb(mockDB, "mock")
 
 	c := &SQLQuerier{
 		db:              db,
@@ -212,13 +215,15 @@ func TestProvideDatabaseClient(T *testing.T) {
 			migrationFunctionCalled = true
 		}
 
-		db, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+		fakeDB, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 		require.NoError(t, err)
+
+		db := sqlx.NewDb(fakeDB, "mock")
 
 		queryBuilder := database.BuildMockSQLQueryBuilder()
 		queryBuilder.On(
 			"BuildMigrationFunc",
-			mock.IsType(&sql.DB{}),
+			mock.IsType(&sqlx.DB{}),
 		).Return(fakeMigrationFunc)
 
 		mockDB.ExpectPing().WillDelayFor(0)
@@ -247,13 +252,13 @@ func TestProvideDatabaseClient(T *testing.T) {
 			migrationFunctionCalled = true
 		}
 
-		db, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+		fakeDB, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 		require.NoError(t, err)
 
 		queryBuilder := database.BuildMockSQLQueryBuilder()
 		queryBuilder.On(
 			"BuildMigrationFunc",
-			mock.IsType(&sql.DB{}),
+			mock.IsType(&sqlx.DB{}),
 		).Return(fakeMigrationFunc)
 
 		mockDB.ExpectPing().WillDelayFor(0)
@@ -264,6 +269,8 @@ func TestProvideDatabaseClient(T *testing.T) {
 			RunMigrations:   true,
 			MaxPingAttempts: 1,
 		}
+
+		db := sqlx.NewDb(fakeDB, "mock")
 
 		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), db, exampleConfig, queryBuilder, true)
 		assert.NotNil(t, actual)
@@ -279,7 +286,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 		ctx := context.Background()
 
-		db, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
+		fakeDB, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 		require.NoError(t, err)
 
 		queryBuilder := database.BuildMockSQLQueryBuilder()
@@ -291,6 +298,8 @@ func TestProvideDatabaseClient(T *testing.T) {
 			RunMigrations:   true,
 			MaxPingAttempts: 1,
 		}
+
+		db := sqlx.NewDb(fakeDB, "mock")
 
 		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), db, exampleConfig, queryBuilder, true)
 		assert.Nil(t, actual)

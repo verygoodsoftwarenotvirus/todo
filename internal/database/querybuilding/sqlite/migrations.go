@@ -1,10 +1,10 @@
 package sqlite
 
 import (
-	"database/sql"
 	"fmt"
 
 	"github.com/GuiaBolso/darwin"
+	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -148,9 +148,9 @@ var (
 
 // BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a sqlite database.
-func (b *Sqlite) BuildMigrationFunc(db *sql.DB) func() {
+func (b *Sqlite) BuildMigrationFunc(db *sqlx.DB) func() {
 	return func() {
-		driver := darwin.NewGenericDriver(db, darwin.SqliteDialect{})
+		driver := darwin.NewGenericDriver(db.DB, darwin.SqliteDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
 			panic(fmt.Errorf("migrating database: %w", err))
 		}

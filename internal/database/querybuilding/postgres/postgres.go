@@ -12,6 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/jmoiron/sqlx"
 	postgres "github.com/lib/pq"
 	"github.com/luna-duclos/instrumentedsql"
 )
@@ -47,7 +48,7 @@ type (
 var instrumentedDriverRegistration sync.Once
 
 // ProvidePostgresDB provides an instrumented postgres db.
-func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
+func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sqlx.DB, error) {
 	logger.WithValue(keys.ConnectionDetailsKey, connectionDetails).Debug("Establishing connection to postgres")
 
 	instrumentedDriverRegistration.Do(func() {
@@ -62,7 +63,7 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 		)
 	})
 
-	db, err := sql.Open(driverName, string(connectionDetails))
+	db, err := sqlx.Open(driverName, string(connectionDetails))
 	if err != nil {
 		return nil, err
 	}

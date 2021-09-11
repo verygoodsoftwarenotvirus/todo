@@ -9,6 +9,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -86,7 +87,7 @@ type MockSQLQueryBuilder struct {
 }
 
 // BuildMigrationFunc implements our interface.
-func (m *MockSQLQueryBuilder) BuildMigrationFunc(db *sql.DB) func() {
+func (m *MockSQLQueryBuilder) BuildMigrationFunc(db *sqlx.DB) func() {
 	args := m.Called(db)
 
 	return args.Get(0).(func())

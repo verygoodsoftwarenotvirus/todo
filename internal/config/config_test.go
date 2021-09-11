@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -20,6 +19,7 @@ import (
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -112,7 +112,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 				},
 			}
 
-			x, err := ProvideDatabaseClient(ctx, logger, &sql.DB{}, cfg)
+			x, err := ProvideDatabaseClient(ctx, logger, &sqlx.DB{}, cfg)
 			assert.NotNil(t, x)
 			assert.NoError(t, err)
 		}
@@ -142,7 +142,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 			},
 		}
 
-		x, err := ProvideDatabaseClient(ctx, logger, &sql.DB{}, cfg)
+		x, err := ProvideDatabaseClient(ctx, logger, &sqlx.DB{}, cfg)
 		assert.Nil(t, x)
 		assert.Error(t, err)
 	})

@@ -3,7 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"sync"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
@@ -13,6 +12,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/jmoiron/sqlx"
 	"github.com/luna-duclos/instrumentedsql"
 	sqlite "github.com/mattn/go-sqlite3"
 )
@@ -48,7 +48,7 @@ type (
 var instrumentedDriverRegistration sync.Once
 
 // ProvideSqliteDB provides an instrumented sqlite db.
-func ProvideSqliteDB(logger logging.Logger, connectionDetails database.ConnectionDetails, metricsCollectionInterval time.Duration) (*sql.DB, error) {
+func ProvideSqliteDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sqlx.DB, error) {
 	logger.WithValue(keys.ConnectionDetailsKey, connectionDetails).Debug("Establishing connection to sqlite")
 
 	instrumentedDriverRegistration.Do(func() {
@@ -63,7 +63,7 @@ func ProvideSqliteDB(logger logging.Logger, connectionDetails database.Connectio
 		)
 	})
 
-	db, err := sql.Open(driverName, string(connectionDetails))
+	db, err := sqlx.Open(driverName, string(connectionDetails))
 	if err != nil {
 		return nil, err
 	}

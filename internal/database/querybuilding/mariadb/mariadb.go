@@ -13,6 +13,7 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"github.com/luna-duclos/instrumentedsql"
 )
 
@@ -47,7 +48,7 @@ type (
 var instrumentedDriverRegistration sync.Once
 
 // ProvideMariaDBConnection provides an instrumented maria DB db.
-func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
+func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sqlx.DB, error) {
 	logger.WithValue(keys.ConnectionDetailsKey, connectionDetails).Debug("Establishing connection to maria DB")
 
 	instrumentedDriverRegistration.Do(func() {
@@ -62,7 +63,7 @@ func ProvideMariaDBConnection(logger logging.Logger, connectionDetails database.
 		)
 	})
 
-	return sql.Open("mysql", string(connectionDetails))
+	return sqlx.Open("mysql", string(connectionDetails))
 }
 
 // ProvideMariaDB provides a maria DB controller.

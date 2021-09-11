@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -22,6 +21,7 @@ import (
 	"github.com/alexedwards/scs/sqlite3store"
 	"github.com/alexedwards/scs/v2"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -66,14 +66,14 @@ func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 }
 
 // ProvideDatabaseConnection provides a database implementation dependent on the configuration.
-func ProvideDatabaseConnection(logger logging.Logger, cfg *Config) (*sql.DB, error) {
+func ProvideDatabaseConnection(logger logging.Logger, cfg *Config) (*sqlx.DB, error) {
 	switch cfg.Provider {
 	case PostgresProvider:
 		return postgres.ProvidePostgresDB(logger, cfg.ConnectionDetails)
 	case MariaDBProvider:
 		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails)
 	case SqliteProvider:
-		return sqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails, cfg.MetricsCollectionInterval)
+		return sqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
 	}
@@ -122,7 +122,7 @@ func (cfg *Config) ProvideCurrentUnixTimestampQuery() string {
 // ProvideSessionManager provides a session manager based on some settings.
 // There's not a great place to put this function. I don't think it belongs in Auth because it accepts a DB connection,
 // but it obviously doesn't belong in the database package, or maybe it does.
-func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config, db *sql.DB) (*scs.SessionManager, error) {
+func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config, db *sqlx.DB) (*scs.SessionManager, error) {
 	sessionManager := scs.New()
 
 	if db == nil {
@@ -131,11 +131,11 @@ func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config,
 
 	switch dbConf.Provider {
 	case PostgresProvider:
-		sessionManager.Store = postgresstore.New(db)
+		sessionManager.Store = postgresstore.New(db.DB)
 	case MariaDBProvider:
-		sessionManager.Store = mysqlstore.New(db)
+		sessionManager.Store = mysqlstore.New(db.DB)
 	case SqliteProvider:
-		sessionManager.Store = sqlite3store.New(db)
+		sessionManager.Store = sqlite3store.New(db.DB)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, dbConf.Provider)
 	}

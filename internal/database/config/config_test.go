@@ -2,13 +2,13 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -271,7 +271,7 @@ func TestProvideSessionManager(T *testing.T) {
 			ConnectionDetails: "example_connection_string",
 		}
 
-		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sql.DB{})
+		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sqlx.DB{})
 		assert.NotNil(t, sessionManager)
 		assert.NoError(t, err)
 	})
@@ -285,7 +285,7 @@ func TestProvideSessionManager(T *testing.T) {
 			ConnectionDetails: "example_connection_string",
 		}
 
-		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sql.DB{})
+		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sqlx.DB{})
 		assert.NotNil(t, sessionManager)
 		assert.NoError(t, err)
 	})
@@ -299,12 +299,14 @@ func TestProvideSessionManager(T *testing.T) {
 			ConnectionDetails: "example_connection_string",
 		}
 
-		db, mockDB, err := sqlmock.New()
+		fakeDB, mockDB, err := sqlmock.New()
 		require.NoError(t, err)
 		require.NotNil(t, mockDB)
 
 		mockDB.ExpectQuery("SELECT VERSION()").
 			WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow("1.2.3"))
+
+		db := sqlx.NewDb(fakeDB, "mock")
 
 		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, db)
 		assert.NotNil(t, sessionManager)
@@ -322,7 +324,7 @@ func TestProvideSessionManager(T *testing.T) {
 			ConnectionDetails: "example_connection_string",
 		}
 
-		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sql.DB{})
+		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sqlx.DB{})
 		assert.Nil(t, sessionManager)
 		assert.Error(t, err)
 	})

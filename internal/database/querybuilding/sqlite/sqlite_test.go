@@ -5,7 +5,6 @@ import (
 	"errors"
 	"regexp"
 	"testing"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -83,7 +82,7 @@ func TestProvideSqliteDB(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		_, err := ProvideSqliteDB(logging.NewNoopLogger(), "", time.Hour)
+		_, err := ProvideSqliteDB(logging.NewNoopLogger(), "")
 		assert.NoError(t, err)
 	})
 }

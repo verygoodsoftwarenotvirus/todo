@@ -24,7 +24,7 @@ require (
 	github.com/blevesearch/bleve/v2 v2.0.3
 	github.com/boombuler/barcode v1.0.1
 	github.com/brianvoe/gofakeit/v5 v5.11.2
-	github.com/carolynvs/magex v0.5.0
+	github.com/carolynvs/magex v0.5.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cznic/ql v1.2.0 // indirect
 	github.com/emicklei/hazana v1.9.6
@@ -42,9 +42,11 @@ require (
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/hashicorp/vault/api v1.1.0
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
-	github.com/lib/pq v1.10.1
+	github.com/jackc/pgx/v4 v4.13.0 // indirect
+	github.com/jmoiron/sqlx v1.3.4
+	github.com/lib/pq v1.10.2
 	github.com/luna-duclos/instrumentedsql v1.1.3
-	github.com/magefile/mage v1.11.0
+	github.com/magefile/mage v1.11.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/makiuchi-d/gozxing v0.0.0-20210324052758-57132e828831
 	github.com/mattn/go-sqlite3 v1.14.7
@@ -94,7 +96,7 @@ require (
 	golang.org/x/mod v0.4.2 // indirect
 	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
-	golang.org/x/sys v0.0.0-20210503173754-0981d6026fa6 // indirect
+	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	golang.org/x/text v0.3.6
 	google.golang.org/api v0.46.0 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect

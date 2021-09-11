@@ -2,9 +2,10 @@ package querybuilding
 
 import (
 	"context"
-	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/jmoiron/sqlx"
 )
 
 type (
@@ -104,7 +105,7 @@ type (
 
 	// SQLQueryBuilder describes anything that builds SQL queries to manage our data.
 	SQLQueryBuilder interface {
-		BuildMigrationFunc(db *sql.DB) func()
+		BuildMigrationFunc(db *sqlx.DB) func()
 		BuildTestUserCreationQuery(ctx context.Context, testUserConfig *types.TestUserCreationConfig) (query string, args []interface{})
 
 		AccountSQLQueryBuilder

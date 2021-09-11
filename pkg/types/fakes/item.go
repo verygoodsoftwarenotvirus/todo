@@ -70,3 +70,19 @@ func BuildFakeItemCreationInputFromItem(item *types.Item) *types.ItemCreationInp
 		BelongsToAccount: item.BelongsToAccount,
 	}
 }
+
+// BuildFakeItemDatabaseCreationInput builds a faked ItemDatabaseCreationInput.
+func BuildFakeItemDatabaseCreationInput() *types.ItemDatabaseCreationInput {
+	item := BuildFakeItem()
+	return BuildFakeItemDatabaseCreationInputFromItem(item)
+}
+
+// BuildFakeItemDatabaseCreationInputFromItem builds a faked ItemCreationInput from an item.
+func BuildFakeItemDatabaseCreationInputFromItem(item *types.Item) *types.ItemDatabaseCreationInput {
+	return &types.ItemDatabaseCreationInput{
+		ID:               item.ID,
+		Name:             item.Name,
+		Details:          item.Details,
+		BelongsToAccount: item.BelongsToAccount,
+	}
+}

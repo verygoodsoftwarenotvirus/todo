@@ -49,7 +49,7 @@ services:
     todo-server:
         container_name: server
         environment:
-            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+            TODO_SERVICE_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
             CONFIGURATION_FILEPATH: '/etc/service.config'
             JAEGER_DISABLED: 'false'
         ports:

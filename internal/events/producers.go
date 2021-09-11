@@ -3,7 +3,7 @@ package events
 import (
 	"bytes"
 	"context"
-	"encoding/gob"
+	"encoding/json"
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -38,13 +38,13 @@ type TopicProducer struct {
 
 // Publish publishes a message onto a topic queue.
 func (w *TopicProducer) Publish(ctx context.Context, data interface{}) error {
-	ctx, span := w.tracer.StartSpan(ctx)
+	_, span := w.tracer.StartSpan(ctx)
 	defer span.End()
 
 	w.logger.Debug("publishing message")
 
 	var b bytes.Buffer
-	if err := gob.NewEncoder(&b).Encode(data); err != nil {
+	if err := json.NewEncoder(&b).Encode(data); err != nil {
 		return observability.PrepareError(err, w.logger, span, "encoding topic message")
 	}
 

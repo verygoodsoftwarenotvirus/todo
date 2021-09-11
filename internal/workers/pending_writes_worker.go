@@ -1,11 +1,10 @@
 package workers
 
 import (
-	"bytes"
 	"context"
-	"encoding/gob"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"encoding/json"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -19,17 +18,19 @@ const (
 
 // PendingWriteMessage represents an event that asks a worker to write data to the datastore.
 type PendingWriteMessage struct {
-	MessageType          string                   `json:"messageType"`
-	Item                 *types.ItemCreationInput `json:"item"`
-	AttributableToUserID string                   `json:"userID"`
+	MessageType          string                           `json:"messageType"`
+	Item                 *types.ItemDatabaseCreationInput `json:"item"`
+	AttributableToUserID string                           `json:"userID"`
 }
 
+// PendingWriter writes data from the pending writes topic to the database.
 type PendingWriter struct {
 	logger      logging.Logger
 	tracer      tracing.Tracer
 	dataManager database.DataManager
 }
 
+// ProvidePendingWriter provides a PendingWriter.
 func ProvidePendingWriter(logger logging.Logger, dataManager database.DataManager) *PendingWriter {
 	return &PendingWriter{
 		logger:      logging.EnsureLogger(logger).WithName(name),
@@ -38,20 +39,16 @@ func ProvidePendingWriter(logger logging.Logger, dataManager database.DataManage
 	}
 }
 
+// HandlePendingWrite handles a pending write.
 func (w *PendingWriter) HandlePendingWrite(message *nsq.Message) error {
 	ctx := context.Background()
 
 	var msg *PendingWriteMessage
 
-	if err := gob.NewDecoder(bytes.NewReader(message.Body)).Decode(&msg); err != nil {
+	if err := json.Unmarshal(message.Body, &msg); err != nil {
 		message.Touch()
 		return err
 	}
-
-	//if err := json.Unmarshal(message.Body, &msg); err != nil {
-	//	message.Touch()
-	//	return err
-	//}
 
 	w.logger.WithValue("message_type", msg.MessageType).WithValue("item", msg.Item).Debug("message read")
 

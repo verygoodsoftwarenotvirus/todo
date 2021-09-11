@@ -92,7 +92,7 @@ func TestService_fetchItem(T *testing.T) {
 	})
 }
 
-func attachItemCreationInputToRequest(input *types.ItemCreationInput) *http.Request {
+func attachItemCreationInputToRequest(input *types.ItemDatabaseCreationInput) *http.Request {
 	form := url.Values{
 		itemCreationInputNameFormKey:    {anyToString(input.Name)},
 		itemCreationInputDetailsFormKey: {anyToString(input.Details)},
@@ -181,7 +181,7 @@ func TestService_parseFormEncodedItemCreationInput(T *testing.T) {
 
 		s := buildTestHelper(t)
 
-		expected := fakes.BuildFakeItemCreationInput()
+		expected := fakes.BuildFakeItemDatabaseCreationInput()
 		expected.ID = ""
 		expected.BelongsToAccount = s.exampleAccount.ID
 		req := attachItemCreationInputToRequest(expected)
@@ -203,18 +203,6 @@ func TestService_parseFormEncodedItemCreationInput(T *testing.T) {
 		actual := s.service.parseFormEncodedItemCreationInput(s.ctx, req, s.sessionCtxData)
 		assert.Nil(t, actual)
 	})
-
-	T.Run("with invalid input", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestHelper(t)
-
-		exampleInput := &types.ItemCreationInput{}
-		req := attachItemCreationInputToRequest(exampleInput)
-
-		actual := s.service.parseFormEncodedItemCreationInput(s.ctx, req, s.sessionCtxData)
-		assert.Nil(t, actual)
-	})
 }
 
 func TestService_handleItemCreationRequest(T *testing.T) {
@@ -231,7 +219,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 		exampleInput.ID = ""
 		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
 
@@ -266,7 +254,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
 		}
@@ -277,40 +265,6 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 		s.service.handleItemCreationRequest(res, req)
 
 		assert.Equal(t, unauthorizedRedirectResponseCode, res.Code)
-	})
-
-	T.Run("with invalid input", func(t *testing.T) {
-		t.Parallel()
-
-		s := buildTestHelper(t)
-
-		exampleItem := fakes.BuildFakeItem()
-		exampleItem.BelongsToAccount = s.exampleAccount.ID
-		s.service.itemIDFetcher = func(*http.Request) string {
-			return exampleItem.ID
-		}
-
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-		exampleInput.ID = ""
-		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
-
-		res := httptest.NewRecorder()
-		req := attachItemCreationInputToRequest(&types.ItemCreationInput{})
-
-		mockDB := database.BuildMockDatabase()
-		mockDB.ItemDataManager.On(
-			"CreateItem",
-			testutils.ContextMatcher,
-			exampleInput,
-			s.sessionCtxData.Requester.UserID,
-		).Return(exampleItem, nil)
-		s.service.dataStore = mockDB
-
-		s.service.handleItemCreationRequest(res, req)
-
-		assert.Equal(t, http.StatusBadRequest, res.Code)
-
-		mock.AssertExpectationsForObjects(t, mockDB)
 	})
 
 	T.Run("with error creating item in database", func(t *testing.T) {
@@ -324,7 +278,7 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 		exampleInput.ID = ""
 		exampleInput.BelongsToAccount = s.sessionCtxData.ActiveAccountID
 

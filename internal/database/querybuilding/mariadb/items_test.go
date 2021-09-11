@@ -176,7 +176,7 @@ func TestMariaDB_BuildCreateItemQuery(T *testing.T) {
 		ctx := context.Background()
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 
 		expectedQuery := "INSERT INTO items (id,name,details,belongs_to_account) VALUES (?,?,?,?)"
 		expectedArgs := []interface{}{

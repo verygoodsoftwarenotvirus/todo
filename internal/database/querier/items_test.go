@@ -882,7 +882,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
 		exampleItem.ID = "1"
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -935,7 +935,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 		t.Parallel()
 
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
@@ -950,7 +950,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -970,7 +970,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 		expectedErr := errors.New(t.Name())
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1007,7 +1007,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -1043,7 +1043,7 @@ func TestQuerier_CreateItem(T *testing.T) {
 
 		exampleUser := fakes.BuildFakeUser()
 		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)

@@ -3,13 +3,13 @@ package items
 import (
 	"database/sql"
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"net/http"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/segmentio/ksuid"
@@ -50,7 +50,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check session context data for parsed input struct.
-	input := new(types.ItemCreationInput)
+	input := new(types.ItemDatabaseCreationInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "decoding request")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
@@ -58,14 +58,13 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	input.ID = ksuid.New().String()
+	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
 	if err = input.ValidateWithContext(ctx); err != nil {
 		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
 	pendingWrite := &workers.PendingWriteMessage{
 		MessageType:          "item",
@@ -77,23 +76,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	//// create item in database.
-	//item, err := s.itemDataManager.CreateItem(ctx, input, sessionCtxData.Requester.UserID)
-	//if err != nil {
-	//	observability.AcknowledgeError(err, logger, span, "creating item")
-	//	s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-	//	return
-	//}
-	//
-	//tracing.AttachItemIDToSpan(span, item.ID)
-	//logger = logger.WithValue(keys.ItemIDKey, item.ID)
-	//
-	//// notify interested parties.
-	//if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
-	//	observability.AcknowledgeError(err, logger, span, "adding item to search index")
-	//}
-	//s.itemCounter.Increment(ctx)
 
 	pwr := types.PendingWriteResponse{ID: input.ID}
 

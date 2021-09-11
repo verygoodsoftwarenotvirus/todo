@@ -267,6 +267,8 @@ func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Que
 			return 0, observability.PrepareError(err, logger, span, "executing %s query", queryDescription)
 		}
 
+		q.logger.WithValue("query", query).WithValue("args", args).Debug("query executed")
+
 		return id, nil
 	} else if q.idStrategy == ReturningStatementIDRetrievalStrategy {
 		res, err := querier.ExecContext(ctx, query, args...)
@@ -292,6 +294,8 @@ func (q *SQLQuerier) performWriteQuery(ctx context.Context, querier database.Que
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "executing query")
 	}
+
+	q.logger.WithValue("query", query).WithValue("args", args).Debug("query executed")
 
 	if res != nil {
 		if rowCount, err := res.RowsAffected(); err == nil && rowCount == 0 {

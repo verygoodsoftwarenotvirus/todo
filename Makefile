@@ -190,7 +190,7 @@ integration-tests-%:
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(LET_HANG)),, --abort-on-container-exit)
+	--always-recreate-deps $(if $(filter y Y yes YES true TRUE plz sure yup YUP,$(LET_HANG)),, --abort-on-container-exit)
 
 .PHONY: integration-coverage
 integration-coverage: clean-$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR) configs
@@ -222,7 +222,7 @@ load-tests-%:
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(LET_HANG)),, --abort-on-container-exit)
+	--always-recreate-deps $(if $(filter y Y yes YES true TRUE plz sure yup YUP,$(LET_HANG)),, --abort-on-container-exit)
 
 ## Running
 
@@ -233,7 +233,7 @@ dev: clean-$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_DIR)
 	--force-recreate \
 	--remove-orphans \
 	--renew-anon-volumes \
-	--always-recreate-deps $(if $(filter y yes true plz sure yup yep yass,$(LET_HANG)),, --abort-on-container-exit)
+	--always-recreate-deps $(if $(filter y Y yes YES true TRUE plz sure yup YUP,$(LET_HANG)),, --abort-on-container-exit)
 
 .PHONY: dev-user
 dev-user:

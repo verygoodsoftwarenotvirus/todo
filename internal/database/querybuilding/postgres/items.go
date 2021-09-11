@@ -153,7 +153,7 @@ func (b *Postgres) BuildGetItemsWithIDsQuery(ctx context.Context, accountID stri
 }
 
 // BuildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
-func (b *Postgres) BuildCreateItemQuery(ctx context.Context, input *types.ItemCreationInput) (query string, args []interface{}) {
+func (b *Postgres) BuildCreateItemQuery(ctx context.Context, input *types.ItemDatabaseCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

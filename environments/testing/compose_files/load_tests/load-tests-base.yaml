@@ -12,7 +12,7 @@ services:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'
         environment:
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
+            CONFIGURATION_FILEPATH: '/etc/service.config'
         ports:
             - 80:8888
 #    tracing-server:

@@ -151,7 +151,7 @@ func (b *MariaDB) BuildGetItemsWithIDsQuery(ctx context.Context, accountID strin
 }
 
 // BuildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
-func (b *MariaDB) BuildCreateItemQuery(ctx context.Context, input *types.ItemCreationInput) (query string, args []interface{}) {
+func (b *MariaDB) BuildCreateItemQuery(ctx context.Context, input *types.ItemDatabaseCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

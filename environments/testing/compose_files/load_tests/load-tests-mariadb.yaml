@@ -29,5 +29,5 @@ services:
             - promtail
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-mariadb.toml'
-              target: '/etc/config.toml'
+              target: '/etc/service.config'
               type: 'bind'

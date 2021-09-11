@@ -22,6 +22,10 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet() {
+	time.Sleep(5 * time.Second)
+}
+
 func reverseString(s string) string {
 	runes := []rune(s)
 	for i, j := 0, len(runes)-1; i < j; i, j = i+1, j-1 {

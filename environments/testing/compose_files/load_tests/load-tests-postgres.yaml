@@ -28,5 +28,5 @@ services:
             - promtail
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-postgres.toml'
-              target: '/etc/config.toml'
+              target: '/etc/service.config'
               type: 'bind'

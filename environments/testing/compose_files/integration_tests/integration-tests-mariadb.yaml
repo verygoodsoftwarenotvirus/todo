@@ -12,25 +12,31 @@ services:
             driver: none
         ports:
             - 3306:3306
-#    workers:
-#        container_name: workers
-#        depends_on:
-#            - todo-server
-#        links:
-#            - database
-#            - nsqlookupd
-#        build:
-#            context: '../../../../'
-#            dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'
+    workers:
+        container_name: workers
+        depends_on:
+            - todo-server
+        links:
+            - database
+            - nsqlookupd
+        build:
+            context: '../../../../'
+            dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'
+        environment:
+            CONFIGURATION_FILEPATH: '/etc/service.config'
+            TODO_WORKERS_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+        volumes:
+            - source: '../../../../environments/testing/config_files/integration-tests-mariadb.config'
+              target: '/etc/service.config'
+              type: 'bind'
     todo-server:
         links:
             - database
         environment:
-            TODO_SERVICE_LOCAL_SECRET_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
-            USE_NOOP_LOGGER: 'nope'
+            TODO_SERVICE_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-mariadb.config'
-              target: '/etc/config.toml'
+              target: '/etc/service.config'
               type: 'bind'
     test:
         container_name: 'mariadb_integration_tests'

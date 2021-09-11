@@ -151,7 +151,7 @@ func (b *Sqlite) BuildGetItemsWithIDsQuery(ctx context.Context, accountID string
 }
 
 // BuildCreateItemQuery takes an item and returns a creation query for that item and the relevant arguments.
-func (b *Sqlite) BuildCreateItemQuery(ctx context.Context, input *types.ItemCreationInput) (query string, args []interface{}) {
+func (b *Sqlite) BuildCreateItemQuery(ctx context.Context, input *types.ItemDatabaseCreationInput) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -93,21 +91,10 @@ func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClien
 
 var _ suite.WithStats = (*TestSuite)(nil)
 
-func (s *TestSuite) checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats *suite.SuiteInformation) {
-	const minimumTestThreshold = 1 * time.Millisecond
-
-	if stats.Passed() {
-		for testName, stat := range stats.TestStats {
-			if stat.End.Sub(stat.Start) < minimumTestThreshold && stat.Passed {
-				s.T().Fatalf("suspiciously quick test execution time: %q", testName)
-			}
-		}
-	}
-}
-
 func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
 	const totalExpectedTestCount = 69
 
-	s.checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats)
-	testutils.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
+	if stats.Passed() {
+		s.Equal(totalExpectedTestCount, len(stats.TestStats), "expected total number of tests run to equal %d, but it was %d", totalExpectedTestCount, len(stats.TestStats))
+	}
 }

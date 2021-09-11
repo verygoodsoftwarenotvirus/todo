@@ -94,7 +94,7 @@ const (
 )
 
 // parseFormEncodedItemCreationInput checks a request for an ItemCreationInput.
-func (s *service) parseFormEncodedItemCreationInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemCreationInput) {
+func (s *service) parseFormEncodedItemCreationInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemDatabaseCreationInput) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -107,16 +107,10 @@ func (s *service) parseFormEncodedItemCreationInput(ctx context.Context, req *ht
 		return nil
 	}
 
-	creationInput = &types.ItemCreationInput{
+	creationInput = &types.ItemDatabaseCreationInput{
 		Name:             form.Get(itemCreationInputNameFormKey),
 		Details:          form.Get(itemCreationInputDetailsFormKey),
 		BelongsToAccount: sessionCtxData.ActiveAccountID,
-	}
-
-	if err = creationInput.ValidateWithContext(ctx); err != nil {
-		logger = logger.WithValue("input", creationInput)
-		observability.AcknowledgeError(err, logger, span, "invalid item creation input")
-		return nil
 	}
 
 	return creationInput

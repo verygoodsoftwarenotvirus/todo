@@ -274,7 +274,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 }
 
 // CreateItem creates an item in the database.
-func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemCreationInput, createdByUser string) (*types.Item, error) {
+func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCreationInput, createdByUser string) (*types.Item, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 

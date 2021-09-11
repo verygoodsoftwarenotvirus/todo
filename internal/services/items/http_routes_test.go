@@ -15,6 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -42,6 +43,8 @@ func TestParseBool(t *testing.T) {
 	}
 }
 
+func pendingWriteMessageMatcher(*workers.PendingWriteMessage) bool { return true }
+
 func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
@@ -51,7 +54,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeItemCreationInput()
+		exampleCreationInput := fakes.BuildFakeItemDatabaseCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -59,41 +62,19 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"CreateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.ItemCreationInput{}),
-			helper.exampleUser.ID,
-		).Return(helper.exampleItem, nil)
-		helper.service.itemDataManager = itemDataManager
-
-		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Increment", testutils.ContextMatcher).Return()
-		helper.service.itemCounter = unitCounter
-
 		mockEventProducer := &events.MockProducer{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
-			mock.MatchedBy(func(x *types.ItemCreationInput) bool { return true }),
+			mock.MatchedBy(pendingWriteMessageMatcher),
 		).Return(nil)
 		helper.service.pendingWritesProducer = mockEventProducer
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Index",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleItem,
-		).Return(nil)
-		helper.service.search = indexManager
 
 		helper.service.CreateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, mockEventProducer, indexManager)
+		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})
 
 	T.Run("without input attached", func(t *testing.T) {
@@ -137,7 +118,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeItemCreationInput()
+		exampleCreationInput := fakes.BuildFakeItemDatabaseCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -152,51 +133,13 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 	})
 
-	T.Run("with error creating item", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-
-		exampleCreationInput := fakes.BuildFakeItemCreationInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"CreateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.ItemCreationInput{}),
-			helper.exampleUser.ID,
-		).Return((*types.Item)(nil), errors.New("blah"))
-		helper.service.itemDataManager = itemDataManager
-
-		mockEventProducer := &events.MockProducer{}
-		mockEventProducer.On(
-			"Publish",
-			testutils.ContextMatcher,
-			mock.MatchedBy(func(x *types.ItemCreationInput) bool { return true }),
-		).Return(nil)
-		helper.service.pendingWritesProducer = mockEventProducer
-
-		helper.service.CreateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
-	})
-
 	T.Run("with error publishing event", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeItemCreationInput()
+		exampleCreationInput := fakes.BuildFakeItemDatabaseCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -208,7 +151,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
-			mock.MatchedBy(func(x *types.ItemCreationInput) bool { return true }),
+			mock.MatchedBy(pendingWriteMessageMatcher),
 		).Return(errors.New("blah"))
 		helper.service.pendingWritesProducer = mockEventProducer
 
@@ -217,57 +160,6 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
-	})
-
-	T.Run("with error indexing item", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-
-		exampleCreationInput := fakes.BuildFakeItemCreationInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"CreateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.ItemCreationInput{}),
-			helper.exampleUser.ID,
-		).Return(helper.exampleItem, nil)
-		helper.service.itemDataManager = itemDataManager
-
-		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Increment", testutils.ContextMatcher).Return()
-		helper.service.itemCounter = unitCounter
-
-		mockEventProducer := &events.MockProducer{}
-		mockEventProducer.On(
-			"Publish",
-			testutils.ContextMatcher,
-			mock.MatchedBy(func(x *types.ItemCreationInput) bool { return true }),
-		).Return(nil)
-		helper.service.pendingWritesProducer = mockEventProducer
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Index",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleItem,
-		).Return(errors.New("blah"))
-		helper.service.search = indexManager
-
-		helper.service.CreateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusCreated, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, mockEventProducer, indexManager)
 	})
 }
 

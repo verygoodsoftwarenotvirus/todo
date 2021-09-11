@@ -59,7 +59,7 @@ func (m *ItemSQLQueryBuilder) BuildGetItemsWithIDsQuery(ctx context.Context, acc
 }
 
 // BuildCreateItemQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildCreateItemQuery(ctx context.Context, input *types.ItemCreationInput) (query string, args []interface{}) {
+func (m *ItemSQLQueryBuilder) BuildCreateItemQuery(ctx context.Context, input *types.ItemDatabaseCreationInput) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, input)
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})

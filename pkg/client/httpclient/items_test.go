@@ -245,7 +245,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		require.NotNil(t, actual)
 		assert.NoError(t, err)
 
-		assert.Equal(t, s.exampleItem, actual)
+		assert.Equal(t, s.exampleItem.ID, actual)
 	})
 
 	s.Run("with nil input", func() {
@@ -254,7 +254,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		c, _ := buildSimpleTestClient(t)
 
 		actual, err := c.CreateItem(s.ctx, nil)
-		assert.Nil(t, actual)
+		assert.Empty(t, actual)
 		assert.Error(t, err)
 	})
 
@@ -265,7 +265,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		exampleInput := &types.ItemCreationInput{}
 
 		actual, err := c.CreateItem(s.ctx, exampleInput)
-		assert.Nil(t, actual)
+		assert.Empty(t, actual)
 		assert.Error(t, err)
 	})
 
@@ -277,7 +277,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		c := buildTestClientWithInvalidURL(t)
 
 		actual, err := c.CreateItem(s.ctx, exampleInput)
-		assert.Nil(t, actual)
+		assert.Empty(t, actual)
 		assert.Error(t, err)
 	})
 
@@ -288,7 +288,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
 		actual, err := c.CreateItem(s.ctx, exampleInput)
-		assert.Nil(t, actual)
+		assert.Empty(t, actual)
 		assert.Error(t, err)
 	})
 }

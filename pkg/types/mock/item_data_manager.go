@@ -52,7 +52,7 @@ func (m *ItemDataManager) GetItemsWithIDs(ctx context.Context, accountID string,
 }
 
 // CreateItem is a mock function.
-func (m *ItemDataManager) CreateItem(ctx context.Context, input *types.ItemCreationInput, createdByUser string) (*types.Item, error) {
+func (m *ItemDataManager) CreateItem(ctx context.Context, input *types.ItemDatabaseCreationInput, createdByUser string) (*types.Item, error) {
 	args := m.Called(ctx, input, createdByUser)
 	return args.Get(0).(*types.Item), args.Error(1)
 }

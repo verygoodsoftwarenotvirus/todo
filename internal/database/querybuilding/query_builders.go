@@ -96,7 +96,7 @@ type (
 		BuildGetBatchOfItemsQuery(ctx context.Context, beginID, endID uint64) (query string, args []interface{})
 		BuildGetItemsQuery(ctx context.Context, accountID string, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{})
 		BuildGetItemsWithIDsQuery(ctx context.Context, accountID string, limit uint8, ids []string, restrictToAccount bool) (query string, args []interface{})
-		BuildCreateItemQuery(ctx context.Context, input *types.ItemCreationInput) (query string, args []interface{})
+		BuildCreateItemQuery(ctx context.Context, input *types.ItemDatabaseCreationInput) (query string, args []interface{})
 		BuildUpdateItemQuery(ctx context.Context, input *types.Item) (query string, args []interface{})
 		BuildArchiveItemQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{})
 		BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID string) (query string, args []interface{})

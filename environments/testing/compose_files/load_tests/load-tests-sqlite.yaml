@@ -10,7 +10,7 @@ services:
             dockerfile: 'environments/testing/dockerfiles/load-tests.Dockerfile'
     todo-server:
         environment:
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
+            CONFIGURATION_FILEPATH: '/etc/service.config'
         ports:
             - 80:8888
         build:
@@ -18,5 +18,5 @@ services:
             dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-sqlite.toml'
-              target: '/etc/config.toml'
+              target: '/etc/service.config'
               type: 'bind'

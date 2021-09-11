@@ -48,6 +48,14 @@ type (
 		BelongsToAccount string `json:"-"`
 	}
 
+	// ItemDatabaseCreationInput represents what a user could set as input for creating items.
+	ItemDatabaseCreationInput struct {
+		ID               string `json:"id"`
+		Name             string `json:"name"`
+		Details          string `json:"details"`
+		BelongsToAccount string `json:"belongsToAccount"`
+	}
+
 	// ItemUpdateInput represents what a user could set as input for updating items.
 	ItemUpdateInput struct {
 		Name             string `json:"name"`
@@ -63,7 +71,7 @@ type (
 		GetAllItems(ctx context.Context, resultChannel chan []*Item, bucketSize uint16) error
 		GetItems(ctx context.Context, accountID string, filter *QueryFilter) (*ItemList, error)
 		GetItemsWithIDs(ctx context.Context, accountID string, limit uint8, ids []string) ([]*Item, error)
-		CreateItem(ctx context.Context, input *ItemCreationInput, createdByUser string) (*Item, error)
+		CreateItem(ctx context.Context, input *ItemDatabaseCreationInput, createdByUser string) (*Item, error)
 		UpdateItem(ctx context.Context, updated *Item, changedByUser string, changes []*FieldChangeSummary) error
 		ArchiveItem(ctx context.Context, itemID, accountID, archivedBy string) error
 		GetAuditLogEntriesForItem(ctx context.Context, itemID string) ([]*AuditLogEntry, error)
@@ -117,6 +125,19 @@ func (x *ItemCreationInput) ValidateWithContext(ctx context.Context) error {
 		ctx,
 		x,
 		validation.Field(&x.Name, validation.Required),
+	)
+}
+
+var _ validation.ValidatableWithContext = (*ItemDatabaseCreationInput)(nil)
+
+// ValidateWithContext validates a ItemDatabaseCreationInput.
+func (x *ItemDatabaseCreationInput) ValidateWithContext(ctx context.Context) error {
+	return validation.ValidateStructWithContext(
+		ctx,
+		x,
+		validation.Field(&x.ID, validation.Required),
+		validation.Field(&x.Name, validation.Required),
+		validation.Field(&x.BelongsToAccount, validation.Required),
 	)
 }
 

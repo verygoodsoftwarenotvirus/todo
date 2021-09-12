@@ -105,7 +105,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		ctx := context.Background()
 		logger := logging.NewNoopLogger()
 
-		for _, provider := range []string{"sqlite", "postgres", "mariadb"} {
+		for _, provider := range []string{"postgres", "mariadb"} {
 			cfg := &InstanceConfig{
 				Database: config.Config{
 					Provider: provider,

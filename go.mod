@@ -17,7 +17,6 @@ require (
 	github.com/alexedwards/argon2id v0.0.0-20210326052512-e2135f7c9c77
 	github.com/alexedwards/scs/mysqlstore v0.0.0-20210407073823-f445396108a4
 	github.com/alexedwards/scs/postgresstore v0.0.0-20210407073823-f445396108a4
-	github.com/alexedwards/scs/sqlite3store v0.0.0-20210407073823-f445396108a4
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/andybalholm/cascadia v1.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.38.35
@@ -27,7 +26,7 @@ require (
 	github.com/carolynvs/magex v0.5.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cznic/ql v1.2.0 // indirect
-	github.com/emicklei/hazana v1.9.6
+	github.com/emicklei/hazana v1.9.6 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/cors v1.2.0
@@ -49,7 +48,6 @@ require (
 	github.com/magefile/mage v1.11.0 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/makiuchi-d/gozxing v0.0.0-20210324052758-57132e828831
-	github.com/mattn/go-sqlite3 v1.14.7
 	github.com/mikespook/gorbac v2.1.0+incompatible // indirect
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/moul/http2curl v1.0.0

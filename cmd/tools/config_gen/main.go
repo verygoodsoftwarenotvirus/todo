@@ -36,7 +36,6 @@ const (
 	defaultPort              = 8888
 	defaultCookieDomain      = "localhost"
 	debugCookieSecret        = "HEREISA32CHARSECRETWHICHISMADEUP"
-	devSqliteConnDetails     = "/tmp/db"
 	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	defaultCookieName        = authservice.DefaultCookieName
@@ -47,7 +46,6 @@ const (
 
 	// database providers.
 	postgres = "postgres"
-	sqlite   = "sqlite"
 	mariadb  = "mariadb"
 
 	// test user stuff.
@@ -139,7 +137,6 @@ var files = map[string]configFunc{
 	"environments/local/service.config":                                   localDevelopmentConfig,
 	"environments/testing/config_files/frontend-tests.config":             frontendTestsConfig,
 	"environments/testing/config_files/integration-tests-postgres.config": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
-	"environments/testing/config_files/integration-tests-sqlite.config":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
 	"environments/testing/config_files/integration-tests-mariadb.config":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
 }
 

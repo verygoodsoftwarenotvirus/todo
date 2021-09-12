@@ -15,7 +15,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -174,8 +173,6 @@ func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sq
 	shouldCreateTestUser := cfg.Meta.RunMode != ProductionRunMode
 
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
-	case "sqlite":
-		qb = sqlite.ProvideSqlite(logger)
 	case "mariadb":
 		qb = mariadb.ProvideMariaDB(logger)
 	case "postgres":

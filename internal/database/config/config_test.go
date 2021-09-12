@@ -50,20 +50,6 @@ func TestConfig_ProvideDatabaseConnection(T *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	T.Run("standard for sqlite", func(t *testing.T) {
-		t.Parallel()
-
-		logger := logging.NewNoopLogger()
-		cfg := &Config{
-			Provider:          SqliteProvider,
-			ConnectionDetails: "example_connection_string",
-		}
-
-		db, err := ProvideDatabaseConnection(logger, cfg)
-		assert.NotNil(t, db)
-		assert.NoError(t, err)
-	})
-
 	T.Run("standard for mariadb", func(t *testing.T) {
 		t.Parallel()
 
@@ -101,19 +87,6 @@ func TestConfig_ProvideDatabasePlaceholderFormat(T *testing.T) {
 
 		cfg := &Config{
 			Provider:          PostgresProvider,
-			ConnectionDetails: "example_connection_string",
-		}
-
-		pf, err := cfg.ProvideDatabasePlaceholderFormat()
-		assert.NotNil(t, pf)
-		assert.NoError(t, err)
-	})
-
-	T.Run("standard for sqlite", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := &Config{
-			Provider:          SqliteProvider,
 			ConnectionDetails: "example_connection_string",
 		}
 
@@ -163,17 +136,6 @@ func TestConfig_ProvideJSONPluckQuery(T *testing.T) {
 		assert.NotEmpty(t, cfg.ProvideJSONPluckQuery())
 	})
 
-	T.Run("standard for sqlite", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := &Config{
-			Provider:          SqliteProvider,
-			ConnectionDetails: "example_connection_string",
-		}
-
-		assert.NotEmpty(t, cfg.ProvideJSONPluckQuery())
-	})
-
 	T.Run("standard for mariadb", func(t *testing.T) {
 		t.Parallel()
 
@@ -205,17 +167,6 @@ func TestConfig_ProvideCurrentUnixTimestampQuery(T *testing.T) {
 
 		cfg := &Config{
 			Provider:          PostgresProvider,
-			ConnectionDetails: "example_connection_string",
-		}
-
-		assert.NotEmpty(t, cfg.ProvideCurrentUnixTimestampQuery())
-	})
-
-	T.Run("standard for sqlite", func(t *testing.T) {
-		t.Parallel()
-
-		cfg := &Config{
-			Provider:          SqliteProvider,
 			ConnectionDetails: "example_connection_string",
 		}
 
@@ -268,20 +219,6 @@ func TestProvideSessionManager(T *testing.T) {
 		cookieConfig := authservice.CookieConfig{}
 		cfg := Config{
 			Provider:          PostgresProvider,
-			ConnectionDetails: "example_connection_string",
-		}
-
-		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sqlx.DB{})
-		assert.NotNil(t, sessionManager)
-		assert.NoError(t, err)
-	})
-
-	T.Run("standard for sqlite", func(t *testing.T) {
-		t.Parallel()
-
-		cookieConfig := authservice.CookieConfig{}
-		cfg := Config{
-			Provider:          SqliteProvider,
 			ConnectionDetails: "example_connection_string",
 		}
 

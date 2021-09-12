@@ -71,7 +71,7 @@ vendor:
 	go mod vendor
 
 .PHONY: revendor
-revendor: clean-vendor vendor frontend-vendor
+revendor: clean-vendor vendor # frontend-vendor
 
 ## dependency injection
 
@@ -179,7 +179,7 @@ frontend-tests:
 lintegration-tests: lint clear integration-tests
 
 .PHONY: integration-tests
-integration-tests: integration-tests-sqlite integration-tests-postgres integration-tests-mariadb
+integration-tests: integration-tests-postgres integration-tests-mariadb
 
 .PHONY: integration-tests-
 integration-tests-%:
@@ -207,22 +207,6 @@ integration-coverage: clean-$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_D
 	--always-recreate-deps \
 	--abort-on-container-exit
 	go tool cover -html=$(ARTIFACTS_DIR)/integration-coverage.out
-
-## Load tests
-
-.PHONY: load-tests
-load-tests: load-tests-sqlite load-tests-postgres load-tests-mariadb
-
-.PHONY: load-tests-
-load-tests-%:
-	docker-compose \
-	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-base.yaml \
-	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-$*.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps $(if $(filter y Y yes YES true TRUE plz sure yup YUP,$(LET_HANG)),, --abort-on-container-exit)
 
 ## Running
 

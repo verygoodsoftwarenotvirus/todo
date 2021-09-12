@@ -373,10 +373,6 @@ issues:
       linters:
         - gomnd
 
-    - path: internal/database/querybuilding/sqlite/migrations.go
-      linters:
-        - gomnd
-
     - path: internal/permissions/permissions.go
       linters:
         - deadcode

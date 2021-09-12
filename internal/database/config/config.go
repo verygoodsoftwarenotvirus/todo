@@ -10,7 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/sqlite"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -18,7 +17,6 @@ import (
 	"github.com/Masterminds/squirrel"
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/postgresstore"
-	"github.com/alexedwards/scs/sqlite3store"
 	"github.com/alexedwards/scs/v2"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/jmoiron/sqlx"
@@ -29,8 +27,6 @@ const (
 	PostgresProvider = "postgres"
 	// MariaDBProvider is the string used to refer to mariaDB.
 	MariaDBProvider = "mariadb"
-	// SqliteProvider is the string used to refer to sqlite.
-	SqliteProvider = "sqlite"
 
 	// DefaultMetricsCollectionInterval is the default amount of time we wait between database metrics queries.
 	DefaultMetricsCollectionInterval = 2 * time.Second
@@ -60,7 +56,7 @@ var _ validation.ValidatableWithContext = (*Config)(nil)
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.ConnectionDetails, validation.Required),
-		validation.Field(&cfg.Provider, validation.In(PostgresProvider, MariaDBProvider, SqliteProvider)),
+		validation.Field(&cfg.Provider, validation.In(PostgresProvider, MariaDBProvider)),
 		validation.Field(&cfg.CreateTestUser, validation.When(cfg.CreateTestUser != nil, validation.Required).Else(validation.Nil)),
 	)
 }
@@ -72,8 +68,6 @@ func ProvideDatabaseConnection(logger logging.Logger, cfg *Config) (*sqlx.DB, er
 		return postgres.ProvidePostgresDB(logger, cfg.ConnectionDetails)
 	case MariaDBProvider:
 		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails)
-	case SqliteProvider:
-		return sqlite.ProvideSqliteDB(logger, cfg.ConnectionDetails)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
 	}
@@ -84,7 +78,7 @@ func (cfg *Config) ProvideDatabasePlaceholderFormat() (squirrel.PlaceholderForma
 	switch cfg.Provider {
 	case PostgresProvider:
 		return squirrel.Dollar, nil
-	case MariaDBProvider, SqliteProvider:
+	case MariaDBProvider:
 		return squirrel.Question, nil
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
@@ -98,8 +92,6 @@ func (cfg *Config) ProvideJSONPluckQuery() string {
 		return `%s.%s->'%s'`
 	case MariaDBProvider:
 		return `JSON_CONTAINS(%s.%s, '%d', '$.%s')`
-	case SqliteProvider:
-		return `json_extract(%s.%s, '$.%s')`
 	default:
 		return ""
 	}
@@ -112,8 +104,6 @@ func (cfg *Config) ProvideCurrentUnixTimestampQuery() string {
 		return `extract(epoch FROM NOW())`
 	case MariaDBProvider:
 		return `UNIX_TIMESTAMP()`
-	case SqliteProvider:
-		return `(strftime('%s','now'))`
 	default:
 		return ""
 	}
@@ -134,8 +124,6 @@ func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config,
 		sessionManager.Store = postgresstore.New(db.DB)
 	case MariaDBProvider:
 		sessionManager.Store = mysqlstore.New(db.DB)
-	case SqliteProvider:
-		sessionManager.Store = sqlite3store.New(db.DB)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, dbConf.Provider)
 	}

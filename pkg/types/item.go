@@ -67,8 +67,7 @@ type (
 	ItemDataManager interface {
 		ItemExists(ctx context.Context, itemID, accountID string) (bool, error)
 		GetItem(ctx context.Context, itemID, accountID string) (*Item, error)
-		GetAllItemsCount(ctx context.Context) (uint64, error)
-		GetAllItems(ctx context.Context, resultChannel chan []*Item, bucketSize uint16) error
+		GetTotalItemCount(ctx context.Context) (uint64, error)
 		GetItems(ctx context.Context, accountID string, filter *QueryFilter) (*ItemList, error)
 		GetItemsWithIDs(ctx context.Context, accountID string, limit uint8, ids []string) ([]*Item, error)
 		CreateItem(ctx context.Context, input *ItemDatabaseCreationInput, createdByUser string) (*Item, error)

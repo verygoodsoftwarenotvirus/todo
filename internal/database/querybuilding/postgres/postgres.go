@@ -6,13 +6,11 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 
 	"github.com/Masterminds/squirrel"
-	"github.com/jmoiron/sqlx"
 	postgres "github.com/lib/pq"
 	"github.com/luna-duclos/instrumentedsql"
 )
@@ -48,7 +46,7 @@ type (
 var instrumentedDriverRegistration sync.Once
 
 // ProvidePostgresDB provides an instrumented postgres db.
-func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sqlx.DB, error) {
+func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
 	logger.WithValue(keys.ConnectionDetailsKey, connectionDetails).Debug("Establishing connection to postgres")
 
 	instrumentedDriverRegistration.Do(func() {
@@ -63,7 +61,7 @@ func ProvidePostgresDB(logger logging.Logger, connectionDetails database.Connect
 		)
 	})
 
-	db, err := sqlx.Open(driverName, string(connectionDetails))
+	db, err := sql.Open(driverName, string(connectionDetails))
 	if err != nil {
 		return nil, err
 	}
@@ -80,14 +78,4 @@ func ProvidePostgres(logger logging.Logger) *Postgres {
 	}
 
 	return pg
-}
-
-// logQueryBuildingError logs errs that may occur during query construction. Such errors should be few and far between,
-// as the generally only occur with type discrepancies or other misuses of SQL. An alert should be set up for any log
-// entries with the given name, and those alerts should be investigated quickly.
-func (b *Postgres) logQueryBuildingError(span tracing.Span, err error) {
-	if err != nil {
-		logger := b.logger.WithValue(keys.QueryErrorKey, true)
-		observability.AcknowledgeError(err, logger, span, "building query")
-	}
 }

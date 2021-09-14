@@ -59,7 +59,7 @@ func TestPostgres_BuildGetItemQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_BuildGetAllItemsCountQuery(T *testing.T) {
+func TestPostgres_BuildGetTotalItemCountQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestPostgres_BuildGetAllItemsCountQuery(T *testing.T) {
 		ctx := context.Background()
 
 		expectedQuery := "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
-		actualQuery := q.BuildGetAllItemsCountQuery(ctx)
+		actualQuery := q.BuildGetTotalItemCountQuery(ctx)
 
 		assertArgCountMatchesQuery(t, actualQuery, []interface{}{})
 		assert.Equal(t, expectedQuery, actualQuery)

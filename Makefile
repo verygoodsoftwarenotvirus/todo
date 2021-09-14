@@ -179,7 +179,7 @@ frontend-tests:
 lintegration-tests: lint clear integration-tests
 
 .PHONY: integration-tests
-integration-tests: integration-tests-postgres integration-tests-mariadb
+integration-tests: integration-tests-postgres integration-tests-mysql
 
 .PHONY: integration-tests-
 integration-tests-%:

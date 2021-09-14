@@ -56,7 +56,7 @@ var (
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableTwoFactorVerifiedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableServiceRolesColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, UsersTableReputationColumn),
-		fmt.Sprintf("%s.%s", UsersTableName, UsersTableStatusExplanationColumn),
+		fmt.Sprintf("%s.%s", UsersTableName, UsersTableReputationExplanationColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, CreatedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, LastUpdatedOnColumn),
 		fmt.Sprintf("%s.%s", UsersTableName, ArchivedOnColumn),

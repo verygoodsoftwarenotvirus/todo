@@ -23,7 +23,7 @@ import (
 )
 
 func waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet() {
-	time.Sleep(1 * time.Second)
+	time.Sleep(2 * time.Second)
 }
 
 func reverseString(s string) string {

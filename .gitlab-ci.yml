@@ -58,7 +58,7 @@ golang-lint:
 #    - apk add --update make
 #    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-postgres.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
 
-#integration_tests_mariadb:
+#integration_tests_mysql:
 #  stage: integration-testing
 #  image: docker/compose:latest
 #  services:
@@ -67,7 +67,7 @@ golang-lint:
 #    GOPATH: "/go"
 #  script:
 #    - apk add --update make
-#    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-mariadb.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
+#    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-mysql.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
 
 #frontend-selenium-tests:
 #  stage: integration-testing

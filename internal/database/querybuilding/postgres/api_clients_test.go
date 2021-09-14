@@ -33,7 +33,7 @@ func TestPostgres_BuildGetBatchOfAPIClientsQuery(T *testing.T) {
 	})
 }
 
-func TestPostgres_BuildGetAPIClientQuery(T *testing.T) {
+func TestPostgres_BuildGetAPIClientByClientIDQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -153,31 +153,6 @@ func TestPostgres_BuildCreateAPIClientQuery(T *testing.T) {
 			exampleAPIClient.BelongsToUser,
 		}
 		actualQuery, actualArgs := q.BuildCreateAPIClientQuery(ctx, exampleAPIClientInput)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
-func TestPostgres_BuildUpdateAPIClientQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		q, _ := buildTestService(t)
-		ctx := context.Background()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-
-		expectedQuery := "UPDATE api_clients SET client_id = $1, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $2 AND id = $3"
-		expectedArgs := []interface{}{
-			exampleAPIClient.ClientID,
-			exampleAPIClient.BelongsToUser,
-			exampleAPIClient.ID,
-		}
-		actualQuery, actualArgs := q.BuildUpdateAPIClientQuery(ctx, exampleAPIClient)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

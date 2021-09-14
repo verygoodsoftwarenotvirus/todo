@@ -36,7 +36,7 @@ const (
 	defaultPort              = 8888
 	defaultCookieDomain      = "localhost"
 	debugCookieSecret        = "HEREISA32CHARSECRETWHICHISMADEUP"
-	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
+	devMySQLConnDetails      = "dbuser:hunter2@tcp(database:3306)/todo"
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	defaultCookieName        = authservice.DefaultCookieName
 
@@ -46,7 +46,7 @@ const (
 
 	// database providers.
 	postgres = "postgres"
-	mariadb  = "mariadb"
+	mysql    = "mysql"
 
 	// test user stuff.
 	defaultPassword = "password"
@@ -137,7 +137,7 @@ var files = map[string]configFunc{
 	"environments/local/service.config":                                   localDevelopmentConfig,
 	"environments/testing/config_files/frontend-tests.config":             frontendTestsConfig,
 	"environments/testing/config_files/integration-tests-postgres.config": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
-	"environments/testing/config_files/integration-tests-mariadb.config":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
+	"environments/testing/config_files/integration-tests-mysql.config":    buildIntegrationTestForDBImplementation(mysql, devMySQLConnDetails),
 }
 
 func buildLocalFrontendServiceConfig() frontendservice.Config {
@@ -335,7 +335,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
 	return func(ctx context.Context, filePath string) error {
 		startupDeadline := time.Minute
-		if dbVendor == mariadb {
+		if dbVendor == mysql {
 			startupDeadline = 5 * time.Minute
 		}
 

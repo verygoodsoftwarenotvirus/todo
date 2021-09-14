@@ -270,7 +270,7 @@ func (b *Postgres) BuildSetUserStatusQuery(ctx context.Context, input *types.Use
 		span,
 		b.sqlBuilder.Update(querybuilding.UsersTableName).
 			Set(querybuilding.UsersTableReputationColumn, input.NewReputation).
-			Set(querybuilding.UsersTableStatusExplanationColumn, input.Reason).
+			Set(querybuilding.UsersTableReputationExplanationColumn, input.Reason).
 			Where(squirrel.Eq{
 				querybuilding.IDColumn:         input.TargetUserID,
 				querybuilding.ArchivedOnColumn: nil,

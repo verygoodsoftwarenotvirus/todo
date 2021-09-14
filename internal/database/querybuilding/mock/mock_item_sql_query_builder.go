@@ -30,8 +30,8 @@ func (m *ItemSQLQueryBuilder) BuildGetItemQuery(ctx context.Context, itemID, acc
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetAllItemsCountQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetAllItemsCountQuery(ctx context.Context) string {
+// BuildGetTotalItemCountQuery implements our interface.
+func (m *ItemSQLQueryBuilder) BuildGetTotalItemCountQuery(ctx context.Context) string {
 	returnArgs := m.Called(ctx)
 
 	return returnArgs.String(0)

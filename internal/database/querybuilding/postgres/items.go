@@ -56,9 +56,9 @@ func (b *Postgres) BuildGetItemQuery(ctx context.Context, itemID, accountID stri
 	)
 }
 
-// BuildGetAllItemsCountQuery returns a query that fetches the total number of items in the database.
+// BuildGetTotalItemCountQuery returns a query that fetches the total number of items in the database.
 // This query only gets generated once, and is otherwise returned from cache.
-func (b *Postgres) BuildGetAllItemsCountQuery(ctx context.Context) string {
+func (b *Postgres) BuildGetTotalItemCountQuery(ctx context.Context) string {
 	_, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

@@ -37,7 +37,7 @@ import (
 // Injectors from build.go:
 
 // Build builds a server.
-func Build(ctx context.Context, cfg *config.InstanceConfig, logger logging.Logger) (*server.HTTPServer, error) {
+func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfig) (*server.HTTPServer, error) {
 	serverConfig := cfg.Server
 	observabilityConfig := &cfg.Observability
 	metricsConfig := &observabilityConfig.Metrics

@@ -47,7 +47,6 @@ type (
 	APIClientDataManager interface {
 		GetAPIClientByClientID(ctx context.Context, clientID string) (*APIClient, error)
 		GetAPIClientByDatabaseID(ctx context.Context, clientID, owneruserID string) (*APIClient, error)
-		GetAllAPIClients(ctx context.Context, resultChannel chan []*APIClient, bucketSize uint16) error
 		GetTotalAPIClientCount(ctx context.Context) (uint64, error)
 		GetAPIClients(ctx context.Context, owneruserID string, filter *QueryFilter) (*APIClientList, error)
 		CreateAPIClient(ctx context.Context, input *APIClientCreationInput, createdByUser string) (*APIClient, error)

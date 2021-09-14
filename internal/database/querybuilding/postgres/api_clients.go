@@ -135,28 +135,6 @@ func (b *Postgres) BuildCreateAPIClientQuery(ctx context.Context, input *types.A
 	)
 }
 
-// BuildUpdateAPIClientQuery returns a SQL query (and args) that will update a given API client in the database.
-func (b *Postgres) BuildUpdateAPIClientQuery(ctx context.Context, input *types.APIClient) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, input.BelongsToUser)
-	tracing.AttachAPIClientClientIDToSpan(span, input.ClientID)
-	tracing.AttachAPIClientDatabaseIDToSpan(span, input.ID)
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Update(querybuilding.APIClientsTableName).
-			Set(querybuilding.APIClientsTableClientIDColumn, input.ClientID).
-			Set(querybuilding.LastUpdatedOnColumn, currentUnixTimeQuery).
-			Where(squirrel.Eq{
-				querybuilding.IDColumn:                       input.ID,
-				querybuilding.APIClientsTableOwnershipColumn: input.BelongsToUser,
-				querybuilding.ArchivedOnColumn:               nil,
-			}),
-	)
-}
-
 // BuildArchiveAPIClientQuery returns a SQL query (and arguments) that will mark an API client as archived.
 func (b *Postgres) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID string) (query string, args []interface{}) {
 	_, span := b.tracer.StartSpan(ctx)

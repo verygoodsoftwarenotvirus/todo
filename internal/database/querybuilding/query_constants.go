@@ -84,8 +84,8 @@ const (
 	UsersTableServiceRolesColumn = "service_roles"
 	// UsersTableReputationColumn is what the users table calls the <> column.
 	UsersTableReputationColumn = "reputation"
-	// UsersTableStatusExplanationColumn is what the users table calls the <> column.
-	UsersTableStatusExplanationColumn = "reputation_explanation"
+	// UsersTableReputationExplanationColumn is what the users table calls the <> column.
+	UsersTableReputationExplanationColumn = "reputation_explanation"
 	// UsersTableAvatarColumn is what the users table calls the <> column.
 	UsersTableAvatarColumn = "avatar_src"
 

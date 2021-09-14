@@ -42,7 +42,7 @@ require (
 	github.com/hashicorp/vault/api v1.1.0
 	github.com/heptiolabs/healthcheck v0.0.0-20180807145615-6ff867650f40
 	github.com/jackc/pgx/v4 v4.13.0 // indirect
-	github.com/jmoiron/sqlx v1.3.4
+	github.com/jmoiron/sqlx v1.3.4 // indirect
 	github.com/lib/pq v1.10.2
 	github.com/luna-duclos/instrumentedsql v1.1.3
 	github.com/magefile/mage v1.11.0 // indirect

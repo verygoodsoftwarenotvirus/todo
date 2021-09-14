@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestPostgres_BuildUserIsBannedQuery(T *testing.T) {
+func TestPostgres_BuildUserHasStatusQuery(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

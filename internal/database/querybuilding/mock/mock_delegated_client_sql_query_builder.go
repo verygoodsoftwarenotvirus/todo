@@ -58,13 +58,6 @@ func (m *APIClientSQLQueryBuilder) BuildCreateAPIClientQuery(ctx context.Context
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildUpdateAPIClientQuery implements our interface.
-func (m *APIClientSQLQueryBuilder) BuildUpdateAPIClientQuery(ctx context.Context, input *types.APIClient) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, input)
-
-	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
-}
-
 // BuildArchiveAPIClientQuery implements our interface.
 func (m *APIClientSQLQueryBuilder) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID string) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, clientID, userID)

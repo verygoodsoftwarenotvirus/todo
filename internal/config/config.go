@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"os"
@@ -11,10 +12,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querier"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/sql/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mysql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -30,7 +31,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -160,7 +160,7 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 // NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
-func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sqlx.DB, cfg *InstanceConfig) (database.DataManager, error) {
+func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *InstanceConfig) (database.DataManager, error) {
 	if rawDB == nil {
 		return nil, errNilDatabaseConnection
 	}
@@ -173,13 +173,13 @@ func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sq
 	shouldCreateTestUser := cfg.Meta.RunMode != ProductionRunMode
 
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
-	case "mariadb":
-		qb = mariadb.ProvideMariaDB(logger)
+	case "mysql":
+		qb = mysql.ProvideMySQL(logger)
 	case "postgres":
-		qb = postgres.ProvidePostgres(logger)
+		return postgres.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, shouldCreateTestUser)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabaseProvider, cfg.Database.Provider)
 	}
 
-	return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, qb, shouldCreateTestUser)
+	return queriers.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, qb, shouldCreateTestUser)
 }

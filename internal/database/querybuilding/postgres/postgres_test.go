@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"regexp"
+	"strings"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -76,6 +77,14 @@ func TestPostgres_logQueryBuildingError(T *testing.T) {
 
 func Test_joinIDs(T *testing.T) {
 	T.Parallel()
+
+	allMigs := []string{}
+	for _, mig := range migrations {
+		allMigs = append(allMigs, mig.Script)
+	}
+
+	x := strings.Join(allMigs, "\n\n\n")
+	_ = x
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()

@@ -59,7 +59,6 @@ type (
 	WebhookDataManager interface {
 		GetWebhook(ctx context.Context, webhookID, accountID string) (*Webhook, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
-		GetAllWebhooks(ctx context.Context, resultChannel chan []*Webhook, bucketSize uint16) error
 		GetWebhooks(ctx context.Context, accountID string, filter *QueryFilter) (*WebhookList, error)
 		CreateWebhook(ctx context.Context, input *WebhookCreationInput, createdByUser string) (*Webhook, error)
 		UpdateWebhook(ctx context.Context, updated *Webhook, changedByUser string, changes []*FieldChangeSummary) error

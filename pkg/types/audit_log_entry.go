@@ -44,7 +44,6 @@ type (
 	AuditLogEntryDataManager interface {
 		GetAuditLogEntry(ctx context.Context, eventID string) (*AuditLogEntry, error)
 		GetAllAuditLogEntriesCount(ctx context.Context) (uint64, error)
-		GetAllAuditLogEntries(ctx context.Context, resultChannel chan []*AuditLogEntry, bucketSize uint16) error
 		GetAuditLogEntries(ctx context.Context, filter *QueryFilter) (*AuditLogEntryList, error)
 	}
 

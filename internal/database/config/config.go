@@ -2,31 +2,34 @@ package config
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mysql"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
-	"github.com/Masterminds/squirrel"
 	"github.com/alexedwards/scs/mysqlstore"
 	"github.com/alexedwards/scs/postgresstore"
 	"github.com/alexedwards/scs/v2"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
+	"github.com/luna-duclos/instrumentedsql"
 )
 
 const (
 	// PostgresProvider is the string used to refer to postgres.
 	PostgresProvider = "postgres"
-	// MariaDBProvider is the string used to refer to mariaDB.
-	MariaDBProvider = "mariadb"
+	// MySQLProvider is the string used to refer to MySQL.
+	MySQLProvider = "mysql"
 
 	// DefaultMetricsCollectionInterval is the default amount of time we wait between database metrics queries.
 	DefaultMetricsCollectionInterval = 2 * time.Second
@@ -56,63 +59,48 @@ var _ validation.ValidatableWithContext = (*Config)(nil)
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
 		validation.Field(&cfg.ConnectionDetails, validation.Required),
-		validation.Field(&cfg.Provider, validation.In(PostgresProvider, MariaDBProvider)),
+		validation.Field(&cfg.Provider, validation.In(PostgresProvider, MySQLProvider)),
 		validation.Field(&cfg.CreateTestUser, validation.When(cfg.CreateTestUser != nil, validation.Required).Else(validation.Nil)),
 	)
 }
 
+var instrumentedDriverRegistration sync.Once
+
 // ProvideDatabaseConnection provides a database implementation dependent on the configuration.
-func ProvideDatabaseConnection(logger logging.Logger, cfg *Config) (*sqlx.DB, error) {
+func ProvideDatabaseConnection(logger logging.Logger, cfg *Config) (*sql.DB, error) {
 	switch cfg.Provider {
 	case PostgresProvider:
-		return postgres.ProvidePostgresDB(logger, cfg.ConnectionDetails)
-	case MariaDBProvider:
-		return mariadb.ProvideMariaDBConnection(logger, cfg.ConnectionDetails)
+		logger.WithValue(keys.ConnectionDetailsKey, cfg.ConnectionDetails).Debug("Establishing connection to postgres")
+
+		instrumentedDriverRegistration.Do(func() {
+			sql.Register(
+				"instrumented-postgres",
+				instrumentedsql.WrapDriver(
+					&pq.Driver{},
+					instrumentedsql.WithOmitArgs(),
+					instrumentedsql.WithTracer(tracing.NewInstrumentedSQLTracer("postgres_connection")),
+					instrumentedsql.WithLogger(tracing.NewInstrumentedSQLLogger(logger)),
+				),
+			)
+		})
+
+		db, err := sql.Open("instrumented-postgres", string(cfg.ConnectionDetails))
+		if err != nil {
+			return nil, err
+		}
+
+		return db, nil
+	case MySQLProvider:
+		return mysql.ProvideMySQLConnection(logger, cfg.ConnectionDetails)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
-	}
-}
-
-// ProvideDatabasePlaceholderFormat provides .
-func (cfg *Config) ProvideDatabasePlaceholderFormat() (squirrel.PlaceholderFormat, error) {
-	switch cfg.Provider {
-	case PostgresProvider:
-		return squirrel.Dollar, nil
-	case MariaDBProvider:
-		return squirrel.Question, nil
-	default:
-		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, cfg.Provider)
-	}
-}
-
-// ProvideJSONPluckQuery provides a query for extracting a value out of a JSON dictionary for a given database.
-func (cfg *Config) ProvideJSONPluckQuery() string {
-	switch cfg.Provider {
-	case PostgresProvider:
-		return `%s.%s->'%s'`
-	case MariaDBProvider:
-		return `JSON_CONTAINS(%s.%s, '%d', '$.%s')`
-	default:
-		return ""
-	}
-}
-
-// ProvideCurrentUnixTimestampQuery provides a database implementation dependent on the configuration.
-func (cfg *Config) ProvideCurrentUnixTimestampQuery() string {
-	switch cfg.Provider {
-	case PostgresProvider:
-		return `extract(epoch FROM NOW())`
-	case MariaDBProvider:
-		return `UNIX_TIMESTAMP()`
-	default:
-		return ""
 	}
 }
 
 // ProvideSessionManager provides a session manager based on some settings.
 // There's not a great place to put this function. I don't think it belongs in Auth because it accepts a DB connection,
 // but it obviously doesn't belong in the database package, or maybe it does.
-func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config, db *sqlx.DB) (*scs.SessionManager, error) {
+func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config, db *sql.DB) (*scs.SessionManager, error) {
 	sessionManager := scs.New()
 
 	if db == nil {
@@ -121,9 +109,9 @@ func ProvideSessionManager(cookieConfig authservice.CookieConfig, dbConf Config,
 
 	switch dbConf.Provider {
 	case PostgresProvider:
-		sessionManager.Store = postgresstore.New(db.DB)
-	case MariaDBProvider:
-		sessionManager.Store = mysqlstore.New(db.DB)
+		sessionManager.Store = postgresstore.New(db)
+	case MySQLProvider:
+		sessionManager.Store = mysqlstore.New(db)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabase, dbConf.Provider)
 	}

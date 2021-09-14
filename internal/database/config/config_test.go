@@ -2,13 +2,13 @@ package config
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
 	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -50,12 +50,12 @@ func TestConfig_ProvideDatabaseConnection(T *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	T.Run("standard for mariadb", func(t *testing.T) {
+	T.Run("standard for mysql", func(t *testing.T) {
 		t.Parallel()
 
 		logger := logging.NewNoopLogger()
 		cfg := &Config{
-			Provider:          MariaDBProvider,
+			Provider:          MySQLProvider,
 			ConnectionDetails: "dbuser:hunter2@tcp(database:3306)/todo",
 		}
 
@@ -95,11 +95,11 @@ func TestConfig_ProvideDatabasePlaceholderFormat(T *testing.T) {
 		assert.NoError(t, err)
 	})
 
-	T.Run("standard for mariadb", func(t *testing.T) {
+	T.Run("standard for mysql", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := &Config{
-			Provider:          MariaDBProvider,
+			Provider:          MySQLProvider,
 			ConnectionDetails: "example_connection_string",
 		}
 
@@ -136,11 +136,11 @@ func TestConfig_ProvideJSONPluckQuery(T *testing.T) {
 		assert.NotEmpty(t, cfg.ProvideJSONPluckQuery())
 	})
 
-	T.Run("standard for mariadb", func(t *testing.T) {
+	T.Run("standard for mysql", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := &Config{
-			Provider:          MariaDBProvider,
+			Provider:          MySQLProvider,
 			ConnectionDetails: "example_connection_string",
 		}
 
@@ -173,11 +173,11 @@ func TestConfig_ProvideCurrentUnixTimestampQuery(T *testing.T) {
 		assert.NotEmpty(t, cfg.ProvideCurrentUnixTimestampQuery())
 	})
 
-	T.Run("standard for mariadb", func(t *testing.T) {
+	T.Run("standard for mysql", func(t *testing.T) {
 		t.Parallel()
 
 		cfg := &Config{
-			Provider:          MariaDBProvider,
+			Provider:          MySQLProvider,
 			ConnectionDetails: "example_connection_string",
 		}
 
@@ -222,17 +222,17 @@ func TestProvideSessionManager(T *testing.T) {
 			ConnectionDetails: "example_connection_string",
 		}
 
-		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sqlx.DB{})
+		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sql.DB{})
 		assert.NotNil(t, sessionManager)
 		assert.NoError(t, err)
 	})
 
-	T.Run("standard for mariadb", func(t *testing.T) {
+	T.Run("standard for mysql", func(t *testing.T) {
 		t.Parallel()
 
 		cookieConfig := authservice.CookieConfig{}
 		cfg := Config{
-			Provider:          MariaDBProvider,
+			Provider:          MySQLProvider,
 			ConnectionDetails: "example_connection_string",
 		}
 
@@ -243,9 +243,7 @@ func TestProvideSessionManager(T *testing.T) {
 		mockDB.ExpectQuery("SELECT VERSION()").
 			WillReturnRows(sqlmock.NewRows([]string{"version"}).AddRow("1.2.3"))
 
-		db := sqlx.NewDb(fakeDB, "mock")
-
-		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, db)
+		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, fakeDB)
 		assert.NotNil(t, sessionManager)
 		assert.NoError(t, err)
 
@@ -261,7 +259,7 @@ func TestProvideSessionManager(T *testing.T) {
 			ConnectionDetails: "example_connection_string",
 		}
 
-		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sqlx.DB{})
+		sessionManager, err := ProvideSessionManager(cookieConfig, cfg, &sql.DB{})
 		assert.Nil(t, sessionManager)
 		assert.Error(t, err)
 	})

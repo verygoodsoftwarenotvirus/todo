@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
@@ -25,6 +27,16 @@ func joinIDs(ids []uint64) string {
 
 func joinStringIDs(ids []string) string {
 	return strings.Join(ids, ",")
+}
+
+// logQueryBuildingError logs errs that may occur during query construction. Such errors should be few and far between,
+// as the generally only occur with type discrepancies or other misuses of SQL. An alert should be set up for any log
+// entries with the given name, and those alerts should be investigated quickly.
+func (b *Postgres) logQueryBuildingError(span tracing.Span, err error) {
+	if err != nil {
+		logger := b.logger.WithValue(keys.QueryErrorKey, true)
+		observability.AcknowledgeError(err, logger, span, "building query")
+	}
 }
 
 // BuildQueryOnly builds a given query, handles whatever errs and returns just the query and args.

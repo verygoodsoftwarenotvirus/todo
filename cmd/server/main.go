@@ -105,7 +105,7 @@ func main() {
 	ctx, initSpan := tracing.StartSpan(ctx)
 
 	// build our server struct.
-	srv, err := server.Build(ctx, cfg, logger)
+	srv, err := server.Build(ctx, logger, cfg)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("initializing HTTP server: %w", err))
 	}

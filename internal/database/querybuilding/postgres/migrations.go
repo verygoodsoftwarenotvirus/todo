@@ -1,10 +1,10 @@
 package postgres
 
 import (
+	"database/sql"
 	"fmt"
 
 	"github.com/GuiaBolso/darwin"
-	"github.com/jmoiron/sqlx"
 )
 
 var (
@@ -148,9 +148,9 @@ var (
 
 // BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a postgres database.
-func (b *Postgres) BuildMigrationFunc(db *sqlx.DB) func() {
+func (b *Postgres) BuildMigrationFunc(db *sql.DB) func() {
 	return func() {
-		driver := darwin.NewGenericDriver(db.DB, darwin.PostgresDialect{})
+		driver := darwin.NewGenericDriver(db, darwin.PostgresDialect{})
 		if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
 			panic(fmt.Errorf("migrating database: %w", err))
 		}

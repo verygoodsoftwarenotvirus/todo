@@ -2,10 +2,9 @@ package querybuilding
 
 import (
 	"context"
+	"database/sql"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/jmoiron/sqlx"
 )
 
 type (
@@ -44,7 +43,6 @@ type (
 		BuildGetAllAPIClientsCountQuery(ctx context.Context) string
 		BuildGetAPIClientsQuery(ctx context.Context, userID string, filter *types.QueryFilter) (query string, args []interface{})
 		BuildCreateAPIClientQuery(ctx context.Context, input *types.APIClientCreationInput) (query string, args []interface{})
-		BuildUpdateAPIClientQuery(ctx context.Context, input *types.APIClient) (query string, args []interface{})
 		BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID string) (query string, args []interface{})
 		BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID string) (query string, args []interface{})
 	}
@@ -93,7 +91,7 @@ type (
 	ItemSQLQueryBuilder interface {
 		BuildItemExistsQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{})
 		BuildGetItemQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{})
-		BuildGetAllItemsCountQuery(ctx context.Context) string
+		BuildGetTotalItemCountQuery(ctx context.Context) string
 		BuildGetBatchOfItemsQuery(ctx context.Context, beginID, endID uint64) (query string, args []interface{})
 		BuildGetItemsQuery(ctx context.Context, accountID string, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{})
 		BuildGetItemsWithIDsQuery(ctx context.Context, accountID string, limit uint8, ids []string, restrictToAccount bool) (query string, args []interface{})
@@ -105,7 +103,7 @@ type (
 
 	// SQLQueryBuilder describes anything that builds SQL queries to manage our data.
 	SQLQueryBuilder interface {
-		BuildMigrationFunc(db *sqlx.DB) func()
+		BuildMigrationFunc(db *sql.DB) func()
 		BuildTestUserCreationQuery(ctx context.Context, testUserConfig *types.TestUserCreationConfig) (query string, args []interface{})
 
 		AccountSQLQueryBuilder
@@ -115,5 +113,18 @@ type (
 		APIClientSQLQueryBuilder
 		WebhookSQLQueryBuilder
 		ItemSQLQueryBuilder
+	}
+
+	// NewSQLQueryBuilder describes anything that builds SQL queries to manage our data.
+	NewSQLQueryBuilder interface {
+		BuildMigrationFunc(db *sql.DB) func()
+		BuildTestUserCreationQuery(ctx context.Context, testUserConfig *types.TestUserCreationConfig) (query string, args []interface{})
+
+		BuildGetAccountsQuery(ctx context.Context, userID string, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{})
+		BuildGetAPIClientsQuery(ctx context.Context, userID string, filter *types.QueryFilter) (query string, args []interface{})
+		BuildGetAuditLogEntriesQuery(ctx context.Context, filter *types.QueryFilter) (query string, args []interface{})
+		BuildGetUsersQuery(ctx context.Context, filter *types.QueryFilter) (query string, args []interface{})
+		BuildGetWebhooksQuery(ctx context.Context, accountID string, filter *types.QueryFilter) (query string, args []interface{})
+		BuildGetItemsQuery(ctx context.Context, accountID string, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{})
 	}
 )

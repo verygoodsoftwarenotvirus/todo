@@ -62,7 +62,6 @@ type (
 	AccountDataManager interface {
 		GetAccount(ctx context.Context, accountID, userID string) (*Account, error)
 		GetAllAccountsCount(ctx context.Context) (uint64, error)
-		GetAllAccounts(ctx context.Context, resultChannel chan []*Account, bucketSize uint16) error
 		GetAccounts(ctx context.Context, userID string, filter *QueryFilter) (*AccountList, error)
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
 		CreateAccount(ctx context.Context, input *AccountCreationInput, createdByUser string) (*Account, error)

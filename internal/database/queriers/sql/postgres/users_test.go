@@ -8,12 +8,10 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -110,15 +108,8 @@ func TestQuerier_UserHasStatus(T *testing.T) {
 		ctx := context.Background()
 		exampleUser := fakes.BuildFakeUser()
 		exampleStatus := string(types.GoodStandingAccountStatus)
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUserHasStatusQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-			[]string{exampleStatus},
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -128,7 +119,7 @@ func TestQuerier_UserHasStatus(T *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -162,15 +153,8 @@ func TestQuerier_UserHasStatus(T *testing.T) {
 		ctx := context.Background()
 		exampleUser := fakes.BuildFakeUser()
 		exampleStatus := string(types.GoodStandingAccountStatus)
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUserHasStatusQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-			[]string{exampleStatus},
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -180,7 +164,7 @@ func TestQuerier_UserHasStatus(T *testing.T) {
 		assert.Error(t, err)
 		assert.False(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -195,14 +179,7 @@ func TestQuerier_getUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -212,7 +189,7 @@ func TestQuerier_getUser(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -234,14 +211,7 @@ func TestQuerier_getUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserWithUnverifiedTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -251,7 +221,7 @@ func TestQuerier_getUser(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
@@ -262,14 +232,7 @@ func TestQuerier_getUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -279,7 +242,7 @@ func TestQuerier_getUser(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -294,14 +257,7 @@ func TestQuerier_GetUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -311,7 +267,7 @@ func TestQuerier_GetUser(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -333,14 +289,7 @@ func TestQuerier_GetUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -350,7 +299,7 @@ func TestQuerier_GetUser(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -365,14 +314,7 @@ func TestQuerier_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserWithUnverifiedTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -382,7 +324,7 @@ func TestQuerier_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -408,14 +350,7 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserByUsernameQuery",
-			testutils.ContextMatcher,
-			exampleUser.Username,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -425,7 +360,7 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUser, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid username", func(t *testing.T) {
@@ -447,14 +382,7 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserByUsernameQuery",
-			testutils.ContextMatcher,
-			exampleUser.Username,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -464,7 +392,7 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
@@ -475,14 +403,7 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUserByUsernameQuery",
-			testutils.ContextMatcher,
-			exampleUser.Username,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -492,7 +413,7 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -509,14 +430,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildSearchForUserByUsernameQuery",
-			testutils.ContextMatcher,
-			exampleUsername,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -526,7 +440,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUserList.Users, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid username", func(t *testing.T) {
@@ -547,14 +461,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildSearchForUserByUsernameQuery",
-			testutils.ContextMatcher,
-			exampleUsername,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -565,7 +472,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
@@ -574,14 +481,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildSearchForUserByUsernameQuery",
-			testutils.ContextMatcher,
-			exampleUsername,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -591,7 +491,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
@@ -600,14 +500,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildSearchForUserByUsernameQuery",
-			testutils.ContextMatcher,
-			exampleUsername,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -617,7 +510,7 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -632,13 +525,7 @@ func TestQuerier_GetAllUsersCount(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetAllUsersCountQuery",
-			testutils.ContextMatcher,
-		).Return(fakeQuery)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -648,7 +535,7 @@ func TestQuerier_GetAllUsersCount(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
 
-		mock.AssertExpectationsForObjects(t, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
@@ -657,13 +544,7 @@ func TestQuerier_GetAllUsersCount(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetAllUsersCountQuery",
-			testutils.ContextMatcher,
-		).Return(fakeQuery)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -673,7 +554,7 @@ func TestQuerier_GetAllUsersCount(T *testing.T) {
 		assert.Error(t, err)
 		assert.Zero(t, actual)
 
-		mock.AssertExpectationsForObjects(t, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t)
 	})
 }
 
@@ -689,14 +570,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUsersQuery",
-			testutils.ContextMatcher,
-			filter,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -706,7 +580,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUserList, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
@@ -719,14 +593,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUsersQuery",
-			testutils.ContextMatcher,
-			filter,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -736,7 +603,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleUserList, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
@@ -747,14 +614,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUsersQuery",
-			testutils.ContextMatcher,
-			filter,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -764,7 +624,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
@@ -775,14 +635,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetUsersQuery",
-			testutils.ContextMatcher,
-			filter,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -792,7 +645,7 @@ func TestQuerier_GetUsers(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -810,12 +663,10 @@ func TestQuerier_createUser(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
+		//exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
@@ -831,11 +682,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
-			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
@@ -843,22 +689,12 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(accountCreationInputMatcher(t, exampleAccountCreationInput)),
-		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
-			Return(secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
@@ -866,23 +702,12 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account user membership for created user
 		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildCreateMembershipForNewUserQuery",
-			testutils.ContextMatcher,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
-			Return(thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(thirdFakeAuditLogEntryEventArgs)...).
@@ -892,7 +717,7 @@ func TestQuerier_createUser(T *testing.T) {
 
 		assert.NoError(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error beginning transaction", func(t *testing.T) {
@@ -934,8 +759,6 @@ func TestQuerier_createUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
 		}
@@ -952,7 +775,7 @@ func TestQuerier_createUser(T *testing.T) {
 
 		assert.Error(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error writing user creation audit log entry", func(t *testing.T) {
@@ -970,8 +793,6 @@ func TestQuerier_createUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
 		}
@@ -986,11 +807,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
-			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
@@ -1000,7 +816,7 @@ func TestQuerier_createUser(T *testing.T) {
 
 		assert.Error(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error creating account", func(t *testing.T) {
@@ -1014,12 +830,10 @@ func TestQuerier_createUser(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
+		//exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
@@ -1035,11 +849,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
-			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
@@ -1047,11 +856,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(accountCreationInputMatcher(t, exampleAccountCreationInput)),
-		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
@@ -1061,7 +865,7 @@ func TestQuerier_createUser(T *testing.T) {
 
 		assert.Error(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error writing account creation audit log entry", func(t *testing.T) {
@@ -1075,12 +879,10 @@ func TestQuerier_createUser(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
+		//exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
@@ -1096,11 +898,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
-			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
@@ -1108,22 +905,12 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(accountCreationInputMatcher(t, exampleAccountCreationInput)),
-		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
-			Return(secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
@@ -1133,7 +920,7 @@ func TestQuerier_createUser(T *testing.T) {
 
 		assert.Error(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error creating account user membership", func(t *testing.T) {
@@ -1147,12 +934,10 @@ func TestQuerier_createUser(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
+		//exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
@@ -1168,11 +953,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
-			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
@@ -1180,22 +960,12 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(accountCreationInputMatcher(t, exampleAccountCreationInput)),
-		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
-			Return(secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
@@ -1203,12 +973,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account user membership for created user
 		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildCreateMembershipForNewUserQuery",
-			testutils.ContextMatcher,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
@@ -1218,7 +982,7 @@ func TestQuerier_createUser(T *testing.T) {
 
 		assert.Error(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error writing account membership creation audit log entry", func(t *testing.T) {
@@ -1232,12 +996,10 @@ func TestQuerier_createUser(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
+		//exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
@@ -1253,11 +1015,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
-			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
@@ -1265,22 +1022,12 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(accountCreationInputMatcher(t, exampleAccountCreationInput)),
-		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
-			Return(secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
@@ -1288,23 +1035,12 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account user membership for created user
 		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildCreateMembershipForNewUserQuery",
-			testutils.ContextMatcher,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
-			Return(thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(thirdFakeAuditLogEntryEventArgs)...).
@@ -1314,7 +1050,7 @@ func TestQuerier_createUser(T *testing.T) {
 
 		assert.Error(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error committing transaction", func(t *testing.T) {
@@ -1328,12 +1064,10 @@ func TestQuerier_createUser(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
+		//exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
@@ -1349,11 +1083,6 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
-			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
@@ -1361,22 +1090,12 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(accountCreationInputMatcher(t, exampleAccountCreationInput)),
-		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
-			Return(secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
@@ -1384,23 +1103,12 @@ func TestQuerier_createUser(T *testing.T) {
 
 		// create account user membership for created user
 		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildCreateMembershipForNewUserQuery",
-			testutils.ContextMatcher,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
-			Return(thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(thirdFakeAuditLogEntryEventArgs)...).
@@ -1410,7 +1118,7 @@ func TestQuerier_createUser(T *testing.T) {
 
 		assert.Error(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -1457,12 +1165,10 @@ func TestQuerier_CreateUser(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 		exampleAccount.CreatedOn = exampleCreationTime
-		exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
+		//exampleAccountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
 
 		c.timeFunc = func() uint64 {
 			return exampleCreationTime
@@ -1471,11 +1177,6 @@ func TestQuerier_CreateUser(T *testing.T) {
 		db.ExpectBegin()
 
 		fakeUserCreationQuery, fakeUserCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUserCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(userDataStoreCreationInputMatcher(t, exampleUserCreationInput)),
-		).Return(fakeUserCreationQuery, fakeUserCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeUserCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeUserCreationArgs)...).
@@ -1483,11 +1184,6 @@ func TestQuerier_CreateUser(T *testing.T) {
 
 		// create audit log entry for created user
 		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserCreationEvent))).
-			Return(firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
@@ -1495,22 +1191,12 @@ func TestQuerier_CreateUser(T *testing.T) {
 
 		// create account for created user
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(accountCreationInputMatcher(t, exampleAccountCreationInput)),
-		).Return(fakeAccountCreationQuery, fakeAccountCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.AccountCreationEvent))).
-			Return(secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
@@ -1518,23 +1204,12 @@ func TestQuerier_CreateUser(T *testing.T) {
 
 		// create account user membership for created user
 		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildCreateMembershipForNewUserQuery",
-			testutils.ContextMatcher,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(fakeMembershipCreationQuery, fakeMembershipCreationArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(testutils.AuditLogEntryCreationInputMatcher(audit.UserAddedToAccountEvent))).
-			Return(thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
 			WithArgs(interfaceToDriverValue(thirdFakeAuditLogEntryEventArgs)...).
@@ -1547,7 +1222,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 		actual.ID = exampleUser.ID
 		assert.Equal(t, exampleUser, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -1576,15 +1251,6 @@ func TestQuerier_CreateUser(T *testing.T) {
 			return exampleCreationTime
 		}
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		fakeUserCreationQuery, fakeUserCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUserCreationQuery",
-			testutils.ContextMatcher,
-			mock.MatchedBy(userDataStoreCreationInputMatcher(t, exampleUserCreationInput)),
-		).Return(fakeUserCreationQuery, fakeUserCreationArgs)
-
 		begin := db.ExpectBegin()
 		begin.WillReturnError(errors.New("blah"))
 
@@ -1607,28 +1273,19 @@ func TestQuerier_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserQuery",
-			testutils.ContextMatcher,
-			exampleUser,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit()
 
 		assert.NoError(t, c.UpdateUser(ctx, exampleUser, nil))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with nil user", func(t *testing.T) {
@@ -1663,16 +1320,9 @@ func TestQuerier_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserQuery",
-			testutils.ContextMatcher,
-			exampleUser,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -1682,7 +1332,7 @@ func TestQuerier_UpdateUser(T *testing.T) {
 
 		assert.Error(t, c.UpdateUser(ctx, exampleUser, nil))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error writing audit log entry", func(t *testing.T) {
@@ -1693,28 +1343,19 @@ func TestQuerier_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserQuery",
-			testutils.ContextMatcher,
-			exampleUser,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
-
 		db.ExpectRollback()
 
 		assert.Error(t, c.UpdateUser(ctx, exampleUser, nil))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error committing transaction", func(t *testing.T) {
@@ -1725,28 +1366,19 @@ func TestQuerier_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserQuery",
-			testutils.ContextMatcher,
-			exampleUser,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit().WillReturnError(errors.New("blah"))
 
 		assert.Error(t, c.UpdateUser(ctx, exampleUser, nil))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -1762,28 +1394,19 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserPasswordQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID, exampleUser.HashedPassword,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit()
 
 		assert.NoError(t, c.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with issue beginning transaction", func(t *testing.T) {
@@ -1833,16 +1456,9 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserPasswordQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID, exampleUser.HashedPassword,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -1852,7 +1468,7 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 
 		assert.Error(t, c.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error writing audit log entry", func(t *testing.T) {
@@ -1864,28 +1480,19 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserPasswordQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID, exampleUser.HashedPassword,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
-
 		db.ExpectRollback()
 
 		assert.Error(t, c.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error committing transaction", func(t *testing.T) {
@@ -1897,28 +1504,19 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserPasswordQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID, exampleUser.HashedPassword,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit().WillReturnError(errors.New("blah"))
 
 		assert.Error(t, c.UpdateUserPassword(ctx, exampleUser.ID, exampleUser.HashedPassword))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -1933,28 +1531,19 @@ func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID, exampleUser.TwoFactorSecret,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit()
 
 		assert.NoError(t, c.UpdateUserTwoFactorSecret(ctx, exampleUser.ID, exampleUser.TwoFactorSecret))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -2002,16 +1591,9 @@ func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID, exampleUser.TwoFactorSecret,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -2021,7 +1603,7 @@ func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 
 		assert.Error(t, c.UpdateUserTwoFactorSecret(ctx, exampleUser.ID, exampleUser.TwoFactorSecret))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error writing audit log entry", func(t *testing.T) {
@@ -2032,28 +1614,19 @@ func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID, exampleUser.TwoFactorSecret,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
-
 		db.ExpectRollback()
 
 		assert.Error(t, c.UpdateUserTwoFactorSecret(ctx, exampleUser.ID, exampleUser.TwoFactorSecret))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error committing transaction", func(t *testing.T) {
@@ -2064,28 +1637,19 @@ func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildUpdateUserTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID, exampleUser.TwoFactorSecret,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit().WillReturnError(errors.New("blah"))
 
 		assert.Error(t, c.UpdateUserTwoFactorSecret(ctx, exampleUser.ID, exampleUser.TwoFactorSecret))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -2100,28 +1664,19 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildVerifyUserTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit()
 
 		assert.NoError(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -2156,16 +1711,9 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildVerifyUserTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -2175,7 +1723,7 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		assert.Error(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error writing audit log entry", func(t *testing.T) {
@@ -2186,28 +1734,19 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildVerifyUserTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
-
 		db.ExpectRollback()
 
 		assert.Error(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error committing transaction", func(t *testing.T) {
@@ -2218,28 +1757,19 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildVerifyUserTwoFactorSecretQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(1, 1))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit().WillReturnError(errors.New("blah"))
 
 		assert.Error(t, c.MarkUserTwoFactorSecretAsVerified(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -2254,39 +1784,25 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeArchiveQuery, fakeArchiveArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildArchiveUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeArchiveQuery, fakeArchiveArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeArchiveQuery)).
 			WithArgs(interfaceToDriverValue(fakeArchiveArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
 		fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildArchiveAccountMembershipsForUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeArchiveMembershipsQuery)).
 			WithArgs(interfaceToDriverValue(fakeArchiveMembershipsArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit()
 
 		assert.NoError(t, c.ArchiveUser(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -2321,16 +1837,9 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildArchiveUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -2340,7 +1849,7 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 
 		assert.Error(t, c.ArchiveUser(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error executing memberships archive query", func(t *testing.T) {
@@ -2351,27 +1860,15 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeArchiveQuery, fakeArchiveArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildArchiveUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeArchiveQuery, fakeArchiveArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeArchiveQuery)).
 			WithArgs(interfaceToDriverValue(fakeArchiveArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
 		fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildArchiveAccountMembershipsForUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeArchiveMembershipsQuery)).
 			WithArgs(interfaceToDriverValue(fakeArchiveMembershipsArgs)...).
@@ -2381,7 +1878,7 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 
 		assert.Error(t, c.ArchiveUser(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error writing user archive audit log entry", func(t *testing.T) {
@@ -2392,39 +1889,25 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeArchiveQuery, fakeArchiveArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildArchiveUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeArchiveQuery, fakeArchiveArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeArchiveQuery)).
 			WithArgs(interfaceToDriverValue(fakeArchiveArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
 		fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildArchiveAccountMembershipsForUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeArchiveMembershipsQuery)).
 			WithArgs(interfaceToDriverValue(fakeArchiveMembershipsArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, errors.New("blah"))
-
 		db.ExpectRollback()
 
 		assert.Error(t, c.ArchiveUser(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error committing transaction", func(t *testing.T) {
@@ -2435,39 +1918,25 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		fakeArchiveQuery, fakeArchiveArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildArchiveUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeArchiveQuery, fakeArchiveArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeArchiveQuery)).
 			WithArgs(interfaceToDriverValue(fakeArchiveArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
 		fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildArchiveAccountMembershipsForUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeArchiveMembershipsQuery, fakeArchiveMembershipsArgs)
 
 		db.ExpectExec(formatQueryForSQLMock(fakeArchiveMembershipsQuery)).
 			WithArgs(interfaceToDriverValue(fakeArchiveMembershipsArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		expectAuditLogEntryInTransaction(mockQueryBuilder, db, nil)
-
 		db.ExpectCommit().WillReturnError(errors.New("blah"))
 
 		assert.Error(t, c.ArchiveUser(ctx, exampleUser.ID))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -2484,12 +1953,6 @@ func TestQuerier_GetAuditLogEntriesForUser(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetAuditLogEntriesForUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -2499,7 +1962,7 @@ func TestQuerier_GetAuditLogEntriesForUser(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList.Entries, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid user ID", func(t *testing.T) {
@@ -2523,12 +1986,6 @@ func TestQuerier_GetAuditLogEntriesForUser(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetAuditLogEntriesForUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -2538,7 +1995,7 @@ func TestQuerier_GetAuditLogEntriesForUser(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
@@ -2550,12 +2007,6 @@ func TestQuerier_GetAuditLogEntriesForUser(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.UserSQLQueryBuilder.On(
-			"BuildGetAuditLogEntriesForUserQuery",
-			testutils.ContextMatcher,
-			exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -2565,6 +2016,6 @@ func TestQuerier_GetAuditLogEntriesForUser(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }

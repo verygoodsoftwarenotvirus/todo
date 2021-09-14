@@ -8,7 +8,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -20,21 +19,6 @@ import (
 var auditLogCreationInputMatcher interface{} = mock.MatchedBy(func(*types.AuditLogEntryCreationInput) bool {
 	return true
 })
-
-func prepareForAuditLogEntryCreation(t *testing.T, exampleAuditLogEntry *types.AuditLogEntryCreationInput, mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock) {
-	t.Helper()
-
-	fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-		"BuildCreateAuditLogEntryQuery",
-		testutils.ContextMatcher,
-		auditLogCreationInputMatcher,
-	).Return(fakeQuery, fakeArgs)
-
-	db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-		WithArgs(interfaceToDriverValue(fakeArgs)...).
-		WillReturnResult(sqlmock.NewResult(1, 1))
-}
 
 func buildMockRowsFromAuditLogEntries(includeCount bool, auditLogEntries ...*types.AuditLogEntry) *sqlmock.Rows {
 	columns := querybuilding.AuditLogEntriesTableColumns
@@ -107,12 +91,6 @@ func TestQuerier_GetAuditLogEntry(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildGetAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			exampleAuditLogEntry.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -122,7 +100,7 @@ func TestQuerier_GetAuditLogEntry(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntry, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with invalid entry ID", func(t *testing.T) {
@@ -144,12 +122,6 @@ func TestQuerier_GetAuditLogEntry(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildGetAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			exampleAuditLogEntry.ID,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -159,7 +131,7 @@ func TestQuerier_GetAuditLogEntry(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -174,11 +146,7 @@ func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildGetAllAuditLogEntriesCountQuery", testutils.ContextMatcher).Return(fakeQuery)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -188,7 +156,7 @@ func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
@@ -197,11 +165,7 @@ func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildGetAllAuditLogEntriesCountQuery", testutils.ContextMatcher).Return(fakeQuery)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs().
@@ -211,7 +175,7 @@ func TestQuerier_GetAllAuditLogEntriesCount(T *testing.T) {
 		assert.Error(t, err)
 		assert.Zero(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -228,12 +192,6 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"buildGetAuditLogEntriesQuery",
-			testutils.ContextMatcher,
-			filter,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -243,7 +201,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with nil filter", func(t *testing.T) {
@@ -258,12 +216,6 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"buildGetAuditLogEntriesQuery",
-			testutils.ContextMatcher,
-			filter,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -273,7 +225,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, exampleAuditLogEntryList, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with error executing query", func(t *testing.T) {
@@ -285,12 +237,6 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"buildGetAuditLogEntriesQuery",
-			testutils.ContextMatcher,
-			filter,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -300,7 +246,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with erroneous response from database", func(t *testing.T) {
@@ -312,12 +258,6 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"buildGetAuditLogEntriesQuery",
-			testutils.ContextMatcher,
-			filter,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -327,7 +267,7 @@ func TestQuerier_GetAuditLogEntries(T *testing.T) {
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -344,12 +284,6 @@ func TestQuerier_createAuditLogEntryInTransaction(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			exampleInput,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectBegin()
 
@@ -362,7 +296,7 @@ func TestQuerier_createAuditLogEntryInTransaction(T *testing.T) {
 
 		assert.NoError(t, c.createAuditLogEntryInTransaction(ctx, tx, exampleInput))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -402,18 +336,14 @@ func TestQuerier_createAuditLogEntryInTransaction(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		tx, err := c.db.BeginTx(ctx, nil)
 		require.NoError(t, err)
 
-		prepareForAuditLogEntryCreation(t, exampleInput, mockQueryBuilder, db)
-
 		assert.NoError(t, c.createAuditLogEntryInTransaction(ctx, tx, exampleInput))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -456,12 +386,6 @@ func TestQuerier_createAuditLogEntryInTransaction(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			exampleInput,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectBegin()
 
@@ -474,7 +398,7 @@ func TestQuerier_createAuditLogEntryInTransaction(T *testing.T) {
 
 		assert.Error(t, c.createAuditLogEntryInTransaction(ctx, tx, exampleInput))
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 
@@ -491,12 +415,6 @@ func TestQuerier_createAuditLogEntry(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			exampleInput,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectBegin()
 
@@ -509,7 +427,7 @@ func TestQuerier_createAuditLogEntry(T *testing.T) {
 
 		c.createAuditLogEntry(ctx, tx, exampleInput)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("obligatory but with helper method", func(t *testing.T) {
@@ -521,18 +439,14 @@ func TestQuerier_createAuditLogEntry(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
 		db.ExpectBegin()
 
 		tx, err := c.db.BeginTx(ctx, nil)
 		require.NoError(t, err)
 
-		prepareForAuditLogEntryCreation(t, exampleInput, mockQueryBuilder, db)
-
 		c.createAuditLogEntry(ctx, tx, exampleInput)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 
 	T.Run("with nil input", func(t *testing.T) {
@@ -575,12 +489,6 @@ func TestQuerier_createAuditLogEntry(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-		mockQueryBuilder.AuditLogEntrySQLQueryBuilder.On(
-			"BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			exampleInput,
-		).Return(fakeQuery, fakeArgs)
 
 		db.ExpectBegin()
 
@@ -593,6 +501,6 @@ func TestQuerier_createAuditLogEntry(T *testing.T) {
 
 		c.createAuditLogEntry(ctx, tx, exampleInput)
 
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }

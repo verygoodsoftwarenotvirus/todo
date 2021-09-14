@@ -10,18 +10,15 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 const (
@@ -90,6 +87,16 @@ func interfaceToDriverValue(in []interface{}) []driver.Value {
 	return out
 }
 
+func interfacesToDriverValue(in ...interface{}) []driver.Value {
+	out := []driver.Value{}
+
+	for _, x := range in {
+		out = append(out, driver.Value(x))
+	}
+
+	return out
+}
+
 type sqlmockExpecterWrapper struct {
 	sqlmock.Sqlmock
 }
@@ -124,24 +131,6 @@ func buildErroneousMockRow() *sqlmock.Rows {
 	)
 
 	return exampleRows
-}
-
-func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock, returnErr error) {
-	fakeAuditLogEntryQuery, fakeAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
-	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-		On("BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.IsType(&types.AuditLogEntryCreationInput{})).
-		Return(fakeAuditLogEntryQuery, fakeAuditLogEntryArgs)
-
-	e := db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryQuery)).
-		WithArgs(interfaceToDriverValue(fakeAuditLogEntryArgs)...)
-
-	if returnErr != nil {
-		e.WillReturnError(returnErr)
-	} else {
-		e.WillReturnResult(newSuccessfulDatabaseResult(123))
-	}
 }
 
 // end helper funcs
@@ -336,38 +325,6 @@ func TestQuerier_rollbackTransaction(T *testing.T) {
 	})
 }
 
-func TestQuerier_getIDFromResult(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		expected := int64(123)
-
-		m := &database.MockSQLResult{}
-		m.On("LastInsertId").Return(expected, nil)
-
-		ctx := context.Background()
-		c, _ := buildTestClient(t)
-		actual := c.getIDFromResult(ctx, m)
-
-		assert.Equal(t, uint64(expected), actual)
-	})
-
-	T.Run("logs error", func(t *testing.T) {
-		t.Parallel()
-
-		m := &database.MockSQLResult{}
-		m.On("LastInsertId").Return(int64(0), errors.New("blah"))
-
-		ctx := context.Background()
-		c, _ := buildTestClient(t)
-		actual := c.getIDFromResult(ctx, m)
-
-		assert.Zero(t, actual)
-	})
-}
-
 func TestQuerier_handleRows(T *testing.T) {
 	T.Parallel()
 
@@ -456,7 +413,7 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
 
-		_, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 
 		assert.NoError(t, err)
 	})
@@ -473,7 +430,7 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		_, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 
 		assert.Error(t, err)
 	})
@@ -490,7 +447,7 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(int64(1), 0))
 
-		_, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))
@@ -509,7 +466,7 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uint64(123)))
 
-		_, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 
 		assert.NoError(t, err)
 	})
@@ -527,9 +484,8 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		id, err := c.performWriteQuery(ctx, c.db, false, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 
-		assert.Zero(t, id)
 		assert.Error(t, err)
 	})
 
@@ -546,7 +502,7 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
 
-		_, err := c.performWriteQuery(ctx, c.db, true, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 
 		assert.NoError(t, err)
 	})
@@ -564,7 +520,7 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
 
-		_, err := c.performWriteQuery(ctx, c.db, true, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 
 		assert.Error(t, err)
 	})
@@ -582,7 +538,7 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(0, 0))
 
-		_, err := c.performWriteQuery(ctx, c.db, true, "example", fakeQuery, fakeArgs)
+		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 
 		assert.Error(t, err)
 		assert.True(t, errors.Is(err, sql.ErrNoRows))

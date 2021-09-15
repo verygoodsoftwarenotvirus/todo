@@ -109,8 +109,6 @@ func TestQuerier_UserHasStatus(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleStatus := string(types.GoodStandingAccountStatus)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
@@ -154,8 +152,6 @@ func TestQuerier_UserHasStatus(T *testing.T) {
 		exampleUser := fakes.BuildFakeUser()
 		exampleStatus := string(types.GoodStandingAccountStatus)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -178,8 +174,6 @@ func TestQuerier_getUser(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -211,8 +205,6 @@ func TestQuerier_getUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromUsers(false, 0, exampleUser))
@@ -231,8 +223,6 @@ func TestQuerier_getUser(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -256,8 +246,6 @@ func TestQuerier_GetUser(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -289,8 +277,6 @@ func TestQuerier_GetUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -313,8 +299,6 @@ func TestQuerier_GetUserWithUnverifiedTwoFactorSecret(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -350,8 +334,6 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromUsers(false, 0, exampleUser))
@@ -382,8 +364,6 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
@@ -402,8 +382,6 @@ func TestQuerier_GetUserByUsername(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -429,8 +407,6 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -461,8 +437,6 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(sql.ErrNoRows)
@@ -481,8 +455,6 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -499,8 +471,6 @@ func TestQuerier_SearchForUsersByUsername(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -570,8 +540,6 @@ func TestQuerier_GetUsers(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromUsers(true, exampleUserList.FilteredCount, exampleUserList.Users...))
@@ -593,8 +561,6 @@ func TestQuerier_GetUsers(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromUsers(true, exampleUserList.FilteredCount, exampleUserList.Users...))
@@ -614,8 +580,6 @@ func TestQuerier_GetUsers(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -634,8 +598,6 @@ func TestQuerier_GetUsers(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -1000,8 +962,6 @@ func TestQuerier_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
@@ -1028,8 +988,6 @@ func TestQuerier_UpdateUser(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -1051,8 +1009,6 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -1094,8 +1050,6 @@ func TestQuerier_UpdateUserPassword(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -1116,8 +1070,6 @@ func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -1158,8 +1110,6 @@ func TestQuerier_UpdateUserTwoFactorSecret(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -1180,8 +1130,6 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -1208,8 +1156,6 @@ func TestQuerier_VerifyUserTwoFactorSecret(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -1286,8 +1232,6 @@ func TestQuerier_ArchiveUser(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).

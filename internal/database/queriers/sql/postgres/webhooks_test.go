@@ -178,8 +178,6 @@ func TestQuerier_GetWebhook(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildErroneousMockRowsFromWebhooks(false, 0, exampleWebhook))
@@ -230,8 +228,6 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(buildMockRowsFromWebhooks(
@@ -257,8 +253,6 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -295,8 +289,6 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -315,8 +307,6 @@ func TestQuerier_GetWebhooks(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -341,8 +331,6 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -379,8 +367,6 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -407,8 +393,6 @@ func TestQuerier_UpdateWebhook(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -447,8 +431,6 @@ func TestQuerier_UpdateWebhook(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -470,8 +452,6 @@ func TestQuerier_ArchiveWebhook(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -513,8 +493,6 @@ func TestQuerier_ArchiveWebhook(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).

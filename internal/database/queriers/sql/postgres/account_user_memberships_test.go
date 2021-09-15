@@ -9,7 +9,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
@@ -19,7 +18,7 @@ import (
 )
 
 func buildMockRowsFromAccountUserMemberships(memberships ...*types.AccountUserMembership) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(querybuilding.AccountsUserMembershipTableColumns)
+	exampleRows := sqlmock.NewRows(accountsUserMembershipTableColumns)
 
 	for _, x := range memberships {
 		rowValues := []driver.Value{
@@ -40,7 +39,7 @@ func buildMockRowsFromAccountUserMemberships(memberships ...*types.AccountUserMe
 }
 
 func buildInvalidMockRowsFromAccountUserMemberships(memberships ...*types.AccountUserMembership) *sqlmock.Rows {
-	exampleRows := sqlmock.NewRows(querybuilding.AccountsUserMembershipTableColumns)
+	exampleRows := sqlmock.NewRows(accountsUserMembershipTableColumns)
 
 	for _, x := range memberships {
 		rowValues := []driver.Value{
@@ -386,8 +385,6 @@ func TestQuerier_MarkAccountAsUserDefault(T *testing.T) {
 
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -456,8 +453,6 @@ func TestQuerier_UserIsMemberOfAccount(T *testing.T) {
 		exampleAccount := fakes.BuildFakeAccount()
 
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -529,8 +524,6 @@ func TestQuerier_ModifyUserPermissions(T *testing.T) {
 		exampleInput := fakes.BuildFakeUserPermissionModificationInput()
 
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -626,9 +619,13 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectBegin()
 
-		fakeAccountTransferQuery, fakeAccountTransferArgs := fakes.BuildFakeSQLQuery()
+		fakeAccountTransferArgs := []interface{}{
+			exampleInput.NewOwner,
+			exampleInput.CurrentOwner,
+			exampleAccount.ID,
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeAccountTransferQuery)).
+		db.ExpectExec(formatQueryForSQLMock(transferAccountOwnershipQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountTransferArgs)...).
 			WillReturnError(errors.New("blah"))
 
@@ -648,9 +645,13 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 
 		db.ExpectBegin()
 
-		fakeAccountTransferQuery, fakeAccountTransferArgs := fakes.BuildFakeSQLQuery()
+		fakeAccountTransferArgs := []interface{}{
+			exampleInput.NewOwner,
+			exampleInput.CurrentOwner,
+			exampleAccount.ID,
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeAccountTransferQuery)).
+		db.ExpectExec(formatQueryForSQLMock(transferAccountOwnershipQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountTransferArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
@@ -669,28 +670,36 @@ func TestQuerier_TransferAccountOwnership(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleAccount := fakes.BuildFakeAccount()
+		exampleAccountID := fakes.BuildFakeID()
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
 
 		c, db := buildTestClient(t)
 
 		db.ExpectBegin()
 
-		fakeAccountTransferQuery, fakeAccountTransferArgs := fakes.BuildFakeSQLQuery()
+		fakeAccountTransferArgs := []interface{}{
+			exampleInput.NewOwner,
+			exampleInput.CurrentOwner,
+			exampleAccountID,
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeAccountTransferQuery)).
+		db.ExpectExec(formatQueryForSQLMock(transferAccountOwnershipQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountTransferArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccountID))
 
-		fakeAccountMembershipsTransferQuery, fakeAccountMembershipsTransferArgs := fakes.BuildFakeSQLQuery()
+		fakeAccountMembershipsTransferArgs := []interface{}{
+			exampleInput.NewOwner,
+			exampleAccountID,
+			exampleInput.CurrentOwner,
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeAccountMembershipsTransferQuery)).
+		db.ExpectExec(formatQueryForSQLMock(transferAccountMembershipQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountMembershipsTransferArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleAccountID))
 
 		db.ExpectCommit().WillReturnError(errors.New("blah"))
 
-		assert.Error(t, c.TransferAccountOwnership(ctx, exampleAccount.ID, exampleInput))
+		assert.Error(t, c.TransferAccountOwnership(ctx, exampleAccountID, exampleInput))
 	})
 }
 
@@ -769,7 +778,7 @@ func TestQuerier_AddUserToAccount(T *testing.T) {
 
 		db.ExpectExec(formatQueryForSQLMock(addUserToAccountQuery)).
 			WithArgs(interfaceToDriverValue(addUserToAccountArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAccountUserMembership.ID))
+			WillReturnError(errors.New("blah"))
 
 		assert.Error(t, c.AddUserToAccount(ctx, exampleInput))
 

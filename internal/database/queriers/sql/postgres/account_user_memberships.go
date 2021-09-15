@@ -16,6 +16,18 @@ import (
 
 var (
 	_ types.AccountUserMembershipDataManager = (*SQLQuerier)(nil)
+
+	// accountsUserMembershipTableColumns are the columns for the account user memberships table.
+	accountsUserMembershipTableColumns = []string{
+		"account_user_memberships.id",
+		"account_user_memberships.belongs_to_user",
+		"account_user_memberships.belongs_to_account",
+		"account_user_memberships.account_roles",
+		"account_user_memberships.default_account",
+		"account_user_memberships.created_on",
+		"account_user_memberships.last_updated_on",
+		"account_user_memberships.archived_on",
+	}
 )
 
 const (

@@ -372,8 +372,6 @@ func TestQuerier_performCreateQueryIgnoringReturn(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
@@ -393,8 +391,6 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
@@ -410,8 +406,6 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -426,8 +420,6 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -446,8 +438,6 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		c, db := buildTestClient(t)
 		c.idStrategy = ReturningStatementIDRetrievalStrategy
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uint64(123)))
@@ -463,8 +453,6 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 		c.idStrategy = ReturningStatementIDRetrievalStrategy
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -482,8 +470,6 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		c, db := buildTestClient(t)
 		c.idStrategy = ReturningStatementIDRetrievalStrategy
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
@@ -500,8 +486,6 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		c, db := buildTestClient(t)
 		c.idStrategy = ReturningStatementIDRetrievalStrategy
 
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
@@ -517,8 +501,6 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 		c.idStrategy = ReturningStatementIDRetrievalStrategy
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).

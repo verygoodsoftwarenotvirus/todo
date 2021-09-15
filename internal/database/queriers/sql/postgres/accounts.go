@@ -20,6 +20,20 @@ import (
 
 var (
 	_ types.AccountDataManager = (*SQLQuerier)(nil)
+
+	accountsTableColumns = []string{
+		"accounts.id",
+		"accounts.name",
+		"accounts.billing_status",
+		"accounts.contact_email",
+		"accounts.contact_phone",
+		"accounts.payment_processor_customer_id",
+		"accounts.subscription_plan_id",
+		"accounts.created_on",
+		"accounts.last_updated_on",
+		"accounts.archived_on",
+		"accounts.belongs_to_user",
+	}
 )
 
 // scanAccount takes a database Scanner (i.e. *sql.Row) and scans the result into an Account struct.
@@ -211,6 +225,10 @@ func (q *SQLQuerier) GetAllAccountsCount(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
+var (
+	accountAndMembershipColumns = append(accountsTableColumns, accountsUserMembershipTableColumns...)
+)
+
 // BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *SQLQuerier) BuildGetAccountsQuery(ctx context.Context, userID string, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
@@ -228,12 +246,11 @@ func (q *SQLQuerier) BuildGetAccountsQuery(ctx context.Context, userID string, f
 		includeArchived = filter.IncludeArchived
 	}
 
-	columns := append(querybuilding.AccountsTableColumns, querybuilding.AccountsUserMembershipTableColumns...)
 	filteredCountQuery, filteredCountQueryArgs := q.buildFilteredCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived, filter)
 	totalCountQuery, totalCountQueryArgs := q.buildTotalCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived)
 
 	builder := q.sqlBuilder.Select(append(
-		columns,
+		accountAndMembershipColumns,
 		fmt.Sprintf("(%s) as total_count", totalCountQuery),
 		fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
 	)...).

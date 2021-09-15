@@ -129,17 +129,6 @@ var (
 		},
 		{
 			Version:     0.02,
-			Description: "create audit log table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS audit_log (
-				id CHAR(27) NOT NULL PRIMARY KEY,
-				event_type TEXT NOT NULL,
-				context JSONB NOT NULL,
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW())
-			);`,
-		},
-		{
-			Version:     0.03,
 			Description: "create users table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS users (
@@ -161,7 +150,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.04,
+			Version:     0.03,
 			Description: "create accounts table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS accounts (
@@ -180,7 +169,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.05,
+			Version:     0.04,
 			Description: "create account user memberships table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS account_user_memberships (
@@ -196,7 +185,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.06,
+			Version:     0.05,
 			Description: "create API clients table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS api_clients (
@@ -213,7 +202,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.07,
+			Version:     0.06,
 			Description: "create webhooks table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS webhooks (
@@ -232,7 +221,7 @@ var (
 			);`,
 		},
 		{
-			Version:     0.08,
+			Version:     0.07,
 			Description: "create items table",
 			Script: `
 			CREATE TABLE IF NOT EXISTS items (

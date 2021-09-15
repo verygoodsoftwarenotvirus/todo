@@ -700,48 +700,6 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
-	T.Run("with error writing account creation audit log entry", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ID = ""
-		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleAccount.Members = []*types.AccountUserMembership(nil)
-		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			exampleCreationInput,
-		).Return(fakeCreationQuery, fakeCreationArgs)
-
-		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
-			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
-
-		db.ExpectRollback()
-
-		c.timeFunc = func() uint64 {
-			return exampleAccount.CreatedOn
-		}
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		actual, err := c.CreateAccount(ctx, exampleCreationInput)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
 	T.Run("with error writing user addition to database", func(t *testing.T) {
 		t.Parallel()
 
@@ -780,59 +738,6 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionQuery)).
 			WithArgs(interfaceToDriverValue(fakeAccountAdditionArgs)...).
 			WillReturnError(errors.New("blah"))
-
-		db.ExpectRollback()
-
-		c.timeFunc = func() uint64 {
-			return exampleAccount.CreatedOn
-		}
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		actual, err := c.CreateAccount(ctx, exampleCreationInput)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
-	T.Run("with error writing user membership addition audit log entry", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.ID = ""
-		exampleAccount.BelongsToUser = exampleUser.ID
-		exampleAccount.Members = []*types.AccountUserMembership(nil)
-		exampleCreationInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildAccountCreationQuery",
-			testutils.ContextMatcher,
-			exampleCreationInput,
-		).Return(fakeCreationQuery, fakeCreationArgs)
-
-		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
-			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
-
-		fakeAccountAdditionQuery, fakeAccountAdditionArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountUserMembershipSQLQueryBuilder.On(
-			"BuildAddUserToAccountQuery",
-			testutils.ContextMatcher,
-			mock.IsType(&types.AddUserToAccountInput{}),
-		).Return(fakeAccountAdditionQuery, fakeAccountAdditionArgs)
-
-		db.ExpectExec(formatQueryForSQLMock(fakeAccountAdditionQuery)).
-			WithArgs(interfaceToDriverValue(fakeAccountAdditionArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		db.ExpectRollback()
 
@@ -1014,39 +919,6 @@ func TestQuerier_UpdateAccount(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
-	T.Run("with error writing audit log entry", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildUpdateAccountQuery",
-			testutils.ContextMatcher,
-			exampleAccount,
-		).Return(fakeQuery, fakeArgs)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
-
-		db.ExpectRollback()
-
-		assert.Error(t, c.UpdateAccount(ctx, exampleAccount))
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
 	T.Run("with error committing transaction", func(t *testing.T) {
 		t.Parallel()
 
@@ -1170,39 +1042,6 @@ func TestQuerier_ArchiveAccount(T *testing.T) {
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
-
-		db.ExpectRollback()
-
-		assert.Error(t, c.ArchiveAccount(ctx, exampleAccount.ID, exampleUser.ID))
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
-	T.Run("with error writing audit log entry", func(t *testing.T) {
-		t.Parallel()
-
-		exampleUser := fakes.BuildFakeUser()
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAccount.BelongsToUser = exampleUser.ID
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildArchiveAccountQuery",
-			testutils.ContextMatcher,
-			exampleAccount.ID, exampleUser.ID,
-		).Return(fakeQuery, fakeArgs)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		db.ExpectRollback()
 

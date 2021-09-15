@@ -590,39 +590,6 @@ func TestQuerier_CreateItem(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
-	T.Run("with error creating audit log entry", func(t *testing.T) {
-		t.Parallel()
-
-		exampleItem := fakes.BuildFakeItem()
-		exampleInput := fakes.BuildFakeItemDatabaseCreationInputFromItem(exampleItem)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.On(
-			"BuildCreateItemQuery",
-			testutils.ContextMatcher,
-			exampleInput,
-		).Return(fakeCreationQuery, fakeCreationArgs)
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
-			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
-
-		db.ExpectRollback()
-
-		actual, err := c.CreateItem(ctx, exampleInput)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
 	T.Run("with error committing transaction", func(t *testing.T) {
 		t.Parallel()
 
@@ -738,37 +705,6 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
 			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
 			WillReturnError(errors.New("blah"))
-
-		db.ExpectRollback()
-
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		assert.Error(t, c.UpdateItem(ctx, exampleItem))
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
-	T.Run("with error writing audit log entry to database", func(t *testing.T) {
-		t.Parallel()
-
-		exampleItem := fakes.BuildFakeItem()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.On(
-			"BuildUpdateItemQuery",
-			testutils.ContextMatcher,
-			exampleItem,
-		).Return(fakeUpdateQuery, fakeUpdateArgs)
-
-		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
-			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		db.ExpectRollback()
 
@@ -908,40 +844,6 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
-
-		db.ExpectRollback()
-
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID))
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
-	T.Run("with error writing audit log entry", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAccountID := fakes.BuildFakeID()
-		exampleItem := fakes.BuildFakeItem()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.ItemSQLQueryBuilder.On(
-			"BuildArchiveItemQuery",
-			testutils.ContextMatcher,
-			exampleItem.ID,
-			exampleAccountID,
-		).Return(fakeQuery, fakeArgs)
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		db.ExpectRollback()
 

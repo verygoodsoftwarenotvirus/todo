@@ -156,12 +156,12 @@ clean-coverage:
 
 .PHONY: coverage
 coverage: clean-coverage $(ARTIFACTS_DIR)
-	@go test -coverprofile=$(COVERAGE_OUT) -covermode=atomic -race $(PACKAGE_LIST) > /dev/null
+	@go test -coverprofile=$(COVERAGE_OUT) -shuffle=on -covermode=atomic -race $(PACKAGE_LIST) > /dev/null
 	@go tool cover -func=$(ARTIFACTS_DIR)/coverage.out | grep 'total:' | xargs | awk '{ print "COVERAGE: " $$3 }'
 
 .PHONY: quicktest # basically only running once instead of with -count 5 or whatever
 quicktest: $(ARTIFACTS_DIR) vendor clear
-	go test -cover -race -failfast $(PACKAGE_LIST)
+	go test -cover -shuffle=on -race -failfast $(PACKAGE_LIST)
 
 .PHONY: frontend-tests
 frontend-tests:

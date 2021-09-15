@@ -583,7 +583,7 @@ func TestService_CreateHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, auth, db, sg)
 	})
 
-	T.Run("with error creating entry in database", func(t *testing.T) {
+	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)

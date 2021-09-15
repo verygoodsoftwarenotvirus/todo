@@ -7,13 +7,6 @@ CREATE TABLE sessions (
 
 CREATE INDEX sessions_expiry_idx ON sessions (expiry);
 
-CREATE TABLE IF NOT EXISTS audit_log (
-    id CHAR(27) NOT NULL PRIMARY KEY,
-    event_type TEXT NOT NULL,
-    context JSONB NOT NULL,
-    created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW())
-);
-
 CREATE TABLE IF NOT EXISTS users (
     id CHAR(27) NOT NULL PRIMARY KEY,
     username TEXT NOT NULL,

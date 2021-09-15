@@ -443,15 +443,11 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectBegin()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
-
-		db.ExpectCommit()
 
 		c.timeFunc = func() uint64 {
 			return exampleAPIClient.CreatedOn
@@ -490,25 +486,6 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		assert.Nil(t, actual)
 	})
 
-	T.Run("with error beginning transaction", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ClientSecret = nil
-		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		db.ExpectBegin().WillReturnError(errors.New("blah"))
-
-		actual, err := c.CreateAPIClient(ctx, exampleInput)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		mock.AssertExpectationsForObjects(t, db)
-	})
-
 	T.Run("with error executing query", func(t *testing.T) {
 		t.Parallel()
 
@@ -518,46 +495,11 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectBegin()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
-
-		db.ExpectRollback()
-
-		c.timeFunc = func() uint64 {
-			return exampleAPIClient.CreatedOn
-		}
-
-		actual, err := c.CreateAPIClient(ctx, exampleInput)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		mock.AssertExpectationsForObjects(t, db)
-	})
-
-	T.Run("with error writing audit log entry", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ClientSecret = nil
-		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
-
-		db.ExpectRollback()
 
 		c.timeFunc = func() uint64 {
 			return exampleAPIClient.CreatedOn
@@ -583,15 +525,11 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectBegin()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
-
-		db.ExpectCommit()
 
 		assert.NoError(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID))
 
@@ -629,39 +567,11 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectBegin()
-
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
-
-		db.ExpectRollback()
-
-		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID))
-
-		mock.AssertExpectationsForObjects(t, db)
-	})
-
-	T.Run("with error writing audit log entry to database", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
-
-		db.ExpectRollback()
 
 		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID))
 

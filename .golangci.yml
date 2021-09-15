@@ -339,10 +339,6 @@ issues:
       linters:
         - gomnd
 
-    - path: internal/audit/
-      linters:
-        - gosec
-
     - path: internal/services/
       linters:
         - wsl

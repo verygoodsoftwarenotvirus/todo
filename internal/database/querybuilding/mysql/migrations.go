@@ -28,20 +28,7 @@ var (
 			Script:      "CREATE INDEX sessions_expiry_idx ON sessions (expiry);",
 		},
 		{
-			Version:     0.03,
-			Description: "create audit log table",
-			Script: strings.Join([]string{
-				"CREATE TABLE IF NOT EXISTS audit_log (",
-				"    `id` CHAR(27) NOT NULL,",
-				"    `event_type` VARCHAR(256) NOT NULL,",
-				"    `context` JSON NOT NULL,",
-				"    `created_on` BIGINT UNSIGNED NOT NULL,",
-				"    PRIMARY KEY (`id`)",
-				");",
-			}, "\n"),
-		},
-		{
-			Version:     0.05,
+			Version:     0.02,
 			Description: "create users table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS users (",
@@ -65,7 +52,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.07,
+			Version:     0.03,
 			Description: "create accounts table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS accounts (",
@@ -86,7 +73,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.09,
+			Version:     0.04,
 			Description: "create account user memberships table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS account_user_memberships (",
@@ -106,7 +93,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.11,
+			Version:     0.05,
 			Description: "create API clients table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS api_clients (",
@@ -127,7 +114,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.13,
+			Version:     0.06,
 			Description: "create webhooks table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS webhooks (",
@@ -149,7 +136,7 @@ var (
 			}, "\n"),
 		},
 		{
-			Version:     0.15,
+			Version:     0.07,
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",

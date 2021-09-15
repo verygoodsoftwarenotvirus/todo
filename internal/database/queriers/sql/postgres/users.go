@@ -234,7 +234,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 
 	if err = q.performWriteQuery(ctx, tx, "account user membership creation", createAccountMembershipForNewUserQuery, createAccountMembershipForNewUserArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing account user membership creation audit log entry")
+		return observability.PrepareError(err, logger, span, "writing account user membership")
 	}
 
 	if err = tx.Commit(); err != nil {

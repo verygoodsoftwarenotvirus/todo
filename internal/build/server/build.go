@@ -23,7 +23,6 @@ import (
 	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
 	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
-
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
@@ -64,7 +63,6 @@ func Build(
 		accountsservice.Providers,
 		apiclientsservice.Providers,
 		webhooksservice.Providers,
-		auditservice.Providers,
 		adminservice.Providers,
 		frontendservice.Providers,
 		itemsservice.Providers,

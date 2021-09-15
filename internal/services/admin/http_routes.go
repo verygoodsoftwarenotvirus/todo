@@ -87,12 +87,7 @@ func (s *service) UserReputationChangeHandler(res http.ResponseWriter, req *http
 		return
 	}
 
-	switch input.NewReputation {
-	case types.BannedUserAccountStatus, types.TerminatedUserReputation:
-		break
-	case types.GoodStandingAccountStatus, types.UnverifiedAccountStatus:
-		// the appropriate audit log entry is already written, the above are supplementary
-	}
+	// handle reputation change here
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, nil, http.StatusAccepted)
 }

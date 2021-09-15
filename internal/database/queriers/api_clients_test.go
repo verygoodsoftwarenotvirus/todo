@@ -665,45 +665,6 @@ func TestQuerier_CreateAPIClient(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
 	})
 
-	T.Run("with error writing audit log entry", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-		exampleAPIClient.ClientSecret = nil
-		exampleInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On(
-			"BuildCreateAPIClientQuery",
-			testutils.ContextMatcher,
-			apiClientCreationInputMatcher,
-		).Return(fakeQuery, fakeArgs)
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
-
-		db.ExpectRollback()
-
-		c.timeFunc = func() uint64 {
-			return exampleAPIClient.CreatedOn
-		}
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		actual, err := c.CreateAPIClient(ctx, exampleInput)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
 	T.Run("with error committing transaction", func(t *testing.T) {
 		t.Parallel()
 
@@ -843,40 +804,6 @@ func TestQuerier_ArchiveAPIClient(T *testing.T) {
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnError(errors.New("blah"))
-
-		db.ExpectRollback()
-
-		c.sqlQueryBuilder = mockQueryBuilder
-
-		assert.Error(t, c.ArchiveAPIClient(ctx, exampleAPIClient.ID, exampleAccount.ID))
-
-		mock.AssertExpectationsForObjects(t, db, mockQueryBuilder)
-	})
-
-	T.Run("with error writing audit log entry to database", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAccount := fakes.BuildFakeAccount()
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-
-		mockQueryBuilder := database.BuildMockSQLQueryBuilder()
-
-		db.ExpectBegin()
-
-		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
-		mockQueryBuilder.APIClientSQLQueryBuilder.On(
-			"BuildArchiveAPIClientQuery",
-			testutils.ContextMatcher,
-			mock.AnythingOfType("string"),
-			mock.AnythingOfType("string"),
-		).Return(fakeQuery, fakeArgs)
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleAPIClient.ID))
 
 		db.ExpectRollback()
 

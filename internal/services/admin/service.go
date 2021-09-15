@@ -25,7 +25,6 @@ type (
 		logger                    logging.Logger
 		authenticator             authentication.Authenticator
 		userDB                    types.AdminUserDataManager
-		auditLog                  types.AdminAuditManager
 		encoderDecoder            encoding.ServerEncoderDecoder
 		sessionManager            *scs.SessionManager
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
@@ -40,7 +39,6 @@ func ProvideService(
 	cfg *authservice.Config,
 	authenticator authentication.Authenticator,
 	userDataManager types.AdminUserDataManager,
-	auditLog types.AdminAuditManager,
 	sessionManager *scs.SessionManager,
 	encoder encoding.ServerEncoderDecoder,
 	routeParamManager routing.RouteParamManager,
@@ -50,7 +48,6 @@ func ProvideService(
 		encoderDecoder:            encoder,
 		config:                    cfg,
 		userDB:                    userDataManager,
-		auditLog:                  auditLog,
 		authenticator:             authenticator,
 		sessionManager:            sessionManager,
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,

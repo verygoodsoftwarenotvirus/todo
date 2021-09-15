@@ -8,7 +8,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuilder_BuildItemExistsRequest(T *testing.T) {
@@ -303,50 +302,6 @@ func TestBuilder_BuildArchiveItemRequest(T *testing.T) {
 		exampleItem := fakes.BuildFakeItem()
 
 		actual, err := helper.builder.BuildArchiveItemRequest(helper.ctx, exampleItem.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-}
-
-func TestBuilder_BuildGetAuditLogForItemRequest(T *testing.T) {
-	T.Parallel()
-
-	const expectedPath = "/api/v1/items/%s/audit"
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-
-		exampleItem := fakes.BuildFakeItem()
-
-		actual, err := helper.builder.BuildGetAuditLogForItemRequest(helper.ctx, exampleItem.ID)
-		require.NotNil(t, actual)
-		assert.NoError(t, err)
-
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleItem.ID)
-		assertRequestQuality(t, actual, spec)
-	})
-
-	T.Run("with invalid item ID", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-
-		actual, err := helper.builder.BuildGetAuditLogForItemRequest(helper.ctx, "")
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	T.Run("with invalid request builder", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-		helper.builder = buildTestRequestBuilderWithInvalidURL()
-
-		exampleItem := fakes.BuildFakeItem()
-
-		actual, err := helper.builder.BuildGetAuditLogForItemRequest(helper.ctx, exampleItem.ID)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

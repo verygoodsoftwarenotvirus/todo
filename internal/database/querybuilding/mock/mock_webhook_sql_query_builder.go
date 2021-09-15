@@ -62,10 +62,3 @@ func (m *WebhookSQLQueryBuilder) BuildArchiveWebhookQuery(ctx context.Context, w
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
-
-// BuildGetAuditLogEntriesForWebhookQuery implements our interface.
-func (m *WebhookSQLQueryBuilder) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID string) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, webhookID)
-
-	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
-}

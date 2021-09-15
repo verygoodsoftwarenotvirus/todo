@@ -3,14 +3,15 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/Masterminds/squirrel"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/Masterminds/squirrel"
 )
 
 var (
@@ -273,7 +274,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 		"id_count": len(ids),
 	})
 
-	query := fmt.Sprintf(getItemsWithIDsQuery, joinStringIDs(ids))
+	query := fmt.Sprintf(getItemsWithIDsQuery, joinIDs(ids))
 
 	args := []interface{}{accountID}
 	for _, id := range ids {
@@ -294,7 +295,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 }
 
 // CreateItem creates an item in the database.
-func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCreationInput, createdByUser string) (*types.Item, error) {
+func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCreationInput) (*types.Item, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -302,17 +303,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 		return nil, ErrNilInputProvided
 	}
 
-	if createdByUser == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := q.logger.WithValue(keys.RequesterIDKey, createdByUser)
-	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
-	}
+	logger := q.logger.WithValue(keys.ItemIDKey, input.ID)
 
 	query := `
 		INSERT INTO items (id,name,details,belongs_to_account) VALUES ($1,$2,$3,$4)
@@ -325,9 +316,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 	}
 
 	// create the item.
-	err = q.performWriteQuery(ctx, tx, "item creation", query, args)
-	if err != nil {
-		q.rollbackTransaction(ctx, tx)
+	if err := q.performWriteQuery(ctx, q.db, "item creation", query, args); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "creating item")
 	}
 
@@ -339,15 +328,6 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 		CreatedOn:        q.currentTime(),
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemCreationEventEntry(x, createdByUser)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return nil, observability.PrepareError(err, logger, span, "writing item creation audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "committing transaction")
-	}
-
 	tracing.AttachItemIDToSpan(span, x.ID)
 	logger.Info("item created")
 
@@ -355,7 +335,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 }
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
-func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, changedByUser string, changes []*types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -363,19 +343,9 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, change
 		return ErrNilInputProvided
 	}
 
-	if changedByUser == "" {
-		return ErrInvalidIDProvided
-	}
-
 	logger := q.logger.WithValue(keys.ItemIDKey, updated.ID)
 	tracing.AttachItemIDToSpan(span, updated.ID)
 	tracing.AttachAccountIDToSpan(span, updated.BelongsToAccount)
-	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "beginning transaction")
-	}
 
 	updateItemQuery := `
 		UPDATE items SET name = $1, details = $2, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = $3 AND id = $4
@@ -387,18 +357,8 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item, change
 		updated.ID,
 	}
 
-	if err = q.performWriteQuery(ctx, tx, "item update", updateItemQuery, args); err != nil {
-		q.rollbackTransaction(ctx, tx)
+	if err := q.performWriteQuery(ctx, q.db, "item update", updateItemQuery, args); err != nil {
 		return observability.PrepareError(err, logger, span, "updating item")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemUpdateEventEntry(changedByUser, updated.ID, updated.BelongsToAccount, changes)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing item update audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Info("item updated")
@@ -411,7 +371,7 @@ const archiveItemQuery = `
 `
 
 // ArchiveItem archives an item from the database by its ID.
-func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archivedBy string) error {
+func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -429,76 +389,16 @@ func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID, archive
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
-	if archivedBy == "" {
-		return ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.RequesterIDKey, archivedBy)
-	tracing.AttachUserIDToSpan(span, archivedBy)
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "beginning transaction")
-	}
-
 	args := []interface{}{
 		accountID,
 		itemID,
 	}
 
-	if err = q.performWriteQuery(ctx, tx, "item archive", archiveItemQuery, args); err != nil {
-		q.rollbackTransaction(ctx, tx)
+	if err := q.performWriteQuery(ctx, q.db, "item archive", archiveItemQuery, args); err != nil {
 		return observability.PrepareError(err, logger, span, "updating item")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildItemArchiveEventEntry(archivedBy, accountID, itemID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing item archive audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Info("item archived")
 
 	return nil
-}
-
-const getAuditLogEntriesForItemQuery = `
-	SELECT 
-		audit_log.id, 
-		audit_log.event_type, 
-		audit_log.context, 
-		audit_log.created_on 
-	FROM audit_log 
-	WHERE audit_log.context->>'item_id' = $1 
-	ORDER BY audit_log.created_on
-`
-
-// GetAuditLogEntriesForItem fetches a list of audit log entries from the database that relate to a given item.
-func (q *SQLQuerier) GetAuditLogEntriesForItem(ctx context.Context, itemID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := q.logger
-
-	if itemID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	args := []interface{}{itemID}
-
-	rows, err := q.performReadQuery(ctx, q.db, "audit log entries for item", getAuditLogEntriesForItemQuery, args)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
-	}
-
-	auditLogEntries, _, err := q.scanAuditLogEntries(ctx, rows, false)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "scanning audit log entries")
-	}
-
-	return auditLogEntries, nil
 }

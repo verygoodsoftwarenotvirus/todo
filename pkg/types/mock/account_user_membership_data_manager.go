@@ -30,8 +30,8 @@ func (m *AccountUserMembershipDataManager) GetDefaultAccountIDForUser(ctx contex
 }
 
 // MarkAccountAsUserDefault implements the interface.
-func (m *AccountUserMembershipDataManager) MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser string) error {
-	return m.Called(ctx, userID, accountID, changedByUser).Error(0)
+func (m *AccountUserMembershipDataManager) MarkAccountAsUserDefault(ctx context.Context, userID, accountID string) error {
+	return m.Called(ctx, userID, accountID).Error(0)
 }
 
 // UserIsMemberOfAccount implements the interface.
@@ -42,21 +42,21 @@ func (m *AccountUserMembershipDataManager) UserIsMemberOfAccount(ctx context.Con
 }
 
 // AddUserToAccount implements the interface.
-func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser string) error {
-	return m.Called(ctx, input, addedByUser).Error(0)
+func (m *AccountUserMembershipDataManager) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput) error {
+	return m.Called(ctx, input).Error(0)
 }
 
 // RemoveUserFromAccount implements the interface.
-func (m *AccountUserMembershipDataManager) RemoveUserFromAccount(ctx context.Context, userID, accountID, removedByUser, reason string) error {
-	return m.Called(ctx, userID, accountID, removedByUser, reason).Error(0)
+func (m *AccountUserMembershipDataManager) RemoveUserFromAccount(ctx context.Context, userID, accountID string) error {
+	return m.Called(ctx, userID, accountID).Error(0)
 }
 
 // ModifyUserPermissions implements the interface.
-func (m *AccountUserMembershipDataManager) ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser string, input *types.ModifyUserPermissionsInput) error {
-	return m.Called(ctx, userID, accountID, changedByUser, input).Error(0)
+func (m *AccountUserMembershipDataManager) ModifyUserPermissions(ctx context.Context, accountID, userID string, input *types.ModifyUserPermissionsInput) error {
+	return m.Called(ctx, userID, accountID, input).Error(0)
 }
 
 // TransferAccountOwnership implements the interface.
-func (m *AccountUserMembershipDataManager) TransferAccountOwnership(ctx context.Context, accountID, transferredBy string, input *types.AccountOwnershipTransferInput) error {
-	return m.Called(ctx, accountID, transferredBy, input).Error(0)
+func (m *AccountUserMembershipDataManager) TransferAccountOwnership(ctx context.Context, accountID string, input *types.AccountOwnershipTransferInput) error {
+	return m.Called(ctx, accountID, input).Error(0)
 }

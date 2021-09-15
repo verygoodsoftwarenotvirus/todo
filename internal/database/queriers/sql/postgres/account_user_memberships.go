@@ -6,7 +6,6 @@ import (
 	"errors"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -186,28 +185,21 @@ const markAccountAsUserDefaultQuery = `
 `
 
 // MarkAccountAsUserDefault does a thing.
-func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser string) error {
+func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accountID string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == "" || accountID == "" || changedByUser == "" {
+	if userID == "" || accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey:      userID,
-		keys.AccountIDKey:   accountID,
-		keys.RequesterIDKey: changedByUser,
+		keys.UserIDKey:    userID,
+		keys.AccountIDKey: accountID,
 	})
 
 	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachAccountIDToSpan(span, accountID)
-	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "beginning transaction")
-	}
 
 	args := []interface{}{
 		userID,
@@ -216,18 +208,8 @@ func (q *SQLQuerier) MarkAccountAsUserDefault(ctx context.Context, userID, accou
 	}
 
 	// create the account.
-	if err = q.performWriteQuery(ctx, tx, "user default account assignment", markAccountAsUserDefaultQuery, args); err != nil {
-		q.rollbackTransaction(ctx, tx)
+	if err := q.performWriteQuery(ctx, q.db, "user default account assignment", markAccountAsUserDefaultQuery, args); err != nil {
 		return observability.PrepareError(err, logger, span, "assigning user default account")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserMarkedAccountAsDefaultEventEntry(userID, changedByUser, accountID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "account not found for user")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Info("account marked as default")
@@ -280,11 +262,11 @@ const modifyUserPermissionsQuery = `
 `
 
 // ModifyUserPermissions does a thing.
-func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser string, input *types.ModifyUserPermissionsInput) error {
+func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userID string, input *types.ModifyUserPermissionsInput) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == "" || userID == "" || changedByUser == "" {
+	if accountID == "" || userID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -293,20 +275,13 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userI
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.AccountIDKey:   accountID,
-		keys.UserIDKey:      userID,
-		keys.RequesterIDKey: changedByUser,
-		"new_roles":         input.NewRoles,
+		keys.AccountIDKey: accountID,
+		keys.UserIDKey:    userID,
+		"new_roles":       input.NewRoles,
 	})
 
 	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachAccountIDToSpan(span, accountID)
-	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "beginning transaction")
-	}
 
 	args := []interface{}{
 		strings.Join(input.NewRoles, accountMemberRolesSeparator),
@@ -315,18 +290,8 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userI
 	}
 
 	// modify the membership.
-	if err = q.performWriteQuery(ctx, tx, "user account permissions modification", modifyUserPermissionsQuery, args); err != nil && !errors.Is(err, sql.ErrNoRows) {
-		q.rollbackTransaction(ctx, tx)
+	if err := q.performWriteQuery(ctx, q.db, "user account permissions modification", modifyUserPermissionsQuery, args); err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return observability.PrepareError(err, logger, span, "modifying user account permissions")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildModifyUserPermissionsEventEntry(userID, accountID, changedByUser, input.NewRoles, input.Reason)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user account membership permission modification audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Info("user permissions modified")
@@ -343,11 +308,11 @@ const transferAccountMembershipQuery = `
 `
 
 // TransferAccountOwnership does a thing.
-func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, transferredBy string, input *types.AccountOwnershipTransferInput) error {
+func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID string, input *types.AccountOwnershipTransferInput) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == "" || transferredBy == "" {
+	if accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -356,16 +321,15 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, tr
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.AccountIDKey:   accountID,
-		keys.RequesterIDKey: transferredBy,
-		"current_owner":     input.CurrentOwner,
-		"new_owner":         input.NewOwner,
+		keys.AccountIDKey: accountID,
+		"current_owner":   input.CurrentOwner,
+		"new_owner":       input.NewOwner,
 	})
 
 	tracing.AttachUserIDToSpan(span, input.NewOwner)
 	tracing.AttachAccountIDToSpan(span, accountID)
-	tracing.AttachRequestingUserIDToSpan(span, transferredBy)
 
+	// begin account transfer transaction
 	tx, err := q.db.BeginTx(ctx, nil)
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "beginning transaction")
@@ -395,11 +359,6 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID, tr
 		return observability.PrepareError(err, logger, span, "transferring account memberships")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildTransferAccountOwnershipEventEntry(accountID, transferredBy, input)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing account ownership transfer audit log entry")
-	}
-
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
@@ -415,32 +374,21 @@ const addUserToAccountQuery = `
 `
 
 // AddUserToAccount does a thing.
-func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput, addedByUser string) error {
+func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserToAccountInput) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
-
-	if addedByUser == "" {
-		return ErrInvalidIDProvided
-	}
 
 	if input == nil {
 		return ErrNilInputProvided
 	}
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.RequesterIDKey: addedByUser,
-		keys.UserIDKey:      input.UserID,
-		keys.AccountIDKey:   input.AccountID,
+		keys.UserIDKey:    input.UserID,
+		keys.AccountIDKey: input.AccountID,
 	})
 
 	tracing.AttachUserIDToSpan(span, input.UserID)
 	tracing.AttachAccountIDToSpan(span, input.AccountID)
-	tracing.AttachRequestingUserIDToSpan(span, addedByUser)
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "beginning transaction")
-	}
 
 	addUserToAccountArgs := []interface{}{
 		input.ID,
@@ -450,18 +398,8 @@ func (q *SQLQuerier) AddUserToAccount(ctx context.Context, input *types.AddUserT
 	}
 
 	// create the membership.
-	if err = q.performWriteQuery(ctx, tx, "user account membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
-		q.rollbackTransaction(ctx, tx)
+	if err := q.performWriteQuery(ctx, q.db, "user account membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
 		return observability.PrepareError(err, logger, span, "creating user account membership")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(addedByUser, input)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Info("user added to account")
@@ -477,33 +415,21 @@ const removeUserFromAccountQuery = `
 `
 
 // RemoveUserFromAccount removes a user's membership to an account.
-func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountID, removedByUser, reason string) error {
+func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountID string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == "" || accountID == "" || removedByUser == "" {
+	if userID == "" || accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
-	if reason == "" {
-		return ErrEmptyInputProvided
-	}
-
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.UserIDKey:      userID,
-		keys.AccountIDKey:   accountID,
-		keys.ReasonKey:      reason,
-		keys.RequesterIDKey: removedByUser,
+		keys.UserIDKey:    userID,
+		keys.AccountIDKey: accountID,
 	})
 
 	tracing.AttachUserIDToSpan(span, userID)
 	tracing.AttachAccountIDToSpan(span, accountID)
-	tracing.AttachRequestingUserIDToSpan(span, removedByUser)
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "beginning transaction")
-	}
 
 	args := []interface{}{
 		accountID,
@@ -511,18 +437,8 @@ func (q *SQLQuerier) RemoveUserFromAccount(ctx context.Context, userID, accountI
 	}
 
 	// create the membership.
-	if err = q.performWriteQuery(ctx, tx, "user membership removal", removeUserFromAccountQuery, args); err != nil {
-		q.rollbackTransaction(ctx, tx)
+	if err := q.performWriteQuery(ctx, q.db, "user membership removal", removeUserFromAccountQuery, args); err != nil {
 		return observability.PrepareError(err, logger, span, "removing user from account")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserRemovedFromAccountEventEntry(removedByUser, userID, accountID, reason)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing remove user from account audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Info("user removed from account")

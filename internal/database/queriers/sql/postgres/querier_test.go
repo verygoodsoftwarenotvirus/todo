@@ -10,19 +10,16 @@ import (
 	"testing"
 	"time"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-)
 
-const (
-	defaultLimit = uint8(20)
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
@@ -34,17 +31,6 @@ func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) 
 		assert.Equal(t, queryArgCount, len(args))
 	} else {
 		assert.Zero(t, queryArgCount)
-	}
-}
-
-func assertArgumentsSkippingIndex(t *testing.T, expectedArgs []interface{}, skipIndex int) {
-	t.Helper()
-
-	for i, x := range expectedArgs {
-		if i == skipIndex {
-			continue
-		}
-		assert.Equal(t, expectedArgs[i], x)
 	}
 }
 

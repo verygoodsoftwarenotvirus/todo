@@ -23,7 +23,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
@@ -61,7 +60,6 @@ type (
 		Items    itemsservice.Config    `json:"items" mapstructure:"items" toml:"items,omitempty"`
 		Auth     authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Webhooks webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		AuditLog auditservice.Config    `json:"auditLog" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 		Frontend frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 
@@ -133,10 +131,6 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 
 	if err := cfg.Server.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating HTTPServer portion of config: %w", err)
-	}
-
-	if err := cfg.Services.AuditLog.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating AuditLog portion of config: %w", err)
 	}
 
 	if err := cfg.Services.Auth.ValidateWithContext(ctx); err != nil {

@@ -186,20 +186,12 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleAccount.ID, nil)
 		helper.service.accountMembershipManager = membershipDB
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogSuccessfulLoginEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID,
-		)
-		helper.service.auditLog = auditLog
-
 		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 		assert.NotEmpty(t, helper.res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, userDataManager, authenticator, membershipDB, auditLog)
+		mock.AssertExpectationsForObjects(t, userDataManager, authenticator, membershipDB)
 	})
 
 	T.Run("with missing login data", func(t *testing.T) {
@@ -320,19 +312,12 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogBannedUserLoginAttemptEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID)
-		helper.service.auditLog = auditLog
-
 		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusForbidden, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, userDataManager, auditLog)
+		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 
 	T.Run("with invalid login", func(t *testing.T) {
@@ -367,19 +352,12 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(false, nil)
 		helper.service.authenticator = authenticator
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogUnsuccessfulLoginBadPasswordEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID)
-		helper.service.auditLog = auditLog
-
 		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, userDataManager, authenticator, auditLog)
+		mock.AssertExpectationsForObjects(t, userDataManager, authenticator)
 	})
 
 	T.Run("with error validating login", func(t *testing.T) {
@@ -454,20 +432,12 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(false, authentication.ErrInvalidTOTPToken)
 		helper.service.authenticator = authenticator
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogUnsuccessfulLoginBad2FATokenEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID,
-		)
-		helper.service.auditLog = auditLog
-
 		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, userDataManager, authenticator, auditLog)
+		mock.AssertExpectationsForObjects(t, userDataManager, authenticator)
 	})
 
 	T.Run("with non-matching password error returned", func(t *testing.T) {
@@ -502,20 +472,12 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(false, authentication.ErrPasswordDoesNotMatch)
 		helper.service.authenticator = authenticator
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogUnsuccessfulLoginBadPasswordEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID,
-		)
-		helper.service.auditLog = auditLog
-
 		helper.service.BeginSessionHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 		assert.Empty(t, helper.res.Header().Get("Set-Cookie"))
 
-		mock.AssertExpectationsForObjects(t, userDataManager, authenticator, auditLog)
+		mock.AssertExpectationsForObjects(t, userDataManager, authenticator)
 	})
 
 	T.Run("with error fetching default account", func(t *testing.T) {
@@ -1181,13 +1143,6 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogLogoutEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID)
-		helper.service.auditLog = auditLog
-
 		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 
 		helper.service.EndSessionHandler(helper.res, helper.req)
@@ -1195,8 +1150,6 @@ func TestAuthenticationService_LogoutHandler(T *testing.T) {
 		assert.Equal(t, http.StatusSeeOther, helper.res.Code)
 		actualCookie := helper.res.Header().Get("Set-Cookie")
 		assert.Contains(t, actualCookie, "Max-Age=0")
-
-		mock.AssertExpectationsForObjects(t, auditLog)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -1301,13 +1254,6 @@ func TestAuthenticationService_CycleSecretHandler(T *testing.T) {
 		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
 		helper.setContextFetcher(t)
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogCycleCookieSecretEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID)
-		helper.service.auditLog = auditLog
-
 		helper.ctx, helper.req, _ = attachCookieToRequestForTest(t, helper.service, helper.req, helper.exampleUser)
 		c := helper.req.Cookies()[0]
 
@@ -1318,8 +1264,6 @@ func TestAuthenticationService_CycleSecretHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusAccepted, helper.res.Code, "expected code to be %d, but was %d", http.StatusUnauthorized, helper.res.Code)
 		assert.Error(t, helper.service.cookieManager.Decode(helper.service.config.Cookies.Name, c.Value, &token))
-
-		mock.AssertExpectationsForObjects(t, auditLog)
 	})
 
 	T.Run("with error getting session context data", func(t *testing.T) {

@@ -18,7 +18,6 @@ type (
 		BuildUpdateAccountQuery(ctx context.Context, input *types.Account) (query string, args []interface{})
 		BuildArchiveAccountQuery(ctx context.Context, accountID, userID string) (query string, args []interface{})
 		BuildTransferAccountOwnershipQuery(ctx context.Context, currentOwnerID, newOwnerID, accountID string) (query string, args []interface{})
-		BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID string) (query string, args []interface{})
 	}
 
 	// AccountUserMembershipSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
@@ -44,16 +43,6 @@ type (
 		BuildGetAPIClientsQuery(ctx context.Context, userID string, filter *types.QueryFilter) (query string, args []interface{})
 		BuildCreateAPIClientQuery(ctx context.Context, input *types.APIClientCreationInput) (query string, args []interface{})
 		BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID string) (query string, args []interface{})
-		BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID string) (query string, args []interface{})
-	}
-
-	// AuditLogEntrySQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
-	AuditLogEntrySQLQueryBuilder interface {
-		BuildGetAuditLogEntryQuery(ctx context.Context, entryID string) (query string, args []interface{})
-		BuildGetAllAuditLogEntriesCountQuery(ctx context.Context) string
-		BuildGetBatchOfAuditLogEntriesQuery(ctx context.Context, beginID, endID uint64) (query string, args []interface{})
-		BuildGetAuditLogEntriesQuery(ctx context.Context, filter *types.QueryFilter) (query string, args []interface{})
-		BuildCreateAuditLogEntryQuery(ctx context.Context, input *types.AuditLogEntryCreationInput) (query string, args []interface{})
 	}
 
 	// UserSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
@@ -71,7 +60,6 @@ type (
 		BuildUpdateUserTwoFactorSecretQuery(ctx context.Context, userID, newSecret string) (query string, args []interface{})
 		BuildVerifyUserTwoFactorSecretQuery(ctx context.Context, userID string) (query string, args []interface{})
 		BuildArchiveUserQuery(ctx context.Context, userID string) (query string, args []interface{})
-		BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID string) (query string, args []interface{})
 		BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{})
 	}
 
@@ -84,7 +72,6 @@ type (
 		BuildCreateWebhookQuery(ctx context.Context, x *types.WebhookCreationInput) (query string, args []interface{})
 		BuildUpdateWebhookQuery(ctx context.Context, input *types.Webhook) (query string, args []interface{})
 		BuildArchiveWebhookQuery(ctx context.Context, webhookID, accountID string) (query string, args []interface{})
-		BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID string) (query string, args []interface{})
 	}
 
 	// ItemSQLQueryBuilder describes a structure capable of generating query/arg pairs for certain situations.
@@ -98,7 +85,6 @@ type (
 		BuildCreateItemQuery(ctx context.Context, input *types.ItemDatabaseCreationInput) (query string, args []interface{})
 		BuildUpdateItemQuery(ctx context.Context, input *types.Item) (query string, args []interface{})
 		BuildArchiveItemQuery(ctx context.Context, itemID, accountID string) (query string, args []interface{})
-		BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID string) (query string, args []interface{})
 	}
 
 	// SQLQueryBuilder describes anything that builds SQL queries to manage our data.
@@ -109,7 +95,6 @@ type (
 		AccountSQLQueryBuilder
 		AccountUserMembershipSQLQueryBuilder
 		UserSQLQueryBuilder
-		AuditLogEntrySQLQueryBuilder
 		APIClientSQLQueryBuilder
 		WebhookSQLQueryBuilder
 		ItemSQLQueryBuilder
@@ -122,7 +107,6 @@ type (
 
 		BuildGetAccountsQuery(ctx context.Context, userID string, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{})
 		BuildGetAPIClientsQuery(ctx context.Context, userID string, filter *types.QueryFilter) (query string, args []interface{})
-		BuildGetAuditLogEntriesQuery(ctx context.Context, filter *types.QueryFilter) (query string, args []interface{})
 		BuildGetUsersQuery(ctx context.Context, filter *types.QueryFilter) (query string, args []interface{})
 		BuildGetWebhooksQuery(ctx context.Context, accountID string, filter *types.QueryFilter) (query string, args []interface{})
 		BuildGetItemsQuery(ctx context.Context, accountID string, includeArchived bool, filter *types.QueryFilter) (query string, args []interface{})

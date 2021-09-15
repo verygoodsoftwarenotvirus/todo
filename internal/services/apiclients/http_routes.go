@@ -149,7 +149,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.BelongsToUser = user.ID
 
 	// create the client.
-	client, err := s.apiClientDataManager.CreateAPIClient(ctx, input, user.ID)
+	client, err := s.apiClientDataManager.CreateAPIClient(ctx, input)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "creating API client")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -225,7 +225,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = sessionCtxData.AttachToLogger(logger)
 
@@ -235,7 +234,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAPIClientDatabaseIDToSpan(span, apiClientID)
 
 	// archive the API client in the database.
-	err = s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, sessionCtxData.ActiveAccountID, requester)
+	err = s.apiClientDataManager.ArchiveAPIClient(ctx, apiClientID, sessionCtxData.Requester.UserID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -250,42 +249,4 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an API client.
-func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	tracing.AttachRequestToSpan(span, req)
-
-	// determine user.
-	sessionCtxData, err := s.sessionContextDataFetcher(req)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
-
-	// determine relevant API client ID.
-	apiClientID := s.urlClientIDExtractor(req)
-	tracing.AttachAPIClientDatabaseIDToSpan(span, apiClientID)
-	logger = logger.WithValue(keys.APIClientClientIDKey, apiClientID)
-
-	x, err := s.apiClientDataManager.GetAuditLogEntriesForAPIClient(ctx, apiClientID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching audit log entries for API client")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

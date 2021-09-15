@@ -4,7 +4,6 @@ import (
 	"context"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -182,7 +181,7 @@ func (q *SQLQuerier) GetWebhooks(ctx context.Context, accountID string, filter *
 }
 
 // CreateWebhook creates a webhook in a database.
-func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput, createdByUser string) (*types.Webhook, error) {
+func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -190,7 +189,6 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 		return nil, ErrNilInputProvided
 	}
 
-	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
 	tracing.AttachAccountIDToSpan(span, input.BelongsToAccount)
 	logger := q.logger.WithValue(keys.AccountIDKey, input.BelongsToAccount)
 
@@ -218,11 +216,6 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 		CreatedOn:        q.currentTime(),
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookCreationEventEntry(x, createdByUser)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return nil, observability.PrepareError(err, logger, span, "writing webhook creation audit log entry")
-	}
-
 	if err = tx.Commit(); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "committing transaction")
 	}
@@ -237,25 +230,19 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 
 // UpdateWebhook updates a particular webhook.
 // NOTE: this function expects the provided input to have a non-zero ID.
-func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser string, changes []*types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
-
-	if changedByUser == "" {
-		return ErrInvalidIDProvided
-	}
 
 	if updated == nil {
 		return ErrNilInputProvided
 	}
 
-	tracing.AttachRequestingUserIDToSpan(span, changedByUser)
 	tracing.AttachWebhookIDToSpan(span, updated.ID)
 	tracing.AttachAccountIDToSpan(span, updated.BelongsToAccount)
 
 	logger := q.logger.
 		WithValue(keys.WebhookIDKey, updated.ID).
-		WithValue(keys.RequesterIDKey, changedByUser).
 		WithValue(keys.AccountIDKey, updated.BelongsToAccount)
 
 	tx, err := q.db.BeginTx(ctx, nil)
@@ -271,13 +258,6 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, 
 		return observability.PrepareError(err, logger, span, "updating webhook")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookUpdateEventEntry(changedByUser, updated.BelongsToAccount, updated.ID, changes)); err != nil {
-		logger.Error(err, "writing webhook update audit log entry")
-		q.rollbackTransaction(ctx, tx)
-
-		return observability.PrepareError(err, logger, span, "writing webhook update audit log entry")
-	}
-
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
@@ -288,22 +268,20 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook, 
 }
 
 // ArchiveWebhook archives a webhook from the database.
-func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID string) error {
+func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if webhookID == "" || accountID == "" || archivedByUserID == "" {
+	if webhookID == "" || accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
-	tracing.AttachRequestingUserIDToSpan(span, archivedByUserID)
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
 	logger := q.logger.WithValues(map[string]interface{}{
-		keys.WebhookIDKey:   webhookID,
-		keys.AccountIDKey:   accountID,
-		keys.RequesterIDKey: archivedByUserID,
+		keys.WebhookIDKey: webhookID,
+		keys.AccountIDKey: accountID,
 	})
 
 	tx, err := q.db.BeginTx(ctx, nil)
@@ -318,11 +296,6 @@ func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, a
 		return observability.PrepareError(err, logger, span, "archiving webhook")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildWebhookArchiveEventEntry(archivedByUserID, accountID, webhookID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing webhook archive audit log entry")
-	}
-
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
@@ -330,29 +303,4 @@ func (q *SQLQuerier) ArchiveWebhook(ctx context.Context, webhookID, accountID, a
 	logger.Info("webhook archived")
 
 	return nil
-}
-
-// GetAuditLogEntriesForWebhook fetches a list of audit log entries from the database that relate to a given webhook.
-func (q *SQLQuerier) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if webhookID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := q.logger.WithValue(keys.WebhookIDKey, webhookID)
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForWebhookQuery(ctx, webhookID)
-
-	rows, err := q.performReadQuery(ctx, q.db, "audit log entries for webhook", query, args...)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
-	}
-
-	auditLogEntries, _, err := q.scanAuditLogEntries(ctx, rows, false)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "scanning response from database")
-	}
-
-	return auditLogEntries, nil
 }

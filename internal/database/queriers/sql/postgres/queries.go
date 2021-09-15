@@ -3,12 +3,11 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-	"strconv"
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
@@ -20,17 +19,7 @@ const (
 	columnCountQueryTemplate = `COUNT(%s.id)`
 )
 
-func joinIDs(ids []uint64) string {
-	out := []string{}
-
-	for _, x := range ids {
-		out = append(out, strconv.FormatUint(x, 10))
-	}
-
-	return strings.Join(out, ",")
-}
-
-func joinStringIDs(ids []string) string {
+func joinIDs(ids []string) string {
 	return strings.Join(ids, ",")
 }
 
@@ -42,15 +31,6 @@ func (q *SQLQuerier) logQueryBuildingError(span tracing.Span, err error) {
 		logger := q.logger.WithValue(keys.QueryErrorKey, true)
 		observability.AcknowledgeError(err, logger, span, "building query")
 	}
-}
-
-// BuildQueryOnly builds a given query, handles whatever errs and returns just the query and args.
-func (q *SQLQuerier) buildQueryOnly(span tracing.Span, builder squirrel.Sqlizer) string {
-	query, _, err := builder.ToSql()
-
-	q.logQueryBuildingError(span, err)
-
-	return query
 }
 
 // BuildQuery builds a given query, handles whatever errs and returns just the query and args.

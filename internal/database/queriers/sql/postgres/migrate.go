@@ -109,8 +109,6 @@ func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserCon
 	return nil
 }
 
-////////////////////////////////////
-
 var (
 	migrations = []darwin.Migration{
 		{

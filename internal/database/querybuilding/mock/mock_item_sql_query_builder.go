@@ -65,13 +65,6 @@ func (m *ItemSQLQueryBuilder) BuildCreateItemQuery(ctx context.Context, input *t
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetAuditLogEntriesForItemQuery implements our interface.
-func (m *ItemSQLQueryBuilder) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID string) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, itemID)
-
-	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
-}
-
 // BuildUpdateItemQuery implements our interface.
 func (m *ItemSQLQueryBuilder) BuildUpdateItemQuery(ctx context.Context, input *types.Item) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, input)

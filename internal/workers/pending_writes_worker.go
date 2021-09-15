@@ -52,7 +52,7 @@ func (w *PendingWriter) HandlePendingWrite(message *nsq.Message) error {
 
 	w.logger.WithValue("message_type", msg.MessageType).WithValue("item", msg.Item).Debug("message read")
 
-	_, err := w.dataManager.CreateItem(ctx, msg.Item, msg.AttributableToUserID)
+	_, err := w.dataManager.CreateItem(ctx, msg.Item)
 	if err != nil {
 		message.Touch()
 		return err

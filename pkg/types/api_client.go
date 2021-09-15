@@ -46,12 +46,11 @@ type (
 	// APIClientDataManager handles API clients.
 	APIClientDataManager interface {
 		GetAPIClientByClientID(ctx context.Context, clientID string) (*APIClient, error)
-		GetAPIClientByDatabaseID(ctx context.Context, clientID, owneruserID string) (*APIClient, error)
+		GetAPIClientByDatabaseID(ctx context.Context, clientID, ownerUserID string) (*APIClient, error)
 		GetTotalAPIClientCount(ctx context.Context) (uint64, error)
 		GetAPIClients(ctx context.Context, owneruserID string, filter *QueryFilter) (*APIClientList, error)
-		CreateAPIClient(ctx context.Context, input *APIClientCreationInput, createdByUser string) (*APIClient, error)
-		ArchiveAPIClient(ctx context.Context, clientID, ownerUserID, archivedByUser string) error
-		GetAuditLogEntriesForAPIClient(ctx context.Context, clientID string) ([]*AuditLogEntry, error)
+		CreateAPIClient(ctx context.Context, input *APIClientCreationInput) (*APIClient, error)
+		ArchiveAPIClient(ctx context.Context, clientID, ownerUserID string) error
 	}
 
 	// APIClientDataService describes a structure capable of serving traffic related to API clients.
@@ -60,7 +59,6 @@ type (
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
-		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 	}
 )
 

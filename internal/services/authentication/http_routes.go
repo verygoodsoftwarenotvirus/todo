@@ -86,7 +86,6 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 	tracing.AttachUserToSpan(span, user)
 
 	if user.IsBanned() {
-		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
 		return user, nil, ErrUserBanned
 	}
 
@@ -95,10 +94,8 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 
 	if err != nil {
 		if errors.Is(err, authentication.ErrInvalidTOTPToken) {
-			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
 			return user, nil, ErrInvalidCredentials
 		} else if errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
-			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 			return user, nil, ErrInvalidCredentials
 		}
 
@@ -107,7 +104,6 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 		return user, nil, observability.PrepareError(err, logger, span, "validating login")
 	} else if !loginValid {
 		logger.Debug("login was invalid")
-		s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 		return user, nil, ErrInvalidCredentials
 	}
 
@@ -120,8 +116,6 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 	if err != nil {
 		return user, nil, observability.PrepareError(err, logger, span, "issuing cookie")
 	}
-
-	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
 
 	return user, cookie, nil
 }
@@ -260,7 +254,6 @@ func (s *service) LogoutUser(ctx context.Context, sessionCtxData *types.SessionC
 		return observability.PrepareError(cookieBuildingErr, logger, span, "building cookie")
 	}
 
-	s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.UserID)
 	newCookie.MaxAge = -1
 	http.SetCookie(res, newCookie)
 
@@ -506,8 +499,6 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		securecookie.GenerateRandomKey(cookieSecretSize),
 		[]byte(s.config.Cookies.SigningKey),
 	)
-
-	s.auditLog.LogCycleCookieSecretEvent(ctx, sessionCtxData.Requester.UserID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

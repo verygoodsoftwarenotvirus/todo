@@ -108,27 +108,3 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, apiClientDatabaseID strin
 
 	return nil
 }
-
-// GetAuditLogForAPIClient retrieves a list of audit log entries pertaining to an API client.
-func (c *Client) GetAuditLogForAPIClient(ctx context.Context, apiClientDatabaseID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if apiClientDatabaseID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := c.logger.WithValue(keys.APIClientDatabaseIDKey, apiClientDatabaseID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForAPIClientRequest(ctx, apiClientDatabaseID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building retrieve audit log entries for API client request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "retrieving plan")
-	}
-
-	return entries, nil
-}

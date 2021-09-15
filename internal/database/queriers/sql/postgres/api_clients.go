@@ -4,10 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -244,28 +243,18 @@ const createAPIClientQuery = `
 `
 
 // CreateAPIClient creates an API client.
-func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClientCreationInput, createdByUser string) (*types.APIClient, error) {
+func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClientCreationInput) (*types.APIClient, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
-
-	if createdByUser == "" {
-		return nil, ErrInvalidIDProvided
-	}
 
 	if input == nil {
 		return nil, ErrNilInputProvided
 	}
 
-	tracing.AttachRequestingUserIDToSpan(span, createdByUser)
 	logger := q.logger.WithValues(map[string]interface{}{
 		keys.APIClientClientIDKey: input.ClientID,
 		keys.UserIDKey:            input.BelongsToUser,
 	})
-
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "beginning transaction")
-	}
 
 	args := []interface{}{
 		input.ID,
@@ -275,8 +264,7 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 		input.BelongsToUser,
 	}
 
-	if writeErr := q.performWriteQuery(ctx, tx, "API client creation", createAPIClientQuery, args); writeErr != nil {
-		q.rollbackTransaction(ctx, tx)
+	if writeErr := q.performWriteQuery(ctx, q.db, "API client creation", createAPIClientQuery, args); writeErr != nil {
 		return nil, observability.PrepareError(writeErr, logger, span, "creating API client")
 	}
 
@@ -289,15 +277,6 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 		ClientSecret:  input.ClientSecret,
 		BelongsToUser: input.BelongsToUser,
 		CreatedOn:     q.currentTime(),
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientCreationEventEntry(client, createdByUser)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return nil, observability.PrepareError(err, logger, span, "writing API client creation audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Info("API client created")
@@ -314,77 +293,29 @@ const archiveAPIClientQuery = `
 `
 
 // ArchiveAPIClient archives an API client.
-func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, accountID, archivedByUser string) error {
+func (q *SQLQuerier) ArchiveAPIClient(ctx context.Context, clientID, userID string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if clientID == "" || accountID == "" || archivedByUser == "" {
+	if clientID == "" || userID == "" {
 		return ErrNilInputProvided
 	}
 
-	tracing.AttachUserIDToSpan(span, archivedByUser)
-	tracing.AttachAccountIDToSpan(span, accountID)
+	tracing.AttachAccountIDToSpan(span, userID)
 	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
 
 	logger := q.logger.WithValues(map[string]interface{}{
 		keys.APIClientDatabaseIDKey: clientID,
-		keys.AccountIDKey:           accountID,
-		keys.UserIDKey:              archivedByUser,
+		keys.UserIDKey:              userID,
 	})
 
-	tx, err := q.db.BeginTx(ctx, nil)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "beginning transaction")
-	}
+	args := []interface{}{userID, clientID}
 
-	args := []interface{}{archivedByUser, clientID}
-
-	if err = q.performWriteQuery(ctx, tx, "API client archive", archiveAPIClientQuery, args); err != nil {
-		q.rollbackTransaction(ctx, tx)
+	if err := q.performWriteQuery(ctx, q.db, "API client archive", archiveAPIClientQuery, args); err != nil {
 		return observability.PrepareError(err, logger, span, "archiving API client")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAPIClientArchiveEventEntry(accountID, clientID, archivedByUser)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing API client archive audit log entry")
-	}
-
-	if err = tx.Commit(); err != nil {
-		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
 
 	logger.Info("API client archived")
 
 	return nil
-}
-
-const auditLogEntriesForAPIClientQuery = `
-	SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->>'api_client_id' = $1 ORDER BY audit_log.created_on
-`
-
-// GetAuditLogEntriesForAPIClient fetches a list of audit log entries from the database that relate to a given client.
-func (q *SQLQuerier) GetAuditLogEntriesForAPIClient(ctx context.Context, clientID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if clientID == "" {
-		return nil, ErrNilInputProvided
-	}
-
-	logger := q.logger.WithValue(keys.APIClientDatabaseIDKey, clientID)
-	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
-
-	args := []interface{}{clientID}
-
-	rows, err := q.performReadQuery(ctx, q.db, "audit log entries for API client", auditLogEntriesForAPIClientQuery, args)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
-	}
-
-	auditLogEntries, _, err := q.scanAuditLogEntries(ctx, rows, false)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "scanning response from database")
-	}
-
-	return auditLogEntries, nil
 }

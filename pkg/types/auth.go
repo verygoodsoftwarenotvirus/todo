@@ -98,16 +98,6 @@ type (
 		AuthenticateUser(ctx context.Context, loginData *UserLoginInput) (*User, *http.Cookie, error)
 		LogoutUser(ctx context.Context, sessionCtxData *SessionContextData, req *http.Request, res http.ResponseWriter) error
 	}
-
-	// AuthAuditManager describes a structure capable of auditing auth events.
-	AuthAuditManager interface {
-		LogCycleCookieSecretEvent(ctx context.Context, userID string)
-		LogSuccessfulLoginEvent(ctx context.Context, userID string)
-		LogBannedUserLoginAttemptEvent(ctx context.Context, userID string)
-		LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID string)
-		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID string)
-		LogLogoutEvent(ctx context.Context, userID string)
-	}
 )
 
 var _ validation.ValidatableWithContext = (*ChangeActiveAccountInput)(nil)

@@ -64,10 +64,3 @@ func (m *APIClientSQLQueryBuilder) BuildArchiveAPIClientQuery(ctx context.Contex
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
-
-// BuildGetAuditLogEntriesForAPIClientQuery implements our interface.
-func (m *APIClientSQLQueryBuilder) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID string) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, clientID)
-
-	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
-}

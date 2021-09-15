@@ -13,9 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/assert"
@@ -97,24 +95,6 @@ func buildErroneousMockRow() *sqlmock.Rows {
 	)
 
 	return exampleRows
-}
-
-func expectAuditLogEntryInTransaction(mockQueryBuilder *database.MockSQLQueryBuilder, db sqlmock.Sqlmock, returnErr error) {
-	fakeAuditLogEntryQuery, fakeAuditLogEntryArgs := fakes.BuildFakeSQLQuery()
-	mockQueryBuilder.AuditLogEntrySQLQueryBuilder.
-		On("BuildCreateAuditLogEntryQuery",
-			testutils.ContextMatcher,
-			mock.IsType(&types.AuditLogEntryCreationInput{})).
-		Return(fakeAuditLogEntryQuery, fakeAuditLogEntryArgs)
-
-	e := db.ExpectExec(formatQueryForSQLMock(fakeAuditLogEntryQuery)).
-		WithArgs(interfaceToDriverValue(fakeAuditLogEntryArgs)...)
-
-	if returnErr != nil {
-		e.WillReturnError(returnErr)
-	} else {
-		e.WillReturnResult(newSuccessfulDatabaseResult(123))
-	}
 }
 
 // end helper funcs

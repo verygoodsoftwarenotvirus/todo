@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
@@ -18,7 +17,6 @@ import (
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/pquerna/otp/totp"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -175,29 +173,4 @@ func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookie
 	require.NoError(t, err)
 
 	return cClient, PASETOClient
-}
-
-func validateAuditLogEntries(t *testing.T, expectedEntries, actualEntries []*types.AuditLogEntry, relevantID, key string) {
-	t.Helper()
-
-	expectedEventTypes := []string{}
-	actualEventTypes := []string{}
-
-	for _, e := range expectedEntries {
-		expectedEventTypes = append(expectedEventTypes, e.EventType)
-	}
-
-	for _, e := range actualEntries {
-		actualEventTypes = append(actualEventTypes, e.EventType)
-
-		if relevantID != "" && key != "" {
-			if assert.Contains(t, e.Context, key) {
-				assert.EqualValues(t, relevantID, e.Context[key])
-			}
-		}
-	}
-
-	assert.Equal(t, len(expectedEntries), len(actualEntries), "expected %q, got %q", strings.Join(expectedEventTypes, ","), strings.Join(actualEventTypes, ","))
-
-	assert.Subset(t, expectedEventTypes, actualEventTypes)
 }

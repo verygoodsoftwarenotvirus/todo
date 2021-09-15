@@ -6,7 +6,6 @@ import (
 	"errors"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -155,11 +154,6 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 		return observability.PrepareError(writeErr, logger, span, "creating user")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserCreationEventEntry(user.ID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user creation audit log entry")
-	}
-
 	// create the account.
 	accountCreationInput := types.AccountCreationInputForNewUser(user)
 	accountCreationInput.ID = account.ID
@@ -172,27 +166,10 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 
 	logger = logger.WithValue(keys.AccountIDKey, account.ID)
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildAccountCreationEventEntry(account, user.ID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing account creation audit log entry")
-	}
-
 	addUserToAccountQuery, addUserToAccountArgs := q.sqlQueryBuilder.BuildCreateMembershipForNewUserQuery(ctx, user.ID, account.ID)
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "account user membership creation", addUserToAccountQuery, addUserToAccountArgs); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing account user membership creation audit log entry")
-	}
-
-	addToAccountInput := &types.AddUserToAccountInput{
-		UserID:       user.ID,
-		AccountID:    account.ID,
-		AccountRoles: []string{authorization.AccountMemberRole.String()},
-		Reason:       "account creation",
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserAddedToAccountEventEntry(user.ID, addToAccountInput)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user added to account audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -402,7 +379,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 
 // UpdateUser receives a complete Requester struct and updates its record in the database.
 // NOTE: this function uses the ID provided in the input to make its query.
-func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, changes []*types.FieldChangeSummary) error {
+func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -422,11 +399,6 @@ func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User, change
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user update", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "updating user")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateEventEntry(updated.ID, changes)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user update audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -466,11 +438,6 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID, newHash str
 		return observability.PrepareError(err, logger, span, "updating user password")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdatePasswordEventEntry(userID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user password update audit log entry")
-	}
-
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
@@ -508,11 +475,6 @@ func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID, newS
 		return observability.PrepareError(err, logger, span, "updating user 2FA secret")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserUpdateTwoFactorSecretEventEntry(userID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing update 2FA secret audit log entry")
-	}
-
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
@@ -544,11 +506,6 @@ func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, user
 	if err = q.performWriteQueryIgnoringReturn(ctx, tx, "user two factor secret verification", query, args); err != nil {
 		q.rollbackTransaction(ctx, tx)
 		return observability.PrepareError(err, logger, span, "writing verified two factor status to database")
-	}
-
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserVerifyTwoFactorSecretEventEntry(userID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user 2FA secret verification audit log entry")
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -591,11 +548,6 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID string) error {
 		return observability.PrepareError(err, logger, span, "archiving user account memberships")
 	}
 
-	if err = q.createAuditLogEntryInTransaction(ctx, tx, audit.BuildUserArchiveEventEntry(userID)); err != nil {
-		q.rollbackTransaction(ctx, tx)
-		return observability.PrepareError(err, logger, span, "writing user archive audit log entry")
-	}
-
 	if err = tx.Commit(); err != nil {
 		return observability.PrepareError(err, logger, span, "committing transaction")
 	}
@@ -603,30 +555,4 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID string) error {
 	logger.Info("user archived")
 
 	return nil
-}
-
-// GetAuditLogEntriesForUser fetches a list of audit log entries from the database that relate to a given user.
-func (q *SQLQuerier) GetAuditLogEntriesForUser(ctx context.Context, userID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if userID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := q.logger.WithValue(keys.UserIDKey, userID)
-
-	query, args := q.sqlQueryBuilder.BuildGetAuditLogEntriesForUserQuery(ctx, userID)
-
-	rows, err := q.performReadQuery(ctx, q.db, "audit log entries for user", query, args...)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "querying database for audit log entries")
-	}
-
-	auditLogEntries, _, err := q.scanAuditLogEntries(ctx, rows, false)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "scanning response from database")
-	}
-
-	return auditLogEntries, nil
 }

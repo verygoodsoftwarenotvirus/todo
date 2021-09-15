@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
@@ -40,15 +39,6 @@ func (s *TestSuite) TestAccounts_Creating() {
 
 			// Assert account equality.
 			checkAccountEquality(t, exampleAccount, createdAccount)
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
@@ -187,16 +177,6 @@ func (s *TestSuite) TestAccounts_Updating() {
 			checkAccountEquality(t, exampleAccount, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.AccountUpdateEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
-
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
 		}
@@ -232,16 +212,6 @@ func (s *TestSuite) TestAccounts_Archiving() {
 
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.AccountArchiveEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
 		}
 	})
 }
@@ -283,12 +253,6 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			t.Logf("created webhook %s for account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
 
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.WebhookCreationEvent},
-			}
-
 			// create dummy users
 			users := []*types.User{}
 			clients := []*httpclient.Client{}
@@ -322,7 +286,6 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 					AccountRoles: []string{authorization.AccountAdminRole.String()},
 				}))
 				t.Logf("added user %q to account %s", users[i].ID, account.ID)
-				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAddedToAccountEvent})
 
 				t.Logf("setting user %q's client to account %s", users[i].ID, account.ID)
 				require.NoError(t, clients[i].SwitchActiveAccount(ctx, account.ID))
@@ -340,7 +303,6 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 					NewRoles: []string{authorization.AccountAdminRole.String()},
 				}
 				require.NoError(t, testClients.main.ModifyMemberPermissions(ctx, account.ID, users[i].ID, input))
-				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAccountPermissionsModifiedEvent})
 			}
 
 			// check that each user can see the webhook
@@ -355,13 +317,11 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			for i := 0; i < userCount; i++ {
 				createdWebhook.Name = fmt.Sprintf("%s_%d", originalWebhookName, time.Now().UnixNano())
 				require.NoError(t, clients[i].UpdateWebhook(ctx, createdWebhook))
-				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.WebhookUpdateEvent})
 			}
 
 			// remove users from account
 			for i := 0; i < userCount; i++ {
-				require.NoError(t, testClients.main.RemoveUserFromAccount(ctx, account.ID, users[i].ID, t.Name()))
-				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserRemovedFromAccountEvent})
+				require.NoError(t, testClients.main.RemoveUserFromAccount(ctx, account.ID, users[i].ID))
 			}
 
 			// check that each user cannot see the webhook
@@ -370,12 +330,6 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 				require.Nil(t, webhook)
 				require.Error(t, err)
 			}
-
-			// check audit log entries
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, account.ID)
-			require.NoError(t, err)
-
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
 
 			// Clean up.
 			require.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
@@ -449,90 +403,11 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			// check that new owner can update the webhook
 			require.NoError(t, futureOwnerClient.UpdateWebhook(ctx, createdWebhook))
 
-			// check audit log entries
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, account.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.WebhookCreationEvent},
-				{EventType: audit.AccountTransferredEvent},
-				{EventType: audit.WebhookUpdateEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
-
 			// Clean up.
 			require.Error(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
 			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
 
 			require.NoError(t, testClients.admin.ArchiveUser(ctx, futureOwner.ID))
-		}
-	})
-}
-
-func (s *TestSuite) TestAccounts_Auditing_Returns404ForNonexistentAccount() {
-	s.runForEachClientExcept("should not be possible to audit a non-existent account", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			x, err := testClients.admin.GetAuditLogForAccount(ctx, nonexistentID)
-
-			assert.NoError(t, err)
-			assert.Empty(t, x)
-		}
-	})
-}
-
-func (s *TestSuite) TestAccounts_Auditing_InaccessibleToNonAdmins() {
-	s.runForEachClientExcept("should not be possible to audit an account as non-admin", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create account.
-			exampleAccount := fakes.BuildFakeAccount()
-			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			requireNotNilAndNoProblems(t, createdAccount, err)
-
-			// fetch audit log entries
-			actual, err := testClients.main.GetAuditLogForAccount(ctx, createdAccount.ID)
-			assert.Error(t, err)
-			assert.Nil(t, actual)
-
-			// Clean up account.
-			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-		}
-	})
-}
-
-func (s *TestSuite) TestAccounts_Auditing() {
-	s.runForEachClientExcept("should be possible to audit an account", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create account.
-			exampleAccount := fakes.BuildFakeAccount()
-			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			requireNotNilAndNoProblems(t, createdAccount, err)
-
-			// fetch audit log entries
-			actual, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)
-			assert.NoError(t, err)
-			assert.NotNil(t, actual)
-
-			// Clean up account.
-			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
 		}
 	})
 }

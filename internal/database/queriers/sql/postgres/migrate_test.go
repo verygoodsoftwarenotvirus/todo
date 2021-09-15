@@ -6,11 +6,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestQuerier_Migrate(T *testing.T) {
@@ -26,10 +26,6 @@ func TestQuerier_Migrate(T *testing.T) {
 		exampleUser.CreatedOn = exampleCreationTime
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
-		//exampleAccountCreationInput := &types.AccountCreationInput{
-		//	Name:          fmt.Sprintf("%s_default", exampleUser.Username),
-		//	BelongsToUser: exampleUser.ID,
-		//}
 
 		exampleInput := &types.TestUserCreationConfig{
 			Username:       exampleUser.Username,
@@ -66,13 +62,6 @@ func TestQuerier_Migrate(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeTestUserCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
-		// create audit log entry for created TestUser
-		firstFakeAuditLogEntryEventQuery, firstFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-
-		db.ExpectExec(formatQueryForSQLMock(firstFakeAuditLogEntryEventQuery)).
-			WithArgs(interfaceToDriverValue(firstFakeAuditLogEntryEventArgs)...).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
 		// create account for created TestUser
 		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
 
@@ -80,24 +69,12 @@ func TestQuerier_Migrate(T *testing.T) {
 			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
-		secondFakeAuditLogEntryEventQuery, secondFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-
-		db.ExpectExec(formatQueryForSQLMock(secondFakeAuditLogEntryEventQuery)).
-			WithArgs(interfaceToDriverValue(secondFakeAuditLogEntryEventArgs)...).
-			WillReturnResult(sqlmock.NewResult(1, 1))
-
 		// create account user membership for created user
 		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
 			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
-
-		thirdFakeAuditLogEntryEventQuery, thirdFakeAuditLogEntryEventArgs := fakes.BuildFakeSQLQuery()
-
-		db.ExpectExec(formatQueryForSQLMock(thirdFakeAuditLogEntryEventQuery)).
-			WithArgs(interfaceToDriverValue(thirdFakeAuditLogEntryEventArgs)...).
-			WillReturnResult(sqlmock.NewResult(1, 1))
 
 		db.ExpectCommit()
 

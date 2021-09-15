@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/Masterminds/squirrel"
 	"sync"
 	"time"
 
@@ -16,6 +15,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/Masterminds/squirrel"
 )
 
 type idRetrievalStrategy int
@@ -25,8 +26,6 @@ const (
 	loggerName  = name
 	tracingName = name
 
-	// allCountQuery is a generic counter query used in a few query builders.
-	allCountQuery = `COUNT(*)`
 	// DefaultIDRetrievalStrategy uses the standard library .LastInsertId method to retrieve the ID.
 	DefaultIDRetrievalStrategy idRetrievalStrategy = iota
 	// ReturningStatementIDRetrievalStrategy scans IDs to results for database drivers that support queries with RETURNING statements.

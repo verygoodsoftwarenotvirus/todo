@@ -184,26 +184,3 @@ func TestPostgres_BuildArchiveAPIClientQuery(T *testing.T) {
 		assert.Equal(t, expectedArgs, actualArgs)
 	})
 }
-
-func TestPostgres_BuildGetAuditLogEntriesForAPIClientQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		q, _ := buildTestService(t)
-		ctx := context.Background()
-
-		exampleAPIClient := fakes.BuildFakeAPIClient()
-
-		expectedQuery := "SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE audit_log.context->>'api_client_id' = $1 ORDER BY audit_log.created_on"
-		expectedArgs := []interface{}{
-			exampleAPIClient.ID,
-		}
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAPIClientQuery(ctx, exampleAPIClient.ID)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}

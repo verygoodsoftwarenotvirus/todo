@@ -136,16 +136,14 @@ type (
 		GetAllUsersCount(ctx context.Context) (uint64, error)
 		GetUsers(ctx context.Context, filter *QueryFilter) (*UserList, error)
 		CreateUser(ctx context.Context, input *UserDataStoreCreationInput) (*User, error)
-		UpdateUser(ctx context.Context, updated *User, changes []*FieldChangeSummary) error
+		UpdateUser(ctx context.Context, updated *User) error
 		UpdateUserPassword(ctx context.Context, userID, newHash string) error
 		ArchiveUser(ctx context.Context, userID string) error
-		GetAuditLogEntriesForUser(ctx context.Context, userID string) ([]*AuditLogEntry, error)
 	}
 
 	// UserDataService describes a structure capable of serving traffic related to users.
 	UserDataService interface {
 		ListHandler(res http.ResponseWriter, req *http.Request)
-		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
 		SelfHandler(res http.ResponseWriter, req *http.Request)

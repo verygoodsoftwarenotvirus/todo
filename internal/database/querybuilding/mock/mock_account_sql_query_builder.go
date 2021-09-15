@@ -71,10 +71,3 @@ func (m *AccountSQLQueryBuilder) BuildArchiveAccountQuery(ctx context.Context, a
 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
-
-// BuildGetAuditLogEntriesForAccountQuery implements our interface.
-func (m *AccountSQLQueryBuilder) BuildGetAuditLogEntriesForAccountQuery(ctx context.Context, accountID string) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, accountID)
-
-	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
-}

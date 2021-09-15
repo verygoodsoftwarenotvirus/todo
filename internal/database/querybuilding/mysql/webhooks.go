@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -166,29 +165,5 @@ func (b *MySQL) BuildArchiveWebhookQuery(ctx context.Context, webhookID, account
 				querybuilding.WebhooksTableOwnershipColumn: accountID,
 				querybuilding.ArchivedOnColumn:             nil,
 			}),
-	)
-}
-
-// BuildGetAuditLogEntriesForWebhookQuery constructs a SQL query for fetching audit log entries belong to a webhook with a given ID.
-func (b *MySQL) BuildGetAuditLogEntriesForWebhookQuery(ctx context.Context, webhookID string) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachWebhookIDToSpan(span, webhookID)
-
-	webhookIDKey := fmt.Sprintf(
-		jsonPluckQuery,
-		querybuilding.AuditLogEntriesTableName,
-		querybuilding.AuditLogEntriesTableContextColumn,
-		webhookID,
-		audit.WebhookAssignmentKey,
-	)
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
-			From(querybuilding.AuditLogEntriesTableName).
-			Where(squirrel.Expr(webhookIDKey)).
-			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

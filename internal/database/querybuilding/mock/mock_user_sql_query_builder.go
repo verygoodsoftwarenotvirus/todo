@@ -93,13 +93,6 @@ func (m *UserSQLQueryBuilder) BuildArchiveUserQuery(ctx context.Context, userID 
 	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
 }
 
-// BuildGetAuditLogEntriesForUserQuery implements our interface.
-func (m *UserSQLQueryBuilder) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
-	returnArgs := m.Called(ctx, userID)
-
-	return returnArgs.String(0), returnArgs.Get(1).([]interface{})
-}
-
 // BuildSetUserStatusQuery implements our interface.
 func (m *UserSQLQueryBuilder) BuildSetUserStatusQuery(ctx context.Context, input *types.UserReputationUpdateInput) (query string, args []interface{}) {
 	returnArgs := m.Called(ctx, input)

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -49,17 +48,6 @@ func (s *TestSuite) TestUsers_Creating() {
 
 			// Assert user equality.
 			checkUserCreationEquality(t, exampleUserInput, createdUser)
-
-			// Clean up.
-			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.CreatedUserID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.UserCreationEvent},
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.CreatedUserID, audit.UserAssignmentKey)
 
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
 		}
@@ -207,95 +195,6 @@ func (s *TestSuite) TestUsers_Archiving() {
 
 			// Execute.
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.CreatedUserID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.UserCreationEvent},
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.UserArchiveEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdUser.CreatedUserID, audit.UserAssignmentKey)
-		}
-	})
-}
-
-func (s *TestSuite) TestUsers_Auditing_Returns404ForNonexistentUser() {
-	s.runForEachClientExcept("it should return an error when trying to audit something that does not exist", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			input := fakes.BuildFakeUserReputationUpdateInput()
-			input.NewReputation = types.BannedUserAccountStatus
-			input.TargetUserID = nonexistentID
-
-			// Ban user.
-			assert.Error(t, testClients.admin.UpdateUserReputation(ctx, input))
-
-			x, err := testClients.admin.GetAuditLogForUser(ctx, nonexistentID)
-			assert.NoError(t, err)
-			assert.Empty(t, x)
-		}
-	})
-}
-
-func (s *TestSuite) TestUsers_Auditing_InaccessibleToNonAdmins() {
-	s.runForEachClientExcept("it should not be auditable by a non-admin", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create user.
-			exampleUser := fakes.BuildFakeUser()
-			exampleUserInput := fakes.BuildFakeUserRegistrationInputFromUser(exampleUser)
-			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
-			requireNotNilAndNoProblems(t, createdUser, err)
-
-			// fetch audit log entries
-			actual, err := testClients.main.GetAuditLogForUser(ctx, createdUser.CreatedUserID)
-			assert.Error(t, err)
-			assert.Nil(t, actual)
-
-			// Clean up user.
-			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
-		}
-	})
-}
-
-func (s *TestSuite) TestUsers_Auditing() {
-	s.runForEachClientExcept("should be able to be audited", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create user.
-			exampleUser := fakes.BuildFakeUser()
-			exampleUserInput := fakes.BuildFakeUserRegistrationInputFromUser(exampleUser)
-			createdUser, err := testClients.main.CreateUser(ctx, exampleUserInput)
-			requireNotNilAndNoProblems(t, createdUser, err)
-
-			// fetch audit log entries
-			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, createdUser.CreatedUserID)
-			assert.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.UserCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.AccountCreationEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, "", "")
-
-			// Clean up user.
-			assert.NoError(t, testClients.admin.ArchiveUser(ctx, createdUser.CreatedUserID))
 		}
 	})
 }
@@ -317,20 +216,6 @@ func (s *TestSuite) TestUsers_AvatarManagement() {
 			requireNotNilAndNoProblems(t, user, err)
 
 			assert.NotEmpty(t, user.AvatarSrc)
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForUser(ctx, s.user.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.UserCreationEvent},
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.UserVerifyTwoFactorSecretEvent},
-				{EventType: audit.SuccessfulLoginEvent},
-				{EventType: audit.APIClientCreationEvent},
-				{EventType: audit.UserUpdateEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, s.user.ID, "")
 
 			assert.NoError(t, testClients.admin.ArchiveUser(ctx, s.user.ID))
 		}

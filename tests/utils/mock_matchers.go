@@ -4,8 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/stretchr/testify/mock"
 )
 
@@ -29,10 +27,3 @@ var HTTPRequestMatcher interface{} = mock.MatchedBy(func(*http.Request) bool {
 var HTTPResponseWriterMatcher interface{} = mock.MatchedBy(func(http.ResponseWriter) bool {
 	return true
 })
-
-// AuditLogEntryCreationInputMatcher is a matcher for use with testify/mock's MatchBy function.
-func AuditLogEntryCreationInputMatcher(eventType string) func(*types.AuditLogEntryCreationInput) bool {
-	return func(input *types.AuditLogEntryCreationInput) bool {
-		return input.EventType == eventType
-	}
-}

@@ -90,17 +90,6 @@ const (
 	UsersTableAvatarColumn = "avatar_src"
 
 	//
-	// Audit Log Entries Table.
-	//
-
-	// AuditLogEntriesTableName is what the audit log entries table calls itself.
-	AuditLogEntriesTableName = "audit_log"
-	// AuditLogEntriesTableEventTypeColumn is what the audit log entries table calls the event type column.
-	AuditLogEntriesTableEventTypeColumn = "event_type"
-	// AuditLogEntriesTableContextColumn is what the audit log entries table calls the context column.
-	AuditLogEntriesTableContextColumn = "context"
-
-	//
 	// API Clients.
 	//
 

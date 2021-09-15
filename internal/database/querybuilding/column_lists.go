@@ -63,18 +63,6 @@ var (
 	}
 
 	//
-	// Audit Log Entries Table.
-	//
-
-	// AuditLogEntriesTableColumns are the columns for the audit log entries table.
-	AuditLogEntriesTableColumns = []string{
-		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, IDColumn),
-		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, AuditLogEntriesTableEventTypeColumn),
-		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, AuditLogEntriesTableContextColumn),
-		fmt.Sprintf("%s.%s", AuditLogEntriesTableName, CreatedOnColumn),
-	}
-
-	//
 	// API Clients Table.
 	//
 

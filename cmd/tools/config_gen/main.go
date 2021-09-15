@@ -22,7 +22,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
@@ -219,10 +219,6 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
-			AuditLog: auditservice.Config{
-				Debug:   true,
-				Enabled: true,
-			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -296,10 +292,6 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
-			AuditLog: auditservice.Config{
-				Debug:   true,
-				Enabled: true,
-			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -391,10 +383,6 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Provider: "bleve",
 			},
 			Services: config.ServicesConfigurations{
-				AuditLog: auditservice.Config{
-					Debug:   false,
-					Enabled: true,
-				},
 				Auth: authservice.Config{
 					PASETO: authservice.PASETOConfig{
 						Issuer:       "todo_service",

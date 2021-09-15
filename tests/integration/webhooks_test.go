@@ -3,13 +3,11 @@ package integration
 import (
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func checkWebhookEquality(t *testing.T, expected, actual *types.Webhook) {
@@ -43,14 +41,6 @@ func (s *TestSuite) TestWebhooks_Creating() {
 			actual, err := testClients.main.GetWebhook(ctx, createdWebhook.ID)
 			requireNotNilAndNoProblems(t, actual, err)
 			checkWebhookEquality(t, exampleWebhook, actual)
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForWebhook(ctx, createdWebhook.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.WebhookCreationEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
@@ -177,15 +167,6 @@ func (s *TestSuite) TestWebhooks_Updating() {
 			checkWebhookEquality(t, exampleWebhook, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
-			auditLogEntries, err := testClients.admin.GetAuditLogForWebhook(ctx, createdWebhook.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.WebhookCreationEvent},
-				{EventType: audit.WebhookUpdateEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
-
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, actual.ID))
 		}
@@ -221,64 +202,6 @@ func (s *TestSuite) TestWebhooks_Archiving() {
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForWebhook(ctx, createdWebhook.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.WebhookCreationEvent},
-				{EventType: audit.WebhookArchiveEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdWebhook.ID, audit.WebhookAssignmentKey)
-		}
-	})
-}
-
-func (s *TestSuite) TestWebhooks_Auditing_Returns404ForNonexistentWebhook() {
-	s.runForEachClientExcept("should return an error when auditing a non-existent webhook", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			exampleWebhook := fakes.BuildFakeWebhook()
-			exampleWebhook.ID = nonexistentID
-
-			// fetch audit log entries
-			x, err := testClients.admin.GetAuditLogForWebhook(ctx, exampleWebhook.ID)
-			assert.NoError(t, err)
-			assert.Empty(t, x)
-		}
-	})
-}
-
-func (s *TestSuite) TestWebhooks_Auditing() {
-	s.runForEachClientExcept("should be auditable", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create webhook.
-			exampleWebhook := fakes.BuildFakeWebhook()
-			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			premade, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, premade, err)
-
-			// Change webhook.
-			premade.Name = reverseString(premade.Name)
-			exampleWebhook.Name = premade.Name
-			assert.NoError(t, testClients.main.UpdateWebhook(ctx, premade))
-
-			// fetch audit log entries
-			actual, err := testClients.admin.GetAuditLogForWebhook(ctx, premade.ID)
-			assert.NoError(t, err)
-			assert.Len(t, actual, 2)
-
-			// Clean up webhook.
-			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, premade.ID))
 		}
 	})
 }

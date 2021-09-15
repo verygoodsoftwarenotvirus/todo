@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -215,28 +214,5 @@ func (b *Postgres) BuildArchiveItemQuery(ctx context.Context, itemID, accountID 
 				querybuilding.ArchivedOnColumn:                 nil,
 				querybuilding.ItemsTableAccountOwnershipColumn: accountID,
 			}),
-	)
-}
-
-// BuildGetAuditLogEntriesForItemQuery constructs a SQL query for fetching audit log entries relating to an item with a given ID.
-func (b *Postgres) BuildGetAuditLogEntriesForItemQuery(ctx context.Context, itemID string) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	itemIDKey := fmt.Sprintf(
-		jsonPluckQuery,
-		querybuilding.AuditLogEntriesTableName,
-		querybuilding.AuditLogEntriesTableContextColumn,
-		audit.ItemAssignmentKey,
-	)
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
-			From(querybuilding.AuditLogEntriesTableName).
-			Where(squirrel.Eq{itemIDKey: itemID}).
-			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

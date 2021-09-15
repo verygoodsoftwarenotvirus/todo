@@ -665,7 +665,6 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			testutils.ContextMatcher,
 			exampleItem,
 			s.sessionCtxData.Requester.UserID,
-			[]*types.FieldChangeSummary(nil),
 		).Return(nil)
 		s.service.dataStore = mockDB
 
@@ -777,7 +776,6 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			testutils.ContextMatcher,
 			exampleItem,
 			s.sessionCtxData.Requester.UserID,
-			[]*types.FieldChangeSummary(nil),
 		).Return(errors.New("blah"))
 		s.service.dataStore = mockDB
 

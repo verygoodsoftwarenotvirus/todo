@@ -3,7 +3,6 @@ package queriers
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -29,74 +28,4 @@ func (q *SQLQuerier) UpdateUserReputation(ctx context.Context, userID string, in
 	logger.Info("user reputation updated")
 
 	return nil
-}
-
-// LogUserBanEvent saves a UserBannedEvent in the audit log table.
-func (q *SQLQuerier) LogUserBanEvent(ctx context.Context, banGiver, banRecipient, reason string) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, banRecipient)
-
-	q.createAuditLogEntry(ctx, q.db, audit.BuildUserBanEventEntry(banGiver, banRecipient, reason))
-}
-
-// LogCycleCookieSecretEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogCycleCookieSecretEvent(ctx context.Context, userID string) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-
-	q.createAuditLogEntry(ctx, q.db, audit.BuildCycleCookieSecretEvent(userID))
-}
-
-// LogSuccessfulLoginEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogSuccessfulLoginEvent(ctx context.Context, userID string) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-
-	q.createAuditLogEntry(ctx, q.db, audit.BuildSuccessfulLoginEventEntry(userID))
-}
-
-// LogBannedUserLoginAttemptEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogBannedUserLoginAttemptEvent(ctx context.Context, userID string) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-
-	q.createAuditLogEntry(ctx, q.db, audit.BuildBannedUserLoginAttemptEventEntry(userID))
-}
-
-// LogUnsuccessfulLoginBadPasswordEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID string) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-
-	q.createAuditLogEntry(ctx, q.db, audit.BuildUnsuccessfulLoginBadPasswordEventEntry(userID))
-}
-
-// LogUnsuccessfulLoginBad2FATokenEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID string) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-
-	q.createAuditLogEntry(ctx, q.db, audit.BuildUnsuccessfulLoginBad2FATokenEventEntry(userID))
-}
-
-// LogLogoutEvent implements our AuditLogEntryDataManager interface.
-func (q *SQLQuerier) LogLogoutEvent(ctx context.Context, userID string) {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-
-	q.createAuditLogEntry(ctx, q.db, audit.BuildLogoutEventEntry(userID))
 }

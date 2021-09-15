@@ -51,11 +51,8 @@ type (
 		types.AccountDataManager
 		types.AccountUserMembershipDataManager
 		types.UserDataManager
-		types.AuditLogEntryDataManager
 		types.APIClientDataManager
 		types.WebhookDataManager
 		types.ItemDataManager
-		types.AdminAuditManager
-		types.AuthAuditManager
 	}
 )

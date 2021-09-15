@@ -46,23 +46,17 @@ func (m *ItemDataManager) GetItemsWithIDs(ctx context.Context, accountID string,
 }
 
 // CreateItem is a mock function.
-func (m *ItemDataManager) CreateItem(ctx context.Context, input *types.ItemDatabaseCreationInput, createdByUser string) (*types.Item, error) {
-	args := m.Called(ctx, input, createdByUser)
+func (m *ItemDataManager) CreateItem(ctx context.Context, input *types.ItemDatabaseCreationInput) (*types.Item, error) {
+	args := m.Called(ctx, input)
 	return args.Get(0).(*types.Item), args.Error(1)
 }
 
 // UpdateItem is a mock function.
-func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item, changedByUser string, changes []*types.FieldChangeSummary) error {
-	return m.Called(ctx, updated, changedByUser, changes).Error(0)
+func (m *ItemDataManager) UpdateItem(ctx context.Context, updated *types.Item) error {
+	return m.Called(ctx, updated).Error(0)
 }
 
 // ArchiveItem is a mock function.
-func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, accountID, archivedBy string) error {
-	return m.Called(ctx, itemID, accountID, archivedBy).Error(0)
-}
-
-// GetAuditLogEntriesForItem is a mock function.
-func (m *ItemDataManager) GetAuditLogEntriesForItem(ctx context.Context, itemID string) ([]*types.AuditLogEntry, error) {
-	args := m.Called(ctx, itemID)
-	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
+func (m *ItemDataManager) ArchiveItem(ctx context.Context, itemID, accountID string) error {
+	return m.Called(ctx, itemID, accountID).Error(0)
 }

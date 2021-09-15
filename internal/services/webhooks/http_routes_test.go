@@ -390,7 +390,6 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			mock.IsType(&types.Webhook{}),
 			helper.exampleUser.ID,
-			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(nil)
 		helper.service.webhookDataManager = wd
 
@@ -540,7 +539,6 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			mock.IsType(&types.Webhook{}),
 			helper.exampleUser.ID,
-			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(sql.ErrNoRows)
 		helper.service.webhookDataManager = wd
 
@@ -575,7 +573,6 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			mock.IsType(&types.Webhook{}),
 			helper.exampleUser.ID,
-			mock.IsType([]*types.FieldChangeSummary{}),
 		).Return(errors.New("blah"))
 		helper.service.webhookDataManager = wd
 
@@ -681,119 +678,5 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, wd, encoderDecoder)
-	})
-}
-
-func TestWebhooksService_AuditEntryHandler(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		exampleAuditLogEntries := fakes.BuildFakeAuditLogEntryList().Entries
-
-		webhookDataManager := &mocktypes.WebhookDataManager{}
-		webhookDataManager.On(
-			"GetAuditLogEntriesForWebhook",
-			testutils.ContextMatcher,
-			helper.exampleWebhook.ID,
-		).Return(exampleAuditLogEntries, nil)
-		helper.service.webhookDataManager = webhookDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-			mock.IsType([]*types.AuditLogEntry{}),
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, webhookDataManager, encoderDecoder)
-	})
-
-	T.Run("with error retrieving session context data", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-			"unauthenticated",
-			http.StatusUnauthorized,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, encoderDecoder)
-	})
-
-	T.Run("with sql.ErrNoRows", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		webhookDataManager := &mocktypes.WebhookDataManager{}
-		webhookDataManager.On(
-			"GetAuditLogEntriesForWebhook",
-			testutils.ContextMatcher,
-			helper.exampleWebhook.ID,
-		).Return([]*types.AuditLogEntry(nil), sql.ErrNoRows)
-		helper.service.webhookDataManager = webhookDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeNotFoundResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, webhookDataManager, encoderDecoder)
-	})
-
-	T.Run("with error reading from database", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-
-		webhookDataManager := &mocktypes.WebhookDataManager{}
-		webhookDataManager.On(
-			"GetAuditLogEntriesForWebhook",
-			testutils.ContextMatcher,
-			helper.exampleWebhook.ID,
-		).Return([]*types.AuditLogEntry(nil), errors.New("blah"))
-		helper.service.webhookDataManager = webhookDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, webhookDataManager, encoderDecoder)
 	})
 }

@@ -12,16 +12,6 @@ type (
 const (
 	// CycleCookieSecretPermission is a service admin permission.
 	CycleCookieSecretPermission Permission = "update.cookie_secret"
-	// ReadAllAuditLogEntriesPermission is a service admin permission.
-	ReadAllAuditLogEntriesPermission Permission = "read.audit_log_entries.all"
-	// ReadAccountAuditLogEntriesPermission is a service admin permission.
-	ReadAccountAuditLogEntriesPermission Permission = "read.audit_log_entries.account"
-	// ReadAPIClientAuditLogEntriesPermission is a service admin permission.
-	ReadAPIClientAuditLogEntriesPermission Permission = "read.audit_log_entries.api_client"
-	// ReadUserAuditLogEntriesPermission is a service admin permission.
-	ReadUserAuditLogEntriesPermission Permission = "read.audit_log_entries.user"
-	// ReadWebhookAuditLogEntriesPermission is a service admin permission.
-	ReadWebhookAuditLogEntriesPermission Permission = "read.audit_log_entries.webhook"
 	// UpdateUserStatusPermission is a service admin permission.
 	UpdateUserStatusPermission Permission = "update.user_status"
 	// ReadUserPermission is a service admin permission.
@@ -55,10 +45,6 @@ const (
 	ReadAPIClientsPermission Permission = "read.api_clients"
 	// ArchiveAPIClientsPermission is an account admin permission.
 	ArchiveAPIClientsPermission Permission = "archive.api_clients"
-	// ReadWebhooksAuditLogEntriesPermission is an account admin permission.
-	ReadWebhooksAuditLogEntriesPermission Permission = "read.audit_log_entries.webhooks"
-	// ReadItemsAuditLogEntriesPermission is an account admin permission.
-	ReadItemsAuditLogEntriesPermission Permission = "read.audit_log_entries.items"
 
 	// CreateItemsPermission is an account user permission.
 	CreateItemsPermission Permission = "create.items"
@@ -85,15 +71,10 @@ func (p Permission) Match(perm gorbac.Permission) bool {
 var (
 	// service admin permissions.
 	serviceAdminPermissions = map[string]gorbac.Permission{
-		CycleCookieSecretPermission.ID():            CycleCookieSecretPermission,
-		ReadAllAuditLogEntriesPermission.ID():       ReadAllAuditLogEntriesPermission,
-		ReadAccountAuditLogEntriesPermission.ID():   ReadAccountAuditLogEntriesPermission,
-		ReadAPIClientAuditLogEntriesPermission.ID(): ReadAPIClientAuditLogEntriesPermission,
-		ReadUserAuditLogEntriesPermission.ID():      ReadUserAuditLogEntriesPermission,
-		ReadWebhookAuditLogEntriesPermission.ID():   ReadWebhookAuditLogEntriesPermission,
-		UpdateUserStatusPermission.ID():             UpdateUserStatusPermission,
-		ReadUserPermission.ID():                     ReadUserPermission,
-		SearchUserPermission.ID():                   SearchUserPermission,
+		CycleCookieSecretPermission.ID(): CycleCookieSecretPermission,
+		UpdateUserStatusPermission.ID():  UpdateUserStatusPermission,
+		ReadUserPermission.ID():          ReadUserPermission,
+		SearchUserPermission.ID():        SearchUserPermission,
 	}
 
 	// account admin permissions.
@@ -111,8 +92,6 @@ var (
 		CreateAPIClientsPermission.ID():                  CreateAPIClientsPermission,
 		ReadAPIClientsPermission.ID():                    ReadAPIClientsPermission,
 		ArchiveAPIClientsPermission.ID():                 ArchiveAPIClientsPermission,
-		ReadWebhooksAuditLogEntriesPermission.ID():       ReadWebhooksAuditLogEntriesPermission,
-		ReadItemsAuditLogEntriesPermission.ID():          ReadItemsAuditLogEntriesPermission,
 	}
 
 	// account member permissions.

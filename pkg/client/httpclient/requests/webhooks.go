@@ -110,27 +110,3 @@ func (b *Builder) BuildArchiveWebhookRequest(ctx context.Context, webhookID stri
 
 	return req, nil
 }
-
-// BuildGetAuditLogForWebhookRequest builds an HTTP request for fetching a list of audit log entries pertaining to a webhook.
-func (b *Builder) BuildGetAuditLogForWebhookRequest(ctx context.Context, webhookID string) (*http.Request, error) {
-	ctx, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if webhookID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := b.logger.WithValue(keys.WebhookIDKey, webhookID)
-	tracing.AttachWebhookIDToSpan(span, webhookID)
-
-	uri := b.BuildURL(ctx, nil, webhooksBasePath, webhookID, "audit")
-
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building user status request")
-	}
-
-	return req, nil
-}

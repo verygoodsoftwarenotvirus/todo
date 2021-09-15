@@ -23,7 +23,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authentication2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
@@ -58,7 +57,6 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 		return nil, err
 	}
 	userDataManager := database.ProvideUserDataManager(dataManager)
-	authAuditManager := database.ProvideAuthAuditManager(dataManager)
 	apiClientDataManager := database.ProvideAPIClientDataManager(dataManager)
 	accountUserMembershipDataManager := database.ProvideAccountUserMembershipDataManager(dataManager)
 	cookieConfig := authenticationConfig.Cookies
@@ -71,12 +69,10 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	contentType := encoding.ProvideContentType(encodingConfig)
 	serverEncoderDecoder := encoding.ProvideServerEncoderDecoder(logger, contentType)
 	routeParamManager := chi.NewRouteParamManager()
-	authService, err := authentication2.ProvideService(logger, authenticationConfig, authenticator, userDataManager, authAuditManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, serverEncoderDecoder, routeParamManager)
+	authService, err := authentication2.ProvideService(logger, authenticationConfig, authenticator, userDataManager, apiClientDataManager, accountUserMembershipDataManager, sessionManager, serverEncoderDecoder)
 	if err != nil {
 		return nil, err
 	}
-	auditLogEntryDataManager := database.ProvideAuditLogEntryDataManager(dataManager)
-	auditLogEntryDataService := audit.ProvideService(logger, auditLogEntryDataManager, serverEncoderDecoder, routeParamManager)
 	accountDataManager := database.ProvideAccountDataManager(dataManager)
 	unitCounterProvider, err := metrics.ProvideUnitCounterProvider(metricsConfig, logger)
 	if err != nil {
@@ -107,8 +103,7 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	webhookDataManager := database.ProvideWebhookDataManager(dataManager)
 	webhookDataService := webhooks.ProvideWebhooksService(logger, webhookDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
 	adminUserDataManager := database.ProvideAdminUserDataManager(dataManager)
-	adminAuditManager := database.ProvideAdminAuditManager(dataManager)
-	adminService := admin.ProvideService(logger, authenticationConfig, authenticator, adminUserDataManager, adminAuditManager, sessionManager, serverEncoderDecoder, routeParamManager)
+	adminService := admin.ProvideService(logger, authenticationConfig, authenticator, adminUserDataManager, sessionManager, serverEncoderDecoder, routeParamManager)
 	frontendConfig := &servicesConfigurations.Frontend
 	frontendAuthService := frontend.ProvideAuthService(authService)
 	usersService := frontend.ProvideUsersService(userDataService)
@@ -117,7 +112,7 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	paymentManager := stripe.ProvideStripePaymentManager(logger, stripeConfig)
 	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dataManager, routeParamManager, paymentManager)
 	router := chi.NewRouter(logger)
-	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, auditLogEntryDataService, userDataService, accountDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
+	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, userDataService, accountDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

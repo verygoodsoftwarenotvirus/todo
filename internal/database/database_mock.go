@@ -17,7 +17,6 @@ var _ DataManager = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		AuditLogEntryDataManager:         &mocktypes.AuditLogEntryDataManager{},
 		AccountDataManager:               &mocktypes.AccountDataManager{},
 		AccountUserMembershipDataManager: &mocktypes.AccountUserMembershipDataManager{},
 		ItemDataManager:                  &mocktypes.ItemDataManager{},
@@ -32,7 +31,6 @@ func BuildMockDatabase() *MockDatabase {
 // So `mockDB.On("GetUserByUsername"...)` is destined to fail, whereas `mockDB.UserDataManager.On("GetUserByUsername"...)` would do what you want it to do.
 type MockDatabase struct {
 	*mocktypes.AdminUserDataManager
-	*mocktypes.AuditLogEntryDataManager
 	*mocktypes.AccountUserMembershipDataManager
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
@@ -65,7 +63,6 @@ func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
 	return &MockSQLQueryBuilder{
 		AccountSQLQueryBuilder:               &mockquerybuilding.AccountSQLQueryBuilder{},
 		AccountUserMembershipSQLQueryBuilder: &mockquerybuilding.AccountUserMembershipSQLQueryBuilder{},
-		AuditLogEntrySQLQueryBuilder:         &mockquerybuilding.AuditLogEntrySQLQueryBuilder{},
 		ItemSQLQueryBuilder:                  &mockquerybuilding.ItemSQLQueryBuilder{},
 		APIClientSQLQueryBuilder:             &mockquerybuilding.APIClientSQLQueryBuilder{},
 		UserSQLQueryBuilder:                  &mockquerybuilding.UserSQLQueryBuilder{},
@@ -78,7 +75,6 @@ type MockSQLQueryBuilder struct {
 	*mockquerybuilding.UserSQLQueryBuilder
 	*mockquerybuilding.AccountSQLQueryBuilder
 	*mockquerybuilding.AccountUserMembershipSQLQueryBuilder
-	*mockquerybuilding.AuditLogEntrySQLQueryBuilder
 	*mockquerybuilding.ItemSQLQueryBuilder
 	*mockquerybuilding.APIClientSQLQueryBuilder
 	*mockquerybuilding.WebhookSQLQueryBuilder

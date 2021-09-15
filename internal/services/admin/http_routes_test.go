@@ -47,18 +47,10 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		).Return(nil)
 		helper.service.userDB = userDataManager
 
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogUserBanEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID, helper.exampleInput.TargetUserID, helper.exampleInput.Reason,
-		).Return()
-		helper.service.auditLog = auditLog
-
 		helper.service.UserReputationChangeHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, userDataManager, auditLog)
+		mock.AssertExpectationsForObjects(t, userDataManager)
 	})
 
 	T.Run("back in good standing", func(t *testing.T) {
@@ -298,16 +290,6 @@ func TestAdminService_UserAccountStatusChangeHandler(T *testing.T) {
 		mockHandler := &mockstore.MockStore{}
 		mockHandler.ExpectDelete("", errors.New("blah"))
 		helper.service.sessionManager.Store = mockHandler
-
-		auditLog := &mocktypes.AuditLogEntryDataManager{}
-		auditLog.On(
-			"LogUserBanEvent",
-			testutils.ContextMatcher,
-			helper.exampleUser.ID,
-			helper.exampleInput.TargetUserID,
-			helper.exampleInput.Reason,
-		).Return()
-		helper.service.auditLog = auditLog
 
 		userDataManager := &mocktypes.AdminUserDataManager{}
 		userDataManager.On(

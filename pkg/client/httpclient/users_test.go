@@ -272,56 +272,6 @@ func (s *usersTestSuite) TestClient_ArchiveUser() {
 	})
 }
 
-func (s *usersTestSuite) TestClient_GetAuditLogForUser() {
-	const (
-		expectedPath   = "/api/v1/users/%s/audit"
-		expectedMethod = http.MethodGet
-	)
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, exampleAuditLogEntryList, actual)
-	})
-
-	s.Run("with invalid user ID", func() {
-		t := s.T()
-
-		c, _ := buildSimpleTestClient(t)
-
-		actual, err := c.GetAuditLogForUser(s.ctx, "")
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-	})
-
-	s.Run("with error building request", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	s.Run("with error executing request", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
-		c := buildTestClientWithInvalidResponse(t, spec)
-
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-}
-
 func (s *usersTestSuite) TestClient_UploadNewAvatar() {
 	const expectedPath = "/api/v1/users/avatar/upload"
 

@@ -26,8 +26,6 @@ type (
 		CanCreateAPIClients() bool
 		CanSeeAPIClients() bool
 		CanDeleteAPIClients() bool
-		CanSeeAuditLogEntriesForWebhooks() bool
-		CanSeeAuditLogEntriesForItems() bool
 	}
 )
 
@@ -135,14 +133,4 @@ func (r accountRoleCollection) CanSeeAPIClients() bool {
 // CanDeleteAPIClients returns whether a user can delete API clients or not.
 func (r accountRoleCollection) CanDeleteAPIClients() bool {
 	return hasPermission(ArchiveAPIClientsPermission, r.Roles...)
-}
-
-// CanSeeAuditLogEntriesForWebhooks returns whether a user can view webhook audit log entries or not.
-func (r accountRoleCollection) CanSeeAuditLogEntriesForWebhooks() bool {
-	return hasPermission(ReadWebhooksAuditLogEntriesPermission, r.Roles...)
-}
-
-// CanSeeAuditLogEntriesForItems returns whether a user can view item audit log entries or not.
-func (r accountRoleCollection) CanSeeAuditLogEntriesForItems() bool {
-	return hasPermission(ReadItemsAuditLogEntriesPermission, r.Roles...)
 }

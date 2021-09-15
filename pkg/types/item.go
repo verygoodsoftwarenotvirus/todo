@@ -70,16 +70,14 @@ type (
 		GetTotalItemCount(ctx context.Context) (uint64, error)
 		GetItems(ctx context.Context, accountID string, filter *QueryFilter) (*ItemList, error)
 		GetItemsWithIDs(ctx context.Context, accountID string, limit uint8, ids []string) ([]*Item, error)
-		CreateItem(ctx context.Context, input *ItemDatabaseCreationInput, createdByUser string) (*Item, error)
-		UpdateItem(ctx context.Context, updated *Item, changedByUser string, changes []*FieldChangeSummary) error
-		ArchiveItem(ctx context.Context, itemID, accountID, archivedBy string) error
-		GetAuditLogEntriesForItem(ctx context.Context, itemID string) ([]*AuditLogEntry, error)
+		CreateItem(ctx context.Context, input *ItemDatabaseCreationInput) (*Item, error)
+		UpdateItem(ctx context.Context, updated *Item) error
+		ArchiveItem(ctx context.Context, itemID, accountID string) error
 	}
 
 	// ItemDataService describes a structure capable of serving traffic related to items.
 	ItemDataService interface {
 		SearchHandler(res http.ResponseWriter, req *http.Request)
-		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ExistenceHandler(res http.ResponseWriter, req *http.Request)
@@ -90,30 +88,14 @@ type (
 )
 
 // Update merges an ItemUpdateInput with an item.
-func (x *Item) Update(input *ItemUpdateInput) []*FieldChangeSummary {
-	var out []*FieldChangeSummary
-
+func (x *Item) Update(input *ItemUpdateInput) {
 	if input.Name != "" && input.Name != x.Name {
-		out = append(out, &FieldChangeSummary{
-			FieldName: "Name",
-			OldValue:  x.Name,
-			NewValue:  input.Name,
-		})
-
 		x.Name = input.Name
 	}
 
 	if input.Details != "" && input.Details != x.Details {
-		out = append(out, &FieldChangeSummary{
-			FieldName: "Details",
-			OldValue:  x.Details,
-			NewValue:  input.Details,
-		})
-
 		x.Details = input.Details
 	}
-
-	return out
 }
 
 var _ validation.ValidatableWithContext = (*ItemCreationInput)(nil)

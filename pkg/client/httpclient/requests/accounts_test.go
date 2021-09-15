@@ -10,7 +10,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuilder_BuildSwitchActiveAccountRequest(T *testing.T) {
@@ -570,48 +569,6 @@ func TestBuilder_BuildTransferAccountOwnershipRequest(T *testing.T) {
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
 
 		actual, err := helper.builder.BuildTransferAccountOwnershipRequest(helper.ctx, exampleAccountID, exampleInput)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-}
-
-func TestBuilder_BuildGetAuditLogForAccountRequest(T *testing.T) {
-	T.Parallel()
-
-	const expectedPath = "/api/v1/accounts/%s/audit"
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-		exampleAccountID := fakes.BuildFakeID()
-
-		actual, err := helper.builder.BuildGetAuditLogForAccountRequest(helper.ctx, exampleAccountID)
-		require.NotNil(t, actual)
-		assert.NoError(t, err)
-
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAccountID)
-		assertRequestQuality(t, actual, spec)
-	})
-
-	T.Run("with invalid account ID", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-
-		actual, err := helper.builder.BuildGetAuditLogForAccountRequest(helper.ctx, "")
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	T.Run("with invalid request builder", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-		helper.builder = buildTestRequestBuilderWithInvalidURL()
-		exampleAccountID := fakes.BuildFakeID()
-
-		actual, err := helper.builder.BuildGetAuditLogForAccountRequest(helper.ctx, exampleAccountID)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

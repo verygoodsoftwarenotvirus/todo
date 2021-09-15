@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -362,40 +361,5 @@ func (b *MySQL) BuildArchiveUserQuery(ctx context.Context, userID string) (query
 				querybuilding.IDColumn:         userID,
 				querybuilding.ArchivedOnColumn: nil,
 			}),
-	)
-}
-
-// BuildGetAuditLogEntriesForUserQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
-func (b *MySQL) BuildGetAuditLogEntriesForUserQuery(ctx context.Context, userID string) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachUserIDToSpan(span, userID)
-
-	userIDKey := fmt.Sprintf(
-		jsonPluckQuery,
-		querybuilding.AuditLogEntriesTableName,
-		querybuilding.AuditLogEntriesTableContextColumn,
-		userID,
-		audit.UserAssignmentKey,
-	)
-
-	performedByIDKey := fmt.Sprintf(
-		jsonPluckQuery,
-		querybuilding.AuditLogEntriesTableName,
-		querybuilding.AuditLogEntriesTableContextColumn,
-		userID,
-		audit.ActorAssignmentKey,
-	)
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
-			From(querybuilding.AuditLogEntriesTableName).
-			Where(squirrel.Or{
-				squirrel.Expr(userIDKey),
-				squirrel.Expr(performedByIDKey),
-			}).
-			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

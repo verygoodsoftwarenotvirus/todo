@@ -39,23 +39,17 @@ func (m *WebhookDataManager) GetAllWebhooks(ctx context.Context, results chan []
 }
 
 // CreateWebhook satisfies our WebhookDataManager interface.
-func (m *WebhookDataManager) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput, createdByUser string) (*types.Webhook, error) {
-	args := m.Called(ctx, input, createdByUser)
+func (m *WebhookDataManager) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
+	args := m.Called(ctx, input)
 	return args.Get(0).(*types.Webhook), args.Error(1)
 }
 
 // UpdateWebhook satisfies our WebhookDataManager interface.
-func (m *WebhookDataManager) UpdateWebhook(ctx context.Context, updated *types.Webhook, changedByUser string, changes []*types.FieldChangeSummary) error {
-	return m.Called(ctx, updated, changedByUser, changes).Error(0)
+func (m *WebhookDataManager) UpdateWebhook(ctx context.Context, updated *types.Webhook) error {
+	return m.Called(ctx, updated).Error(0)
 }
 
 // ArchiveWebhook satisfies our WebhookDataManager interface.
-func (m *WebhookDataManager) ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID string) error {
-	return m.Called(ctx, webhookID, accountID, archivedByUserID).Error(0)
-}
-
-// GetAuditLogEntriesForWebhook is a mock function.
-func (m *WebhookDataManager) GetAuditLogEntriesForWebhook(ctx context.Context, webhookID string) ([]*types.AuditLogEntry, error) {
-	args := m.Called(ctx, webhookID)
-	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
+func (m *WebhookDataManager) ArchiveWebhook(ctx context.Context, webhookID, accountID string) error {
+	return m.Called(ctx, webhookID, accountID).Error(0)
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -153,29 +152,5 @@ func (b *MySQL) BuildArchiveAPIClientQuery(ctx context.Context, clientID, userID
 				querybuilding.ArchivedOnColumn:               nil,
 				querybuilding.APIClientsTableOwnershipColumn: userID,
 			}),
-	)
-}
-
-// BuildGetAuditLogEntriesForAPIClientQuery constructs a SQL query for fetching audit log entries belong to a user with a given ID.
-func (b *MySQL) BuildGetAuditLogEntriesForAPIClientQuery(ctx context.Context, clientID string) (query string, args []interface{}) {
-	_, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	tracing.AttachAPIClientDatabaseIDToSpan(span, clientID)
-
-	apiClientIDKey := fmt.Sprintf(
-		jsonPluckQuery,
-		querybuilding.AuditLogEntriesTableName,
-		querybuilding.AuditLogEntriesTableContextColumn,
-		clientID,
-		audit.APIClientAssignmentKey,
-	)
-
-	return b.buildQuery(
-		span,
-		b.sqlBuilder.Select(querybuilding.AuditLogEntriesTableColumns...).
-			From(querybuilding.AuditLogEntriesTableName).
-			Where(squirrel.Expr(apiClientIDKey)).
-			OrderBy(fmt.Sprintf("%s.%s", querybuilding.AuditLogEntriesTableName, querybuilding.CreatedOnColumn)),
 	)
 }

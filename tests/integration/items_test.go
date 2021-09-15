@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -43,14 +42,6 @@ func (s *TestSuite) TestItems_Creating() {
 
 			// assert item equality
 			checkItemEquality(t, exampleItem, createdItem)
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForItem(ctx, createdItem.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.ItemCreationEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
@@ -347,15 +338,6 @@ func (s *TestSuite) TestItems_Updating() {
 			checkItemEquality(t, exampleItem, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
-			auditLogEntries, err := testClients.admin.GetAuditLogForItem(ctx, createdItem.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.ItemCreationEvent},
-				{EventType: audit.ItemUpdateEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItem.ID, audit.ItemAssignmentKey)
-
 			// clean up item
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 		}
@@ -396,31 +378,6 @@ func (s *TestSuite) TestItems_Archiving() {
 
 			// clean up item
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItemID))
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForItem(ctx, createdItemID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.ItemCreationEvent},
-				{EventType: audit.ItemArchiveEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdItemID, audit.ItemAssignmentKey)
-		}
-	})
-}
-
-func (s *TestSuite) TestItems_Auditing_Returns404ForNonexistentItem() {
-	s.runForEachClientExcept("it should return an error when trying to audit something that does not exist", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			x, err := testClients.admin.GetAuditLogForItem(ctx, nonexistentID)
-
-			assert.NoError(t, err)
-			assert.Empty(t, x)
 		}
 	})
 }

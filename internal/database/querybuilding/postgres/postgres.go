@@ -21,10 +21,6 @@ const (
 
 	// columnCountQueryTemplate is a generic counter query used in a few query builders.
 	columnCountQueryTemplate = `COUNT(%s.id)`
-	// allCountQuery is a generic counter query used in a few query builders.
-	allCountQuery = `COUNT(*)`
-	// jsonPluckQuery is a generic format string for getting something out of the first layer of a JSON blob.
-	jsonPluckQuery = "%s.%s->>'%s'"
 )
 
 var (

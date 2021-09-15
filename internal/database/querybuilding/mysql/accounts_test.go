@@ -2,7 +2,6 @@ package mysql
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -191,27 +190,6 @@ func TestMySQL_BuildArchiveAccountQuery(T *testing.T) {
 			exampleAccount.ID,
 		}
 		actualQuery, actualArgs := q.BuildArchiveAccountQuery(ctx, exampleAccount.ID, exampleUser.ID)
-
-		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.Equal(t, expectedArgs, actualArgs)
-	})
-}
-
-func TestMySQL_BuildGetAuditLogEntriesForAccountQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		q, _ := buildTestService(t)
-		ctx := context.Background()
-
-		exampleAccount := fakes.BuildFakeAccount()
-
-		expectedQuery := fmt.Sprintf("SELECT audit_log.id, audit_log.event_type, audit_log.context, audit_log.created_on FROM audit_log WHERE JSON_CONTAINS(audit_log.context, '%q', '$.account_id') ORDER BY audit_log.created_on", exampleAccount.ID)
-		expectedArgs := []interface{}(nil)
-		actualQuery, actualArgs := q.BuildGetAuditLogEntriesForAccountQuery(ctx, exampleAccount.ID)
 
 		assertArgCountMatchesQuery(t, actualQuery, actualArgs)
 		assert.Equal(t, expectedQuery, actualQuery)

@@ -13,11 +13,6 @@ type (
 		UserReputationChangeHandler(res http.ResponseWriter, req *http.Request)
 	}
 
-	// AdminAuditManager describes a structure capable of managing audit entries for admin events.
-	AdminAuditManager interface {
-		LogUserBanEvent(ctx context.Context, banGiver, banReceiver, reason string)
-	}
-
 	// UserReputationUpdateInput represents what an admin User could provide as input for changing statuses.
 	UserReputationUpdateInput struct {
 		NewReputation accountStatus `json:"newReputation"`

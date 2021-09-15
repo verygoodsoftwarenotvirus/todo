@@ -64,12 +64,12 @@ type (
 	AccountUserMembershipDataManager interface {
 		BuildSessionContextDataForUser(ctx context.Context, userID string) (*SessionContextData, error)
 		GetDefaultAccountIDForUser(ctx context.Context, userID string) (string, error)
-		MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser string) error
+		MarkAccountAsUserDefault(ctx context.Context, userID, accountID string) error
 		UserIsMemberOfAccount(ctx context.Context, userID, accountID string) (bool, error)
-		ModifyUserPermissions(ctx context.Context, accountID string, userID, changedByUser string, input *ModifyUserPermissionsInput) error
-		TransferAccountOwnership(ctx context.Context, accountID, transferredBy string, input *AccountOwnershipTransferInput) error
-		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput, addedByUser string) error
-		RemoveUserFromAccount(ctx context.Context, userID, accountID string, removedByUser, reason string) error
+		ModifyUserPermissions(ctx context.Context, accountID, userID string, input *ModifyUserPermissionsInput) error
+		TransferAccountOwnership(ctx context.Context, accountID string, input *AccountOwnershipTransferInput) error
+		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput) error
+		RemoveUserFromAccount(ctx context.Context, userID, accountID string) error
 	}
 )
 

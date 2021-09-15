@@ -404,7 +404,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 		spec := newRequestSpec(true, http.MethodDelete, query, expectedPathFormat, s.exampleAccount.ID, s.exampleUser.ID)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
-		assert.NoError(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID, t.Name()))
+		assert.NoError(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID))
 	})
 
 	s.Run("with invalid account ID", func() {
@@ -412,7 +412,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, "", s.exampleUser.ID, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(s.ctx, "", s.exampleUser.ID))
 	})
 
 	s.Run("with invalid user ID", func() {
@@ -420,15 +420,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, "", t.Name()))
-	})
-
-	s.Run("with invalid reason", func() {
-		t := s.T()
-
-		c, _ := buildSimpleTestClient(t)
-
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID, ""))
+		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, ""))
 	})
 
 	s.Run("with error building request", func() {
@@ -436,7 +428,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 
 		c := buildTestClientWithInvalidURL(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID))
 	})
 
 	s.Run("with error executing request", func() {
@@ -444,7 +436,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID))
 	})
 }
 
@@ -570,57 +562,5 @@ func (s *accountsTestSuite) TestClient_TransferAccountOwnership() {
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
 
 		assert.Error(t, c.TransferAccountOwnership(s.ctx, s.exampleAccount.ID, exampleInput))
-	})
-}
-
-func (s *accountsTestSuite) TestClient_GetAuditLogForAccount() {
-	const (
-		expectedPath   = "/api/v1/accounts/%s/audit"
-		expectedMethod = http.MethodGet
-	)
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
-
-		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-
-		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
-		require.NotNil(t, actual)
-		assert.NoError(t, err)
-		assert.Equal(t, exampleAuditLogEntryList, actual)
-	})
-
-	s.Run("with invalid account ID", func() {
-		t := s.T()
-
-		c, _ := buildSimpleTestClient(t)
-
-		actual, err := c.GetAuditLogForAccount(s.ctx, "")
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-	})
-
-	s.Run("with error building request", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-
-		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	s.Run("with error executing request", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
-		c := buildTestClientWithInvalidResponse(t, spec)
-
-		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
 	})
 }

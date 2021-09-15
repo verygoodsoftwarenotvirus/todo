@@ -16,7 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 
@@ -50,9 +50,6 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				},
 			},
 			Services: ServicesConfigurations{
-				AuditLog: auditservice.Config{
-					Enabled: true,
-				},
 				Auth: authservice.Config{
 					Cookies: authservice.CookieConfig{
 						Name:     "todo_cookie",

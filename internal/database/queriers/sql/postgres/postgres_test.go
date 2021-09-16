@@ -17,10 +17,27 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
 	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/Masterminds/squirrel"
+	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+type idMatcher struct{}
+
+func (s *idMatcher) Match(v driver.Value) bool {
+	x, ok := v.(string)
+	if !ok {
+		return false
+	}
+
+	if _, err := ksuid.Parse(x); err != nil {
+		return false
+	}
+
+	return true
+}
 
 func assertArgCountMatchesQuery(t *testing.T, query string, args []interface{}) {
 	t.Helper()
@@ -73,16 +90,6 @@ func interfaceToDriverValue(in []interface{}) []driver.Value {
 	return out
 }
 
-func interfacesToDriverValue(in ...interface{}) []driver.Value {
-	out := []driver.Value{}
-
-	for _, x := range in {
-		out = append(out, driver.Value(x))
-	}
-
-	return out
-}
-
 type sqlmockExpecterWrapper struct {
 	sqlmock.Sqlmock
 }
@@ -102,7 +109,7 @@ func buildTestClient(t *testing.T) (*SQLQuerier, *sqlmockExpecterWrapper) {
 		logger:     logging.NewNoopLogger(),
 		timeFunc:   defaultTimeFunc,
 		tracer:     tracing.NewTracer("test"),
-		idStrategy: DefaultIDRetrievalStrategy,
+		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 
 	return c, &sqlmockExpecterWrapper{Sqlmock: sqlMock}
@@ -169,25 +176,13 @@ func TestProvideDatabaseClient(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		var migrationFunctionCalled bool
-		fakeMigrationFunc := func() {
-			migrationFunctionCalled = true
-		}
 
 		fakeDB, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 		require.NoError(t, err)
 
-		queryBuilder := database.BuildMockSQLQueryBuilder()
-		queryBuilder.On(
-			"BuildMigrationFunc",
-			mock.IsType(&sql.DB{}),
-		).Return(fakeMigrationFunc)
-
-		mockDB.ExpectPing().WillDelayFor(0)
-
 		exampleConfig := &config.Config{
 			Debug:           true,
-			RunMigrations:   true,
+			RunMigrations:   false,
 			MaxPingAttempts: 1,
 		}
 
@@ -195,35 +190,21 @@ func TestProvideDatabaseClient(T *testing.T) {
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
-		assert.True(t, migrationFunctionCalled)
-
-		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
+		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB})
 	})
 
 	T.Run("with PostgresProvider", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		var migrationFunctionCalled bool
-		fakeMigrationFunc := func() {
-			migrationFunctionCalled = true
-		}
 
 		fakeDB, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
 		require.NoError(t, err)
 
-		queryBuilder := database.BuildMockSQLQueryBuilder()
-		queryBuilder.On(
-			"BuildMigrationFunc",
-			mock.IsType(&sql.DB{}),
-		).Return(fakeMigrationFunc)
-
-		mockDB.ExpectPing().WillDelayFor(0)
-
 		exampleConfig := &config.Config{
 			Provider:        config.PostgresProvider,
 			Debug:           true,
-			RunMigrations:   true,
+			RunMigrations:   false,
 			MaxPingAttempts: 1,
 		}
 
@@ -231,34 +212,7 @@ func TestProvideDatabaseClient(T *testing.T) {
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
-		assert.True(t, migrationFunctionCalled)
-
-		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
-	})
-
-	T.Run("with error initializing querier", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-
-		fakeDB, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
-		require.NoError(t, err)
-
-		queryBuilder := database.BuildMockSQLQueryBuilder()
-
-		mockDB.ExpectPing().WillReturnError(errors.New("blah"))
-
-		exampleConfig := &config.Config{
-			Debug:           true,
-			RunMigrations:   true,
-			MaxPingAttempts: 1,
-		}
-
-		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), fakeDB, exampleConfig, true)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-
-		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB}, queryBuilder)
+		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB})
 	})
 }
 
@@ -372,6 +326,8 @@ func TestQuerier_performCreateQueryIgnoringReturn(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
@@ -391,6 +347,8 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(newSuccessfulDatabaseResult(1))
@@ -405,6 +363,8 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
+
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
@@ -421,90 +381,11 @@ func TestQuerier_performCreateQuery(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
+		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
+
 		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
 			WithArgs(interfaceToDriverValue(fakeArgs)...).
 			WillReturnResult(sqlmock.NewResult(int64(1), 0))
-
-		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
-
-		assert.Error(t, err)
-		assert.True(t, errors.Is(err, sql.ErrNoRows))
-	})
-
-	T.Run("with ReturningStatementIDRetrievalStrategy", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-		c.idStrategy = ReturningStatementIDRetrievalStrategy
-
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnRows(sqlmock.NewRows([]string{"id"}).AddRow(uint64(123)))
-
-		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
-
-		assert.NoError(t, err)
-	})
-
-	T.Run("with ReturningStatementIDRetrievalStrategy and error", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-		c.idStrategy = ReturningStatementIDRetrievalStrategy
-
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnError(errors.New("blah"))
-
-		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
-
-		assert.Error(t, err)
-	})
-
-	T.Run("ignoring return with return statement id strategy", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-		c.idStrategy = ReturningStatementIDRetrievalStrategy
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newSuccessfulDatabaseResult(1))
-
-		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
-
-		assert.NoError(t, err)
-	})
-
-	T.Run("ignoring return with return statement id strategy and error executing query", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-		c.idStrategy = ReturningStatementIDRetrievalStrategy
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnError(errors.New("blah"))
-
-		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
-
-		assert.Error(t, err)
-	})
-
-	T.Run("ignoring return with return statement id strategy with no rows affected", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		c, db := buildTestClient(t)
-		c.idStrategy = ReturningStatementIDRetrievalStrategy
-
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(sqlmock.NewResult(0, 0))
 
 		err := c.performWriteQuery(ctx, c.db, "example", fakeQuery, fakeArgs)
 

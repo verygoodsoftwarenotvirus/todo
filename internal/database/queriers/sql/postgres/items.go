@@ -5,13 +5,10 @@ import (
 	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/Masterminds/squirrel"
 )
 
 var (
@@ -208,16 +205,12 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID string, filter *typ
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	where := squirrel.Eq{
-		fmt.Sprintf("%s.%s", querybuilding.ItemsTableName, querybuilding.ArchivedOnColumn): nil,
-	}
-
 	query, args := q.buildListQuery(
 		ctx,
 		"items",
 		nil,
-		where,
-		"belongs_to_account",
+		nil,
+		accountOwnershipColumn,
 		itemsTableColumns,
 		accountID,
 		false,
@@ -294,6 +287,10 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 	return items, nil
 }
 
+const itemCreationQuery = `
+	INSERT INTO items (id,name,details,belongs_to_account) VALUES ($1,$2,$3,$4)
+`
+
 // CreateItem creates an item in the database.
 func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCreationInput) (*types.Item, error) {
 	ctx, span := q.tracer.StartSpan(ctx)
@@ -305,9 +302,6 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 
 	logger := q.logger.WithValue(keys.ItemIDKey, input.ID)
 
-	query := `
-		INSERT INTO items (id,name,details,belongs_to_account) VALUES ($1,$2,$3,$4)
-	`
 	args := []interface{}{
 		input.ID,
 		input.Name,
@@ -316,7 +310,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 	}
 
 	// create the item.
-	if err := q.performWriteQuery(ctx, q.db, "item creation", query, args); err != nil {
+	if err := q.performWriteQuery(ctx, q.db, "item creation", itemCreationQuery, args); err != nil {
 		return nil, observability.PrepareError(err, logger, span, "creating item")
 	}
 
@@ -334,6 +328,10 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 	return x, nil
 }
 
+const updateItemQuery = `
+	UPDATE items SET name = $1, details = $2, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = $3 AND id = $4
+`
+
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
 func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item) error {
 	ctx, span := q.tracer.StartSpan(ctx)
@@ -347,9 +345,6 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item) error 
 	tracing.AttachItemIDToSpan(span, updated.ID)
 	tracing.AttachAccountIDToSpan(span, updated.BelongsToAccount)
 
-	updateItemQuery := `
-		UPDATE items SET name = $1, details = $2, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = $3 AND id = $4
-	`
 	args := []interface{}{
 		updated.Name,
 		updated.Details,

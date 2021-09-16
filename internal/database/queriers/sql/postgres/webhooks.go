@@ -5,15 +5,39 @@ import (
 	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
+const (
+	// webhooksTableEventsSeparator is what the webhooks table uses to separate event subscriptions.
+	webhooksTableEventsSeparator = commaSeparator
+	// webhooksTableDataTypesSeparator is what the webhooks table uses to separate data type subscriptions.
+	webhooksTableDataTypesSeparator = commaSeparator
+	// webhooksTableTopicsSeparator is what the webhooks table uses to separate topic subscriptions.
+	webhooksTableTopicsSeparator = commaSeparator
+)
+
 var (
 	_ types.WebhookDataManager = (*SQLQuerier)(nil)
+
+	// webhooksTableColumns are the columns for the webhooks table.
+	webhooksTableColumns = []string{
+		"webhooks.id",
+		"webhooks.name",
+		"webhooks.content_type",
+		"webhooks.url",
+		"webhooks.method",
+		"webhooks.events",
+		"webhooks.data_types",
+		"webhooks.topics",
+		"webhooks.created_on",
+		"webhooks.last_updated_on",
+		"webhooks.archived_on",
+		"webhooks.belongs_to_account",
+	}
 )
 
 // scanWebhook is a consistent way to turn a *sql.Row into a webhook struct.
@@ -53,15 +77,15 @@ func (q *SQLQuerier) scanWebhook(ctx context.Context, scan database.Scanner, inc
 		return nil, 0, 0, observability.PrepareError(err, logger, span, "scanning webhook")
 	}
 
-	if events := strings.Split(eventsStr, querybuilding.WebhooksTableEventsSeparator); len(events) >= 1 && events[0] != "" {
+	if events := strings.Split(eventsStr, webhooksTableEventsSeparator); len(events) >= 1 && events[0] != "" {
 		webhook.Events = events
 	}
 
-	if dataTypes := strings.Split(dataTypesStr, querybuilding.WebhooksTableDataTypesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
+	if dataTypes := strings.Split(dataTypesStr, webhooksTableDataTypesSeparator); len(dataTypes) >= 1 && dataTypes[0] != "" {
 		webhook.DataTypes = dataTypes
 	}
 
-	if topics := strings.Split(topicsStr, querybuilding.WebhooksTableTopicsSeparator); len(topics) >= 1 && topics[0] != "" {
+	if topics := strings.Split(topicsStr, webhooksTableTopicsSeparator); len(topics) >= 1 && topics[0] != "" {
 		webhook.Topics = topics
 	}
 
@@ -180,11 +204,11 @@ func (q *SQLQuerier) GetWebhooks(ctx context.Context, accountID string, filter *
 
 	query, args := q.buildListQuery(
 		ctx,
-		querybuilding.WebhooksTableName,
+		"webhooks",
 		nil,
 		nil,
-		querybuilding.WebhooksTableOwnershipColumn,
-		querybuilding.WebhooksTableColumns,
+		"belongs_to_account",
+		webhooksTableColumns,
 		accountID,
 		false,
 		filter,
@@ -224,9 +248,9 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 		input.ContentType,
 		input.URL,
 		input.Method,
-		strings.Join(input.Events, querybuilding.WebhooksTableEventsSeparator),
-		strings.Join(input.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
-		strings.Join(input.Topics, querybuilding.WebhooksTableTopicsSeparator),
+		strings.Join(input.Events, webhooksTableEventsSeparator),
+		strings.Join(input.DataTypes, webhooksTableDataTypesSeparator),
+		strings.Join(input.Topics, webhooksTableTopicsSeparator),
 		input.BelongsToAccount,
 	}
 
@@ -291,9 +315,9 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook) 
 		updated.ContentType,
 		updated.URL,
 		updated.Method,
-		strings.Join(updated.Events, querybuilding.WebhooksTableEventsSeparator),
-		strings.Join(updated.DataTypes, querybuilding.WebhooksTableDataTypesSeparator),
-		strings.Join(updated.Topics, querybuilding.WebhooksTableTopicsSeparator),
+		strings.Join(updated.Events, webhooksTableEventsSeparator),
+		strings.Join(updated.DataTypes, webhooksTableDataTypesSeparator),
+		strings.Join(updated.Topics, webhooksTableTopicsSeparator),
 		updated.BelongsToAccount,
 		updated.ID,
 	}
@@ -302,15 +326,13 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook) 
 		return observability.PrepareError(err, logger, span, "updating webhook")
 	}
 
-	logger.Debug("webhook updated")
-
 	return nil
 }
 
 const archiveWebhookQuery = `
-	UPDATE webhooks SET
-last_updated_on = extract(epoch FROM NOW()), 
-archived_on = extract(epoch FROM NOW())
+UPDATE webhooks SET
+	last_updated_on = extract(epoch FROM NOW()), 
+	archived_on = extract(epoch FROM NOW())
 WHERE archived_on IS NULL 
 AND belongs_to_account = $1
 AND id = $2

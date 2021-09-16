@@ -304,7 +304,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAccountsQuery",
+			"buildGetAccountsQuery",
 			testutils.ContextMatcher,
 			exampleUser.ID,
 			false,
@@ -351,7 +351,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAccountsQuery",
+			"buildGetAccountsQuery",
 			testutils.ContextMatcher,
 			exampleUser.ID,
 			false,
@@ -382,7 +382,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAccountsQuery",
+			"buildGetAccountsQuery",
 			testutils.ContextMatcher,
 			exampleUser.ID,
 			false,
@@ -413,7 +413,7 @@ func TestQuerier_GetAccounts(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAccountsQuery",
+			"buildGetAccountsQuery",
 			testutils.ContextMatcher,
 			exampleUser.ID,
 			false,
@@ -449,7 +449,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAccountsQuery",
+			"buildGetAccountsQuery",
 			testutils.ContextMatcher,
 			"",
 			true,
@@ -482,7 +482,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAccountsQuery",
+			"buildGetAccountsQuery",
 			testutils.ContextMatcher,
 			"",
 			true,
@@ -513,7 +513,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAccountsQuery",
+			"buildGetAccountsQuery",
 			testutils.ContextMatcher,
 			"",
 			true,
@@ -544,7 +544,7 @@ func TestQuerier_GetAccountsForAdmin(T *testing.T) {
 
 		fakeQuery, fakeArgs := fakes.BuildFakeSQLQuery()
 		mockQueryBuilder.AccountSQLQueryBuilder.On(
-			"BuildGetAccountsQuery",
+			"buildGetAccountsQuery",
 			testutils.ContextMatcher,
 			"",
 			true,

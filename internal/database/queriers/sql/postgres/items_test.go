@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
@@ -18,7 +17,7 @@ import (
 )
 
 func buildMockRowsFromItems(includeCounts bool, filteredCount uint64, items ...*types.Item) *sqlmock.Rows {
-	columns := querybuilding.ItemsTableColumns
+	columns := itemsTableColumns
 
 	if includeCounts {
 		columns = append(columns, "filtered_count", "total_count")
@@ -89,15 +88,19 @@ func TestQuerier_ItemExists(T *testing.T) {
 		ctx := context.Background()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItem := fakes.BuildFakeItem()
+		exampleItemID := fakes.BuildFakeID()
 
 		c, db := buildTestClient(t)
+		args := []interface{}{
+			exampleAccountID,
+			exampleItemID,
+		}
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		db.ExpectQuery(formatQueryForSQLMock(itemExistenceQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
-		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
+		actual, err := c.ItemExists(ctx, exampleItemID, exampleAccountID)
 		assert.NoError(t, err)
 		assert.True(t, actual)
 
@@ -123,11 +126,11 @@ func TestQuerier_ItemExists(T *testing.T) {
 
 		ctx := context.Background()
 
-		exampleItem := fakes.BuildFakeItem()
+		exampleItemID := fakes.BuildFakeID()
 
 		c, db := buildTestClient(t)
 
-		actual, err := c.ItemExists(ctx, exampleItem.ID, "")
+		actual, err := c.ItemExists(ctx, exampleItemID, "")
 		assert.Error(t, err)
 		assert.False(t, actual)
 
@@ -140,15 +143,19 @@ func TestQuerier_ItemExists(T *testing.T) {
 		ctx := context.Background()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItem := fakes.BuildFakeItem()
+		exampleItemID := fakes.BuildFakeID()
 
 		c, db := buildTestClient(t)
+		args := []interface{}{
+			exampleAccountID,
+			exampleItemID,
+		}
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		db.ExpectQuery(formatQueryForSQLMock(itemExistenceQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
+		actual, err := c.ItemExists(ctx, exampleItemID, exampleAccountID)
 		assert.NoError(t, err)
 		assert.False(t, actual)
 
@@ -161,15 +168,19 @@ func TestQuerier_ItemExists(T *testing.T) {
 		ctx := context.Background()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItem := fakes.BuildFakeItem()
+		exampleItemID := fakes.BuildFakeID()
 
 		c, db := buildTestClient(t)
+		args := []interface{}{
+			exampleAccountID,
+			exampleItemID,
+		}
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		db.ExpectQuery(formatQueryForSQLMock(itemExistenceQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
+		actual, err := c.ItemExists(ctx, exampleItemID, exampleAccountID)
 		assert.Error(t, err)
 		assert.False(t, actual)
 
@@ -189,8 +200,13 @@ func TestQuerier_GetItem(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		args := []interface{}{
+			exampleAccountID,
+			exampleItem.ID,
+		}
+
+		db.ExpectQuery(formatQueryForSQLMock(getItemQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnRows(buildMockRowsFromItems(false, 0, exampleItem))
 
 		actual, err := c.GetItem(ctx, exampleItem.ID, exampleAccountID)
@@ -235,8 +251,13 @@ func TestQuerier_GetItem(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		args := []interface{}{
+			exampleAccountID,
+			exampleItem.ID,
+		}
+
+		db.ExpectQuery(formatQueryForSQLMock(getItemQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := c.GetItem(ctx, exampleItem.ID, exampleAccountID)
@@ -258,9 +279,7 @@ func TestQuerier_GetTotalItemCount(T *testing.T) {
 
 		c, db := buildTestClient(t)
 
-		fakeQuery, _ := fakes.BuildFakeSQLQuery()
-
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
+		db.ExpectQuery(formatQueryForSQLMock(getAllItemsCountQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(uint64(123)))
 
@@ -285,8 +304,20 @@ func TestQuerier_GetItems(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		query, args := c.buildListQuery(
+			ctx,
+			"items",
+			nil,
+			nil,
+			accountOwnershipColumn,
+			itemsTableColumns,
+			exampleAccountID,
+			false,
+			filter,
+		)
+
+		db.ExpectQuery(formatQueryForSQLMock(query)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnRows(buildMockRowsFromItems(true, exampleItemList.FilteredCount, exampleItemList.Items...))
 
 		actual, err := c.GetItems(ctx, exampleAccountID, filter)
@@ -308,8 +339,20 @@ func TestQuerier_GetItems(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		query, args := c.buildListQuery(
+			ctx,
+			"items",
+			nil,
+			nil,
+			accountOwnershipColumn,
+			itemsTableColumns,
+			exampleAccountID,
+			false,
+			filter,
+		)
+
+		db.ExpectQuery(formatQueryForSQLMock(query)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnRows(buildMockRowsFromItems(true, exampleItemList.FilteredCount, exampleItemList.Items...))
 
 		actual, err := c.GetItems(ctx, exampleAccountID, filter)
@@ -341,8 +384,20 @@ func TestQuerier_GetItems(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		query, args := c.buildListQuery(
+			ctx,
+			"items",
+			nil,
+			nil,
+			accountOwnershipColumn,
+			itemsTableColumns,
+			exampleAccountID,
+			false,
+			filter,
+		)
+
+		db.ExpectQuery(formatQueryForSQLMock(query)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(errors.New("blah"))
 
 		actual, err := c.GetItems(ctx, exampleAccountID, filter)
@@ -361,8 +416,20 @@ func TestQuerier_GetItems(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		query, args := c.buildListQuery(
+			ctx,
+			"items",
+			nil,
+			nil,
+			accountOwnershipColumn,
+			itemsTableColumns,
+			exampleAccountID,
+			false,
+			filter,
+		)
+
+		db.ExpectQuery(formatQueryForSQLMock(query)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnRows(buildErroneousMockRow())
 
 		actual, err := c.GetItems(ctx, exampleAccountID, filter)
@@ -386,10 +453,15 @@ func TestQuerier_CreateItem(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeCreationQuery, fakeCreationArgs := fakes.BuildFakeSQLQuery()
+		args := []interface{}{
+			exampleInput.ID,
+			exampleInput.Name,
+			exampleInput.Details,
+			exampleInput.BelongsToAccount,
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeCreationQuery)).
-			WithArgs(interfaceToDriverValue(fakeCreationArgs)...).
+		db.ExpectExec(formatQueryForSQLMock(itemCreationQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		c.timeFunc = func() uint64 {
@@ -424,8 +496,15 @@ func TestQuerier_CreateItem(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		args := []interface{}{
+			exampleInput.ID,
+			exampleInput.Name,
+			exampleInput.Details,
+			exampleInput.BelongsToAccount,
+		}
+
+		db.ExpectExec(formatQueryForSQLMock(itemCreationQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(expectedErr)
 
 		c.timeFunc = func() uint64 {
@@ -452,10 +531,15 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
+		args := []interface{}{
+			exampleItem.Name,
+			exampleItem.Details,
+			exampleItem.BelongsToAccount,
+			exampleItem.ID,
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
-			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
+		db.ExpectExec(formatQueryForSQLMock(updateItemQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
 		assert.NoError(t, c.UpdateItem(ctx, exampleItem))
@@ -491,10 +575,15 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		fakeUpdateQuery, fakeUpdateArgs := fakes.BuildFakeSQLQuery()
+		args := []interface{}{
+			exampleItem.Name,
+			exampleItem.Details,
+			exampleItem.BelongsToAccount,
+			exampleItem.ID,
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeUpdateQuery)).
-			WithArgs(interfaceToDriverValue(fakeUpdateArgs)...).
+		db.ExpectExec(formatQueryForSQLMock(updateItemQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(errors.New("blah"))
 
 		assert.Error(t, c.UpdateItem(ctx, exampleItem))
@@ -510,16 +599,21 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 		t.Parallel()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItem := fakes.BuildFakeItem()
+		exampleItemID := fakes.BuildFakeID()
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
+		args := []interface{}{
+			exampleAccountID,
+			exampleItemID,
+		}
 
-		assert.NoError(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID))
+		db.ExpectExec(formatQueryForSQLMock(archiveItemQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
+			WillReturnResult(newArbitraryDatabaseResult(exampleItemID))
+
+		assert.NoError(t, c.ArchiveItem(ctx, exampleItemID, exampleAccountID))
 
 		mock.AssertExpectationsForObjects(t, db)
 	})
@@ -538,28 +632,33 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Run("with invalid account ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleItem := fakes.BuildFakeItem()
+		exampleItemID := fakes.BuildFakeID()
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, ""))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItemID, ""))
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItem := fakes.BuildFakeItem()
+		exampleItemID := fakes.BuildFakeID()
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		args := []interface{}{
+			exampleAccountID,
+			exampleItemID,
+		}
+
+		db.ExpectExec(formatQueryForSQLMock(archiveItemQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(errors.New("blah"))
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItemID, exampleAccountID))
 
 		mock.AssertExpectationsForObjects(t, db)
 	})

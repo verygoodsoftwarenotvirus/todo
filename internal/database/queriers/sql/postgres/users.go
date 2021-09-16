@@ -9,7 +9,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -20,10 +19,28 @@ import (
 
 var (
 	_ types.UserDataManager = (*SQLQuerier)(nil)
+
+	// usersTableColumns are the columns for the users table.
+	usersTableColumns = []string{
+		"users.id",
+		"users.username",
+		"users.avatar_src",
+		"users.hashed_password",
+		"users.requires_password_change",
+		"users.password_last_changed_on",
+		"users.two_factor_secret",
+		"users.two_factor_secret_verified_on",
+		"users.service_roles",
+		"users.reputation",
+		"users.reputation_explanation",
+		"users.created_on",
+		"users.last_updated_on",
+		"users.archived_on",
+	}
 )
 
 const (
-	serviceRolesSeparator = ","
+	serviceRolesSeparator = commaSeparator
 )
 
 // scanUser provides a consistent way to scan something like a *sql.Row into a Requester struct.
@@ -430,11 +447,11 @@ func (q *SQLQuerier) GetUsers(ctx context.Context, filter *types.QueryFilter) (x
 
 	query, args := q.buildListQuery(
 		ctx,
-		querybuilding.UsersTableName,
+		"users",
 		nil,
 		nil,
 		"",
-		querybuilding.UsersTableColumns,
+		usersTableColumns,
 		"",
 		false,
 		filter,
@@ -536,6 +553,11 @@ func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User) error 
 	return nil
 }
 
+/* #nosec */
+const updateUserPasswordQuery = `
+	UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $3
+`
+
 // UpdateUserPassword updates a user's passwords hash in the database.
 func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID, newHash string) error {
 	ctx, span := q.tracer.StartSpan(ctx)
@@ -552,16 +574,13 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID, newHash str
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query := `
-		UPDATE users SET hashed_password = $1, requires_password_change = $2, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $3
-	`
 	args := []interface{}{
 		newHash,
 		false,
 		userID,
 	}
 
-	if err := q.performWriteQuery(ctx, q.db, "user passwords update", query, args); err != nil {
+	if err := q.performWriteQuery(ctx, q.db, "user passwords update", updateUserPasswordQuery, args); err != nil {
 		return observability.PrepareError(err, logger, span, "updating user password")
 	}
 
@@ -569,6 +588,11 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID, newHash str
 
 	return nil
 }
+
+/* #nosec */
+const updateUserTwoFactorSecretQuery = `
+	query := "UPDATE users SET two_factor_secret_verified_on = $1, two_factor_secret = $2 WHERE archived_on IS NULL AND id = $3"
+`
 
 // UpdateUserTwoFactorSecret marks a user's two factor secret as validated.
 func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID, newSecret string) error {
@@ -586,21 +610,24 @@ func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID, newS
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query := "UPDATE users SET two_factor_secret_verified_on = $1, two_factor_secret = $2 WHERE archived_on IS NULL AND id = $3"
 	args := []interface{}{
 		nil,
 		newSecret,
 		userID,
 	}
 
-	if err := q.performWriteQuery(ctx, q.db, "user 2FA secret update", query, args); err != nil {
+	if err := q.performWriteQuery(ctx, q.db, "user 2FA secret update", updateUserTwoFactorSecretQuery, args); err != nil {
 		return observability.PrepareError(err, logger, span, "updating user 2FA secret")
 	}
-
 	logger.Info("user two factor secret updated")
 
 	return nil
 }
+
+/* #nosec */
+const markUserTwoFactorSecretAsVerified = `
+	UPDATE users SET two_factor_secret_verified_on = extract(epoch FROM NOW()), reputation = $1 WHERE archived_on IS NULL AND id = $2
+`
 
 // MarkUserTwoFactorSecretAsVerified marks a user's two factor secret as validated.
 func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, userID string) error {
@@ -614,13 +641,12 @@ func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, user
 	tracing.AttachUserIDToSpan(span, userID)
 	logger := q.logger.WithValue(keys.UserIDKey, userID)
 
-	query := "UPDATE users SET two_factor_secret_verified_on = extract(epoch FROM NOW()), reputation = $1 WHERE archived_on IS NULL AND id = $2"
 	args := []interface{}{
 		types.GoodStandingAccountStatus,
 		userID,
 	}
 
-	if err := q.performWriteQuery(ctx, q.db, "user two factor secret verification", query, args); err != nil {
+	if err := q.performWriteQuery(ctx, q.db, "user two factor secret verification", markUserTwoFactorSecretAsVerified, args); err != nil {
 		return observability.PrepareError(err, logger, span, "writing verified two factor status to database")
 	}
 
@@ -631,6 +657,10 @@ func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, user
 
 const archiveUserQuery = `
 	UPDATE users SET archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = $1
+`
+
+const archiveMembershipsQuery = `
+	UPDATE account_user_memberships SET archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1
 `
 
 // ArchiveUser archives a user.
@@ -658,9 +688,6 @@ func (q *SQLQuerier) ArchiveUser(ctx context.Context, userID string) error {
 		return observability.PrepareError(err, logger, span, "archiving user")
 	}
 
-	archiveMembershipsQuery := `
-		UPDATE account_user_memberships SET archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = $1
-	`
 	archiveMembershipsArgs := []interface{}{userID}
 
 	if err = q.performWriteQuery(ctx, tx, "user memberships archive", archiveMembershipsQuery, archiveMembershipsArgs); err != nil {

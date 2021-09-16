@@ -8,7 +8,6 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -16,6 +15,13 @@ import (
 
 	"github.com/Masterminds/squirrel"
 	"github.com/segmentio/ksuid"
+)
+
+const (
+	// accountsTableName is what the accounts table calls itself.
+	accountsTableName = "accounts"
+
+	accountUserMembershipsOnAccountsJoinClause = "account_user_memberships ON account_user_memberships.belongs_to_account = accounts.id"
 )
 
 var (
@@ -229,9 +235,9 @@ var (
 	accountAndMembershipColumns = append(accountsTableColumns, accountsUserMembershipTableColumns...)
 )
 
-// BuildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given account,
+// buildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
-func (q *SQLQuerier) BuildGetAccountsQuery(ctx context.Context, userID string, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
+func (q *SQLQuerier) buildGetAccountsQuery(ctx context.Context, userID string, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -246,41 +252,39 @@ func (q *SQLQuerier) BuildGetAccountsQuery(ctx context.Context, userID string, f
 		includeArchived = filter.IncludeArchived
 	}
 
-	filteredCountQuery, filteredCountQueryArgs := q.buildFilteredCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived, filter)
-	totalCountQuery, totalCountQueryArgs := q.buildTotalCountQuery(ctx, querybuilding.AccountsTableName, nil, nil, querybuilding.AccountsTableUserOwnershipColumn, userID, forAdmin, includeArchived)
+	filteredCountQuery, filteredCountQueryArgs := q.buildFilteredCountQuery(ctx, accountsTableName, nil, nil, userOwnershipColumn, userID, forAdmin, includeArchived, filter)
+	totalCountQuery, totalCountQueryArgs := q.buildTotalCountQuery(ctx, accountsTableName, nil, nil, userOwnershipColumn, userID, forAdmin, includeArchived)
 
 	builder := q.sqlBuilder.Select(append(
 		accountAndMembershipColumns,
 		fmt.Sprintf("(%s) as total_count", totalCountQuery),
 		fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
 	)...).
-		From(querybuilding.AccountsTableName).
-		Join(fmt.Sprintf(
-			"%s ON %s.%s = %s.%s",
-			querybuilding.AccountsUserMembershipTableName,
-			querybuilding.AccountsUserMembershipTableName,
-			querybuilding.AccountsUserMembershipTableAccountOwnershipColumn,
-			querybuilding.AccountsTableName,
-			querybuilding.IDColumn,
-		))
+		From(accountsTableName).
+		Join(accountUserMembershipsOnAccountsJoinClause)
 
 	if !forAdmin {
-		builder = builder.Where(squirrel.Eq{
-			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.ArchivedOnColumn):                 nil,
-			fmt.Sprintf("%s.%s", querybuilding.AccountsTableName, querybuilding.AccountsTableUserOwnershipColumn): userID,
-		})
+		where := squirrel.Eq{
+			"accounts.archived_on": nil,
+		}
+
+		if userID != "" {
+			where["accounts.belongs_to_user"] = userID
+		}
+
+		builder = builder.Where(where)
 	}
 
 	builder = builder.GroupBy(fmt.Sprintf(
 		"%s.%s, %s.%s",
-		querybuilding.AccountsTableName,
-		querybuilding.IDColumn,
-		querybuilding.AccountsUserMembershipTableName,
-		querybuilding.IDColumn,
+		accountsTableName,
+		"id",
+		accountsUserMembershipTableName,
+		"id",
 	))
 
 	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, querybuilding.AccountsTableName, builder)
+		builder = applyFilterToQueryBuilder(filter, accountsTableName, builder)
 	}
 
 	query, selectArgs := q.buildQuery(span, builder)
@@ -306,7 +310,7 @@ func (q *SQLQuerier) GetAccounts(ctx context.Context, userID string, filter *typ
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.BuildGetAccountsQuery(ctx, userID, false, filter)
+	query, args := q.buildGetAccountsQuery(ctx, userID, false, filter)
 
 	rows, err := q.performReadQuery(ctx, q.db, "accounts", query, args)
 	if err != nil {
@@ -333,7 +337,7 @@ func (q *SQLQuerier) GetAccountsForAdmin(ctx context.Context, filter *types.Quer
 		x.Page, x.Limit = filter.Page, filter.Limit
 	}
 
-	query, args := q.BuildGetAccountsQuery(ctx, "", true, filter)
+	query, args := q.buildGetAccountsQuery(ctx, "", true, filter)
 
 	rows, err := q.performReadQuery(ctx, q.db, "accounts for admin", query, args)
 	if err != nil {

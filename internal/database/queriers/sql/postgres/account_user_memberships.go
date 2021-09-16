@@ -14,6 +14,11 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
+const (
+	// accountsUserMembershipTableName is what the accounts membership table calls itself.
+	accountsUserMembershipTableName = "account_user_memberships"
+)
+
 var (
 	_ types.AccountUserMembershipDataManager = (*SQLQuerier)(nil)
 
@@ -31,7 +36,7 @@ var (
 )
 
 const (
-	accountMemberRolesSeparator = ","
+	accountMemberRolesSeparator = commaSeparator
 )
 
 // scanAccountUserMembership takes a database Scanner (i.e. *sql.Row) and scans the result into an AccountUserMembership struct.

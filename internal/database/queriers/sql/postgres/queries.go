@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -15,12 +14,14 @@ import (
 )
 
 const (
-	// columnCountQueryTemplate is a generic counter query used in a few query builders.
+	commaSeparator           = ","
 	columnCountQueryTemplate = `COUNT(%s.id)`
+	userOwnershipColumn      = "belongs_to_user"
+	accountOwnershipColumn   = "belongs_to_account"
 )
 
 func joinIDs(ids []string) string {
-	return strings.Join(ids, ",")
+	return strings.Join(ids, commaSeparator)
 }
 
 // logQueryBuildingError logs errs that may occur during query construction. Such errors should be few and far between,
@@ -64,9 +65,9 @@ func (q *SQLQuerier) buildTotalCountQuery(ctx context.Context, tableName string,
 			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = userID
 		}
 
-		where[fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn)] = nil
+		where[fmt.Sprintf("%s.archived_on", tableName)] = nil
 	} else if !includeArchived {
-		where[fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn)] = nil
+		where[fmt.Sprintf("%s.archived_on", tableName)] = nil
 	}
 
 	if len(where) > 0 {
@@ -102,9 +103,9 @@ func (q *SQLQuerier) buildFilteredCountQuery(ctx context.Context, tableName stri
 			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = userID
 		}
 
-		where[fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn)] = nil
+		where[fmt.Sprintf("%s.archived_on", tableName)] = nil
 	} else if !includeArchived {
-		where[fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn)] = nil
+		where[fmt.Sprintf("%s.archived_on", tableName)] = nil
 	}
 
 	if len(where) > 0 {
@@ -112,7 +113,7 @@ func (q *SQLQuerier) buildFilteredCountQuery(ctx context.Context, tableName stri
 	}
 
 	if filter != nil {
-		filteredCountQueryBuilder = querybuilding.ApplyFilterToSubCountQueryBuilder(filter, tableName, filteredCountQueryBuilder)
+		filteredCountQueryBuilder = applyFilterToSubCountQueryBuilder(filter, tableName, filteredCountQueryBuilder)
 	}
 
 	return q.buildQuery(span, filteredCountQueryBuilder)
@@ -162,7 +163,7 @@ func (q *SQLQuerier) buildListQuery(
 		if where == nil {
 			where = squirrel.Eq{}
 		}
-		where[fmt.Sprintf("%s.%s", tableName, querybuilding.ArchivedOnColumn)] = nil
+		where[fmt.Sprintf("%s.archived_on", tableName)] = nil
 
 		if ownershipColumn != "" && ownerID != "" {
 			where[fmt.Sprintf("%s.%s", tableName, ownershipColumn)] = ownerID
@@ -171,10 +172,10 @@ func (q *SQLQuerier) buildListQuery(
 		builder = builder.Where(where)
 	}
 
-	builder = builder.GroupBy(fmt.Sprintf("%s.%s", tableName, querybuilding.IDColumn))
+	builder = builder.GroupBy(fmt.Sprintf("%s.%s", tableName, "id"))
 
 	if filter != nil {
-		builder = querybuilding.ApplyFilterToQueryBuilder(filter, tableName, builder)
+		builder = applyFilterToQueryBuilder(filter, tableName, builder)
 	}
 
 	query, selectArgs := q.buildQuery(span, builder)

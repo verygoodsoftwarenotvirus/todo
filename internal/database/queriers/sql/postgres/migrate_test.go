@@ -6,6 +6,7 @@ import (
 	"errors"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
@@ -27,7 +28,7 @@ func TestQuerier_Migrate(T *testing.T) {
 
 		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
 
-		exampleInput := &types.TestUserCreationConfig{
+		exampleTestUserConfig := &types.TestUserCreationConfig{
 			Username:       exampleUser.Username,
 			Password:       exampleUser.HashedPassword,
 			HashedPassword: exampleUser.HashedPassword,
@@ -44,43 +45,63 @@ func TestQuerier_Migrate(T *testing.T) {
 		// called by c.IsReady()
 		db.ExpectPing()
 
-		migrationFuncCalled := false
+		c.migrateOnce.Do(func() {})
 
 		// expect TestUser to be queried for
-		fakeTestUserExistenceQuery, fakeTestUserExistenceArgs := fakes.BuildFakeSQLQuery()
-
-		db.ExpectQuery(formatQueryForSQLMock(fakeTestUserExistenceQuery)).
-			WithArgs(interfaceToDriverValue(fakeTestUserExistenceArgs)...).
+		testUserExistenceArgs := []interface{}{exampleTestUserConfig.Username}
+		db.ExpectQuery(formatQueryForSQLMock(testUserExistenceQuery)).
+			WithArgs(interfaceToDriverValue(testUserExistenceArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
 		db.ExpectBegin()
 
 		// expect TestUser to be created
-		fakeTestUserCreationQuery, fakeTestUserCreationArgs := fakes.BuildFakeSQLQuery()
+		testUserCreationArgs := []interface{}{
+			&idMatcher{},
+			exampleTestUserConfig.Username,
+			exampleTestUserConfig.HashedPassword,
+			defaultTestUserTwoFactorSecret,
+			types.GoodStandingAccountStatus,
+			authorization.ServiceAdminRole.String(),
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeTestUserCreationQuery)).
-			WithArgs(interfaceToDriverValue(fakeTestUserCreationArgs)...).
+		db.ExpectExec(formatQueryForSQLMock(testUserCreationQuery)).
+			WithArgs(interfaceToDriverValue(testUserCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
 		// create account for created TestUser
-		fakeAccountCreationQuery, fakeAccountCreationArgs := fakes.BuildFakeSQLQuery()
+		accountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
+		accountCreationArgs := []interface{}{
+			&idMatcher{},
+			accountCreationInput.Name,
+			types.UnpaidAccountBillingStatus,
+			accountCreationInput.ContactEmail,
+			accountCreationInput.ContactPhone,
+			&idMatcher{},
+		}
 
-		db.ExpectExec(formatQueryForSQLMock(fakeAccountCreationQuery)).
-			WithArgs(interfaceToDriverValue(fakeAccountCreationArgs)...).
+		db.ExpectExec(formatQueryForSQLMock(accountCreationQuery)).
+			WithArgs(interfaceToDriverValue(accountCreationArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		// create account user membership for created user
-		fakeMembershipCreationQuery, fakeMembershipCreationArgs := fakes.BuildFakeSQLQuery()
 
-		db.ExpectExec(formatQueryForSQLMock(fakeMembershipCreationQuery)).
-			WithArgs(interfaceToDriverValue(fakeMembershipCreationArgs)...).
+		createAccountMembershipForNewUserArgs := []interface{}{
+			&idMatcher{},
+			&idMatcher{},
+			&idMatcher{},
+			true,
+			authorization.AccountAdminRole.String(),
+		}
+
+		db.ExpectExec(formatQueryForSQLMock(createAccountMembershipForNewUserQuery)).
+			WithArgs(interfaceToDriverValue(createAccountMembershipForNewUserArgs)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		db.ExpectCommit()
 
-		err := c.Migrate(ctx, 1, exampleInput)
+		err := c.Migrate(ctx, 1, exampleTestUserConfig)
 		assert.NoError(t, err)
-		assert.True(t, migrationFuncCalled)
 
 		mock.AssertExpectationsForObjects(t, db)
 	})
@@ -94,7 +115,7 @@ func TestQuerier_Migrate(T *testing.T) {
 		exampleUser.TwoFactorSecretVerifiedOn = nil
 		exampleUser.CreatedOn = exampleCreationTime
 
-		exampleInput := &types.TestUserCreationConfig{
+		exampleTestUserConfig := &types.TestUserCreationConfig{
 			Username:       exampleUser.Username,
 			Password:       exampleUser.HashedPassword,
 			HashedPassword: exampleUser.HashedPassword,
@@ -111,17 +132,34 @@ func TestQuerier_Migrate(T *testing.T) {
 		// called by c.IsReady()
 		db.ExpectPing()
 
-		// expect TestUser to be queried for
-		fakeTestUserExistenceQuery, fakeTestUserExistenceArgs := fakes.BuildFakeSQLQuery()
+		c.migrateOnce.Do(func() {})
 
-		db.ExpectQuery(formatQueryForSQLMock(fakeTestUserExistenceQuery)).
-			WithArgs(interfaceToDriverValue(fakeTestUserExistenceArgs)...).
+		// expect TestUser to be queried for
+		testUserExistenceArgs := []interface{}{exampleTestUserConfig.Username}
+		db.ExpectQuery(formatQueryForSQLMock(testUserExistenceQuery)).
+			WithArgs(interfaceToDriverValue(testUserExistenceArgs)...).
 			WillReturnError(sql.ErrNoRows)
 
-		// expect transaction begin
-		db.ExpectBegin().WillReturnError(errors.New("blah"))
+		db.ExpectBegin()
 
-		assert.Error(t, c.Migrate(ctx, 1, exampleInput))
+		// expect TestUser to be created
+		testUserCreationArgs := []interface{}{
+			&idMatcher{},
+			exampleTestUserConfig.Username,
+			exampleTestUserConfig.HashedPassword,
+			defaultTestUserTwoFactorSecret,
+			types.GoodStandingAccountStatus,
+			authorization.ServiceAdminRole.String(),
+		}
+
+		db.ExpectExec(formatQueryForSQLMock(testUserCreationQuery)).
+			WithArgs(interfaceToDriverValue(testUserCreationArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		db.ExpectRollback()
+
+		err := c.Migrate(ctx, 1, exampleTestUserConfig)
+		assert.Error(t, err)
 
 		mock.AssertExpectationsForObjects(t, db)
 	})

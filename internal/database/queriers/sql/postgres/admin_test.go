@@ -28,8 +28,14 @@ func TestQuerier_UpdateUserReputation(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		args := []interface{}{
+			exampleInput.NewReputation,
+			exampleInput.Reason,
+			exampleInput.TargetUserID,
+		}
+
+		db.ExpectExec(formatQueryForSQLMock(setUserReputationQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnResult(newArbitraryDatabaseResult(exampleUser.ID))
 
 		assert.NoError(t, c.UpdateUserReputation(ctx, exampleUser.ID, exampleInput))
@@ -50,8 +56,14 @@ func TestQuerier_UpdateUserReputation(T *testing.T) {
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
-		db.ExpectExec(formatQueryForSQLMock(fakeQuery)).
-			WithArgs(interfaceToDriverValue(fakeArgs)...).
+		args := []interface{}{
+			exampleInput.NewReputation,
+			exampleInput.Reason,
+			exampleInput.TargetUserID,
+		}
+
+		db.ExpectExec(formatQueryForSQLMock(setUserReputationQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(errors.New("blah"))
 
 		assert.Error(t, c.UpdateUserReputation(ctx, exampleUser.ID, exampleInput))

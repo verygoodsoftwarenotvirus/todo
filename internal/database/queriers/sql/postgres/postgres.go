@@ -19,17 +19,10 @@ import (
 	"github.com/Masterminds/squirrel"
 )
 
-type idRetrievalStrategy int
-
 const (
 	name        = "db_client"
 	loggerName  = name
 	tracingName = name
-
-	// DefaultIDRetrievalStrategy uses the standard library .LastInsertId method to retrieve the ID.
-	DefaultIDRetrievalStrategy idRetrievalStrategy = iota
-	// ReturningStatementIDRetrievalStrategy scans IDs to results for database drivers that support queries with RETURNING statements.
-	ReturningStatementIDRetrievalStrategy
 )
 
 var _ database.DataManager = (*SQLQuerier)(nil)
@@ -43,7 +36,6 @@ type SQLQuerier struct {
 	logger      logging.Logger
 	tracer      tracing.Tracer
 	migrateOnce sync.Once
-	idStrategy  idRetrievalStrategy
 }
 
 // ProvideDatabaseClient provides a new DataManager client.
@@ -65,7 +57,6 @@ func ProvideDatabaseClient(
 		tracer:     tracer,
 		timeFunc:   defaultTimeFunc,
 		logger:     logging.EnsureLogger(logger).WithName(loggerName),
-		idStrategy: DefaultIDRetrievalStrategy,
 		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 
@@ -169,8 +160,6 @@ func (q *SQLQuerier) getOneRow(ctx context.Context, querier database.SQLQueryExe
 	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s single row fetch query", queryDescription), query, args)
 
 	row := querier.QueryRowContext(ctx, query, args...)
-
-	q.logger.WithValue("query", query).WithValue("args", args).Debug("query executed")
 
 	return row
 }

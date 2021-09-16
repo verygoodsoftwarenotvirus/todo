@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -15,6 +14,17 @@ import (
 
 var (
 	_ types.APIClientDataManager = (*SQLQuerier)(nil)
+
+	apiClientsTableColumns = []string{
+		"api_clients.id",
+		"api_clients.name",
+		"api_clients.client_id",
+		"api_clients.secret_key",
+		"api_clients.created_on",
+		"api_clients.last_updated_on",
+		"api_clients.archived_on",
+		"api_clients.belongs_to_user",
+	}
 )
 
 // scanAPIClient takes a Scanner (i.e. *sql.Row) and scans its results into an APIClient struct.
@@ -212,11 +222,11 @@ func (q *SQLQuerier) GetAPIClients(ctx context.Context, userID string, filter *t
 
 	query, args := q.buildListQuery(
 		ctx,
-		querybuilding.APIClientsTableName,
+		"api_clients",
 		nil,
 		nil,
-		querybuilding.APIClientsTableOwnershipColumn,
-		querybuilding.APIClientsTableColumns,
+		userOwnershipColumn,
+		apiClientsTableColumns,
 		userID,
 		false,
 		filter,

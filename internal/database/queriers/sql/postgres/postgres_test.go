@@ -177,29 +177,21 @@ func TestProvideDatabaseClient(T *testing.T) {
 
 		ctx := context.Background()
 
-		fakeDB, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
-		require.NoError(t, err)
-
 		exampleConfig := &config.Config{
 			Debug:           true,
 			RunMigrations:   false,
 			MaxPingAttempts: 1,
 		}
 
-		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), fakeDB, exampleConfig, true)
+		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), exampleConfig, true)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB})
 	})
 
 	T.Run("with PostgresProvider", func(t *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-
-		fakeDB, mockDB, err := sqlmock.New(sqlmock.MonitorPingsOption(true))
-		require.NoError(t, err)
 
 		exampleConfig := &config.Config{
 			Provider:        config.PostgresProvider,
@@ -208,11 +200,9 @@ func TestProvideDatabaseClient(T *testing.T) {
 			MaxPingAttempts: 1,
 		}
 
-		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), fakeDB, exampleConfig, true)
+		actual, err := ProvideDatabaseClient(ctx, logging.NewNoopLogger(), exampleConfig, true)
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, &sqlmockExpecterWrapper{Sqlmock: mockDB})
 	})
 }
 

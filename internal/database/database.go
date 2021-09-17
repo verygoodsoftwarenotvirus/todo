@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/alexedwards/scs/v2"
 )
 
 var (
@@ -46,6 +48,7 @@ type (
 	DataManager interface {
 		Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error
 		IsReady(ctx context.Context, maxAttempts uint8) (ready bool)
+		ProvideSessionStore() scs.Store
 
 		types.AdminUserDataManager
 		types.AccountDataManager

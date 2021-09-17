@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -193,8 +193,8 @@ func (q *SQLQuerier) getUser(ctx context.Context, userID string, withVerifiedTOT
 }
 
 const createAccountMembershipForNewUserQuery = `
-	INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,default_account,account_roles) 
-	VALUES (?,?,?,?,?)
+	INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,default_account,account_roles,created_on) 
+	VALUES (?,?,?,?,?,UNIX_TIMESTAMP())
 `
 
 // createUser creates a user. The `user` and `account` parameters are meant to be filled out.
@@ -231,6 +231,7 @@ func (q *SQLQuerier) createUser(ctx context.Context, user *types.User, account *
 		types.UnpaidAccountBillingStatus,
 		accountCreationInput.ContactEmail,
 		accountCreationInput.ContactPhone,
+		"",
 		accountCreationInput.BelongsToUser,
 	}
 
@@ -378,7 +379,7 @@ func (q *SQLQuerier) GetUserByUsername(ctx context.Context, username string) (*t
 }
 
 const searchForUserByUsernameQuery = `
-	SELECT users.id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.service_roles, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username ILIKE ? AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL	
+	SELECT users.id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.service_roles, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username LIKE ? AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL	
 `
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.
@@ -470,7 +471,7 @@ func (q *SQLQuerier) GetUsers(ctx context.Context, filter *types.QueryFilter) (x
 }
 
 const userCreationQuery = `
-	INSERT INTO users (id,username,hashed_password,two_factor_secret,reputation,service_roles) VALUES (?,?,?,?,?,?)
+	INSERT INTO users (id,username,hashed_password,two_factor_secret,avatar_src,reputation,reputation_explanation,service_roles,created_on) VALUES (?,?,?,?,?,?,?,?,UNIX_TIMESTAMP())
 `
 
 // CreateUser creates a user.
@@ -490,7 +491,9 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 		input.Username,
 		input.HashedPassword,
 		input.TwoFactorSecret,
+		"",
 		types.UnverifiedAccountStatus,
+		"",
 		authorization.ServiceUserRole.String(),
 	}
 
@@ -519,7 +522,7 @@ func (q *SQLQuerier) CreateUser(ctx context.Context, input *types.UserDataStoreC
 }
 
 const updateUserQuery = `
-	UPDATE users SET username = ?, hashed_password = ?, avatar_src = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = ?
+	UPDATE users SET username = ?, hashed_password = ?, avatar_src = ?, two_factor_secret = ?, two_factor_secret_verified_on = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?
 `
 
 // UpdateUser receives a complete Requester struct and updates its record in the database.
@@ -555,7 +558,7 @@ func (q *SQLQuerier) UpdateUser(ctx context.Context, updated *types.User) error 
 
 /* #nosec */
 const updateUserPasswordQuery = `
-	UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = extract(epoch FROM NOW()), last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = ?
+	UPDATE users SET hashed_password = ?, requires_password_change = ?, password_last_changed_on = UNIX_TIMESTAMP(), last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?
 `
 
 // UpdateUserPassword updates a user's passwords hash in the database.
@@ -591,7 +594,7 @@ func (q *SQLQuerier) UpdateUserPassword(ctx context.Context, userID, newHash str
 
 /* #nosec */
 const updateUserTwoFactorSecretQuery = `
-	query := "UPDATE users SET two_factor_secret_verified_on = ?, two_factor_secret = ? WHERE archived_on IS NULL AND id = ?"
+	UPDATE users SET two_factor_secret_verified_on = ?, two_factor_secret = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?
 `
 
 // UpdateUserTwoFactorSecret marks a user's two factor secret as validated.
@@ -626,7 +629,7 @@ func (q *SQLQuerier) UpdateUserTwoFactorSecret(ctx context.Context, userID, newS
 
 /* #nosec */
 const markUserTwoFactorSecretAsVerified = `
-	UPDATE users SET two_factor_secret_verified_on = extract(epoch FROM NOW()), reputation = ? WHERE archived_on IS NULL AND id = ?
+	UPDATE users SET two_factor_secret_verified_on = UNIX_TIMESTAMP(), reputation = ? WHERE archived_on IS NULL AND id = ?
 `
 
 // MarkUserTwoFactorSecretAsVerified marks a user's two factor secret as validated.
@@ -656,11 +659,11 @@ func (q *SQLQuerier) MarkUserTwoFactorSecretAsVerified(ctx context.Context, user
 }
 
 const archiveUserQuery = `
-	UPDATE users SET archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND id = ?
+	UPDATE users SET archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?
 `
 
 const archiveMembershipsQuery = `
-	UPDATE account_user_memberships SET archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = ?
+	UPDATE account_user_memberships SET archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ?
 `
 
 // ArchiveUser archives a user.

@@ -124,13 +124,18 @@ func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID string) (
 }
 
 const getItemQuery = `
-	SELECT items.id, 
-items.name, 
-items.details, 
-items.created_on, 
-items.last_updated_on, 
-items.archived_on, 
-items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1 AND items.id = $2
+SELECT
+	items.id,
+	items.name,
+	items.details,
+	items.created_on,
+	items.last_updated_on,
+	items.archived_on,
+	items.belongs_to_account
+FROM items
+WHERE items.archived_on IS NULL
+AND items.belongs_to_account = $1
+AND items.id = $2
 `
 
 // GetItem fetches an item from the database.
@@ -230,19 +235,24 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID string, filter *typ
 }
 
 const getItemsWithIDsQuery = `
-	SELECT items.id, 
-items.name, 
-items.details, 
-items.created_on, 
-items.last_updated_on, 
-items.archived_on, 
-items.belongs_to_account FROM (SELECT items.id, 
-items.name, 
-items.details, 
-items.created_on, 
-items.last_updated_on, 
-items.archived_on, 
-items.belongs_to_account FROM items JOIN unnest('{%s}'::text[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT 20) AS items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1 AND items.id IN ($2,$3,$4)
+SELECT 
+	items.id,
+	items.name,
+	items.details,
+	items.created_on,
+	items.last_updated_on,
+	items.archived_on,
+	items.belongs_to_account FROM (SELECT items.id,
+	items.name,
+	items.details,
+	items.created_on,
+	items.last_updated_on,
+	items.archived_on,
+	items.belongs_to_account
+FROM items JOIN unnest('{%s}'::text[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT 20) AS items 
+WHERE items.archived_on IS NULL 
+AND items.belongs_to_account = $1 
+AND items.id IN ($2,$3,$4)
 `
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.

@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -196,7 +196,8 @@ func (q *SQLQuerier) GetDefaultAccountIDForUser(ctx context.Context, userID stri
 
 const markAccountAsUserDefaultQuery = `
 	UPDATE account_user_memberships
-	SET default_account = (belongs_to_user = ? AND belongs_to_account = ?)
+	SET default_account = (belongs_to_user = ? AND belongs_to_account = ?),
+		last_updated_on = UNIX_TIMESTAMP()
 	WHERE archived_on IS NULL
 	AND belongs_to_user = ?
 `
@@ -275,7 +276,7 @@ func (q *SQLQuerier) UserIsMemberOfAccount(ctx context.Context, userID, accountI
 }
 
 const modifyUserPermissionsQuery = `
-	UPDATE account_user_memberships SET account_roles = ? WHERE belongs_to_account = ? AND belongs_to_user = ?
+	UPDATE account_user_memberships SET account_roles = ?, last_updated_on = UNIX_TIMESTAMP() WHERE belongs_to_account = ? AND belongs_to_user = ?
 `
 
 // ModifyUserPermissions does a thing.
@@ -317,11 +318,11 @@ func (q *SQLQuerier) ModifyUserPermissions(ctx context.Context, accountID, userI
 }
 
 const transferAccountOwnershipQuery = `
-	UPDATE accounts SET belongs_to_user = ? WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?
+	UPDATE accounts SET belongs_to_user = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?
 `
 
 const transferAccountMembershipQuery = `
-	UPDATE account_user_memberships SET belongs_to_user = ? WHERE archived_on IS NULL AND belongs_to_account = ? AND belongs_to_user = ?
+	UPDATE account_user_memberships SET belongs_to_user = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_account = ? AND belongs_to_user = ?
 `
 
 // TransferAccountOwnership does a thing.
@@ -386,8 +387,8 @@ func (q *SQLQuerier) TransferAccountOwnership(ctx context.Context, accountID str
 }
 
 const addUserToAccountQuery = `
-	INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,account_roles)
-	VALUES (?,?,?,?)
+	INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,account_roles,created_on)
+	VALUES (?,?,?,?,UNIX_TIMESTAMP())
 `
 
 // AddUserToAccount does a thing.

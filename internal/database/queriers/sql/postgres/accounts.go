@@ -141,29 +141,29 @@ func (q *SQLQuerier) scanAccounts(ctx context.Context, rows database.ResultItera
 }
 
 const getAccountQuery = `
-	SELECT 
-		accounts.id, 
-		accounts.name, 
-		accounts.billing_status, 
-		accounts.contact_email, 
-		accounts.contact_phone, 
-		accounts.payment_processor_customer_id, 
-		accounts.subscription_plan_id, 
-		accounts.created_on, 
-		accounts.last_updated_on, 
-		accounts.archived_on, 
-		accounts.belongs_to_user, 
-		account_user_memberships.id, 
-		account_user_memberships.belongs_to_user, 
-		account_user_memberships.belongs_to_account, 
-		account_user_memberships.account_roles, 
-		account_user_memberships.default_account, 
-		account_user_memberships.created_on, 
+	SELECT
+		accounts.id,
+		accounts.name,
+		accounts.billing_status,
+		accounts.contact_email,
+		accounts.contact_phone,
+		accounts.payment_processor_customer_id,
+		accounts.subscription_plan_id,
+		accounts.created_on,
+		accounts.last_updated_on,
+		accounts.archived_on,
+		accounts.belongs_to_user,
+		account_user_memberships.id,
+		account_user_memberships.belongs_to_user,
+		account_user_memberships.belongs_to_account,
+		account_user_memberships.account_roles,
+		account_user_memberships.default_account,
+		account_user_memberships.created_on,
 		account_user_memberships.last_updated_on,
-		account_user_memberships.archived_on 
+		account_user_memberships.archived_on
 	FROM accounts
-	JOIN account_user_memberships ON account_user_memberships.belongs_to_account = accounts.id 
-	WHERE accounts.archived_on IS NULL 
+	JOIN account_user_memberships ON account_user_memberships.belongs_to_account = accounts.id
+	WHERE accounts.archived_on IS NULL
 	AND accounts.belongs_to_user = $1
 	AND accounts.id = $2
 `
@@ -231,10 +231,6 @@ func (q *SQLQuerier) GetAllAccountsCount(ctx context.Context) (uint64, error) {
 	return count, nil
 }
 
-var (
-	accountAndMembershipColumns = append(accountsTableColumns, accountsUserMembershipTableColumns...)
-)
-
 // buildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given account,
 // and returns both the query and the relevant args to pass to the query executor.
 func (q *SQLQuerier) buildGetAccountsQuery(ctx context.Context, userID string, forAdmin bool, filter *types.QueryFilter) (query string, args []interface{}) {
@@ -256,7 +252,7 @@ func (q *SQLQuerier) buildGetAccountsQuery(ctx context.Context, userID string, f
 	totalCountQuery, totalCountQueryArgs := q.buildTotalCountQuery(ctx, accountsTableName, nil, nil, userOwnershipColumn, userID, forAdmin, includeArchived)
 
 	builder := q.sqlBuilder.Select(append(
-		accountAndMembershipColumns,
+		append(accountsTableColumns, accountsUserMembershipTableColumns...),
 		fmt.Sprintf("(%s) as total_count", totalCountQuery),
 		fmt.Sprintf("(%s) as filtered_count", filteredCountQuery),
 	)...).

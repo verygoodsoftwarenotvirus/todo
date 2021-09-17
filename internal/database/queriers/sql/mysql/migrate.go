@@ -1,23 +1,17 @@
-package postgres
+package mysql
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
-	"sync"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"strings"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/GuiaBolso/darwin"
-	postgres "github.com/lib/pq"
-	"github.com/luna-duclos/instrumentedsql"
 	"github.com/segmentio/ksuid"
 )
 
@@ -29,38 +23,12 @@ const (
 	defaultTestUserTwoFactorSecret = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="
 )
 
-var instrumentedDriverRegistration sync.Once
-
-// ProvidePostgresDB provides an instrumented postgres db.
-func ProvidePostgresDB(logger logging.Logger, connectionDetails database.ConnectionDetails) (*sql.DB, error) {
-	logger.WithValue(keys.ConnectionDetailsKey, connectionDetails).Debug("Establishing connection to postgres")
-
-	instrumentedDriverRegistration.Do(func() {
-		sql.Register(
-			driverName,
-			instrumentedsql.WrapDriver(
-				&postgres.Driver{},
-				instrumentedsql.WithOmitArgs(),
-				instrumentedsql.WithTracer(tracing.NewInstrumentedSQLTracer("postgres_connection")),
-				instrumentedsql.WithLogger(tracing.NewInstrumentedSQLLogger(logger)),
-			),
-		)
-	})
-
-	db, err := sql.Open(driverName, string(connectionDetails))
-	if err != nil {
-		return nil, err
-	}
-
-	return db, nil
-}
-
 const testUserExistenceQuery = `
 	SELECT users.id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.service_roles, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.archived_on IS NULL AND users.username = ? AND users.two_factor_secret_verified_on IS NOT NULL
 `
 
 const testUserCreationQuery = `
-	INSERT INTO users (id,username,hashed_password,two_factor_secret,reputation,service_roles,two_factor_secret_verified_on) VALUES (?,?,?,?,?,?,extract(epoch FROM NOW()))
+	INSERT INTO users (id,username,hashed_password,two_factor_secret,avatar_src,reputation,reputation_explanation,service_roles,two_factor_secret_verified_on,created_on) VALUES (?,?,?,?,?,?,?,?,UNIX_TIMESTAMP(),UNIX_TIMESTAMP())
 `
 
 // Migrate is a simple wrapper around the core querier Migrate call.
@@ -93,7 +61,9 @@ func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserCon
 				testUserConfig.Username,
 				testUserConfig.HashedPassword,
 				defaultTestUserTwoFactorSecret,
+				"",
 				types.GoodStandingAccountStatus,
+				"",
 				authorization.ServiceAdminRole.String(),
 			}
 
@@ -119,127 +89,145 @@ func (q *SQLQuerier) Migrate(ctx context.Context, maxAttempts uint8, testUserCon
 var (
 	migrations = []darwin.Migration{
 		{
-			Version:     0.0,
-			Description: "create sessions table for session manager",
-			Script: `
-			CREATE TABLE sessions (
-				token TEXT PRIMARY KEY,
-				data BYTEA NOT NULL,
-				expiry TIMESTAMPTZ NOT NULL,
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW())
-			);`,
-		},
-		{
 			Version:     0.01,
 			Description: "create sessions table for session manager",
-			Script:      `CREATE INDEX sessions_expiry_idx ON sessions (expiry);`,
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS sessions (",
+				"`token` CHAR(43) PRIMARY KEY,",
+				"`data` BLOB NOT NULL,",
+				"`expiry` TIMESTAMP(6) NOT NULL,",
+				"`created_on` BIGINT UNSIGNED",
+				");",
+			}, "\n"),
 		},
 		{
 			Version:     0.02,
-			Description: "create users table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS users (
-				id CHAR(27) NOT NULL PRIMARY KEY,
-				username TEXT NOT NULL,
-				avatar_src TEXT,
-				hashed_password TEXT NOT NULL,
-				password_last_changed_on INTEGER,
-				requires_password_change BOOLEAN NOT NULL DEFAULT 'false',
-				two_factor_secret TEXT NOT NULL,
-				two_factor_secret_verified_on BIGINT DEFAULT NULL,
-				service_roles TEXT NOT NULL DEFAULT 'service_user',
-				reputation TEXT NOT NULL DEFAULT 'unverified',
-				reputation_explanation TEXT NOT NULL DEFAULT '',
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				last_updated_on BIGINT DEFAULT NULL,
-				archived_on BIGINT DEFAULT NULL,
-				UNIQUE("username")
-			);`,
+			Description: "create sessions table for session manager",
+			Script:      "CREATE INDEX sessions_expiry_idx ON sessions (expiry);",
 		},
 		{
 			Version:     0.03,
-			Description: "create accounts table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS accounts (
-				id CHAR(27) NOT NULL PRIMARY KEY,
-				name TEXT NOT NULL,
-				billing_status TEXT NOT NULL DEFAULT 'unpaid',
-				contact_email TEXT NOT NULL DEFAULT '',
-				contact_phone TEXT NOT NULL DEFAULT '',
-				payment_processor_customer_id TEXT NOT NULL DEFAULT '',
-				subscription_plan_id TEXT,
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				last_updated_on BIGINT DEFAULT NULL,
-				archived_on BIGINT DEFAULT NULL,
-				belongs_to_user CHAR(27) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-				UNIQUE("belongs_to_user", "name")
-			);`,
+			Description: "create users table",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS users (",
+				"    `id` CHAR(27) NOT NULL,",
+				"    `username` VARCHAR(128) NOT NULL,",
+				"    `avatar_src` LONGTEXT NOT NULL,",
+				"    `hashed_password` VARCHAR(100) NOT NULL,",
+				"    `requires_password_change` BOOLEAN NOT NULL DEFAULT false,",
+				"    `password_last_changed_on` INTEGER UNSIGNED,",
+				"    `two_factor_secret` VARCHAR(256) NOT NULL,",
+				"    `two_factor_secret_verified_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `service_roles` LONGTEXT NOT NULL,",
+				"    `reputation` VARCHAR(64) NOT NULL,",
+				"    `reputation_explanation` VARCHAR(1024) NOT NULL,",
+				"    `created_on` BIGINT UNSIGNED NOT NULL,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    UNIQUE (`username`)",
+				");",
+			}, "\n"),
 		},
 		{
 			Version:     0.04,
-			Description: "create account user memberships table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS account_user_memberships (
-				id CHAR(27) NOT NULL PRIMARY KEY,
-				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
-				belongs_to_user CHAR(27) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-				default_account BOOLEAN NOT NULL DEFAULT 'false',
-				account_roles TEXT NOT NULL DEFAULT 'account_user',
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				last_updated_on BIGINT DEFAULT NULL,
-				archived_on BIGINT DEFAULT NULL,
-				UNIQUE("belongs_to_account", "belongs_to_user")
-			);`,
+			Description: "create accounts table",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS accounts (",
+				"    `id` CHAR(27) NOT NULL,",
+				"    `name` LONGTEXT NOT NULL,",
+				"    `billing_status` TEXT NOT NULL,",
+				"    `contact_email` TEXT NOT NULL,",
+				"    `contact_phone` TEXT NOT NULL,",
+				"    `payment_processor_customer_id` TEXT NOT NULL,",
+				"    `subscription_plan_id` VARCHAR(128),",
+				"    `created_on` BIGINT UNSIGNED NOT NULL,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `belongs_to_user` CHAR(27) NOT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    FOREIGN KEY (`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE",
+				");",
+			}, "\n"),
 		},
 		{
 			Version:     0.05,
-			Description: "create API clients table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS api_clients (
-				id CHAR(27) NOT NULL PRIMARY KEY,
-				name TEXT DEFAULT '',
-				client_id TEXT NOT NULL,
-				secret_key BYTEA NOT NULL,
-				permissions BIGINT NOT NULL DEFAULT 0,
-				admin_permissions BIGINT NOT NULL DEFAULT 0,
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				last_updated_on BIGINT DEFAULT NULL,
-				archived_on BIGINT DEFAULT NULL,
-				belongs_to_user CHAR(27) NOT NULL REFERENCES users(id) ON DELETE CASCADE
-			);`,
+			Description: "create account user memberships table",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS account_user_memberships (",
+				"    `id` CHAR(27) NOT NULL,",
+				"    `belongs_to_account` CHAR(27) NOT NULL,",
+				"    `belongs_to_user` CHAR(27) NOT NULL,",
+				"    `default_account` BOOLEAN NOT NULL DEFAULT false,",
+				"    `account_roles` LONGTEXT NOT NULL,",
+				"    `created_on` BIGINT UNSIGNED NOT NULL,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    FOREIGN KEY (`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE,",
+				"    FOREIGN KEY (`belongs_to_account`) REFERENCES accounts(`id`) ON DELETE CASCADE,",
+				"    UNIQUE (`belongs_to_account`, `belongs_to_user`)",
+				");",
+			}, "\n"),
 		},
 		{
 			Version:     0.06,
-			Description: "create webhooks table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS webhooks (
-				id CHAR(27) NOT NULL PRIMARY KEY,
-				name TEXT NOT NULL,
-				content_type TEXT NOT NULL,
-				url TEXT NOT NULL,
-				method TEXT NOT NULL,
-				events TEXT NOT NULL,
-				data_types TEXT NOT NULL,
-				topics TEXT NOT NULL,
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				last_updated_on BIGINT DEFAULT NULL,
-				archived_on BIGINT DEFAULT NULL,
-				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
-			);`,
+			Description: "create API clients table",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS api_clients (",
+				"    `id` CHAR(27) NOT NULL,",
+				"    `name` VARCHAR(128),",
+				"    `client_id` VARCHAR(64) NOT NULL,",
+				"    `secret_key` BINARY(128) NOT NULL,",
+				"    `for_admin` BOOLEAN NOT NULL DEFAULT false,",
+				"    `created_on` BIGINT UNSIGNED NOT NULL,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `belongs_to_user` CHAR(27) NOT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    UNIQUE (`name`, `belongs_to_user`),",
+				"    FOREIGN KEY (`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE",
+				");",
+			}, "\n"),
 		},
 		{
 			Version:     0.07,
+			Description: "create webhooks table",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS webhooks (",
+				"    `id` CHAR(27) NOT NULL,",
+				"    `name` VARCHAR(128) NOT NULL,",
+				"    `content_type` VARCHAR(64) NOT NULL,",
+				"    `url` LONGTEXT NOT NULL,",
+				"    `method` VARCHAR(8) NOT NULL,",
+				"    `events` VARCHAR(256) NOT NULL,",
+				"    `data_types` VARCHAR(256) NOT NULL,",
+				"    `topics` VARCHAR(256) NOT NULL,",
+				"    `created_on` BIGINT UNSIGNED NOT NULL,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `belongs_to_account` CHAR(27) NOT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    FOREIGN KEY (`belongs_to_account`) REFERENCES accounts(`id`) ON DELETE CASCADE",
+				");",
+			}, "\n"),
+		},
+		{
+			Version:     0.08,
 			Description: "create items table",
-			Script: `
-			CREATE TABLE IF NOT EXISTS items (
-				id CHAR(27) NOT NULL PRIMARY KEY,
-				name TEXT NOT NULL,
-				details TEXT NOT NULL DEFAULT '',
-				created_on BIGINT NOT NULL DEFAULT extract(epoch FROM NOW()),
-				last_updated_on BIGINT DEFAULT NULL,
-				archived_on BIGINT DEFAULT NULL,
-				belongs_to_account CHAR(27) NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
-			);`,
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS items (",
+				"    `id` CHAR(27) NOT NULL,",
+				"    `name` LONGTEXT NOT NULL,",
+				"    `details` LONGTEXT NOT NULL,",
+				"    `created_on` BIGINT UNSIGNED NOT NULL,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `archived_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `belongs_to_account` CHAR(27) NOT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    FOREIGN KEY (`belongs_to_account`) REFERENCES accounts(`id`) ON DELETE CASCADE",
+				");",
+			}, "\n"),
 		},
 	}
 )
@@ -247,7 +235,7 @@ var (
 // BuildMigrationFunc returns a sync.Once compatible function closure that will
 // migrate a postgres database.
 func (q *SQLQuerier) migrationFunc() {
-	driver := darwin.NewGenericDriver(q.db, darwin.PostgresDialect{})
+	driver := darwin.NewGenericDriver(q.db, darwin.MySQLDialect{})
 	if err := darwin.New(driver, migrations, nil).Migrate(); err != nil {
 		panic(fmt.Errorf("migrating database: %w", err))
 	}

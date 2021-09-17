@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 var _ types.AdminUserDataManager = (*SQLQuerier)(nil)
 
 const setUserReputationQuery = `
-	UPDATE users SET reputation = ?, reputation_explanation = ? WHERE archived_on IS NULL AND id = ?
+	UPDATE users SET reputation = ?, reputation_explanation = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND id = ?
 `
 
 // UpdateUserReputation updates a user's account status.

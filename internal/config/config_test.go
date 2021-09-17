@@ -2,7 +2,6 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -65,11 +64,10 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				},
 			},
 			Database: config.Config{
-				Provider:                  "postgres",
-				MetricsCollectionInterval: 2 * time.Second,
-				Debug:                     true,
-				RunMigrations:             true,
-				ConnectionDetails:         database.ConnectionDetails("postgres://username:passwords@host/table"),
+				Provider:          "postgres",
+				Debug:             true,
+				RunMigrations:     true,
+				ConnectionDetails: database.ConnectionDetails("postgres://username:passwords@host/table"),
 			},
 		}
 
@@ -94,11 +92,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 }
 
 func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
-	T.Parallel()
-
 	T.Run("supported providers", func(t *testing.T) {
-		t.Parallel()
-
 		ctx := context.Background()
 		logger := logging.NewNoopLogger()
 
@@ -109,27 +103,13 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 				},
 			}
 
-			x, err := ProvideDatabaseClient(ctx, logger, &sql.DB{}, cfg)
+			x, err := ProvideDatabaseClient(ctx, logger, cfg)
 			assert.NotNil(t, x)
 			assert.NoError(t, err)
 		}
 	})
 
-	T.Run("with nil *sql.DB", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		logger := logging.NewNoopLogger()
-		cfg := &InstanceConfig{}
-
-		x, err := ProvideDatabaseClient(ctx, logger, nil, cfg)
-		assert.Nil(t, x)
-		assert.Error(t, err)
-	})
-
 	T.Run("with invalid provider", func(t *testing.T) {
-		t.Parallel()
-
 		ctx := context.Background()
 		logger := logging.NewNoopLogger()
 
@@ -139,7 +119,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 			},
 		}
 
-		x, err := ProvideDatabaseClient(ctx, logger, &sql.DB{}, cfg)
+		x, err := ProvideDatabaseClient(ctx, logger, cfg)
 		assert.Nil(t, x)
 		assert.Error(t, err)
 	})

@@ -77,11 +77,11 @@ revendor: clean-vendor vendor # frontend-vendor
 
 .PHONY: clean-wire
 clean-wire:
-	rm -f cmd/server/wire_gen.go
+	rm -f $(THIS)/internal/build/server/wire_gen.go
 
 .PHONY: wire
 wire: ensure-wire vendor
-	wire gen $(THIS)/cmd/server
+	wire gen $(THIS)/internal/build/server
 
 .PHONY: rewire
 rewire: ensure-wire clean-wire wire

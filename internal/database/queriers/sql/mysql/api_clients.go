@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -249,7 +249,7 @@ func (q *SQLQuerier) GetAPIClients(ctx context.Context, userID string, filter *t
 }
 
 const createAPIClientQuery = `
-	INSERT INTO api_clients (id,name,client_id,secret_key,belongs_to_user) VALUES (?,?,?,?,?)
+	INSERT INTO api_clients (id,name,client_id,secret_key,belongs_to_user,created_on) VALUES (?,?,?,?,?,UNIX_TIMESTAMP())
 `
 
 // CreateAPIClient creates an API client.
@@ -296,8 +296,8 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 
 const archiveAPIClientQuery = `
 	UPDATE api_clients SET
-		last_updated_on = extract(epoch FROM NOW()), 
-		archived_on = extract(epoch FROM NOW())
+		last_updated_on = UNIX_TIMESTAMP(), 
+		archived_on = UNIX_TIMESTAMP()
 	WHERE archived_on IS NULL 
 	AND belongs_to_user = ? AND id = ?
 `

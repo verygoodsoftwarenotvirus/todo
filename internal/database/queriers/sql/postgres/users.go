@@ -140,23 +140,23 @@ const getUserQuery = `
 `
 
 const getUserWithUnverifiedTwoFactorQuery = `
-	SELECT 
-		users.id, 
-		users.username, 
-		users.avatar_src, 
-		users.hashed_password, 
-		users.requires_password_change, 
-		users.password_last_changed_on, 
-		users.two_factor_secret, 
-		users.two_factor_secret_verified_on, 
-		users.service_roles, 
-		users.reputation, 
-		users.reputation_explanation, 
-		users.created_on, 
-		users.last_updated_on, 
-		users.archived_on 
-	FROM users 
-	WHERE users.archived_on IS NULL 
+	SELECT
+		users.id,
+		users.username,
+		users.avatar_src,
+		users.hashed_password,
+		users.requires_password_change,
+		users.password_last_changed_on,
+		users.two_factor_secret,
+		users.two_factor_secret_verified_on,
+		users.service_roles,
+		users.reputation,
+		users.reputation_explanation,
+		users.created_on,
+		users.last_updated_on,
+		users.archived_on
+	FROM users
+	WHERE users.archived_on IS NULL
 	AND users.id = $1
 	AND users.two_factor_secret_verified_on IS NULL
 `
@@ -193,7 +193,7 @@ func (q *SQLQuerier) getUser(ctx context.Context, userID string, withVerifiedTOT
 }
 
 const createAccountMembershipForNewUserQuery = `
-	INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,default_account,account_roles) 
+	INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,default_account,account_roles)
 	VALUES ($1,$2,$3,$4,$5)
 `
 
@@ -328,23 +328,23 @@ func (q *SQLQuerier) GetUserWithUnverifiedTwoFactorSecret(ctx context.Context, u
 }
 
 const getUserByUsernameQuery = `
-	SELECT 
-		users.id, 
-		users.username, 
-		users.avatar_src, 
-		users.hashed_password, 
-		users.requires_password_change, 
-		users.password_last_changed_on, 
-		users.two_factor_secret, 
-		users.two_factor_secret_verified_on, 
-		users.service_roles, 
-		users.reputation, 
-		users.reputation_explanation, 
-		users.created_on, 
-		users.last_updated_on, 
-		users.archived_on 
-	FROM users 
-	WHERE users.archived_on IS NULL 
+	SELECT
+		users.id,
+		users.username,
+		users.avatar_src,
+		users.hashed_password,
+		users.requires_password_change,
+		users.password_last_changed_on,
+		users.two_factor_secret,
+		users.two_factor_secret_verified_on,
+		users.service_roles,
+		users.reputation,
+		users.reputation_explanation,
+		users.created_on,
+		users.last_updated_on,
+		users.archived_on
+	FROM users
+	WHERE users.archived_on IS NULL
 	AND users.username = $1
 	AND users.two_factor_secret_verified_on IS NOT NULL
 `
@@ -378,7 +378,7 @@ func (q *SQLQuerier) GetUserByUsername(ctx context.Context, username string) (*t
 }
 
 const searchForUserByUsernameQuery = `
-	SELECT users.id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.service_roles, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username ILIKE $1 AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL	
+	SELECT users.id, users.username, users.avatar_src, users.hashed_password, users.requires_password_change, users.password_last_changed_on, users.two_factor_secret, users.two_factor_secret_verified_on, users.service_roles, users.reputation, users.reputation_explanation, users.created_on, users.last_updated_on, users.archived_on FROM users WHERE users.username ILIKE $1 AND users.archived_on IS NULL AND users.two_factor_secret_verified_on IS NOT NULL
 `
 
 // SearchForUsersByUsername fetches a list of users whose usernames begin with a given query.

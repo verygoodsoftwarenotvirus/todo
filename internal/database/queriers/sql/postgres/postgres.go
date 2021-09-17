@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/alexedwards/scs/postgresstore"
+	"github.com/alexedwards/scs/v2"
 	"sync"
 	"time"
 
@@ -17,6 +19,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/lib/pq"
+	"github.com/luna-duclos/instrumentedsql"
 )
 
 const (
@@ -38,11 +42,12 @@ type SQLQuerier struct {
 	migrateOnce sync.Once
 }
 
+var instrumentedDriverRegistration sync.Once
+
 // ProvideDatabaseClient provides a new DataManager client.
 func ProvideDatabaseClient(
 	ctx context.Context,
 	logger logging.Logger,
-	db *sql.DB,
 	cfg *dbconfig.Config,
 	shouldCreateTestUser bool,
 ) (database.DataManager, error) {
@@ -50,6 +55,25 @@ func ProvideDatabaseClient(
 
 	ctx, span := tracer.StartSpan(ctx)
 	defer span.End()
+
+	const driverName = "instrumented-postgres"
+
+	instrumentedDriverRegistration.Do(func() {
+		sql.Register(
+			driverName,
+			instrumentedsql.WrapDriver(
+				&pq.Driver{},
+				instrumentedsql.WithOmitArgs(),
+				instrumentedsql.WithTracer(tracing.NewInstrumentedSQLTracer("postgres_connection")),
+				instrumentedsql.WithLogger(tracing.NewInstrumentedSQLLogger(logger)),
+			),
+		)
+	})
+
+	db, err := sql.Open(driverName, string(cfg.ConnectionDetails))
+	if err != nil {
+		return nil, fmt.Errorf("connecting to postgres database: %w", err)
+	}
 
 	c := &SQLQuerier{
 		db:         db,
@@ -80,6 +104,10 @@ func ProvideDatabaseClient(
 	}
 
 	return c, nil
+}
+
+func (q *SQLQuerier) ProvideSessionStore() scs.Store {
+	return postgresstore.New(q.db)
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.

@@ -92,7 +92,7 @@ func (q *SQLQuerier) scanAPIClients(ctx context.Context, rows database.ResultIte
 }
 
 const getAPIClientByClientIDQuery = `
-	SELECT 
+	SELECT
 		api_clients.id,
 		api_clients.name,
 		api_clients.client_id,
@@ -102,7 +102,7 @@ const getAPIClientByClientIDQuery = `
 		api_clients.archived_on,
 		api_clients.belongs_to_user
 	FROM api_clients
-	WHERE api_clients.archived_on IS NULL 
+	WHERE api_clients.archived_on IS NULL
 	AND api_clients.client_id = $1
 `
 
@@ -136,17 +136,17 @@ func (q *SQLQuerier) GetAPIClientByClientID(ctx context.Context, clientID string
 
 const getAPIClientByDatabaseIDQuery = `
 	SELECT
-		api_clients.id, 
-		api_clients.name, 
-		api_clients.client_id, 
-		api_clients.secret_key, 
-		api_clients.created_on, 
-		api_clients.last_updated_on, 
-		api_clients.archived_on, 
+		api_clients.id,
+		api_clients.name,
+		api_clients.client_id,
+		api_clients.secret_key,
+		api_clients.created_on,
+		api_clients.last_updated_on,
+		api_clients.archived_on,
 		api_clients.belongs_to_user
 	FROM api_clients
-	WHERE api_clients.archived_on IS NULL 
-	AND api_clients.belongs_to_user = $1 
+	WHERE api_clients.archived_on IS NULL
+	AND api_clients.belongs_to_user = $1
 	AND api_clients.id = $2
 `
 
@@ -296,9 +296,9 @@ func (q *SQLQuerier) CreateAPIClient(ctx context.Context, input *types.APIClient
 
 const archiveAPIClientQuery = `
 	UPDATE api_clients SET
-		last_updated_on = extract(epoch FROM NOW()), 
+		last_updated_on = extract(epoch FROM NOW()),
 		archived_on = extract(epoch FROM NOW())
-	WHERE archived_on IS NULL 
+	WHERE archived_on IS NULL
 	AND belongs_to_user = $1 AND id = $2
 `
 

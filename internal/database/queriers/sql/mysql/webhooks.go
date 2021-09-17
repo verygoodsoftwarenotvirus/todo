@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -227,7 +227,7 @@ func (q *SQLQuerier) GetWebhooks(ctx context.Context, accountID string, filter *
 }
 
 const createWebhookQuery = `
-	INSERT INTO webhooks (id,name,content_type,url,method,events,data_types,topics,belongs_to_account) VALUES (?,?,?,?,?,?,?,?,?)
+	INSERT INTO webhooks (id,name,content_type,url,method,events,data_types,topics,belongs_to_account,created_on) VALUES (?,?,?,?,?,?,?,?,?,UNIX_TIMESTAMP())
 `
 
 // CreateWebhook creates a webhook in a database.
@@ -288,7 +288,7 @@ UPDATE webhooks SET
 	events = ?, 
 	data_types = ?, 
 	topics = ?, 
-	last_updated_on = extract(epoch FROM NOW())
+	last_updated_on = UNIX_TIMESTAMP()
 WHERE archived_on IS NULL 
 AND belongs_to_account = ? 
 AND id = ?
@@ -331,8 +331,8 @@ func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook) 
 
 const archiveWebhookQuery = `
 UPDATE webhooks SET
-	last_updated_on = extract(epoch FROM NOW()), 
-	archived_on = extract(epoch FROM NOW())
+	last_updated_on = UNIX_TIMESTAMP(), 
+	archived_on = UNIX_TIMESTAMP()
 WHERE archived_on IS NULL 
 AND belongs_to_account = ?
 AND id = ?

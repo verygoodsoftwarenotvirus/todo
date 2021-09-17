@@ -2,20 +2,13 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
-	"os"
-	"strings"
-	"time"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/sql/mysql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/sql/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mysql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -28,6 +21,8 @@ import (
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
+	"os"
+	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
@@ -39,14 +34,9 @@ const (
 	TestingRunMode runMode = "testing"
 	// ProductionRunMode is the run mode for a production environment.
 	ProductionRunMode runMode = "production"
-	// DefaultRunMode is the default run mode.
-	DefaultRunMode = DevelopmentRunMode
-	// DefaultStartupDeadline is the default amount of time we allow for server startup.
-	DefaultStartupDeadline = time.Minute
 )
 
 var (
-	errNilDatabaseConnection   = errors.New("nil DB connection provided")
 	errNilConfig               = errors.New("nil config provided")
 	errInvalidDatabaseProvider = errors.New("invalid database provider")
 )
@@ -154,26 +144,19 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 // NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
-func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *InstanceConfig) (database.DataManager, error) {
-	if rawDB == nil {
-		return nil, errNilDatabaseConnection
-	}
-
+func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, cfg *InstanceConfig) (database.DataManager, error) {
 	if cfg == nil {
 		return nil, errNilConfig
 	}
 
-	var qb querybuilding.SQLQueryBuilder
 	shouldCreateTestUser := cfg.Meta.RunMode != ProductionRunMode
 
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
-	case "mysql":
-		qb = mysql.ProvideMySQL(logger)
-	case "postgres":
-		return postgres.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, shouldCreateTestUser)
+	case dbconfig.MySQLProvider:
+		return mysql.ProvideDatabaseClient(ctx, logger, &cfg.Database, shouldCreateTestUser)
+	case dbconfig.PostgresProvider:
+		return postgres.ProvideDatabaseClient(ctx, logger, &cfg.Database, shouldCreateTestUser)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabaseProvider, cfg.Database.Provider)
 	}
-
-	return queriers.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, qb, shouldCreateTestUser)
 }

@@ -180,12 +180,11 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		},
 		Server: localServer,
 		Database: dbconfig.Config{
-			Debug:                     true,
-			RunMigrations:             true,
-			MaxPingAttempts:           maxAttempts,
-			Provider:                  postgres,
-			ConnectionDetails:         devPostgresDBConnDetails,
-			MetricsCollectionInterval: time.Second,
+			Debug:             true,
+			RunMigrations:     true,
+			MaxPingAttempts:   maxAttempts,
+			Provider:          postgres,
+			ConnectionDetails: devPostgresDBConnDetails,
 			CreateTestUser: &types.TestUserCreationConfig{
 				Username:       "username",
 				Password:       defaultPassword,
@@ -265,12 +264,11 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		},
 		Server: localServer,
 		Database: dbconfig.Config{
-			Debug:                     true,
-			RunMigrations:             true,
-			Provider:                  postgres,
-			ConnectionDetails:         devPostgresDBConnDetails,
-			MaxPingAttempts:           maxAttempts,
-			MetricsCollectionInterval: time.Second,
+			Debug:             true,
+			RunMigrations:     true,
+			Provider:          postgres,
+			ConnectionDetails: devPostgresDBConnDetails,
+			MaxPingAttempts:   maxAttempts,
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
@@ -348,12 +346,11 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				StartupDeadline: startupDeadline,
 			},
 			Database: dbconfig.Config{
-				Debug:                     false,
-				RunMigrations:             true,
-				Provider:                  dbVendor,
-				MaxPingAttempts:           maxAttempts,
-				MetricsCollectionInterval: 2 * time.Second,
-				ConnectionDetails:         database.ConnectionDetails(dbDetails),
+				Debug:             false,
+				RunMigrations:     true,
+				Provider:          dbVendor,
+				MaxPingAttempts:   maxAttempts,
+				ConnectionDetails: database.ConnectionDetails(dbDetails),
 				CreateTestUser: &types.TestUserCreationConfig{
 					Username:       "exampleUser",
 					Password:       "integration-tests-are-cool",

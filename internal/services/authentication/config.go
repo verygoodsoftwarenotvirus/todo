@@ -10,8 +10,6 @@ import (
 const (
 	// DefaultCookieName is the default Cookie.BucketName.
 	DefaultCookieName = "todocookie"
-	// DefaultCookieDomain is the default Cookie.Domain.
-	DefaultCookieDomain = "localhost"
 	// DefaultCookieLifetime is the how long a cookie is valid.
 	DefaultCookieLifetime = 24 * time.Hour
 

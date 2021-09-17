@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -1029,7 +1029,9 @@ func TestQuerier_CreateUser(T *testing.T) {
 			exampleUserCreationInput.Username,
 			exampleUserCreationInput.HashedPassword,
 			exampleUserCreationInput.TwoFactorSecret,
+			"",
 			types.UnverifiedAccountStatus,
+			"",
 			authorization.ServiceUserRole.String(),
 		}
 
@@ -1046,6 +1048,7 @@ func TestQuerier_CreateUser(T *testing.T) {
 			types.UnpaidAccountBillingStatus,
 			accountCreationInput.ContactEmail,
 			accountCreationInput.ContactPhone,
+			"",
 			&idMatcher{},
 		}
 

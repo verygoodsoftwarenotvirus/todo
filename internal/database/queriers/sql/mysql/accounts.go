@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -352,12 +352,12 @@ func (q *SQLQuerier) GetAccountsForAdmin(ctx context.Context, filter *types.Quer
 }
 
 const accountCreationQuery = `
-	INSERT INTO accounts (id,name,billing_status,contact_email,contact_phone,belongs_to_user) VALUES (?,?,?,?,?,?)
+	INSERT INTO accounts (id,name,billing_status,contact_email,contact_phone,payment_processor_customer_id,created_on,belongs_to_user) VALUES (?,?,?,?,?,?,UNIX_TIMESTAMP(),?)
 `
 
 const addUserToAccountDuringCreationQuery = `
-	INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,account_roles)
-	VALUES (?,?,?,?)
+	INSERT INTO account_user_memberships (id,belongs_to_user,belongs_to_account,account_roles,created_on)
+	VALUES (?,?,?,?,UNIX_TIMESTAMP())
 `
 
 // CreateAccount creates an account in the database.
@@ -383,6 +383,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 		types.UnpaidAccountBillingStatus,
 		input.ContactEmail,
 		input.ContactPhone,
+		"",
 		input.BelongsToUser,
 	}
 
@@ -432,7 +433,7 @@ func (q *SQLQuerier) CreateAccount(ctx context.Context, input *types.AccountCrea
 }
 
 const updateAccountQuery = `
-	UPDATE accounts SET name = ?, contact_email = ?, contact_phone = ?, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?
+	UPDATE accounts SET name = ?, contact_email = ?, contact_phone = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?
 `
 
 // UpdateAccount updates a particular account. Note that UpdateAccount expects the provided input to have a valid ID.
@@ -465,7 +466,7 @@ func (q *SQLQuerier) UpdateAccount(ctx context.Context, updated *types.Account) 
 }
 
 const archiveAccountQuery = `
-	UPDATE accounts SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?
+	UPDATE accounts SET last_updated_on = UNIX_TIMESTAMP(), archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_user = ? AND id = ?
 `
 
 // ArchiveAccount archives an account from the database by its ID.

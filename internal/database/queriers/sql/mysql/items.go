@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -288,7 +288,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 }
 
 const itemCreationQuery = `
-	INSERT INTO items (id,name,details,belongs_to_account) VALUES (?,?,?,?)
+	INSERT INTO items (id,name,details,belongs_to_account,created_on) VALUES (?,?,?,?,UNIX_TIMESTAMP())
 `
 
 // CreateItem creates an item in the database.
@@ -329,7 +329,7 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 }
 
 const updateItemQuery = `
-	UPDATE items SET name = ?, details = ?, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?
+	UPDATE items SET name = ?, details = ?, last_updated_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?
 `
 
 // UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
@@ -362,7 +362,7 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item) error 
 }
 
 const archiveItemQuery = `
-	UPDATE items SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?
+	UPDATE items SET archived_on = UNIX_TIMESTAMP() WHERE archived_on IS NULL AND belongs_to_account = ? AND id = ?
 `
 
 // ArchiveItem archives an item from the database by its ID.

@@ -1,4 +1,4 @@
-package postgres
+package mysql
 
 import (
 	"context"
@@ -487,6 +487,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 			types.UnpaidAccountBillingStatus,
 			exampleInput.ContactEmail,
 			exampleInput.ContactPhone,
+			"",
 			exampleInput.BelongsToUser,
 		}
 

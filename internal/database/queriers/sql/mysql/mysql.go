@@ -1,10 +1,14 @@
-package postgres
+package mysql
 
 import (
 	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-sql-driver/mysql"
+	"github.com/luna-duclos/instrumentedsql"
 	"sync"
 	"time"
 
@@ -38,11 +42,12 @@ type SQLQuerier struct {
 	migrateOnce sync.Once
 }
 
+var instrumentedDriverRegistration sync.Once
+
 // ProvideDatabaseClient provides a new DataManager client.
 func ProvideDatabaseClient(
 	ctx context.Context,
 	logger logging.Logger,
-	db *sql.DB,
 	cfg *dbconfig.Config,
 	shouldCreateTestUser bool,
 ) (database.DataManager, error) {
@@ -50,6 +55,25 @@ func ProvideDatabaseClient(
 
 	ctx, span := tracer.StartSpan(ctx)
 	defer span.End()
+
+	logger.WithValue(keys.ConnectionDetailsKey, cfg.ConnectionDetails).Debug("Establishing connection to maria DB")
+
+	instrumentedDriverRegistration.Do(func() {
+		sql.Register(
+			driverName,
+			instrumentedsql.WrapDriver(
+				&mysql.MySQLDriver{},
+				instrumentedsql.WithOmitArgs(),
+				instrumentedsql.WithTracer(tracing.NewInstrumentedSQLTracer("mysql_connection")),
+				instrumentedsql.WithLogger(tracing.NewInstrumentedSQLLogger(logger)),
+			),
+		)
+	})
+
+	db, err := sql.Open(driverName, string(cfg.ConnectionDetails))
+	if err != nil {
+		return nil, fmt.Errorf("opening connection to database: %w", err)
+	}
 
 	c := &SQLQuerier{
 		db:         db,
@@ -72,7 +96,7 @@ func ProvideDatabaseClient(
 			testUser = cfg.CreateTestUser
 		}
 
-		if err := c.Migrate(ctx, cfg.MaxPingAttempts, testUser); err != nil {
+		if err = c.Migrate(ctx, cfg.MaxPingAttempts, testUser); err != nil {
 			return nil, observability.PrepareError(err, logger, span, "migrating database")
 		}
 
@@ -80,6 +104,10 @@ func ProvideDatabaseClient(
 	}
 
 	return c, nil
+}
+
+func (q *SQLQuerier) ProvideSessionStore() scs.Store {
+	return mysqlstore.New(q.db)
 }
 
 // IsReady is a simple wrapper around the core querier IsReady call.

@@ -33,6 +33,8 @@ const (
 
 // QueryFilter represents all the filters a User could apply to a list query.
 type QueryFilter struct {
+	_ struct{}
+
 	SortBy          sortType `json:"sortBy"`
 	Page            uint64   `json:"page"`
 	CreatedAfter    uint64   `json:"createdBefore,omitempty"`

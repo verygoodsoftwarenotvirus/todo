@@ -33,6 +33,8 @@ func init() {
 type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
+		_ struct{}
+
 		AccountName  string   `json:"name"`
 		AccountID    string   `json:"accountID"`
 		AccountRoles []string `json:"-"`
@@ -40,6 +42,8 @@ type (
 
 	// SessionContextData represents what we encode in our passwords cookies.
 	SessionContextData struct {
+		_ struct{}
+
 		AccountPermissions map[string]authorization.AccountRolePermissionsChecker `json:"-"`
 		Requester          RequesterInfo                                          `json:"-"`
 		ActiveAccountID    string                                                 `json:"-"`
@@ -47,6 +51,8 @@ type (
 
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
+		_ struct{}
+
 		ServicePermissions    authorization.ServiceRolePermissionChecker `json:"-"`
 		Reputation            accountStatus                              `json:"-"`
 		ReputationExplanation string                                     `json:"-"`
@@ -55,6 +61,8 @@ type (
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
+		_ struct{}
+
 		UserReputation            accountStatus `json:"accountStatus,omitempty"`
 		UserReputationExplanation string        `json:"reputationExplanation"`
 		ActiveAccount             string        `json:"activeAccount,omitempty"`
@@ -63,11 +71,15 @@ type (
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
 	ChangeActiveAccountInput struct {
+		_ struct{}
+
 		AccountID string `json:"accountID"`
 	}
 
 	// PASETOCreationInput is used to create a PASETO.
 	PASETOCreationInput struct {
+		_ struct{}
+
 		ClientID          string `json:"clientID"`
 		AccountID         string `json:"accountID"`
 		RequestTime       int64  `json:"requestTime"`
@@ -76,6 +88,8 @@ type (
 
 	// PASETOResponse is used to respond to a PASETO request.
 	PASETOResponse struct {
+		_ struct{}
+
 		Token     string `json:"token"`
 		ExpiresAt string `json:"expiresAt"`
 	}

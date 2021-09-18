@@ -124,8 +124,8 @@ format: format-backend format-frontend
 
 .PHONY: check-backend-formatting
 check-backend-formatting: vendor
-	docker build --tag check-formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
-	docker run --rm check-formatting:latest
+	docker build --tag check-formatting --file environments/testing/dockerfiles/formatting.Dockerfile .
+	docker run --rm check-formatting
 
 .PHONY: check-frontend-formatting
 check-frontend-formatting:
@@ -142,13 +142,13 @@ docker-lint:
 
 .PHONY: lint
 lint:
-	@docker pull golangci/golangci-lint:latest
+	@docker pull golangci/golangci-lint:v1.42
 	docker run \
 		--rm \
 		--volume `pwd`:`pwd` \
 		--workdir=`pwd` \
 		--env=GO111MODULE=on \
-		golangci/golangci-lint:latest golangci-lint run --config=.golangci.yml ./...
+		golangci/golangci-lint:v1.42 golangci-lint run --config=.golangci.yml ./...
 
 .PHONY: clean-coverage
 clean-coverage:

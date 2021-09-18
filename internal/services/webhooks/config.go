@@ -8,6 +8,8 @@ import (
 
 // Config represents our database configuration.
 type Config struct {
+	_ struct{}
+
 	Debug   bool `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 	Enabled bool `json:"enabled" mapstructure:"enabled" toml:"enabled,omitempty"`
 }

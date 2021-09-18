@@ -13,6 +13,8 @@ const (
 
 // Config contains settings regarding search indices.
 type Config struct {
+	_ struct{}
+
 	Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 }
 

@@ -21,6 +21,8 @@ type (
 
 	// Account represents an account.
 	Account struct {
+		_ struct{}
+
 		ArchivedOn                 *uint64                  `json:"archivedOn"`
 		SubscriptionPlanID         *uint64                  `json:"subscriptionPlanID"`
 		LastUpdatedOn              *uint64                  `json:"lastUpdatedOn"`
@@ -37,12 +39,16 @@ type (
 
 	// AccountList represents a list of accounts.
 	AccountList struct {
+		_ struct{}
+
 		Accounts []*Account `json:"accounts"`
 		Pagination
 	}
 
 	// AccountCreationInput represents what a User could set as input for creating accounts.
 	AccountCreationInput struct {
+		_ struct{}
+
 		ID            string `json:"-"`
 		Name          string `json:"name"`
 		ContactEmail  string `json:"contactEmail"`
@@ -52,6 +58,8 @@ type (
 
 	// AccountUpdateInput represents what a User could set as input for updating accounts.
 	AccountUpdateInput struct {
+		_ struct{}
+
 		Name          string `json:"name"`
 		ContactEmail  string `json:"contactEmail"`
 		ContactPhone  string `json:"contactPhone"`

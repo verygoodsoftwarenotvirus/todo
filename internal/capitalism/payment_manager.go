@@ -10,6 +10,8 @@ import (
 type (
 	// SubscriptionPlan describes a plan you pay on a recurring monthly basis for.
 	SubscriptionPlan struct {
+		_ struct{}
+
 		ID    string
 		Name  string
 		Price uint32

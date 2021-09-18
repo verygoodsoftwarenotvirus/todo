@@ -25,6 +25,8 @@ func init() {
 type (
 	// Item represents an item.
 	Item struct {
+		_ struct{}
+
 		ArchivedOn       *uint64 `json:"archivedOn"`
 		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
 		Name             string  `json:"name"`
@@ -36,12 +38,16 @@ type (
 
 	// ItemList represents a list of items.
 	ItemList struct {
+		_ struct{}
+
 		Items []*Item `json:"items"`
 		Pagination
 	}
 
 	// ItemCreationInput represents what a user could set as input for creating items.
 	ItemCreationInput struct {
+		_ struct{}
+
 		ID               string `json:"-"`
 		Name             string `json:"name"`
 		Details          string `json:"details"`
@@ -50,6 +56,8 @@ type (
 
 	// ItemDatabaseCreationInput represents what a user could set as input for creating items.
 	ItemDatabaseCreationInput struct {
+		_ struct{}
+
 		ID               string `json:"id"`
 		Name             string `json:"name"`
 		Details          string `json:"details"`
@@ -58,6 +66,8 @@ type (
 
 	// ItemUpdateInput represents what a user could set as input for updating items.
 	ItemUpdateInput struct {
+		_ struct{}
+
 		Name             string `json:"name"`
 		Details          string `json:"details"`
 		BelongsToAccount string `json:"-"`

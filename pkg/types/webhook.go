@@ -10,6 +10,8 @@ import (
 type (
 	// Webhook represents a webhook listener, an endpoint to send an HTTP request to upon an event.
 	Webhook struct {
+		_ struct{}
+
 		LastUpdatedOn    *uint64  `json:"lastUpdatedOn"`
 		ArchivedOn       *uint64  `json:"archivedOn"`
 		Name             string   `json:"name"`
@@ -26,6 +28,8 @@ type (
 
 	// WebhookCreationInput represents what a User could set as input for creating a webhook.
 	WebhookCreationInput struct {
+		_ struct{}
+
 		ID               string   `json:"-"`
 		Name             string   `json:"name"`
 		ContentType      string   `json:"contentType"`
@@ -39,6 +43,8 @@ type (
 
 	// WebhookUpdateInput represents what a User could set as input for updating a webhook.
 	WebhookUpdateInput struct {
+		_ struct{}
+
 		Name             string   `json:"name"`
 		ContentType      string   `json:"contentType"`
 		URL              string   `json:"url"`
@@ -51,6 +57,8 @@ type (
 
 	// WebhookList represents a list of webhooks.
 	WebhookList struct {
+		_ struct{}
+
 		Webhooks []*Webhook `json:"webhooks"`
 		Pagination
 	}

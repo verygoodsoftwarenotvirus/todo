@@ -10,6 +10,8 @@ import (
 type (
 	// APIClient represents a user-authorized API client.
 	APIClient struct {
+		_ struct{}
+
 		LastUpdatedOn *uint64 `json:"lastUpdatedOn"`
 		ArchivedOn    *uint64 `json:"archivedOn"`
 		Name          string  `json:"name"`
@@ -22,12 +24,16 @@ type (
 
 	// APIClientList is a response struct containing a list of API clients.
 	APIClientList struct {
+		_ struct{}
+
 		Clients []*APIClient `json:"clients"`
 		Pagination
 	}
 
 	// APIClientCreationInput is a struct for use when creating API clients.
 	APIClientCreationInput struct {
+		_ struct{}
+
 		UserLoginInput
 		ID            string `json:"-"`
 		Name          string `json:"clientName"`
@@ -38,6 +44,8 @@ type (
 
 	// APIClientCreationResponse is a struct for informing users of what their API client's secret key is.
 	APIClientCreationResponse struct {
+		_ struct{}
+
 		ClientID     string `json:"clientID"`
 		ClientSecret string `json:"clientSecret"`
 		ID           string `json:"id"`

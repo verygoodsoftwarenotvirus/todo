@@ -22,6 +22,8 @@ const (
 type (
 	// CookieConfig holds our cookie settings.
 	CookieConfig struct {
+		_ struct{}
+
 		Name       string        `json:"name" mapstructure:"name" toml:"name,omitempty"`
 		Domain     string        `json:"domain" mapstructure:"domain" toml:"domain,omitempty"`
 		HashKey    string        `json:"hash_key" mapstructure:"hash_key" toml:"hash_key,omitempty"`
@@ -32,6 +34,8 @@ type (
 
 	// PASETOConfig holds our PASETO settings.
 	PASETOConfig struct {
+		_ struct{}
+
 		Issuer       string        `json:"issuer" mapstructure:"issuer" toml:"issuer,omitempty"`
 		LocalModeKey []byte        `json:"local_mode_key" mapstructure:"local_mode_key" toml:"local_mode_key,omitempty"`
 		Lifetime     time.Duration `json:"lifetime" mapstructure:"lifetime" toml:"lifetime,omitempty"`
@@ -39,6 +43,8 @@ type (
 
 	// Config represents our passwords configuration.
 	Config struct {
+		_ struct{}
+
 		PASETO                PASETOConfig `json:"paseto" mapstructure:"paseto" toml:"paseto,omitempty"`
 		Cookies               CookieConfig `json:"cookies" mapstructure:"cookies" toml:"cookies,omitempty"`
 		Debug                 bool         `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`

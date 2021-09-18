@@ -15,6 +15,8 @@ type (
 
 	// UserReputationUpdateInput represents what an admin User could provide as input for changing statuses.
 	UserReputationUpdateInput struct {
+		_ struct{}
+
 		NewReputation accountStatus `json:"newReputation"`
 		Reason        string        `json:"reason"`
 		TargetUserID  string        `json:"targetUserID"`

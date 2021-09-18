@@ -17,8 +17,6 @@
 # Vim
 *.swp
 
-# Sqlite databases
-*.db
 
 # OSX
 .DS_Store

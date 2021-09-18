@@ -9,9 +9,6 @@ import (
 var (
 	// Providers represents what we provide to dependency injectors.
 	Providers = wire.NewSet(
-		ProvideAdminAuditManager,
-		ProvideAuthAuditManager,
-		ProvideAuditLogEntryDataManager,
 		ProvideItemDataManager,
 		ProvideUserDataManager,
 		ProvideAdminUserDataManager,
@@ -21,21 +18,6 @@ var (
 		ProvideWebhookDataManager,
 	)
 )
-
-// ProvideAdminAuditManager is an arbitrary function for dependency injection's sake.
-func ProvideAdminAuditManager(db DataManager) types.AdminAuditManager {
-	return db
-}
-
-// ProvideAuthAuditManager is an arbitrary function for dependency injection's sake.
-func ProvideAuthAuditManager(db DataManager) types.AuthAuditManager {
-	return db
-}
-
-// ProvideAuditLogEntryDataManager is an arbitrary function for dependency injection's sake.
-func ProvideAuditLogEntryDataManager(db DataManager) types.AuditLogEntryDataManager {
-	return db
-}
 
 // ProvideAccountDataManager is an arbitrary function for dependency injection's sake.
 func ProvideAccountDataManager(db DataManager) types.AccountDataManager {

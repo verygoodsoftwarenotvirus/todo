@@ -71,8 +71,8 @@ func (m *UserDataManager) CreateUser(ctx context.Context, input *types.UserDataS
 }
 
 // UpdateUser is a mock function.
-func (m *UserDataManager) UpdateUser(ctx context.Context, updated *types.User, changes []*types.FieldChangeSummary) error {
-	return m.Called(ctx, updated, changes).Error(0)
+func (m *UserDataManager) UpdateUser(ctx context.Context, updated *types.User) error {
+	return m.Called(ctx, updated).Error(0)
 }
 
 // UpdateUserPassword is a mock function.
@@ -83,10 +83,4 @@ func (m *UserDataManager) UpdateUserPassword(ctx context.Context, userID, newHas
 // ArchiveUser is a mock function.
 func (m *UserDataManager) ArchiveUser(ctx context.Context, userID string) error {
 	return m.Called(ctx, userID).Error(0)
-}
-
-// GetAuditLogEntriesForUser is a mock function.
-func (m *UserDataManager) GetAuditLogEntriesForUser(ctx context.Context, userID string) ([]*types.AuditLogEntry, error) {
-	args := m.Called(ctx, userID)
-	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
 }

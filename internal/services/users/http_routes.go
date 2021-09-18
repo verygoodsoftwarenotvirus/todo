@@ -455,7 +455,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	user.TwoFactorSecretVerifiedOn = nil
 
 	// update the user in the database.
-	if err = s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
+	if err = s.userDataManager.UpdateUser(ctx, user); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating 2FA secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -595,7 +595,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 
 	user.AvatarSrc = stringPointer(internalPath)
 
-	if err = s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
+	if err = s.userDataManager.UpdateUser(ctx, user); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating user info")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -631,31 +631,4 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// we're all good.
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an audit log entry.
-func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	tracing.AttachRequestToSpan(span, req)
-
-	// figure out who this is for.
-	userID := s.userIDFetcher(req)
-	logger = logger.WithValue(keys.UserIDKey, userID)
-	tracing.AttachUserIDToSpan(span, userID)
-
-	x, err := s.userDataManager.GetAuditLogEntriesForUser(ctx, userID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching audit log entries for user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

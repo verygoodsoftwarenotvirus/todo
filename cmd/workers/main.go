@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
@@ -89,12 +88,7 @@ func main() {
 
 	cfg.Database.RunMigrations = false
 
-	db, err := dbconfig.ProvideDatabaseConnection(logger, &cfg.Database)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	dataManager, err := config.ProvideDatabaseClient(ctx, logger, db, cfg)
+	dataManager, err := config.ProvideDatabaseClient(ctx, logger, cfg)
 	if err != nil {
 		logger.Fatal(err)
 	}

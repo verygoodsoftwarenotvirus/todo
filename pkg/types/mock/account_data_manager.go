@@ -52,23 +52,17 @@ func (m *AccountDataManager) GetAccountsForAdmin(ctx context.Context, filter *ty
 }
 
 // CreateAccount is a mock function.
-func (m *AccountDataManager) CreateAccount(ctx context.Context, input *types.AccountCreationInput, createdByUser string) (*types.Account, error) {
-	args := m.Called(ctx, input, createdByUser)
+func (m *AccountDataManager) CreateAccount(ctx context.Context, input *types.AccountCreationInput) (*types.Account, error) {
+	args := m.Called(ctx, input)
 	return args.Get(0).(*types.Account), args.Error(1)
 }
 
 // UpdateAccount is a mock function.
-func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.Account, changedByUser string, changes []*types.FieldChangeSummary) error {
-	return m.Called(ctx, updated, changedByUser, changes).Error(0)
+func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.Account) error {
+	return m.Called(ctx, updated).Error(0)
 }
 
 // ArchiveAccount is a mock function.
-func (m *AccountDataManager) ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser string) error {
-	return m.Called(ctx, accountID, userID, archivedByUser).Error(0)
-}
-
-// GetAuditLogEntriesForAccount is a mock function.
-func (m *AccountDataManager) GetAuditLogEntriesForAccount(ctx context.Context, accountID string) ([]*types.AuditLogEntry, error) {
-	args := m.Called(ctx, accountID)
-	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
+func (m *AccountDataManager) ArchiveAccount(ctx context.Context, accountID, userID string) error {
+	return m.Called(ctx, accountID, userID).Error(0)
 }

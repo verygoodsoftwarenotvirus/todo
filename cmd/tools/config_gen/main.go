@@ -22,7 +22,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
@@ -36,8 +36,7 @@ const (
 	defaultPort              = 8888
 	defaultCookieDomain      = "localhost"
 	debugCookieSecret        = "HEREISA32CHARSECRETWHICHISMADEUP"
-	devSqliteConnDetails     = "/tmp/db"
-	devMariaDBConnDetails    = "dbuser:hunter2@tcp(database:3306)/todo"
+	devMySQLConnDetails      = "dbuser:hunter2@tcp(database:3306)/todo"
 	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
 	defaultCookieName        = authservice.DefaultCookieName
 
@@ -47,8 +46,7 @@ const (
 
 	// database providers.
 	postgres = "postgres"
-	sqlite   = "sqlite"
-	mariadb  = "mariadb"
+	mysql    = "mysql"
 
 	// test user stuff.
 	defaultPassword = "password"
@@ -139,8 +137,7 @@ var files = map[string]configFunc{
 	"environments/local/service.config":                                   localDevelopmentConfig,
 	"environments/testing/config_files/frontend-tests.config":             frontendTestsConfig,
 	"environments/testing/config_files/integration-tests-postgres.config": buildIntegrationTestForDBImplementation(postgres, devPostgresDBConnDetails),
-	"environments/testing/config_files/integration-tests-sqlite.config":   buildIntegrationTestForDBImplementation(sqlite, devSqliteConnDetails),
-	"environments/testing/config_files/integration-tests-mariadb.config":  buildIntegrationTestForDBImplementation(mariadb, devMariaDBConnDetails),
+	"environments/testing/config_files/integration-tests-mysql.config":    buildIntegrationTestForDBImplementation(mysql, devMySQLConnDetails),
 }
 
 func buildLocalFrontendServiceConfig() frontendservice.Config {
@@ -183,12 +180,11 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		},
 		Server: localServer,
 		Database: dbconfig.Config{
-			Debug:                     true,
-			RunMigrations:             true,
-			MaxPingAttempts:           maxAttempts,
-			Provider:                  postgres,
-			ConnectionDetails:         devPostgresDBConnDetails,
-			MetricsCollectionInterval: time.Second,
+			Debug:             true,
+			RunMigrations:     true,
+			MaxPingAttempts:   maxAttempts,
+			Provider:          postgres,
+			ConnectionDetails: devPostgresDBConnDetails,
 			CreateTestUser: &types.TestUserCreationConfig{
 				Username:       "username",
 				Password:       defaultPassword,
@@ -222,10 +218,6 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
-			AuditLog: auditservice.Config{
-				Debug:   true,
-				Enabled: true,
-			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -272,12 +264,11 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		},
 		Server: localServer,
 		Database: dbconfig.Config{
-			Debug:                     true,
-			RunMigrations:             true,
-			Provider:                  postgres,
-			ConnectionDetails:         devPostgresDBConnDetails,
-			MaxPingAttempts:           maxAttempts,
-			MetricsCollectionInterval: time.Second,
+			Debug:             true,
+			RunMigrations:     true,
+			Provider:          postgres,
+			ConnectionDetails: devPostgresDBConnDetails,
+			MaxPingAttempts:   maxAttempts,
 		},
 		Observability: observability.Config{
 			Metrics: metrics.Config{
@@ -299,10 +290,6 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
-			AuditLog: auditservice.Config{
-				Debug:   true,
-				Enabled: true,
-			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -338,7 +325,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configFunc {
 	return func(ctx context.Context, filePath string) error {
 		startupDeadline := time.Minute
-		if dbVendor == mariadb {
+		if dbVendor == mysql {
 			startupDeadline = 5 * time.Minute
 		}
 
@@ -359,12 +346,11 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				StartupDeadline: startupDeadline,
 			},
 			Database: dbconfig.Config{
-				Debug:                     false,
-				RunMigrations:             true,
-				Provider:                  dbVendor,
-				MaxPingAttempts:           maxAttempts,
-				MetricsCollectionInterval: 2 * time.Second,
-				ConnectionDetails:         database.ConnectionDetails(dbDetails),
+				Debug:             false,
+				RunMigrations:     true,
+				Provider:          dbVendor,
+				MaxPingAttempts:   maxAttempts,
+				ConnectionDetails: database.ConnectionDetails(dbDetails),
 				CreateTestUser: &types.TestUserCreationConfig{
 					Username:       "exampleUser",
 					Password:       "integration-tests-are-cool",
@@ -394,10 +380,6 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Provider: "bleve",
 			},
 			Services: config.ServicesConfigurations{
-				AuditLog: auditservice.Config{
-					Debug:   false,
-					Enabled: true,
-				},
 				Auth: authservice.Config{
 					PASETO: authservice.PASETOConfig{
 						Issuer:       "todo_service",

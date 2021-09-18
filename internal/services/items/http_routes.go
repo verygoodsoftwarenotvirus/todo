@@ -295,11 +295,10 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update the item.
-	changeReport := item.Update(input)
-	tracing.AttachChangeSummarySpan(span, "item", changeReport)
+	item.Update(input)
 
 	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, item, sessionCtxData.Requester.UserID, changeReport); err != nil {
+	if err = s.itemDataManager.UpdateItem(ctx, item); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating item")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -339,7 +338,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
 	// archive the item in the database.
-	err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID)
+	err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -358,42 +357,4 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
-func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	tracing.AttachRequestToSpan(span, req)
-
-	// determine user ID.
-	sessionCtxData, err := s.sessionContextDataFetcher(req)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
-
-	// determine item ID.
-	itemID := s.itemIDFetcher(req)
-	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-
-	x, err := s.itemDataManager.GetAuditLogEntriesForItem(ctx, itemID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving audit log entries for item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

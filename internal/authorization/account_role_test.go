@@ -26,8 +26,6 @@ func TestNewAccountRolePermissionChecker(T *testing.T) {
 		assert.False(t, r.CanCreateAPIClients())
 		assert.False(t, r.CanSeeAPIClients())
 		assert.False(t, r.CanDeleteAPIClients())
-		assert.False(t, r.CanSeeAuditLogEntriesForWebhooks())
-		assert.False(t, r.CanSeeAuditLogEntriesForItems())
 	})
 
 	T.Run("account admin", func(t *testing.T) {
@@ -47,7 +45,5 @@ func TestNewAccountRolePermissionChecker(T *testing.T) {
 		assert.True(t, r.CanCreateAPIClients())
 		assert.True(t, r.CanSeeAPIClients())
 		assert.True(t, r.CanDeleteAPIClients())
-		assert.True(t, r.CanSeeAuditLogEntriesForWebhooks())
-		assert.True(t, r.CanSeeAuditLogEntriesForItems())
 	})
 }

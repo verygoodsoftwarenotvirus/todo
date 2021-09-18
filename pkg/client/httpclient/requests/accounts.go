@@ -273,25 +273,3 @@ func (b *Builder) BuildTransferAccountOwnershipRequest(ctx context.Context, acco
 
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
-
-// BuildGetAuditLogForAccountRequest builds an HTTP request for fetching a list of audit log entries pertaining to an account.
-func (b *Builder) BuildGetAuditLogForAccountRequest(ctx context.Context, accountID string) (*http.Request, error) {
-	ctx, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if accountID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := b.logger.WithValue(keys.AccountIDKey, accountID)
-
-	uri := b.BuildURL(ctx, nil, accountsBasePath, accountID, "audit")
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building user status request")
-	}
-
-	return req, nil
-}

@@ -33,7 +33,6 @@ type (
 		authService       types.AuthService
 		accountsService   types.AccountDataService
 		frontendService   frontend.Service
-		auditService      types.AuditLogEntryDataService
 		usersService      types.UserDataService
 		adminService      types.AdminService
 		apiClientsService types.APIClientDataService
@@ -54,7 +53,6 @@ func ProvideHTTPServer(
 	serverSettings Config,
 	metricsHandler metrics.InstrumentationHandler,
 	authService types.AuthService,
-	auditService types.AuditLogEntryDataService,
 	usersService types.UserDataService,
 	accountsService types.AccountDataService,
 	apiClientsService types.APIClientDataService,
@@ -76,7 +74,6 @@ func ProvideHTTPServer(
 
 		// services,
 		adminService:      adminService,
-		auditService:      auditService,
 		webhooksService:   webhooksService,
 		frontendService:   frontendService,
 		usersService:      usersService,

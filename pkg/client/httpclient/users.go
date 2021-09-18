@@ -131,30 +131,6 @@ func (c *Client) ArchiveUser(ctx context.Context, userID string) error {
 	return nil
 }
 
-// GetAuditLogForUser retrieves a list of audit log entries pertaining to a user.
-func (c *Client) GetAuditLogForUser(ctx context.Context, userID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if userID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForUserRequest(ctx, userID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building get audit log entries for user request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "retrieving audit log entries for user")
-	}
-
-	return entries, nil
-}
-
 const (
 	png  = "png"
 	jpeg = "jpeg"

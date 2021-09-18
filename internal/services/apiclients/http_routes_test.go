@@ -198,7 +198,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			testutils.ContextMatcher,
 			apiClientCreationInputMatcher,
-			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
 
@@ -299,16 +298,17 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		require.NotNil(t, helper.req)
 
 		mockDB := database.BuildMockDatabase()
+
 		mockDB.UserDataManager.On(
 			"GetUser",
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
+
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
 			testutils.ContextMatcher,
 			apiClientCreationInputMatcher,
-			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
@@ -349,11 +349,11 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
+
 		mockDB.APIClientDataManager.On(
 			"CreateAPIClient",
 			testutils.ContextMatcher,
 			apiClientCreationInputMatcher,
-			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
@@ -418,7 +418,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			testutils.ContextMatcher,
 			apiClientCreationInputMatcher,
-			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 
 		helper.service.apiClientDataManager = mockDB
@@ -479,7 +478,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			testutils.ContextMatcher,
 			apiClientCreationInputMatcher,
-			helper.exampleUser.ID,
 		).Return(helper.exampleAPIClient, nil)
 		helper.service.apiClientDataManager = mockDB
 
@@ -537,7 +535,6 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			"CreateAPIClient",
 			testutils.ContextMatcher,
 			apiClientCreationInputMatcher,
-			helper.exampleUser.ID,
 		).Return((*types.APIClient)(nil), errors.New("blah"))
 
 		helper.service.apiClientDataManager = mockDB
@@ -678,7 +675,6 @@ func TestAPIClientsService_ArchiveHandler(T *testing.T) {
 			"ArchiveAPIClient",
 			testutils.ContextMatcher,
 			helper.exampleAPIClient.ID,
-			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.apiClientDataManager = apiClientDataManager
@@ -727,7 +723,6 @@ func TestAPIClientsService_ArchiveHandler(T *testing.T) {
 			"ArchiveAPIClient",
 			testutils.ContextMatcher,
 			helper.exampleAPIClient.ID,
-			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.apiClientDataManager = apiClientDataManager
@@ -757,7 +752,6 @@ func TestAPIClientsService_ArchiveHandler(T *testing.T) {
 			"ArchiveAPIClient",
 			testutils.ContextMatcher,
 			helper.exampleAPIClient.ID,
-			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.apiClientDataManager = apiClientDataManager
@@ -773,120 +767,6 @@ func TestAPIClientsService_ArchiveHandler(T *testing.T) {
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
-	})
-}
-
-func TestAPIClientsService_AuditEntryHandler(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		exampleAuditLogEntries := fakes.BuildFakeAuditLogEntryList().Entries
-
-		apiClientDataManager := &mocktypes.APIClientDataManager{}
-		apiClientDataManager.On(
-			"GetAuditLogEntriesForAPIClient",
-			testutils.ContextMatcher,
-			helper.exampleAPIClient.ID,
-		).Return(exampleAuditLogEntries, nil)
-		helper.service.apiClientDataManager = apiClientDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-			mock.IsType([]*types.AuditLogEntry{}),
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
-	})
-
-	T.Run("with error retrieving session context data", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-			"unauthenticated",
-			http.StatusUnauthorized,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, encoderDecoder)
-	})
-
-	T.Run("with sql.ErrNoRows", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		apiClientDataManager := &mocktypes.APIClientDataManager{}
-		apiClientDataManager.On(
-			"GetAuditLogEntriesForAPIClient",
-			testutils.ContextMatcher,
-			helper.exampleAPIClient.ID,
-		).Return([]*types.AuditLogEntry(nil), sql.ErrNoRows)
-		helper.service.apiClientDataManager = apiClientDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeNotFoundResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
-	})
-
-	T.Run("with error reading from database", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		apiClientDataManager := &mocktypes.APIClientDataManager{}
-		apiClientDataManager.On(
-			"GetAuditLogEntriesForAPIClient",
-			testutils.ContextMatcher,
-			helper.exampleAPIClient.ID,
-		).Return([]*types.AuditLogEntry(nil), errors.New("blah"))
-		helper.service.apiClientDataManager = apiClientDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, apiClientDataManager, encoderDecoder)
 	})

@@ -17,6 +17,8 @@ const (
 type (
 	// Config contains settings related to tracing.
 	Config struct {
+		_ struct{}
+
 		// Jaeger configures the Jaeger tracer.
 		Jaeger   *JaegerConfig `json:"jaeger" mapstructure:"jaeger" toml:"jaeger,omitempty"`
 		Provider string        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
@@ -26,6 +28,8 @@ type (
 
 	// JaegerConfig contains settings related to tracing with Jaeger.
 	JaegerConfig struct {
+		_ struct{}
+
 		CollectorEndpoint string `json:"collector_endpoint" mapstructure:"collector_endpoint" toml:"collector_endpoint,omitempty"`
 		ServiceName       string `json:"service_name" mapstructure:"service_name" toml:"service_name,omitempty"`
 	}

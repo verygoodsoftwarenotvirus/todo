@@ -163,7 +163,6 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 			"CreateAccount",
 			testutils.ContextMatcher,
 			mock.IsType(&types.AccountCreationInput{}),
-			helper.exampleUser.ID,
 		).Return(helper.exampleAccount, nil)
 		helper.service.accountDataManager = accountDataManager
 
@@ -253,7 +252,6 @@ func TestAccountsService_CreateHandler(T *testing.T) {
 			"CreateAccount",
 			testutils.ContextMatcher,
 			mock.IsType(&types.AccountCreationInput{}),
-			helper.exampleUser.ID,
 		).Return((*types.Account)(nil), errors.New("blah"))
 		helper.service.accountDataManager = accountDataManager
 
@@ -401,13 +399,13 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager.On(
 			"GetAccount",
 			testutils.ContextMatcher,
-			helper.exampleAccount.ID, helper.exampleUser.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(helper.exampleAccount, nil)
 		accountDataManager.On(
 			"UpdateAccount",
 			testutils.ContextMatcher,
-			mock.IsType(&types.Account{}), helper.exampleUser.ID,
-			mock.IsType([]*types.FieldChangeSummary{}),
+			mock.IsType(&types.Account{}),
 		).Return(nil)
 		helper.service.accountDataManager = accountDataManager
 
@@ -553,13 +551,13 @@ func TestAccountsService_UpdateHandler(T *testing.T) {
 		accountDataManager.On(
 			"GetAccount",
 			testutils.ContextMatcher,
-			helper.exampleAccount.ID, helper.exampleUser.ID,
+			helper.exampleAccount.ID,
+			helper.exampleUser.ID,
 		).Return(helper.exampleAccount, nil)
 		accountDataManager.On(
 			"UpdateAccount",
 			testutils.ContextMatcher,
-			mock.IsType(&types.Account{}), helper.exampleUser.ID,
-			mock.IsType([]*types.FieldChangeSummary{}),
+			mock.IsType(&types.Account{}),
 		).Return(errors.New("blah"))
 		helper.service.accountDataManager = accountDataManager
 
@@ -584,7 +582,6 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 			"ArchiveAccount",
 			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.accountDataManager = accountDataManager
@@ -634,7 +631,6 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
 			helper.exampleUser.ID,
-			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.accountDataManager = accountDataManager
 
@@ -663,7 +659,6 @@ func TestAccountsService_ArchiveHandler(T *testing.T) {
 			"ArchiveAccount",
 			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.accountDataManager = accountDataManager
@@ -706,7 +701,6 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 			"AddUserToAccount",
 			testutils.ContextMatcher,
 			mock.IsType(&types.AddUserToAccountInput{}),
-			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
 
@@ -792,7 +786,6 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 			"AddUserToAccount",
 			testutils.ContextMatcher,
 			mock.IsType(&types.AddUserToAccountInput{}),
-			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
 
@@ -827,7 +820,6 @@ func TestAccountsService_ModifyMemberPermissionsHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 			exampleInput,
 		).Return(nil)
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
@@ -914,7 +906,6 @@ func TestAccountsService_ModifyMemberPermissionsHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 			exampleInput,
 		).Return(errors.New("blah"))
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
@@ -949,7 +940,6 @@ func TestAccountsService_TransferAccountOwnershipHandler(T *testing.T) {
 			"TransferAccountOwnership",
 			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 			exampleInput,
 		).Return(nil)
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
@@ -1035,7 +1025,6 @@ func TestAccountsService_TransferAccountOwnershipHandler(T *testing.T) {
 			"TransferAccountOwnership",
 			testutils.ContextMatcher,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 			exampleInput,
 		).Return(errors.New("blah"))
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
@@ -1064,8 +1053,6 @@ func TestAccountsService_RemoveMemberHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
-			exampleReason,
 		).Return(nil)
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
 
@@ -1115,8 +1102,6 @@ func TestAccountsService_RemoveMemberHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
-			exampleReason,
 		).Return(errors.New("blah"))
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
 
@@ -1150,7 +1135,6 @@ func TestAccountsService_MarkAsDefaultAccountHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
 
@@ -1195,7 +1179,6 @@ func TestAccountsService_MarkAsDefaultAccountHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleUser.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.accountMembershipDataManager = accountMembershipDataManager
 
@@ -1212,119 +1195,5 @@ func TestAccountsService_MarkAsDefaultAccountHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, accountMembershipDataManager, encoderDecoder)
-	})
-}
-
-func TestAccountsService_AuditEntryHandler(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		exampleAuditLogEntries := fakes.BuildFakeAuditLogEntryList().Entries
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On(
-			"GetAuditLogEntriesForAccount",
-			testutils.ContextMatcher,
-			helper.exampleAccount.ID,
-		).Return(exampleAuditLogEntries, nil)
-		helper.service.accountDataManager = accountDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"RespondWithData",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-			mock.IsType([]*types.AuditLogEntry{}),
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, encoderDecoder)
-	})
-
-	T.Run("with error retrieving session context data", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeErrorResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-			"unauthenticated",
-			http.StatusUnauthorized,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, encoderDecoder)
-	})
-
-	T.Run("with sql.ErrNoRows", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On(
-			"GetAuditLogEntriesForAccount",
-			testutils.ContextMatcher,
-			helper.exampleAccount.ID,
-		).Return([]*types.AuditLogEntry(nil), sql.ErrNoRows)
-		helper.service.accountDataManager = accountDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeNotFoundResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, encoderDecoder)
-	})
-
-	T.Run("with error reading from database", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		accountDataManager := &mocktypes.AccountDataManager{}
-		accountDataManager.On(
-			"GetAuditLogEntriesForAccount",
-			testutils.ContextMatcher,
-			helper.exampleAccount.ID,
-		).Return([]*types.AuditLogEntry(nil), errors.New("blah"))
-		helper.service.accountDataManager = accountDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.AuditEntryHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountDataManager, encoderDecoder)
 	})
 }

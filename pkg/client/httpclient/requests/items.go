@@ -212,33 +212,3 @@ func (b *Builder) BuildArchiveItemRequest(ctx context.Context, itemID string) (*
 
 	return req, nil
 }
-
-// BuildGetAuditLogForItemRequest builds an HTTP request for fetching a list of audit log entries pertaining to an item.
-func (b *Builder) BuildGetAuditLogForItemRequest(ctx context.Context, itemID string) (*http.Request, error) {
-	ctx, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := b.logger
-
-	if itemID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	uri := b.BuildURL(
-		ctx,
-		nil,
-		itemsBasePath,
-		itemID,
-		"audit",
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building user status request")
-	}
-
-	return req, nil
-}

@@ -131,27 +131,3 @@ func (c *Client) ArchiveWebhook(ctx context.Context, webhookID string) error {
 
 	return nil
 }
-
-// GetAuditLogForWebhook retrieves a list of audit log entries pertaining to a webhook.
-func (c *Client) GetAuditLogForWebhook(ctx context.Context, webhookID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if webhookID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := c.logger.WithValue(keys.WebhookIDKey, webhookID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForWebhookRequest(ctx, webhookID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building get audit log entries for webhook request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "retrieving audit log entries for webhook")
-	}
-
-	return entries, nil
-}

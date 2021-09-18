@@ -108,25 +108,3 @@ func (b *Builder) BuildArchiveAPIClientRequest(ctx context.Context, clientID str
 
 	return req, nil
 }
-
-// BuildGetAuditLogForAPIClientRequest builds an HTTP request for fetching a list of audit log entries for an API client.
-func (b *Builder) BuildGetAuditLogForAPIClientRequest(ctx context.Context, clientID string) (*http.Request, error) {
-	ctx, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if clientID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := b.logger.WithValue(keys.APIClientDatabaseIDKey, clientID)
-
-	uri := b.BuildURL(ctx, nil, apiClientsBasePath, clientID, "audit")
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building user status request")
-	}
-
-	return req, nil
-}

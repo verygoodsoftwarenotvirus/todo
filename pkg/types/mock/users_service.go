@@ -39,11 +39,6 @@ func (m *UsersService) ListHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 
-// AuditEntryHandler satisfies our interface contract.
-func (m *UsersService) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
-
 // CreateHandler satisfies our interface contract.
 func (m *UsersService) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)

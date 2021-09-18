@@ -214,7 +214,7 @@ func (c *Client) MarkAsDefault(ctx context.Context, accountID string) error {
 }
 
 // RemoveUserFromAccount removes a user from an account.
-func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID, reason string) error {
+func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -226,15 +226,11 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID, r
 		return ErrInvalidIDProvided
 	}
 
-	if reason == "" {
-		return ErrEmptyInputProvided
-	}
-
 	logger := c.logger.WithValue(keys.AccountIDKey, accountID).WithValue(keys.UserIDKey, userID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	req, err := c.requestBuilder.BuildRemoveUserRequest(ctx, accountID, userID, reason)
+	req, err := c.requestBuilder.BuildRemoveUserRequest(ctx, accountID, userID, "")
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "building remove user from account request")
 	}
@@ -317,29 +313,4 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID string,
 	}
 
 	return nil
-}
-
-// GetAuditLogForAccount retrieves a list of audit log entries pertaining to an account.
-func (c *Client) GetAuditLogForAccount(ctx context.Context, accountID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if accountID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
-	tracing.AttachAccountIDToSpan(span, accountID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForAccountRequest(ctx, accountID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building fetch audit log entries for account request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "fetching audit log entries for account")
-	}
-
-	return entries, nil
 }

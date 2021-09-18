@@ -14,8 +14,7 @@ func TestAccount_Update(T *testing.T) {
 		t.Parallel()
 
 		x := &Account{}
-
-		assert.NotEmpty(t, x.Update(&AccountUpdateInput{Name: t.Name()}))
+		x.Update(&AccountUpdateInput{Name: t.Name()})
 	})
 }
 

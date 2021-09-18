@@ -189,29 +189,3 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID string) error {
 
 	return nil
 }
-
-// GetAuditLogForItem retrieves a list of audit log entries pertaining to an item.
-func (c *Client) GetAuditLogForItem(ctx context.Context, itemID string) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := c.logger
-
-	if itemID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForItemRequest(ctx, itemID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building get audit log entries for item request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "retrieving plan")
-	}
-
-	return entries, nil
-}

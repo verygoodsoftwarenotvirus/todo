@@ -100,30 +100,6 @@ func TestAttachFilterToSpan(T *testing.T) {
 	})
 }
 
-func TestAttachAuditLogEntryIDToSpan(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		_, span := StartSpan(context.Background())
-
-		AttachAuditLogEntryIDToSpan(span, "123")
-	})
-}
-
-func TestAttachAuditLogEntryEventTypeToSpan(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		_, span := StartSpan(context.Background())
-
-		AttachAuditLogEntryEventTypeToSpan(span, t.Name())
-	})
-}
-
 func TestAttachAccountIDToSpan(T *testing.T) {
 	T.Parallel()
 
@@ -145,23 +121,6 @@ func TestAttachRequestingUserIDToSpan(T *testing.T) {
 		_, span := StartSpan(context.Background())
 
 		AttachRequestingUserIDToSpan(span, "123")
-	})
-}
-
-func TestAttachChangeSummarySpan(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		_, span := StartSpan(context.Background())
-
-		AttachChangeSummarySpan(span, t.Name(), []*types.FieldChangeSummary{
-			{
-				OldValue: "blah",
-				NewValue: "butt",
-			},
-		})
 	})
 }
 

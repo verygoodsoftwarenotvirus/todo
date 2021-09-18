@@ -56,16 +56,6 @@ func AttachFilterToSpan(span trace.Span, page uint64, limit uint8, sortBy string
 	attachStringToSpan(span, keys.FilterSortByKey, sortBy)
 }
 
-// AttachAuditLogEntryIDToSpan attaches an audit log entry ID to a given span.
-func AttachAuditLogEntryIDToSpan(span trace.Span, entryID string) {
-	attachStringToSpan(span, keys.AuditLogEntryIDKey, entryID)
-}
-
-// AttachAuditLogEntryEventTypeToSpan attaches an audit log entry ID to a given span.
-func AttachAuditLogEntryEventTypeToSpan(span trace.Span, eventType string) {
-	attachStringToSpan(span, keys.AuditLogEntryEventTypeKey, eventType)
-}
-
 // AttachAccountIDToSpan provides a consistent way to attach an account's ID to a span.
 func AttachAccountIDToSpan(span trace.Span, accountID string) {
 	attachStringToSpan(span, keys.AccountIDKey, accountID)
@@ -79,13 +69,6 @@ func AttachActiveAccountIDToSpan(span trace.Span, accountID string) {
 // AttachRequestingUserIDToSpan provides a consistent way to attach a user's ID to a span.
 func AttachRequestingUserIDToSpan(span trace.Span, userID string) {
 	attachStringToSpan(span, keys.RequesterIDKey, userID)
-}
-
-// AttachChangeSummarySpan provides a consistent way to attach a SessionContextData object to a span.
-func AttachChangeSummarySpan(span trace.Span, typeName string, changes []*types.FieldChangeSummary) {
-	for i, change := range changes {
-		span.SetAttributes(attribute.Any(fmt.Sprintf("%s.field_changes.%d", typeName, i), change))
-	}
 }
 
 // AttachSessionContextDataToSpan provides a consistent way to attach a SessionContextData object to a span.

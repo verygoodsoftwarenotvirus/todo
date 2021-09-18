@@ -34,7 +34,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	requester := sessionCtxData.Requester.UserID
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = sessionCtxData.AttachToLogger(logger)
 
@@ -56,7 +55,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
 	// create the webhook.
-	wh, err := s.webhookDataManager.CreateWebhook(ctx, input, requester)
+	wh, err := s.webhookDataManager.CreateWebhook(ctx, input)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "creating webhook")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -204,11 +203,10 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update it.
-	changeReport := webhook.Update(input)
-	tracing.AttachChangeSummarySpan(span, "webhook", changeReport)
+	webhook.Update(input)
 
 	// save the update in the database.
-	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook, sessionCtxData.Requester.UserID, changeReport); err != nil {
+	if err = s.webhookDataManager.UpdateWebhook(ctx, webhook); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			logger.Debug("attempted to update nonexistent webhook")
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -253,7 +251,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
 	// do the deed.
-	err = s.webhookDataManager.ArchiveWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID)
+	err = s.webhookDataManager.ArchiveWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID)
 	if errors.Is(err, sql.ErrNoRows) {
 		logger.Debug("no rows found for webhook")
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -269,42 +267,4 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// let everybody go home.
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to a webhook.
-func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	tracing.AttachRequestToSpan(span, req)
-
-	// determine user ID.
-	sessionCtxData, err := s.sessionContextDataFetcher(req)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching session context data")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
-
-	// determine webhook ID.
-	webhookID := s.webhookIDFetcher(req)
-	tracing.AttachWebhookIDToSpan(span, webhookID)
-	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
-
-	x, err := s.webhookDataManager.GetAuditLogEntriesForWebhook(ctx, webhookID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching audit log entries for webhook`")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

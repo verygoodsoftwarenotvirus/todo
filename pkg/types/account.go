@@ -21,6 +21,8 @@ type (
 
 	// Account represents an account.
 	Account struct {
+		_ struct{}
+
 		ArchivedOn                 *uint64                  `json:"archivedOn"`
 		SubscriptionPlanID         *uint64                  `json:"subscriptionPlanID"`
 		LastUpdatedOn              *uint64                  `json:"lastUpdatedOn"`
@@ -37,12 +39,16 @@ type (
 
 	// AccountList represents a list of accounts.
 	AccountList struct {
+		_ struct{}
+
 		Accounts []*Account `json:"accounts"`
 		Pagination
 	}
 
 	// AccountCreationInput represents what a User could set as input for creating accounts.
 	AccountCreationInput struct {
+		_ struct{}
+
 		ID            string `json:"-"`
 		Name          string `json:"name"`
 		ContactEmail  string `json:"contactEmail"`
@@ -52,6 +58,8 @@ type (
 
 	// AccountUpdateInput represents what a User could set as input for updating accounts.
 	AccountUpdateInput struct {
+		_ struct{}
+
 		Name          string `json:"name"`
 		ContactEmail  string `json:"contactEmail"`
 		ContactPhone  string `json:"contactPhone"`
@@ -62,13 +70,11 @@ type (
 	AccountDataManager interface {
 		GetAccount(ctx context.Context, accountID, userID string) (*Account, error)
 		GetAllAccountsCount(ctx context.Context) (uint64, error)
-		GetAllAccounts(ctx context.Context, resultChannel chan []*Account, bucketSize uint16) error
 		GetAccounts(ctx context.Context, userID string, filter *QueryFilter) (*AccountList, error)
 		GetAccountsForAdmin(ctx context.Context, filter *QueryFilter) (*AccountList, error)
-		CreateAccount(ctx context.Context, input *AccountCreationInput, createdByUser string) (*Account, error)
-		UpdateAccount(ctx context.Context, updated *Account, changedByUser string, changes []*FieldChangeSummary) error
-		ArchiveAccount(ctx context.Context, accountID string, userID, archivedByUser string) error
-		GetAuditLogEntriesForAccount(ctx context.Context, accountID string) ([]*AuditLogEntry, error)
+		CreateAccount(ctx context.Context, input *AccountCreationInput) (*Account, error)
+		UpdateAccount(ctx context.Context, updated *Account) error
+		ArchiveAccount(ctx context.Context, accountID string, userID string) error
 	}
 
 	// AccountDataService describes a structure capable of serving traffic related to accounts.
@@ -83,25 +89,14 @@ type (
 		MarkAsDefaultAccountHandler(res http.ResponseWriter, req *http.Request)
 		ModifyMemberPermissionsHandler(res http.ResponseWriter, req *http.Request)
 		TransferAccountOwnershipHandler(res http.ResponseWriter, req *http.Request)
-		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 	}
 )
 
 // Update merges an AccountUpdateInput with an account.
-func (x *Account) Update(input *AccountUpdateInput) []*FieldChangeSummary {
-	var out []*FieldChangeSummary
-
+func (x *Account) Update(input *AccountUpdateInput) {
 	if input.Name != "" && input.Name != x.Name {
-		out = append(out, &FieldChangeSummary{
-			FieldName: "Name",
-			OldValue:  x.Name,
-			NewValue:  input.Name,
-		})
-
 		x.Name = input.Name
 	}
-
-	return out
 }
 
 var _ validation.ValidatableWithContext = (*AccountCreationInput)(nil)

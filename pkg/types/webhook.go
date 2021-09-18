@@ -10,6 +10,8 @@ import (
 type (
 	// Webhook represents a webhook listener, an endpoint to send an HTTP request to upon an event.
 	Webhook struct {
+		_ struct{}
+
 		LastUpdatedOn    *uint64  `json:"lastUpdatedOn"`
 		ArchivedOn       *uint64  `json:"archivedOn"`
 		Name             string   `json:"name"`
@@ -26,6 +28,8 @@ type (
 
 	// WebhookCreationInput represents what a User could set as input for creating a webhook.
 	WebhookCreationInput struct {
+		_ struct{}
+
 		ID               string   `json:"-"`
 		Name             string   `json:"name"`
 		ContentType      string   `json:"contentType"`
@@ -39,6 +43,8 @@ type (
 
 	// WebhookUpdateInput represents what a User could set as input for updating a webhook.
 	WebhookUpdateInput struct {
+		_ struct{}
+
 		Name             string   `json:"name"`
 		ContentType      string   `json:"contentType"`
 		URL              string   `json:"url"`
@@ -51,6 +57,8 @@ type (
 
 	// WebhookList represents a list of webhooks.
 	WebhookList struct {
+		_ struct{}
+
 		Webhooks []*Webhook `json:"webhooks"`
 		Pagination
 	}
@@ -59,17 +67,14 @@ type (
 	WebhookDataManager interface {
 		GetWebhook(ctx context.Context, webhookID, accountID string) (*Webhook, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
-		GetAllWebhooks(ctx context.Context, resultChannel chan []*Webhook, bucketSize uint16) error
 		GetWebhooks(ctx context.Context, accountID string, filter *QueryFilter) (*WebhookList, error)
-		CreateWebhook(ctx context.Context, input *WebhookCreationInput, createdByUser string) (*Webhook, error)
-		UpdateWebhook(ctx context.Context, updated *Webhook, changedByUser string, changes []*FieldChangeSummary) error
-		ArchiveWebhook(ctx context.Context, webhookID, accountID, archivedByUserID string) error
-		GetAuditLogEntriesForWebhook(ctx context.Context, webhookID string) ([]*AuditLogEntry, error)
+		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
+		UpdateWebhook(ctx context.Context, updated *Webhook) error
+		ArchiveWebhook(ctx context.Context, webhookID, accountID string) error
 	}
 
 	// WebhookDataService describes a structure capable of serving traffic related to webhooks.
 	WebhookDataService interface {
-		AuditEntryHandler(res http.ResponseWriter, req *http.Request)
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
@@ -79,73 +84,34 @@ type (
 )
 
 // Update merges an WebhookCreationInput with an Webhook.
-func (w *Webhook) Update(input *WebhookUpdateInput) []*FieldChangeSummary {
-	changes := []*FieldChangeSummary{}
-
+func (w *Webhook) Update(input *WebhookUpdateInput) {
 	if input.Name != "" {
-		changes = append(changes, &FieldChangeSummary{
-			FieldName: "Name",
-			OldValue:  w.Name,
-			NewValue:  input.Name,
-		})
 		w.Name = input.Name
 	}
 
 	if input.ContentType != "" {
-		changes = append(changes, &FieldChangeSummary{
-			FieldName: "ContentType",
-			OldValue:  w.ContentType,
-			NewValue:  input.ContentType,
-		})
 		w.ContentType = input.ContentType
 	}
 
 	if input.URL != "" {
-		changes = append(changes, &FieldChangeSummary{
-			FieldName: "url",
-			OldValue:  w.URL,
-			NewValue:  input.URL,
-		})
 		w.URL = input.URL
 	}
 
 	if input.Method != "" {
-		changes = append(changes, &FieldChangeSummary{
-			FieldName: "Method",
-			OldValue:  w.Method,
-			NewValue:  input.Method,
-		})
 		w.Method = input.Method
 	}
 
 	if input.Events != nil && len(input.Events) > 0 {
-		changes = append(changes, &FieldChangeSummary{
-			FieldName: "Events",
-			OldValue:  w.Events,
-			NewValue:  input.Events,
-		})
 		w.Events = input.Events
 	}
 
 	if input.DataTypes != nil && len(input.DataTypes) > 0 {
-		changes = append(changes, &FieldChangeSummary{
-			FieldName: "DataTypes",
-			OldValue:  w.DataTypes,
-			NewValue:  input.DataTypes,
-		})
 		w.DataTypes = input.DataTypes
 	}
 
 	if input.Topics != nil && len(input.Topics) > 0 {
-		changes = append(changes, &FieldChangeSummary{
-			FieldName: "Topics",
-			OldValue:  w.Topics,
-			NewValue:  input.Topics,
-		})
 		w.Topics = input.Topics
 	}
-
-	return changes
 }
 
 var _ validation.ValidatableWithContext = (*WebhookCreationInput)(nil)

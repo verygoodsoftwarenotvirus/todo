@@ -6,7 +6,6 @@ package worker
 import (
 	"context"
 
-	"github.com/google/wire"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -15,7 +14,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+
+	"github.com/google/wire"
 )
 
 // Build builds a worker.
@@ -23,7 +23,7 @@ func Build(
 	ctx context.Context,
 	cfg *config.InstanceConfig,
 	logger logging.Logger,
-) (*server.HTTPServer, error) {
+) error {
 	wire.Build(
 		database.Providers,
 		dbconfig.Providers,
@@ -33,5 +33,5 @@ func Build(
 		authentication.Providers,
 	)
 
-	return nil, nil
+	return nil
 }

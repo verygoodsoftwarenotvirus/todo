@@ -8,13 +8,11 @@ import (
 	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+
+	"github.com/alexedwards/scs/v2"
 )
 
 var (
-	_ Scanner = (*sql.Row)(nil)
-	_ Querier = (*sql.DB)(nil)
-	_ Querier = (*sql.Tx)(nil)
-
 	// ErrDatabaseNotReady indicates the given database is not ready.
 	ErrDatabaseNotReady = errors.New("database is not ready yet")
 )
@@ -33,8 +31,8 @@ type (
 		io.Closer
 	}
 
-	// Querier is a subset interface for sql.{DB|Tx} objects.
-	Querier interface {
+	// SQLQueryExecutor is a subset interface for sql.{DB|Tx} objects.
+	SQLQueryExecutor interface {
 		ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)
 		QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)
 		QueryRowContext(ctx context.Context, query string, args ...interface{}) *sql.Row
@@ -50,16 +48,14 @@ type (
 	DataManager interface {
 		Migrate(ctx context.Context, maxAttempts uint8, testUserConfig *types.TestUserCreationConfig) error
 		IsReady(ctx context.Context, maxAttempts uint8) (ready bool)
+		ProvideSessionStore() scs.Store
 
 		types.AdminUserDataManager
 		types.AccountDataManager
 		types.AccountUserMembershipDataManager
 		types.UserDataManager
-		types.AuditLogEntryDataManager
 		types.APIClientDataManager
 		types.WebhookDataManager
 		types.ItemDataManager
-		types.AdminAuditManager
-		types.AuthAuditManager
 	}
 )

@@ -143,7 +143,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 
 	logger.Debug("item creation input parsed successfully")
 
-	if _, err = s.dataStore.CreateItem(ctx, creationInput, sessionCtxData.Requester.UserID); err != nil {
+	if _, err = s.dataStore.CreateItem(ctx, creationInput); err != nil {
 		observability.AcknowledgeError(err, logger, span, "writing item to datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -343,9 +343,9 @@ func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 		return
 	}
 
-	changes := item.Update(updateInput)
+	item.Update(updateInput)
 
-	if err = s.dataStore.UpdateItem(ctx, item, sessionCtxData.Requester.UserID, changes); err != nil {
+	if err = s.dataStore.UpdateItem(ctx, item); err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -380,7 +380,7 @@ func (s *service) handleItemArchiveRequest(res http.ResponseWriter, req *http.Re
 	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
-	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID); err != nil {
+	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "archiving items in datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return

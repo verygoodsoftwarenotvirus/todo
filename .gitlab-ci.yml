@@ -40,56 +40,9 @@ golang-format-check:
 
 golang-lint:
   stage: quality
-  image: golangci/golangci-lint:latest # v1.18
+  image: golangci/golangci-lint:v1.42 # v1.18
   variables:
     GO111MODULE: "on"
   script:
     - go mod vendor
     - golangci-lint run --config=.golangci.yml --deadline=15m
-
-#integration_tests_sqlite:
-#  stage: integration-testing
-#  image: docker/compose:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - ls -Al environments/testing/config_files/integration-tests-sqlite.toml
-#    - ls -Al /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
-#    - whoami
-#    - cat /go/src/gitlab.com/verygoodsoftwarenotvirus/todo/environments/testing/config_files/integration-tests-sqlite.toml
-#    - apk add --no-cache git make musl-dev go
-#    - go version
-#    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-sqlite.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
-
-#integration_tests_postgres:
-#  stage: integration-testing
-#  image: docker/compose:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apk add --update make
-#    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-postgres.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
-
-#integration_tests_mariadb:
-#  stage: integration-testing
-#  image: docker/compose:latest
-#  services:
-#    - docker:dind
-#  variables:
-#    GOPATH: "/go"
-#  script:
-#    - apk add --update make
-#    - docker-compose --file environments/testing/compose_files/integration_tests/integration-tests-base.yaml --file environments/testing/compose_files/integration_tests/integration-tests-mariadb.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit
-
-#frontend-selenium-tests:
-#  stage: integration-testing
-#  image: docker/compose:latest
-#  services:
-#    - docker:dind
-#  script:
-#    - apk add --update make
-#    - docker-compose --file environments/testing/compose_files/frontend-tests.yaml up --build --force-recreate --remove-orphans --renew-anon-volumes --always-recreate-deps --abort-on-container-exit

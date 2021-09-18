@@ -23,7 +23,6 @@ var (
 		),
 		wire.FieldsOf(
 			new(*ServicesConfigurations),
-			"AuditLog",
 			"Auth",
 			"Frontend",
 			"Webhooks",

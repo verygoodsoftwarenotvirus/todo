@@ -2,21 +2,16 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querier"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/mysql"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -24,7 +19,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
@@ -41,14 +35,9 @@ const (
 	TestingRunMode runMode = "testing"
 	// ProductionRunMode is the run mode for a production environment.
 	ProductionRunMode runMode = "production"
-	// DefaultRunMode is the default run mode.
-	DefaultRunMode = DevelopmentRunMode
-	// DefaultStartupDeadline is the default amount of time we allow for server startup.
-	DefaultStartupDeadline = time.Minute
 )
 
 var (
-	errNilDatabaseConnection   = errors.New("nil DB connection provided")
 	errNilConfig               = errors.New("nil config provided")
 	errInvalidDatabaseProvider = errors.New("invalid database provider")
 )
@@ -62,7 +51,6 @@ type (
 		Items    itemsservice.Config    `json:"items" mapstructure:"items" toml:"items,omitempty"`
 		Auth     authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Webhooks webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		AuditLog auditservice.Config    `json:"auditLog" mapstructure:"audit_log" toml:"audit_log,omitempty"`
 		Frontend frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 
@@ -136,10 +124,6 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 		return fmt.Errorf("error validating HTTPServer portion of config: %w", err)
 	}
 
-	if err := cfg.Services.AuditLog.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating AuditLog portion of config: %w", err)
-	}
-
 	if err := cfg.Services.Auth.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating Auth service portion of config: %w", err)
 	}
@@ -161,28 +145,19 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 // NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
-func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *InstanceConfig) (database.DataManager, error) {
-	if rawDB == nil {
-		return nil, errNilDatabaseConnection
-	}
-
+func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, cfg *InstanceConfig) (database.DataManager, error) {
 	if cfg == nil {
 		return nil, errNilConfig
 	}
 
-	var qb querybuilding.SQLQueryBuilder
 	shouldCreateTestUser := cfg.Meta.RunMode != ProductionRunMode
 
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
-	case "sqlite":
-		qb = sqlite.ProvideSqlite(logger)
-	case "mariadb":
-		qb = mariadb.ProvideMariaDB(logger)
-	case "postgres":
-		qb = postgres.ProvidePostgres(logger)
+	case dbconfig.MySQLProvider:
+		return mysql.ProvideDatabaseClient(ctx, logger, &cfg.Database, shouldCreateTestUser)
+	case dbconfig.PostgresProvider:
+		return postgres.ProvideDatabaseClient(ctx, logger, &cfg.Database, shouldCreateTestUser)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabaseProvider, cfg.Database.Provider)
 	}
-
-	return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, qb, shouldCreateTestUser)
 }

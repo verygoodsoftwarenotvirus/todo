@@ -339,10 +339,6 @@ issues:
       linters:
         - gomnd
 
-    - path: internal/audit/
-      linters:
-        - gosec
-
     - path: internal/services/
       linters:
         - wsl
@@ -365,15 +361,11 @@ issues:
       linters:
         - gomnd
 
-    - path: internal/database/querybuilding/mariadb/migrations.go
+    - path: internal/database/querybuilding/mysql/migrations.go
       linters:
         - gomnd
 
     - path: internal/database/querybuilding/postgres/migrations.go
-      linters:
-        - gomnd
-
-    - path: internal/database/querybuilding/sqlite/migrations.go
       linters:
         - gomnd
 

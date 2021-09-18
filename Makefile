@@ -71,17 +71,17 @@ vendor:
 	go mod vendor
 
 .PHONY: revendor
-revendor: clean-vendor vendor frontend-vendor
+revendor: clean-vendor vendor # frontend-vendor
 
 ## dependency injection
 
 .PHONY: clean-wire
 clean-wire:
-	rm -f cmd/server/wire_gen.go
+	rm -f $(THIS)/internal/build/server/wire_gen.go
 
 .PHONY: wire
 wire: ensure-wire vendor
-	wire gen $(THIS)/cmd/server
+	wire gen $(THIS)/internal/build/server
 
 .PHONY: rewire
 rewire: ensure-wire clean-wire wire
@@ -124,8 +124,8 @@ format: format-backend format-frontend
 
 .PHONY: check-backend-formatting
 check-backend-formatting: vendor
-	docker build --tag check-formatting:latest --file environments/testing/dockerfiles/formatting.Dockerfile .
-	docker run --rm check-formatting:latest
+	docker build --tag check-formatting --file environments/testing/dockerfiles/formatting.Dockerfile .
+	docker run --rm check-formatting
 
 .PHONY: check-frontend-formatting
 check-frontend-formatting:
@@ -142,13 +142,13 @@ docker-lint:
 
 .PHONY: lint
 lint:
-	@docker pull golangci/golangci-lint:latest
+	@docker pull golangci/golangci-lint:v1.42
 	docker run \
 		--rm \
 		--volume `pwd`:`pwd` \
 		--workdir=`pwd` \
 		--env=GO111MODULE=on \
-		golangci/golangci-lint:latest golangci-lint run --config=.golangci.yml ./...
+		golangci/golangci-lint:v1.42 golangci-lint run --config=.golangci.yml ./...
 
 .PHONY: clean-coverage
 clean-coverage:
@@ -156,12 +156,12 @@ clean-coverage:
 
 .PHONY: coverage
 coverage: clean-coverage $(ARTIFACTS_DIR)
-	@go test -coverprofile=$(COVERAGE_OUT) -covermode=atomic -race $(PACKAGE_LIST) > /dev/null
+	@go test -coverprofile=$(COVERAGE_OUT) -shuffle=on -covermode=atomic -race $(PACKAGE_LIST) > /dev/null
 	@go tool cover -func=$(ARTIFACTS_DIR)/coverage.out | grep 'total:' | xargs | awk '{ print "COVERAGE: " $$3 }'
 
 .PHONY: quicktest # basically only running once instead of with -count 5 or whatever
 quicktest: $(ARTIFACTS_DIR) vendor clear
-	go test -cover -race -failfast $(PACKAGE_LIST)
+	go test -cover -shuffle=on -race -failfast $(PACKAGE_LIST)
 
 .PHONY: frontend-tests
 frontend-tests:
@@ -179,7 +179,7 @@ frontend-tests:
 lintegration-tests: lint clear integration-tests
 
 .PHONY: integration-tests
-integration-tests: integration-tests-sqlite integration-tests-postgres integration-tests-mariadb
+integration-tests: integration-tests-postgres integration-tests-mysql
 
 .PHONY: integration-tests-
 integration-tests-%:
@@ -207,22 +207,6 @@ integration-coverage: clean-$(ARTIFACTS_DIR) $(ARTIFACTS_DIR) $(SEARCH_INDICES_D
 	--always-recreate-deps \
 	--abort-on-container-exit
 	go tool cover -html=$(ARTIFACTS_DIR)/integration-coverage.out
-
-## Load tests
-
-.PHONY: load-tests
-load-tests: load-tests-sqlite load-tests-postgres load-tests-mariadb
-
-.PHONY: load-tests-
-load-tests-%:
-	docker-compose \
-	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-base.yaml \
-	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/load_tests/load-tests-$*.yaml up \
-	--build \
-	--force-recreate \
-	--remove-orphans \
-	--renew-anon-volumes \
-	--always-recreate-deps $(if $(filter y Y yes YES true TRUE plz sure yup YUP,$(LET_HANG)),, --abort-on-container-exit)
 
 ## Running
 

@@ -4,11 +4,10 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	mockquerybuilding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 
+	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -17,7 +16,6 @@ var _ DataManager = (*MockDatabase)(nil)
 // BuildMockDatabase builds a mock database.
 func BuildMockDatabase() *MockDatabase {
 	return &MockDatabase{
-		AuditLogEntryDataManager:         &mocktypes.AuditLogEntryDataManager{},
 		AccountDataManager:               &mocktypes.AccountDataManager{},
 		AccountUserMembershipDataManager: &mocktypes.AccountUserMembershipDataManager{},
 		ItemDataManager:                  &mocktypes.ItemDataManager{},
@@ -32,7 +30,6 @@ func BuildMockDatabase() *MockDatabase {
 // So `mockDB.On("GetUserByUsername"...)` is destined to fail, whereas `mockDB.UserDataManager.On("GetUserByUsername"...)` would do what you want it to do.
 type MockDatabase struct {
 	*mocktypes.AdminUserDataManager
-	*mocktypes.AuditLogEntryDataManager
 	*mocktypes.AccountUserMembershipDataManager
 	*mocktypes.ItemDataManager
 	*mocktypes.UserDataManager
@@ -40,6 +37,11 @@ type MockDatabase struct {
 	*mocktypes.WebhookDataManager
 	*mocktypes.AccountDataManager
 	mock.Mock
+}
+
+// ProvideSessionStore satisfies the DataManager interface.
+func (m *MockDatabase) ProvideSessionStore() scs.Store {
+	return m.Called().Get(0).(scs.Store)
 }
 
 // Migrate satisfies the DataManager interface.
@@ -56,47 +58,6 @@ func (m *MockDatabase) IsReady(ctx context.Context, maxAttempts uint8) (ready bo
 func (m *MockDatabase) BeginTx(ctx context.Context, options *sql.TxOptions) (*sql.Tx, error) {
 	args := m.Called(ctx, options)
 	return args.Get(0).(*sql.Tx), args.Error(1)
-}
-
-var _ querybuilding.SQLQueryBuilder = (*MockSQLQueryBuilder)(nil)
-
-// BuildMockSQLQueryBuilder builds a MockSQLQueryBuilder.
-func BuildMockSQLQueryBuilder() *MockSQLQueryBuilder {
-	return &MockSQLQueryBuilder{
-		AccountSQLQueryBuilder:               &mockquerybuilding.AccountSQLQueryBuilder{},
-		AccountUserMembershipSQLQueryBuilder: &mockquerybuilding.AccountUserMembershipSQLQueryBuilder{},
-		AuditLogEntrySQLQueryBuilder:         &mockquerybuilding.AuditLogEntrySQLQueryBuilder{},
-		ItemSQLQueryBuilder:                  &mockquerybuilding.ItemSQLQueryBuilder{},
-		APIClientSQLQueryBuilder:             &mockquerybuilding.APIClientSQLQueryBuilder{},
-		UserSQLQueryBuilder:                  &mockquerybuilding.UserSQLQueryBuilder{},
-		WebhookSQLQueryBuilder:               &mockquerybuilding.WebhookSQLQueryBuilder{},
-	}
-}
-
-// MockSQLQueryBuilder is our mock database structure.
-type MockSQLQueryBuilder struct {
-	*mockquerybuilding.UserSQLQueryBuilder
-	*mockquerybuilding.AccountSQLQueryBuilder
-	*mockquerybuilding.AccountUserMembershipSQLQueryBuilder
-	*mockquerybuilding.AuditLogEntrySQLQueryBuilder
-	*mockquerybuilding.ItemSQLQueryBuilder
-	*mockquerybuilding.APIClientSQLQueryBuilder
-	*mockquerybuilding.WebhookSQLQueryBuilder
-	mock.Mock
-}
-
-// BuildMigrationFunc implements our interface.
-func (m *MockSQLQueryBuilder) BuildMigrationFunc(db *sql.DB) func() {
-	args := m.Called(db)
-
-	return args.Get(0).(func())
-}
-
-// BuildTestUserCreationQuery implements our interface.
-func (m *MockSQLQueryBuilder) BuildTestUserCreationQuery(ctx context.Context, testUserConfig *types.TestUserCreationConfig) (query string, args []interface{}) {
-	returnValues := m.Called(ctx, testUserConfig)
-
-	return returnValues.Get(0).(string), returnValues.Get(1).([]interface{})
 }
 
 var _ ResultIterator = (*MockResultIterator)(nil)

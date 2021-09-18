@@ -122,57 +122,6 @@ func (s *TestSuite) TestWebhooks_Listing() {
 	})
 }
 
-func (s *TestSuite) TestWebhooks_Updating_Returns404ForNonexistentWebhook() {
-	s.runForEachClientExcept("should fail to update a non-existent webhook", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			exampleWebhook := fakes.BuildFakeWebhook()
-			exampleWebhook.ID = nonexistentID
-
-			err := testClients.main.UpdateWebhook(ctx, exampleWebhook)
-			assert.Error(t, err)
-		}
-	})
-}
-
-func (s *TestSuite) TestWebhooks_Updating() {
-	s.runForEachClientExcept("should be updateable", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create webhook.
-			exampleWebhook := fakes.BuildFakeWebhook()
-			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			createdWebhook, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, createdWebhook, err)
-
-			// Change webhook.
-			createdWebhook.Name = reverseString(createdWebhook.Name)
-			exampleWebhook.Name = createdWebhook.Name
-
-			assert.NoError(t, testClients.main.UpdateWebhook(ctx, createdWebhook))
-
-			// Fetch webhook.
-			actual, err := testClients.main.GetWebhook(ctx, createdWebhook.ID)
-			requireNotNilAndNoProblems(t, actual, err)
-
-			// Assert webhook equality.
-			checkWebhookEquality(t, exampleWebhook, actual)
-			assert.NotNil(t, actual.LastUpdatedOn)
-
-			// Clean up.
-			assert.NoError(t, testClients.main.ArchiveWebhook(ctx, actual.ID))
-		}
-	})
-}
-
 func (s *TestSuite) TestWebhooks_Archiving_Returns404ForNonexistentWebhook() {
 	s.runForEachClientExcept("should fail to archive a non-existent webhook", func(testClients *testClientWrapper) func() {
 		return func() {

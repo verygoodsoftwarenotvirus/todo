@@ -164,9 +164,6 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 				singleWebhookRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveWebhooksPermission)).
 					Delete(root, s.webhooksService.ArchiveHandler)
-				singleWebhookRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.UpdateWebhooksPermission)).
-					Put(root, s.webhooksService.UpdateHandler)
 			})
 		})
 

@@ -73,22 +73,6 @@ func (b *Builder) BuildCreateWebhookRequest(ctx context.Context, input *types.We
 	return b.buildDataRequest(ctx, http.MethodPost, uri, input)
 }
 
-// BuildUpdateWebhookRequest builds an HTTP request for updating a webhook.
-func (b *Builder) BuildUpdateWebhookRequest(ctx context.Context, updated *types.Webhook) (*http.Request, error) {
-	ctx, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if updated == nil {
-		return nil, ErrNilInputProvided
-	}
-
-	tracing.AttachWebhookIDToSpan(span, updated.ID)
-
-	uri := b.BuildURL(ctx, nil, webhooksBasePath, updated.ID)
-
-	return b.buildDataRequest(ctx, http.MethodPut, uri, updated)
-}
-
 // BuildArchiveWebhookRequest builds an HTTP request for archiving a webhook.
 func (b *Builder) BuildArchiveWebhookRequest(ctx context.Context, webhookID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)

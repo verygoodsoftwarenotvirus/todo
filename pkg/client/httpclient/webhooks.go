@@ -86,29 +86,6 @@ func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreation
 	return webhook, nil
 }
 
-// UpdateWebhook updates a webhook.
-func (c *Client) UpdateWebhook(ctx context.Context, updated *types.Webhook) error {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if updated == nil {
-		return ErrNilInputProvided
-	}
-
-	logger := c.logger.WithValue(keys.WebhookIDKey, updated.ID)
-
-	req, err := c.requestBuilder.BuildUpdateWebhookRequest(ctx, updated)
-	if err != nil {
-		return observability.PrepareError(err, logger, span, "building update webhook request")
-	}
-
-	if err = c.fetchAndUnmarshal(ctx, req, &updated); err != nil {
-		return observability.PrepareError(err, logger, span, "updating webhook")
-	}
-
-	return nil
-}
-
 // ArchiveWebhook archives a webhook.
 func (c *Client) ArchiveWebhook(ctx context.Context, webhookID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)

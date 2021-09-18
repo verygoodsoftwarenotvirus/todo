@@ -279,56 +279,6 @@ func (q *SQLQuerier) CreateWebhook(ctx context.Context, input *types.WebhookCrea
 	return x, nil
 }
 
-const updateWebhookQuery = `
-UPDATE webhooks SET
-	name = ?, 
-	content_type = ?,
-	url = ?, 
-	method = ?,
-	events = ?, 
-	data_types = ?, 
-	topics = ?, 
-	last_updated_on = UNIX_TIMESTAMP()
-WHERE archived_on IS NULL 
-AND belongs_to_account = ? 
-AND id = ?
-`
-
-// UpdateWebhook updates a particular webhook.
-func (q *SQLQuerier) UpdateWebhook(ctx context.Context, updated *types.Webhook) error {
-	ctx, span := q.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if updated == nil {
-		return ErrNilInputProvided
-	}
-
-	tracing.AttachWebhookIDToSpan(span, updated.ID)
-	tracing.AttachAccountIDToSpan(span, updated.BelongsToAccount)
-
-	logger := q.logger.
-		WithValue(keys.WebhookIDKey, updated.ID).
-		WithValue(keys.AccountIDKey, updated.BelongsToAccount)
-
-	args := []interface{}{
-		updated.Name,
-		updated.ContentType,
-		updated.URL,
-		updated.Method,
-		strings.Join(updated.Events, webhooksTableEventsSeparator),
-		strings.Join(updated.DataTypes, webhooksTableDataTypesSeparator),
-		strings.Join(updated.Topics, webhooksTableTopicsSeparator),
-		updated.BelongsToAccount,
-		updated.ID,
-	}
-
-	if err := q.performWriteQuery(ctx, q.db, "webhook update", updateWebhookQuery, args); err != nil {
-		return observability.PrepareError(err, logger, span, "updating webhook")
-	}
-
-	return nil
-}
-
 const archiveWebhookQuery = `
 UPDATE webhooks SET
 	last_updated_on = UNIX_TIMESTAMP(), 

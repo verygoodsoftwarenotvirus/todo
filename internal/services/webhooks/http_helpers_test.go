@@ -23,7 +23,6 @@ type webhooksServiceHTTPRoutesTestHelper struct {
 	exampleAccount       *types.Account
 	exampleWebhook       *types.Webhook
 	exampleCreationInput *types.WebhookCreationInput
-	exampleUpdateInput   *types.WebhookUpdateInput
 }
 
 func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {
@@ -39,7 +38,6 @@ func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {
 	helper.exampleWebhook = fakes.BuildFakeWebhook()
 	helper.exampleWebhook.BelongsToAccount = helper.exampleAccount.ID
 	helper.exampleCreationInput = fakes.BuildFakeWebhookCreationInputFromWebhook(helper.exampleWebhook)
-	helper.exampleUpdateInput = fakes.BuildFakeWebhookUpdateInputFromWebhook(helper.exampleWebhook)
 
 	helper.service.webhookIDFetcher = func(*http.Request) string {
 		return helper.exampleWebhook.ID

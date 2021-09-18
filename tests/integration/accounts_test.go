@@ -1,9 +1,7 @@
 package integration
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -312,13 +310,6 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 				requireNotNilAndNoProblems(t, webhook, err)
 			}
 
-			originalWebhookName := createdWebhook.Name
-			// check that each user can update the webhook
-			for i := 0; i < userCount; i++ {
-				createdWebhook.Name = fmt.Sprintf("%s_%d", originalWebhookName, time.Now().UnixNano())
-				require.NoError(t, clients[i].UpdateWebhook(ctx, createdWebhook))
-			}
-
 			// remove users from account
 			for i := 0; i < userCount; i++ {
 				require.NoError(t, testClients.main.RemoveUserFromAccount(ctx, account.ID, users[i].ID))
@@ -400,13 +391,11 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			require.Nil(t, webhook)
 			require.Error(t, err)
 
-			// check that new owner can update the webhook
-			require.NoError(t, futureOwnerClient.UpdateWebhook(ctx, createdWebhook))
+			// check that new owner can delete the webhook
+			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
 
 			// Clean up.
 			require.Error(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
-			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
-
 			require.NoError(t, testClients.admin.ArchiveUser(ctx, futureOwner.ID))
 		}
 	})

@@ -41,20 +41,6 @@ type (
 		Topics           []string `json:"topics"`
 	}
 
-	// WebhookUpdateInput represents what a User could set as input for updating a webhook.
-	WebhookUpdateInput struct {
-		_ struct{}
-
-		Name             string   `json:"name"`
-		ContentType      string   `json:"contentType"`
-		URL              string   `json:"url"`
-		Method           string   `json:"method"`
-		BelongsToAccount string   `json:"-"`
-		Events           []string `json:"events"`
-		DataTypes        []string `json:"dataTypes"`
-		Topics           []string `json:"topics"`
-	}
-
 	// WebhookList represents a list of webhooks.
 	WebhookList struct {
 		_ struct{}
@@ -69,7 +55,6 @@ type (
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
 		GetWebhooks(ctx context.Context, accountID string, filter *QueryFilter) (*WebhookList, error)
 		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
-		UpdateWebhook(ctx context.Context, updated *Webhook) error
 		ArchiveWebhook(ctx context.Context, webhookID, accountID string) error
 	}
 
@@ -78,60 +63,14 @@ type (
 		ListHandler(res http.ResponseWriter, req *http.Request)
 		CreateHandler(res http.ResponseWriter, req *http.Request)
 		ReadHandler(res http.ResponseWriter, req *http.Request)
-		UpdateHandler(res http.ResponseWriter, req *http.Request)
 		ArchiveHandler(res http.ResponseWriter, req *http.Request)
 	}
 )
-
-// Update merges an WebhookCreationInput with an Webhook.
-func (w *Webhook) Update(input *WebhookUpdateInput) {
-	if input.Name != "" {
-		w.Name = input.Name
-	}
-
-	if input.ContentType != "" {
-		w.ContentType = input.ContentType
-	}
-
-	if input.URL != "" {
-		w.URL = input.URL
-	}
-
-	if input.Method != "" {
-		w.Method = input.Method
-	}
-
-	if input.Events != nil && len(input.Events) > 0 {
-		w.Events = input.Events
-	}
-
-	if input.DataTypes != nil && len(input.DataTypes) > 0 {
-		w.DataTypes = input.DataTypes
-	}
-
-	if input.Topics != nil && len(input.Topics) > 0 {
-		w.Topics = input.Topics
-	}
-}
 
 var _ validation.ValidatableWithContext = (*WebhookCreationInput)(nil)
 
 // ValidateWithContext validates a WebhookCreationInput.
 func (w *WebhookCreationInput) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, w,
-		validation.Field(&w.Name, validation.Required),
-		validation.Field(&w.URL, validation.Required, &urlValidator{}),
-		validation.Field(&w.Method, validation.Required, validation.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete)),
-		validation.Field(&w.ContentType, validation.Required, validation.In("application/json", "application/xml")),
-		validation.Field(&w.Events, validation.Required),
-		validation.Field(&w.DataTypes, validation.Required),
-	)
-}
-
-var _ validation.ValidatableWithContext = (*WebhookUpdateInput)(nil)
-
-// ValidateWithContext validates a WebhookUpdateInput.
-func (w *WebhookUpdateInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, w,
 		validation.Field(&w.Name, validation.Required),
 		validation.Field(&w.URL, validation.Required, &urlValidator{}),

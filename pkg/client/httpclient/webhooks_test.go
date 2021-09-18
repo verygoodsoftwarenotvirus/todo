@@ -175,47 +175,6 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 	})
 }
 
-func (s *webhooksTestSuite) TestClient_UpdateWebhook() {
-	const expectedPathFormat = "/api/v1/webhooks/%s"
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		spec := newRequestSpec(false, http.MethodPut, "", expectedPathFormat, s.exampleWebhook.ID)
-		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleWebhook)
-
-		err := c.UpdateWebhook(s.ctx, s.exampleWebhook)
-		assert.NoError(t, err)
-	})
-
-	s.Run("with invalid webhook ID", func() {
-		t := s.T()
-
-		c, _ := buildSimpleTestClient(t)
-
-		err := c.UpdateWebhook(s.ctx, nil)
-		assert.Error(t, err)
-	})
-
-	s.Run("with error building request", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-
-		err := c.UpdateWebhook(s.ctx, s.exampleWebhook)
-		assert.Error(t, err)
-	})
-
-	s.Run("with error executing request", func() {
-		t := s.T()
-
-		c, _ := buildTestClientThatWaitsTooLong(t)
-
-		err := c.UpdateWebhook(s.ctx, s.exampleWebhook)
-		assert.Error(t, err)
-	})
-}
-
 func (s *webhooksTestSuite) TestClient_ArchiveWebhook() {
 	const expectedPathFormat = "/api/v1/webhooks/%s"
 

@@ -61,7 +61,9 @@ func TestQuerier_Migrate(T *testing.T) {
 			exampleTestUserConfig.Username,
 			exampleTestUserConfig.HashedPassword,
 			defaultTestUserTwoFactorSecret,
+			"",
 			types.GoodStandingAccountStatus,
+			"",
 			authorization.ServiceAdminRole.String(),
 		}
 
@@ -77,6 +79,7 @@ func TestQuerier_Migrate(T *testing.T) {
 			types.UnpaidAccountBillingStatus,
 			accountCreationInput.ContactEmail,
 			accountCreationInput.ContactPhone,
+			"",
 			&idMatcher{},
 		}
 
@@ -148,7 +151,9 @@ func TestQuerier_Migrate(T *testing.T) {
 			exampleTestUserConfig.Username,
 			exampleTestUserConfig.HashedPassword,
 			defaultTestUserTwoFactorSecret,
+			"",
 			types.GoodStandingAccountStatus,
+			"",
 			authorization.ServiceAdminRole.String(),
 		}
 

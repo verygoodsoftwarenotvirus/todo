@@ -231,7 +231,6 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			"CreateItem",
 			testutils.ContextMatcher,
 			exampleInput,
-			s.sessionCtxData.Requester.UserID,
 		).Return(exampleItem, nil)
 		s.service.dataStore = mockDB
 
@@ -290,7 +289,6 @@ func TestService_handleItemCreationRequest(T *testing.T) {
 			"CreateItem",
 			testutils.ContextMatcher,
 			exampleInput,
-			s.sessionCtxData.Requester.UserID,
 		).Return((*types.Item)(nil), errors.New("blah"))
 		s.service.dataStore = mockDB
 
@@ -664,7 +662,6 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			"UpdateItem",
 			testutils.ContextMatcher,
 			exampleItem,
-			s.sessionCtxData.Requester.UserID,
 		).Return(nil)
 		s.service.dataStore = mockDB
 
@@ -775,7 +772,6 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			"UpdateItem",
 			testutils.ContextMatcher,
 			exampleItem,
-			s.sessionCtxData.Requester.UserID,
 		).Return(errors.New("blah"))
 		s.service.dataStore = mockDB
 
@@ -812,7 +808,6 @@ func TestService_handleItemArchiveRequest(T *testing.T) {
 			testutils.ContextMatcher,
 			exampleItem.ID,
 			s.sessionCtxData.ActiveAccountID,
-			s.sessionCtxData.Requester.UserID,
 		).Return(nil)
 		s.service.dataStore = mockDB
 
@@ -868,7 +863,6 @@ func TestService_handleItemArchiveRequest(T *testing.T) {
 			testutils.ContextMatcher,
 			exampleItem.ID,
 			s.sessionCtxData.ActiveAccountID,
-			s.sessionCtxData.Requester.UserID,
 		).Return(errors.New("blah"))
 		s.service.dataStore = mockDB
 
@@ -899,7 +893,6 @@ func TestService_handleItemArchiveRequest(T *testing.T) {
 			testutils.ContextMatcher,
 			exampleItem.ID,
 			s.sessionCtxData.ActiveAccountID,
-			s.sessionCtxData.Requester.UserID,
 		).Return(nil)
 		s.service.dataStore = mockDB
 

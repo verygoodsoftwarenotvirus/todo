@@ -2,17 +2,13 @@ package config
 
 import (
 	"context"
-	"github.com/alexedwards/scs/v2/memstore"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"testing"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 
+	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/stretchr/testify/assert"
-)
-
-const (
-	invalidProvider = "blah"
 )
 
 func TestConfig_ValidateWithContext(T *testing.T) {

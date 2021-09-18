@@ -1,4 +1,4 @@
 /*
-Package postgres provides an interface for writing to a Postgres instance.
+Package mysql provides an interface for writing to a MySQL instance.
 */
 package mysql

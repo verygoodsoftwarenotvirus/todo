@@ -727,12 +727,14 @@ func TestQuerier_createUser(T *testing.T) {
 		// create account for created user
 		accountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 		accountCreationInput.ID = exampleAccount.ID
+
 		accountCreationArgs := []interface{}{
 			accountCreationInput.ID,
 			accountCreationInput.Name,
 			types.UnpaidAccountBillingStatus,
 			accountCreationInput.ContactEmail,
 			accountCreationInput.ContactPhone,
+			"",
 			accountCreationInput.BelongsToUser,
 		}
 
@@ -849,12 +851,14 @@ func TestQuerier_createUser(T *testing.T) {
 		// create account for created user
 		accountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 		accountCreationInput.ID = exampleAccount.ID
+
 		accountCreationArgs := []interface{}{
 			accountCreationInput.ID,
 			accountCreationInput.Name,
 			types.UnpaidAccountBillingStatus,
 			accountCreationInput.ContactEmail,
 			accountCreationInput.ContactPhone,
+			"",
 			accountCreationInput.BelongsToUser,
 		}
 
@@ -899,12 +903,14 @@ func TestQuerier_createUser(T *testing.T) {
 		// create account for created user
 		accountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 		accountCreationInput.ID = exampleAccount.ID
+
 		accountCreationArgs := []interface{}{
 			accountCreationInput.ID,
 			accountCreationInput.Name,
 			types.UnpaidAccountBillingStatus,
 			accountCreationInput.ContactEmail,
 			accountCreationInput.ContactPhone,
+			"",
 			accountCreationInput.BelongsToUser,
 		}
 
@@ -963,12 +969,14 @@ func TestQuerier_createUser(T *testing.T) {
 		// create account for created user
 		accountCreationInput := types.AccountCreationInputForNewUser(exampleUser)
 		accountCreationInput.ID = exampleAccount.ID
+
 		accountCreationArgs := []interface{}{
 			accountCreationInput.ID,
 			accountCreationInput.Name,
 			types.UnpaidAccountBillingStatus,
 			accountCreationInput.ContactEmail,
 			accountCreationInput.ContactPhone,
+			"",
 			accountCreationInput.BelongsToUser,
 		}
 

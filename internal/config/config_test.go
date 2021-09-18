@@ -92,7 +92,11 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 }
 
 func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
+	T.Parallel()
+
 	T.Run("supported providers", func(t *testing.T) {
+		t.Parallel()
+
 		ctx := context.Background()
 		logger := logging.NewNoopLogger()
 
@@ -110,6 +114,8 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 	})
 
 	T.Run("with invalid provider", func(t *testing.T) {
+		t.Parallel()
+
 		ctx := context.Background()
 		logger := logging.NewNoopLogger()
 

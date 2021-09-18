@@ -39,6 +39,7 @@ type MockDatabase struct {
 	mock.Mock
 }
 
+// ProvideSessionStore satisfies the DataManager interface.
 func (m *MockDatabase) ProvideSessionStore() scs.Store {
 	return m.Called().Get(0).(scs.Store)
 }

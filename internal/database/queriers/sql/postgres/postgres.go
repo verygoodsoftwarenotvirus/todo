@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/alexedwards/scs/postgresstore"
-	"github.com/alexedwards/scs/v2"
 	"sync"
 	"time"
 
@@ -19,6 +17,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/alexedwards/scs/postgresstore"
+	"github.com/alexedwards/scs/v2"
 	"github.com/lib/pq"
 	"github.com/luna-duclos/instrumentedsql"
 )
@@ -106,6 +106,7 @@ func ProvideDatabaseClient(
 	return c, nil
 }
 
+// ProvideSessionStore provides the scs Store for MySQL.
 func (q *SQLQuerier) ProvideSessionStore() scs.Store {
 	return postgresstore.New(q.db)
 }

@@ -576,6 +576,7 @@ func TestQuerier_CreateAccount(T *testing.T) {
 			types.UnpaidAccountBillingStatus,
 			exampleInput.ContactEmail,
 			exampleInput.ContactPhone,
+			"",
 			exampleInput.BelongsToUser,
 		}
 
@@ -610,12 +611,14 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		db.ExpectBegin()
+
 		accountCreationArgs := []interface{}{
 			exampleInput.ID,
 			exampleInput.Name,
 			types.UnpaidAccountBillingStatus,
 			exampleInput.ContactEmail,
 			exampleInput.ContactPhone,
+			"",
 			exampleInput.BelongsToUser,
 		}
 
@@ -661,12 +664,14 @@ func TestQuerier_CreateAccount(T *testing.T) {
 		c, db := buildTestClient(t)
 
 		db.ExpectBegin()
+
 		accountCreationArgs := []interface{}{
 			exampleInput.ID,
 			exampleInput.Name,
 			types.UnpaidAccountBillingStatus,
 			exampleInput.ContactEmail,
 			exampleInput.ContactPhone,
+			"",
 			exampleInput.BelongsToUser,
 		}
 

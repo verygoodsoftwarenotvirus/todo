@@ -4,9 +4,9 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"

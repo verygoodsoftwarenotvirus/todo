@@ -3,10 +3,8 @@ package httpclient
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
@@ -400,8 +398,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 	s.Run("standard", func() {
 		t := s.T()
 
-		query := url.Values{keys.ReasonKey: []string{t.Name()}}.Encode()
-		spec := newRequestSpec(true, http.MethodDelete, query, expectedPathFormat, s.exampleAccount.ID, s.exampleUser.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccount.ID, s.exampleUser.ID)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
 		assert.NoError(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID))

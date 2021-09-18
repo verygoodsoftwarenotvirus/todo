@@ -5,10 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/alexedwards/scs/mysqlstore"
-	"github.com/alexedwards/scs/v2"
-	"github.com/go-sql-driver/mysql"
-	"github.com/luna-duclos/instrumentedsql"
 	"sync"
 	"time"
 
@@ -21,6 +17,10 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/Masterminds/squirrel"
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-sql-driver/mysql"
+	"github.com/luna-duclos/instrumentedsql"
 )
 
 const (
@@ -106,6 +106,7 @@ func ProvideDatabaseClient(
 	return c, nil
 }
 
+// ProvideSessionStore provides the scs Store for MySQL.
 func (q *SQLQuerier) ProvideSessionStore() scs.Store {
 	return mysqlstore.New(q.db)
 }

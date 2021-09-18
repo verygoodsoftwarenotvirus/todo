@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
@@ -21,8 +24,6 @@ import (
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
-	"os"
-	"strings"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )

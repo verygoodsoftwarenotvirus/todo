@@ -47,7 +47,6 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 			"CreateWebhook",
 			testutils.ContextMatcher,
 			mock.IsType(&types.WebhookCreationInput{}),
-			helper.exampleUser.ID,
 		).Return(helper.exampleWebhook, nil)
 		helper.service.webhookDataManager = wd
 
@@ -146,7 +145,6 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 			"CreateWebhook",
 			testutils.ContextMatcher,
 			mock.IsType(&types.WebhookCreationInput{}),
-			helper.exampleUser.ID,
 		).Return((*types.Webhook)(nil), errors.New("blah"))
 		helper.service.webhookDataManager = wd
 
@@ -389,7 +387,6 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 			"UpdateWebhook",
 			testutils.ContextMatcher,
 			mock.IsType(&types.Webhook{}),
-			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.webhookDataManager = wd
 
@@ -538,7 +535,6 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 			"UpdateWebhook",
 			testutils.ContextMatcher,
 			mock.IsType(&types.Webhook{}),
-			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.webhookDataManager = wd
 
@@ -572,7 +568,6 @@ func TestWebhooksService_UpdateHandler(T *testing.T) {
 			"UpdateWebhook",
 			testutils.ContextMatcher,
 			mock.IsType(&types.Webhook{}),
-			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.webhookDataManager = wd
 
@@ -601,7 +596,6 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 		).Return(nil)
 		helper.service.webhookDataManager = wd
 
@@ -633,7 +627,6 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 		).Return(sql.ErrNoRows)
 		helper.service.webhookDataManager = wd
 
@@ -662,7 +655,6 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
-			helper.exampleUser.ID,
 		).Return(errors.New("blah"))
 		helper.service.webhookDataManager = wd
 

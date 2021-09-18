@@ -232,7 +232,29 @@ func (q *SQLQuerier) GetAllAccountsCount(ctx context.Context) (uint64, error) {
 }
 
 var (
-	accountAndMembershipColumns = append(accountsTableColumns, accountsUserMembershipTableColumns...)
+	accountAndMembershipColumns = []string{
+		// accountsTableColumns,
+		"accounts.id",
+		"accounts.name",
+		"accounts.billing_status",
+		"accounts.contact_email",
+		"accounts.contact_phone",
+		"accounts.payment_processor_customer_id",
+		"accounts.subscription_plan_id",
+		"accounts.created_on",
+		"accounts.last_updated_on",
+		"accounts.archived_on",
+		"accounts.belongs_to_user",
+		// accountsUserMembershipTableColumns,
+		"account_user_memberships.id",
+		"account_user_memberships.belongs_to_user",
+		"account_user_memberships.belongs_to_account",
+		"account_user_memberships.account_roles",
+		"account_user_memberships.default_account",
+		"account_user_memberships.created_on",
+		"account_user_memberships.last_updated_on",
+		"account_user_memberships.archived_on",
+	}
 )
 
 // buildGetAccountsQuery builds a SQL query selecting accounts that adhere to a given QueryFilter and belong to a given account,

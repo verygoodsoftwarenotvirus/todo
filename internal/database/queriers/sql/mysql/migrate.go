@@ -3,10 +3,10 @@ package mysql
 import (
 	"context"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"strings"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	driverName = "instrumented-postgres"
+	driverName = "instrumented-mysql"
 
 	// defaultTestUserTwoFactorSecret is the default TwoFactorSecret we give to test users when we initialize them.
 	// `otpauth://totp/todo:username?secret=AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=&issuer=todo`

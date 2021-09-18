@@ -14,15 +14,15 @@ import (
 	"github.com/nsqio/go-nsq"
 )
 
-// PendingWriteMessage represents an event that asks a worker to write data to the datastore.
-type PendingWriteMessage struct {
+// PendingUpdateMessage represents an event that asks a worker to write data to the datastore.
+type PendingUpdateMessage struct {
 	MessageType          string                           `json:"messageType"`
 	Item                 *types.ItemDatabaseCreationInput `json:"item"`
 	AttributableToUserID string                           `json:"userID"`
 }
 
-// PendingWritesWorker writes data from the pending writes topic to the database.
-type PendingWritesWorker struct {
+// PendingUpdatesWorker writes data from the pending writes topic to the database.
+type PendingUpdatesWorker struct {
 	logger              logging.Logger
 	tracer              tracing.Tracer
 	afterWritesProducer events.Producer
@@ -30,11 +30,11 @@ type PendingWritesWorker struct {
 	dataManager         database.DataManager
 }
 
-// ProvidePendingWritesWorker provides a PendingWritesWorker.
-func ProvidePendingWritesWorker(logger logging.Logger, dataManager database.DataManager, afterWritesProducer, errorsProducer events.Producer) *PendingWritesWorker {
-	name := "pending_writes"
+// ProvidePendingUpdatesWorker provides a PendingUpdatesWorker.
+func ProvidePendingUpdatesWorker(logger logging.Logger, dataManager database.DataManager, afterWritesProducer, errorsProducer events.Producer) *PendingUpdatesWorker {
+	name := "pending_updates"
 
-	return &PendingWritesWorker{
+	return &PendingUpdatesWorker{
 		logger:              logging.EnsureLogger(logger).WithName(name),
 		tracer:              tracing.NewTracer(name),
 		afterWritesProducer: afterWritesProducer,
@@ -43,12 +43,12 @@ func ProvidePendingWritesWorker(logger logging.Logger, dataManager database.Data
 	}
 }
 
-// HandlePendingWrite handles a pending write.
-func (w *PendingWritesWorker) HandleMessage(message *nsq.Message) error {
+// HandleMessage handles a pending write.
+func (w *PendingUpdatesWorker) HandleMessage(message *nsq.Message) error {
 	ctx, span := w.tracer.StartSpan(context.Background())
 	defer span.End()
 
-	var msg *PendingWriteMessage
+	var msg *PendingUpdateMessage
 
 	if err := json.Unmarshal(message.Body, &msg); err != nil {
 		message.Touch()

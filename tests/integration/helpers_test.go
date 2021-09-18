@@ -31,7 +31,7 @@ func requireNotNilAndNoProblems(t *testing.T, i interface{}, err error) {
 	require.NotNil(t, i)
 }
 
-func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.User, cookie *http.Cookie, cookieClient, pasetoClient *httpclient.Client) {
+func createUserAndClientForTest(ctx context.Context, t *testing.T) (*types.User, *http.Cookie, *httpclient.Client, *httpclient.Client) {
 	t.Helper()
 
 	user, err := testutils.CreateServiceUser(ctx, urlToUse, fakes.BuildFakeUser().Username)
@@ -39,10 +39,10 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 
 	t.Logf("created user %q: %q", user.ID, user.Username)
 
-	cookie, err = testutils.GetLoginCookie(ctx, urlToUse, user)
+	cookie, err := testutils.GetLoginCookie(ctx, urlToUse, user)
 	require.NoError(t, err)
 
-	cookieClient, err = initializeCookiePoweredClient(cookie)
+	cookieClient, err := initializeCookiePoweredClient(cookie)
 	require.NoError(t, err)
 
 	apiClient, err := cookieClient.CreateAPIClient(ctx, cookie, &types.APIClientCreationInput{
@@ -58,7 +58,7 @@ func createUserAndClientForTest(ctx context.Context, t *testing.T) (user *types.
 	secretKey, err := base64.RawURLEncoding.DecodeString(apiClient.ClientSecret)
 	require.NoError(t, err)
 
-	pasetoClient, err = initializePASETOPoweredClient(apiClient.ClientID, secretKey)
+	pasetoClient, err := initializePASETOPoweredClient(apiClient.ClientID, secretKey)
 	require.NoError(t, err)
 
 	return user, cookie, cookieClient, pasetoClient
@@ -125,7 +125,7 @@ func generateTOTPTokenForUser(t *testing.T, u *types.User) string {
 	return code
 }
 
-func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (cookieClient, pasetoClient *httpclient.Client) {
+func buildAdminCookieAndPASETOClients(ctx context.Context, t *testing.T) (*httpclient.Client, *httpclient.Client) {
 	t.Helper()
 
 	ctx, span := tracing.StartSpan(ctx)

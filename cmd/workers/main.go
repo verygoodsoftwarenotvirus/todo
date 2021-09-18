@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"log"
 	"os"
 	"os/signal"
@@ -93,21 +94,68 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	pendingWorker := workers.ProvidePendingWriter(logger, dataManager)
-
-	// configure a new Consumer
-	pendingWritesConsumer, err := events.NewTopicConsumer(addr, "pending_writes", pendingWorker.HandlePendingWrite)
+	afterWritesProducer, err := events.NewProducerProvider(logger, addr).ProviderProducer("writes")
 	if err != nil {
 		logger.Fatal(err)
 	}
-	defer pendingWritesConsumer.Stop()
+
+	errorsProducer, err := events.NewProducerProvider(logger, addr).ProviderProducer("errors")
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	if err = setupPendingWritesConsumer(logger, dataManager, afterWritesProducer, errorsProducer, addr); err != nil {
+		logger.Fatal(err)
+	}
+
+	if err = setupAfterWritesConsumer(logger, errorsProducer, addr); err != nil {
+		logger.Fatal(err)
+	}
+
+	if err = setupErrorsConsumer(logger, addr); err != nil {
+		logger.Fatal(err)
+	}
+
+	// wait for signal to exit
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	<-sigChan
+}
+
+func setupPendingWritesConsumer(logger logging.Logger, dataManager database.DataManager, afterWritesProducer, errorsProducer events.Producer, addr string) error {
+	pendingWritesWorker := workers.ProvidePendingWritesWorker(logger, dataManager, afterWritesProducer, errorsProducer)
+
+	// configure a new Consumer
+	pendingWritesConsumer, err := events.NewTopicConsumer(addr, "pending_writes", pendingWritesWorker.HandleMessage)
+	if err != nil {
+		logger.Fatal(err)
+	}
 
 	pendingWritesConsumer.SetLogger(&nsqLogger{logger: logger}, nsq.LogLevelInfo)
 	pendingWritesConsumer.SetLoggerLevel(nsq.LogLevelInfo)
 
-	// configure a new Consumer
-	writesConsumer, err := events.NewTopicConsumer(addr, "writes", func(message *nsq.Message) error {
-		logger.WithName("writes_consumer").WithValue("message_body", string(message.Body)).Debug("Got a write message")
+	return nil
+}
+
+func setupAfterWritesConsumer(logger logging.Logger, errorsProducer events.Producer, addr string) error {
+	afterWritesWorker := workers.ProvideAfterWriteWorker(logger, errorsProducer)
+
+	afterWritesConsumer, err := events.NewTopicConsumer(addr, "after_writes", afterWritesWorker.HandleMessage)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	defer afterWritesConsumer.Stop()
+
+	afterWritesConsumer.SetLogger(&nsqLogger{logger: logger}, nsq.LogLevelInfo)
+	afterWritesConsumer.SetLoggerLevel(nsq.LogLevelInfo)
+
+	return nil
+}
+
+func setupErrorsConsumer(logger logging.Logger, addr string) error {
+	writesConsumer, err := events.NewTopicConsumer(addr, "errors", func(message *nsq.Message) error {
+		logger.WithName("writes_consumer").WithValue("message_body", string(message.Body)).Debug("Got an error message")
 		return nil
 	})
 	if err != nil {
@@ -118,9 +166,5 @@ func main() {
 	writesConsumer.SetLogger(&nsqLogger{logger: logger}, nsq.LogLevelInfo)
 	writesConsumer.SetLoggerLevel(nsq.LogLevelInfo)
 
-	// wait for signal to exit
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
-
-	<-sigChan
+	return nil
 }

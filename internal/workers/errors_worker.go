@@ -14,41 +14,38 @@ import (
 	"github.com/nsqio/go-nsq"
 )
 
-// PendingWriteMessage represents an event that asks a worker to write data to the datastore.
-type PendingWriteMessage struct {
+// ErrorMessage represents an event that asks a worker to write data to the datastore.
+type ErrorMessage struct {
 	MessageType          string                           `json:"messageType"`
 	Item                 *types.ItemDatabaseCreationInput `json:"item"`
 	AttributableToUserID string                           `json:"userID"`
 }
 
-// PendingWritesWorker writes data from the pending writes topic to the database.
-type PendingWritesWorker struct {
-	logger              logging.Logger
-	tracer              tracing.Tracer
-	afterWritesProducer events.Producer
-	errorsProducer      events.Producer
-	dataManager         database.DataManager
+// ErrorsWorker writes data from the pending writes topic to the database.
+type ErrorsWorker struct {
+	logger         logging.Logger
+	tracer         tracing.Tracer
+	errorsProducer events.Producer
+	dataManager    database.DataManager
 }
 
-// ProvidePendingWritesWorker provides a PendingWritesWorker.
-func ProvidePendingWritesWorker(logger logging.Logger, dataManager database.DataManager, afterWritesProducer, errorsProducer events.Producer) *PendingWritesWorker {
-	name := "pending_writes"
-
-	return &PendingWritesWorker{
-		logger:              logging.EnsureLogger(logger).WithName(name),
-		tracer:              tracing.NewTracer(name),
-		afterWritesProducer: afterWritesProducer,
-		errorsProducer:      errorsProducer,
-		dataManager:         dataManager,
+// ProvideErrorsWorker provides a ErrorsWorker.
+func ProvideErrorsWorker(logger logging.Logger, dataManager database.DataManager, errorsProducer events.Producer) *ErrorsWorker {
+	name := "errors_worker"
+	return &ErrorsWorker{
+		logger:         logging.EnsureLogger(logger).WithName(name),
+		tracer:         tracing.NewTracer(name),
+		errorsProducer: errorsProducer,
+		dataManager:    dataManager,
 	}
 }
 
-// HandlePendingWrite handles a pending write.
-func (w *PendingWritesWorker) HandleMessage(message *nsq.Message) error {
+// HandleMessage handles a pending write.
+func (w *ErrorsWorker) HandleMessage(message *nsq.Message) error {
 	ctx, span := w.tracer.StartSpan(context.Background())
 	defer span.End()
 
-	var msg *PendingWriteMessage
+	var msg *ErrorMessage
 
 	if err := json.Unmarshal(message.Body, &msg); err != nil {
 		message.Touch()
@@ -76,10 +73,6 @@ func (w *PendingWritesWorker) HandleMessage(message *nsq.Message) error {
 		}
 
 		message.Finish()
-
-		if err = w.afterWritesProducer.Publish(ctx, msg.Item); err != nil {
-			w.logger.Error(err, "publishing write to after writes topic")
-		}
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-package events
+package messagequeue
 
 import "github.com/google/wire"
 

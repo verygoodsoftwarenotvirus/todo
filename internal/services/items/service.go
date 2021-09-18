@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -36,7 +36,7 @@ type (
 		itemCounter               metrics.UnitCounter
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
-		pendingWritesProducer     events.Producer
+		pendingWritesProducer     messagequeue.Producer
 		search                    SearchIndex
 	}
 )
@@ -50,7 +50,7 @@ func ProvideService(
 	counterProvider metrics.UnitCounterProvider,
 	searchIndexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
-	producerProvider events.ProducerProvider,
+	producerProvider messagequeue.ProducerProvider,
 ) (types.ItemDataService, error) {
 	searchIndexManager, err := searchIndexProvider(search.IndexPath(cfg.SearchIndexPath), "items", logger)
 	if err != nil {

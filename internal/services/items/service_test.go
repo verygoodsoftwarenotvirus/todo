@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
@@ -50,8 +50,8 @@ func TestProvideItemsService(T *testing.T) {
 
 		cfg := Config{SearchIndexPath: "example/path"}
 
-		pp := &events.MockProducerProvider{}
-		pp.On("ProviderProducer", cfg.PendingWritesTopicName).Return(&events.MockProducer{}, nil)
+		pp := &messagequeue.MockProducerProvider{}
+		pp.On("ProviderProducer", cfg.PendingWritesTopicName).Return(&messagequeue.MockProducer{}, nil)
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
@@ -81,8 +81,8 @@ func TestProvideItemsService(T *testing.T) {
 
 		cfg := Config{SearchIndexPath: "example/path"}
 
-		pp := &events.MockProducerProvider{}
-		pp.On("ProviderProducer", cfg.PendingWritesTopicName).Return(&events.MockProducer{}, nil)
+		pp := &messagequeue.MockProducerProvider{}
+		pp.On("ProviderProducer", cfg.PendingWritesTopicName).Return(&messagequeue.MockProducer{}, nil)
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),

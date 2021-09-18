@@ -1,4 +1,4 @@
-package events
+package messagequeue
 
 type (
 	// EventQueueAddress is a simple string alias for the location of our event queue server.

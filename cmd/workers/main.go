@@ -2,47 +2,25 @@ package main
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 
-	"github.com/nsqio/go-nsq"
+	"github.com/go-redis/redis/v8"
 )
 
-const (
-	configFilepathEnvVar = "CONFIGURATION_FILEPATH"
-	configStoreEnvVarKey = "TODO_WORKERS_LOCAL_CONFIG_STORE_KEY"
-)
-
-type nsqLogger struct {
-	logger logging.Logger
-}
-
-func (l *nsqLogger) Output(calldepth int, s string) error {
-	if !strings.Contains(s, "TOPIC_NOT_FOUND") &&
-		!strings.Contains(s, "querying nsqlookupd") &&
-		!strings.Contains(s, "retrying with next nsqlookupd") {
-		l.logger.WithValue("calldepth", calldepth).Info(s)
-	}
-
-	return nil
-}
-
-func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
+func initializeLocalSecretManager(ctx context.Context, envVarKey string) secrets.SecretManager {
 	logger := logging.NewNoopLogger()
 
 	cfg := &secrets.Config{
 		Provider: secrets.ProviderLocal,
-		Key:      os.Getenv(configStoreEnvVarKey),
+		Key:      os.Getenv(envVarKey),
 	}
 
 	k, err := secrets.ProvideSecretKeeper(ctx, cfg)
@@ -58,9 +36,14 @@ func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
 	return sm
 }
 
+const (
+	configFilepathEnvVar = "CONFIGURATION_FILEPATH"
+	configStoreEnvVarKey = "TODO_WORKERS_LOCAL_CONFIG_STORE_KEY"
+)
+
 func main() {
 	const (
-		addr = "nsqlookupd:4161"
+		addr = "worker_queue:6379"
 	)
 
 	ctx := context.Background()
@@ -80,7 +63,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	sm := initializeLocalSecretManager(ctx)
+	sm := initializeLocalSecretManager(ctx, configStoreEnvVarKey)
 
 	var cfg *config.InstanceConfig
 	if err = sm.Decrypt(ctx, string(configBytes), &cfg); err != nil || cfg == nil {
@@ -94,26 +77,26 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	afterWritesProducer, err := events.NewProducerProvider(logger, addr).ProviderProducer("writes")
-	if err != nil {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     addr,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
+	pubsub := rdb.Subscribe(ctx, "pending_writes")
+
+	// Wait for confirmation that subscription is created before publishing anything.
+	if _, err = pubsub.Receive(ctx); err != nil {
 		logger.Fatal(err)
 	}
 
-	errorsProducer, err := events.NewProducerProvider(logger, addr).ProviderProducer("errors")
-	if err != nil {
-		logger.Fatal(err)
-	}
+	pww := workers.ProvidePendingWritesWorker(logger, dataManager)
 
-	if err = setupPendingWritesConsumer(logger, dataManager, afterWritesProducer, errorsProducer, addr); err != nil {
-		logger.Fatal(err)
-	}
+	// Consume messages.
+	for msg := range pubsub.Channel() {
+		if err = pww.HandleMessage([]byte(msg.Payload)); err != nil {
 
-	if err = setupAfterWritesConsumer(logger, errorsProducer, addr); err != nil {
-		logger.Fatal(err)
-	}
-
-	if err = setupErrorsConsumer(logger, addr); err != nil {
-		logger.Fatal(err)
+		}
 	}
 
 	// wait for signal to exit
@@ -121,50 +104,4 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigChan
-}
-
-func setupPendingWritesConsumer(logger logging.Logger, dataManager database.DataManager, afterWritesProducer, errorsProducer events.Producer, addr string) error {
-	pendingWritesWorker := workers.ProvidePendingWritesWorker(logger, dataManager, afterWritesProducer, errorsProducer)
-
-	// configure a new Consumer
-	pendingWritesConsumer, err := events.NewTopicConsumer(addr, "pending_writes", pendingWritesWorker.HandleMessage)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	pendingWritesConsumer.SetLogger(&nsqLogger{logger: logger}, nsq.LogLevelInfo)
-	pendingWritesConsumer.SetLoggerLevel(nsq.LogLevelInfo)
-
-	return nil
-}
-
-func setupAfterWritesConsumer(logger logging.Logger, errorsProducer events.Producer, addr string) error {
-	afterWritesWorker := workers.ProvideAfterWriteWorker(logger, errorsProducer)
-
-	afterWritesConsumer, err := events.NewTopicConsumer(addr, "after_writes", afterWritesWorker.HandleMessage)
-	if err != nil {
-		logger.Fatal(err)
-	}
-	defer afterWritesConsumer.Stop()
-
-	afterWritesConsumer.SetLogger(&nsqLogger{logger: logger}, nsq.LogLevelInfo)
-	afterWritesConsumer.SetLoggerLevel(nsq.LogLevelInfo)
-
-	return nil
-}
-
-func setupErrorsConsumer(logger logging.Logger, addr string) error {
-	writesConsumer, err := events.NewTopicConsumer(addr, "errors", func(message *nsq.Message) error {
-		logger.WithName("writes_consumer").WithValue("message_body", string(message.Body)).Debug("Got an error message")
-		return nil
-	})
-	if err != nil {
-		logger.Fatal(err)
-	}
-	defer writesConsumer.Stop()
-
-	writesConsumer.SetLogger(&nsqLogger{logger: logger}, nsq.LogLevelInfo)
-	writesConsumer.SetLoggerLevel(nsq.LogLevelInfo)
-
-	return nil
 }

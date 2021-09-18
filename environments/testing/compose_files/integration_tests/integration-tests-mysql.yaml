@@ -17,8 +17,8 @@ services:
         depends_on:
             - todo-server
         links:
+            - worker_queue
             - database
-            - nsqlookupd
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'
@@ -31,6 +31,7 @@ services:
               type: 'bind'
     todo-server:
         links:
+            - worker_queue
             - database
         environment:
             TODO_SERVICE_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='

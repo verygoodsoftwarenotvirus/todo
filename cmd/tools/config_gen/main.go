@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
 	"log"
 	"os"
 	"path/filepath"
@@ -60,7 +60,7 @@ const (
 
 	contentTypeJSON = "application/json"
 
-	eventsServerAddress = "events:4150"
+	eventsServerAddress = "worker_queue:6379"
 )
 
 var (
@@ -175,7 +175,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Events: events.ProducerConfig{
+		Events: messagequeue.ProducerConfig{
 			Address: eventsServerAddress,
 		},
 		Server: localServer,
@@ -259,7 +259,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Events: events.ProducerConfig{
+		Events: messagequeue.ProducerConfig{
 			Address: eventsServerAddress,
 		},
 		Server: localServer,
@@ -334,7 +334,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Debug:   false,
 				RunMode: testingEnv,
 			},
-			Events: events.ProducerConfig{
+			Events: messagequeue.ProducerConfig{
 				Address: eventsServerAddress,
 			},
 			Encoding: encoding.Config{

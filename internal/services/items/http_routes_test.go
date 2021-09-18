@@ -11,7 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
@@ -62,7 +62,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &events.MockProducer{}
+		mockEventProducer := &messagequeue.MockProducer{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -147,7 +147,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &events.MockProducer{}
+		mockEventProducer := &messagequeue.MockProducer{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,

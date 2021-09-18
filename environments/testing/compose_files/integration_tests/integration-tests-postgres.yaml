@@ -15,8 +15,8 @@ services:
         depends_on:
             - todo-server
         links:
+            - worker_queue
             - database
-            - nsqlookupd
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'
@@ -32,6 +32,7 @@ services:
             TODO_SERVICE_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
             USE_NOOP_LOGGER: 'nope'
         links:
+            - worker_queue
             - database
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-postgres.config'

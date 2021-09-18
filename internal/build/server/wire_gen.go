@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/events"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
@@ -89,7 +89,7 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
 	producerConfig := cfg.Events
 	eventQueueAddress := producerConfig.Address
-	producerProvider := events.NewProducerProvider(logger, eventQueueAddress)
+	producerProvider := messagequeue.NewProducerProvider(logger, eventQueueAddress)
 	itemDataService, err := items.ProvideService(logger, itemsConfig, itemDataManager, serverEncoderDecoder, unitCounterProvider, indexManagerProvider, routeParamManager, producerProvider)
 	if err != nil {
 		return nil, err

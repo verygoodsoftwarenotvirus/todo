@@ -21,7 +21,7 @@ import (
 )
 
 func waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet() {
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 }
 
 func requireNotNilAndNoProblems(t *testing.T, i interface{}, err error) {

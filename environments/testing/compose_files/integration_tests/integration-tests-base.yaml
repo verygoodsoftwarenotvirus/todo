@@ -1,31 +1,14 @@
 version: "3.3"
 services:
-    nsqlookupd:
-        image: nsqio/nsq:v1.2.1
-        hostname: nsqlookupd
-        ports:
-            - "4160:4160"
-            - "4161:4161"
-        command: /nsqlookupd
-        logging:
-            driver: none
-    events:
-        image: nsqio/nsq:v1.2.1
-        hostname: nsqd
-        links:
-            - nsqlookupd
-        ports:
-            - "4150:4150"
-            - "4151:4151"
-        command: /nsqd -broadcast-address=nsqd --lookupd-tcp-address=nsqlookupd:4160
-        logging:
-            driver: none
+    worker_queue:
+        image: redis:6-buster
+        container_name: worker_queue
     todo-server:
         environment:
             CONFIGURATION_FILEPATH: '/etc/service.config'
             JAEGER_DISABLED: 'true'
         links:
-            - events
+            - worker_queue
         ports:
             - 80:8888
         build:

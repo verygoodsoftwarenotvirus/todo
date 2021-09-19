@@ -18,10 +18,12 @@ import (
 )
 
 const (
-	preWritesTopicName   = "pre_writes"
-	postWritesTopicName  = "post_writes"
-	preUpdatesTopicName  = "pre_updates"
-	postUpdatesTopicName = "post_updates"
+	preWritesTopicName    = "pre_writes"
+	postWritesTopicName   = "post_writes"
+	preUpdatesTopicName   = "pre_updates"
+	postUpdatesTopicName  = "post_updates"
+	preArchivesTopicName  = "pre_archives"
+	postArchivesTopicName = "post_archives"
 )
 
 func initializeLocalSecretManager(ctx context.Context, envVarKey string) secrets.SecretManager {
@@ -116,6 +118,10 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	if err = setupPreArchivesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
+		logger.Fatal(err)
+	}
+
 	logger.Info("working...")
 
 	// wait for signal to exit
@@ -182,6 +188,28 @@ func setupPreUpdatesWorker(ctx context.Context, logger logging.Logger, dataManag
 	// Consume messages.
 	go func() {
 		for msg := range preUpdatesSubscription.Channel() {
+			if err = worker.HandleMessage([]byte(msg.Payload)); err != nil {
+				logger.Error(err, "handling pre-write message")
+			}
+		}
+	}()
+
+	return nil
+}
+
+func setupPreArchivesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
+	preArchivesSubscription := redisClient.Subscribe(ctx, preArchivesTopicName)
+
+	postArchivesPublisher, err := publisherProvider.ProviderPublisher(postArchivesTopicName)
+	if err != nil {
+		return err
+	}
+
+	worker := workers.ProvidePreArchivesWorker(logger, dataManager, postArchivesPublisher)
+
+	// Consume messages.
+	go func() {
+		for msg := range preArchivesSubscription.Channel() {
 			if err = worker.HandleMessage([]byte(msg.Payload)); err != nil {
 				logger.Error(err, "handling pre-write message")
 			}

@@ -13,7 +13,6 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -44,8 +43,6 @@ func TestParseBool(t *testing.T) {
 }
 
 func PreWriteMessageMatcher(*workers.PreWriteMessage) bool { return true }
-
-func PreUpdateMessageMatcher(*workers.PreUpdateMessage) bool { return true }
 
 func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
@@ -707,6 +704,8 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	})
 }
 
+func PreUpdateMessageMatcher(*workers.PreUpdateMessage) bool { return true }
+
 func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
@@ -745,7 +744,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
 	})
 
 	T.Run("with invalid input", func(t *testing.T) {
@@ -855,6 +854,8 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	})
 }
 
+func PreArchiveMessageMatcher(*workers.PreArchiveMessage) bool { return true }
+
 func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
@@ -865,30 +866,26 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
-			"ArchiveItem",
+			"ItemExists",
 			testutils.ContextMatcher,
 			helper.exampleItem.ID,
 			helper.exampleAccount.ID,
-		).Return(nil)
+		).Return(true, nil)
 		helper.service.itemDataManager = itemDataManager
 
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Delete",
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
 			testutils.ContextMatcher,
-			helper.exampleItem.ID,
+			mock.MatchedBy(PreArchiveMessageMatcher),
 		).Return(nil)
-		helper.service.search = indexManager
-
-		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Decrement", testutils.ContextMatcher).Return()
-		helper.service.itemCounter = unitCounter
+		helper.service.preArchivesProducer = mockEventProducer
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, indexManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -922,11 +919,11 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 
 		itemDataManager := &mocktypes.ItemDataManager{}
 		itemDataManager.On(
-			"ArchiveItem",
+			"ItemExists",
 			testutils.ContextMatcher,
 			helper.exampleItem.ID,
 			helper.exampleAccount.ID,
-		).Return(sql.ErrNoRows)
+		).Return(false, nil)
 		helper.service.itemDataManager = itemDataManager
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
@@ -942,67 +939,5 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, encoderDecoder)
-	})
-
-	T.Run("with error saving as archived", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"ArchiveItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(errors.New("blah"))
-		helper.service.itemDataManager = itemDataManager
-
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
-			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
-
-		helper.service.ArchiveHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, encoderDecoder)
-	})
-
-	T.Run("with error removing from search index", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"ArchiveItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(nil)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Delete",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-		).Return(errors.New("blah"))
-		helper.service.search = indexManager
-
-		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Decrement", testutils.ContextMatcher).Return()
-		helper.service.itemCounter = unitCounter
-
-		helper.service.ArchiveHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusNoContent, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, unitCounter, indexManager)
 	})
 }

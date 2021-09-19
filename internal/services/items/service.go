@@ -38,6 +38,7 @@ type (
 		tracer                    tracing.Tracer
 		preWritesProducer         publishers.Publisher
 		preUpdatesProducer        publishers.Publisher
+		preArchivesProducer       publishers.Publisher
 		search                    SearchIndex
 	}
 )
@@ -68,6 +69,11 @@ func ProvideService(
 		return nil, fmt.Errorf("setting up event producer: %w", err)
 	}
 
+	preArchivesProducer, err := producerProvider.ProviderPublisher(cfg.PreArchivesTopicName)
+	if err != nil {
+		return nil, fmt.Errorf("setting up event producer: %w", err)
+	}
+
 	svc := &service{
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		itemIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(ItemIDURIParamKey),
@@ -75,6 +81,7 @@ func ProvideService(
 		itemDataManager:           itemDataManager,
 		preWritesProducer:         preWritesProducer,
 		preUpdatesProducer:        preUpdatesProducer,
+		preArchivesProducer:       preArchivesProducer,
 		encoderDecoder:            encoder,
 		itemCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		search:                    searchIndexManager,

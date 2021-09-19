@@ -147,7 +147,7 @@ func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 
 	// check the database.
 	exists, err := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
-	if !errors.Is(err, sql.ErrNoRows) {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		observability.AcknowledgeError(err, logger, span, "checking item existence")
 	}
 
@@ -303,7 +303,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		AttributeToUserID: sessionCtxData.Requester.UserID,
 	}
 	if err = s.preUpdatesProducer.Publish(ctx, pum); err != nil {
-		observability.AcknowledgeError(err, logger, span, "publishing item write message")
+		observability.AcknowledgeError(err, logger, span, "publishing item update message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -336,22 +336,25 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
-	// archive the item in the database.
-	err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+	exists, err := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		observability.AcknowledgeError(err, logger, span, "checking item existence")
 		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "archiving item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+	} else if !exists || errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	}
 
-	// notify interested parties.
-	s.itemCounter.Decrement(ctx)
-
-	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
-		observability.AcknowledgeError(err, logger, span, "removing from search index")
+	pam := &workers.PreArchiveMessage{
+		MessageType:       "item",
+		RelevantID:        itemID,
+		AccountID:         sessionCtxData.ActiveAccountID,
+		AttributeToUserID: sessionCtxData.Requester.UserID,
+	}
+	if err = s.preArchivesProducer.Publish(ctx, pam); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item archive message")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
 	}
 
 	// encode our response and peace.

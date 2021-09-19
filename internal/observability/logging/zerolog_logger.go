@@ -82,7 +82,11 @@ func (l *zerologLogger) Debug(input string) {
 
 // Error satisfies our contract for the logging.Logger Error method.
 func (l *zerologLogger) Error(err error, input string) {
-	l.logger.Error().Stack().Caller().Err(err).Msg(input)
+	if err == nil {
+		l.logger.Error().Stack().Caller().Str("err", "nil").Msg(input)
+	} else {
+		l.logger.Error().Stack().Caller().Err(err).Msg(input)
+	}
 }
 
 // Fatal satisfies our contract for the logging.Logger Fatal method.
@@ -139,7 +143,7 @@ func (l *zerologLogger) attachRequestToLog(req *http.Request) zerolog.Logger {
 
 		if l.requestIDFunc != nil {
 			if reqID := l.requestIDFunc(req); reqID != "" {
-				l2 = l2.With().Str("request_id", reqID).Logger()
+				l2 = l2.With().Str("request.id", reqID).Logger()
 			}
 		}
 

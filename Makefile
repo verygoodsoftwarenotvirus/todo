@@ -136,6 +136,10 @@ check-formatting: check-backend-formatting check-frontend-formatting
 
 ## Testing things
 
+.PHONY: pre-lint
+pre-lint:
+	@fieldalignment -fix ./...
+
 .PHONY: docker-lint
 docker-lint:
 	docker run --rm --volume `pwd`:`pwd` --workdir=`pwd` openpolicyagent/conftest:v0.21.0 test --policy docker_security.rego `find . -type f -name "*.Dockerfile"`

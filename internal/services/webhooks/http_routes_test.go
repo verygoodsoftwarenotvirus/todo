@@ -9,8 +9,8 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -38,22 +38,18 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Increment", testutils.ContextMatcher).Return()
-		helper.service.webhookCounter = unitCounter
-
-		wd := &mocktypes.WebhookDataManager{}
-		wd.On(
-			"CreateWebhook",
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
 			testutils.ContextMatcher,
-			mock.IsType(&types.WebhookCreationInput{}),
-		).Return(helper.exampleWebhook, nil)
-		helper.service.webhookDataManager = wd
+			mock.MatchedBy(testutils.PreWriteMessageMatcher),
+		).Return(nil)
+		helper.service.preWritesProducer = mockEventProducer
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, unitCounter, wd)
+		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -118,40 +114,8 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Increment", testutils.ContextMatcher).Return()
-		helper.service.webhookCounter = unitCounter
-
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
-	})
-
-	T.Run("with error creating webhook", func(t *testing.T) {
-		t.Parallel()
-
-		helper := newTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-
-		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		wd := &mocktypes.WebhookDataManager{}
-		wd.On(
-			"CreateWebhook",
-			testutils.ContextMatcher,
-			mock.IsType(&types.WebhookCreationInput{}),
-		).Return((*types.Webhook)(nil), errors.New("blah"))
-		helper.service.webhookDataManager = wd
-
-		helper.service.CreateHandler(helper.res, helper.req)
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, wd)
 	})
 }
 
@@ -366,10 +330,6 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 
 		helper := newTestHelper(t)
 
-		unitCounter := &mockmetrics.UnitCounter{}
-		unitCounter.On("Decrement", testutils.ContextMatcher).Return()
-		helper.service.webhookCounter = unitCounter
-
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
 			"ArchiveWebhook",
@@ -382,7 +342,7 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 		helper.service.ArchiveHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, unitCounter, wd)
+		mock.AssertExpectationsForObjects(t, wd)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {

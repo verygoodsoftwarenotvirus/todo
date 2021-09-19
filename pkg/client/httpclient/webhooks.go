@@ -56,34 +56,34 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (*t
 }
 
 // CreateWebhook creates a webhook.
-func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
+func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	if input == nil {
-		return nil, ErrNilInputProvided
+		return "", ErrNilInputProvided
 	}
 
 	logger := c.logger.WithValue(keys.NameKey, input.Name)
 	logger.Debug("creating webhook")
 
 	if err := input.ValidateWithContext(ctx); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "validating input")
+		return "", observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateWebhookRequest(ctx, input)
 	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building create webhook request")
+		return "", observability.PrepareError(err, logger, span, "building create webhook request")
 	}
 
-	var webhook *types.Webhook
-	if err = c.fetchAndUnmarshal(ctx, req, &webhook); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "creating webhook")
+	var pwr *types.PreWriteResponse
+	if err = c.fetchAndUnmarshal(ctx, req, &pwr); err != nil {
+		return "", observability.PrepareError(err, logger, span, "creating webhook")
 	}
 
 	logger.Debug("webhook created")
 
-	return webhook, nil
+	return pwr.ID, nil
 }
 
 // ArchiveWebhook archives a webhook.

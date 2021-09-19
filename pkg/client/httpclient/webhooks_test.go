@@ -125,11 +125,11 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 		exampleInput.BelongsToAccount = ""
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		c := buildTestClientWithRequestBodyValidation(t, spec, &types.WebhookCreationInput{}, exampleInput, s.exampleWebhook)
+		c, _ := buildTestClientWithJSONResponse(t, spec, &types.PreWriteResponse{ID: s.exampleWebhook.ID})
 
 		actual, err := c.CreateWebhook(s.ctx, exampleInput)
 		assert.NoError(t, err)
-		assert.Equal(t, s.exampleWebhook, actual)
+		assert.Equal(t, s.exampleWebhook.ID, actual)
 	})
 
 	s.Run("with nil input", func() {
@@ -139,7 +139,7 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 
 		actual, err := c.CreateWebhook(s.ctx, nil)
 		assert.Error(t, err)
-		assert.Nil(t, actual)
+		assert.Empty(t, actual)
 	})
 
 	s.Run("with invalid input", func() {
@@ -149,7 +149,7 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 
 		actual, err := c.CreateWebhook(s.ctx, &types.WebhookCreationInput{})
 		assert.Error(t, err)
-		assert.Nil(t, actual)
+		assert.Empty(t, actual)
 	})
 
 	s.Run("with error building request", func() {
@@ -159,8 +159,8 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 		c := buildTestClientWithInvalidURL(t)
 
 		actual, err := c.CreateWebhook(s.ctx, exampleInput)
-		assert.Nil(t, actual)
 		assert.Error(t, err)
+		assert.Empty(t, actual)
 	})
 
 	s.Run("with error executing request", func() {
@@ -170,8 +170,8 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
 		actual, err := c.CreateWebhook(s.ctx, exampleInput)
-		assert.Nil(t, actual)
 		assert.Error(t, err)
+		assert.Empty(t, actual)
 	})
 }
 

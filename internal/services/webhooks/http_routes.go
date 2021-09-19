@@ -8,6 +8,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 
 	"github.com/segmentio/ksuid"
@@ -37,37 +38,38 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	logger = sessionCtxData.AttachToLogger(logger)
 
-	input := new(types.WebhookCreationInput)
-	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+	providedInput := new(types.WebhookCreationInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, providedInput); err != nil {
 		observability.AcknowledgeError(err, logger, span, "decoding request body")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 		return
 	}
 
-	input.ID = ksuid.New().String()
-
-	if err = input.ValidateWithContext(ctx); err != nil {
+	if err = providedInput.ValidateWithContext(ctx); err != nil {
 		logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	input := types.WebhookDatabaseCreationInputFromWebhookCreationInput(providedInput)
+	input.ID = ksuid.New().String()
+	tracing.AttachWebhookIDToSpan(span, input.ID)
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
-	// create the webhook.
-	wh, err := s.webhookDataManager.CreateWebhook(ctx, input)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "creating webhook")
+	PreWrite := &workers.PreWriteMessage{
+		MessageType:       "webhook",
+		Webhook:           input,
+		AttributeToUserID: sessionCtxData.Requester.UserID,
+	}
+	if err = s.preWritesProducer.Publish(ctx, PreWrite); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	// notify the relevant parties.
-	tracing.AttachWebhookIDToSpan(span, wh.ID)
-	s.webhookCounter.Increment(ctx)
+	pwr := types.PreWriteResponse{ID: input.ID}
 
-	// let everybody know we're good.
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, wh, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusCreated)
 }
 
 // ListHandler is our list route.
@@ -189,9 +191,6 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
-
-	// let the interested parties know.
-	s.webhookCounter.Decrement(ctx)
 
 	// let everybody go home.
 	res.WriteHeader(http.StatusNoContent)

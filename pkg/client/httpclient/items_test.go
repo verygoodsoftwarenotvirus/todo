@@ -193,7 +193,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		exampleInput.BelongsToAccount = ""
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
-		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleItem)
+		c, _ := buildTestClientWithJSONResponse(t, spec, &types.PreWriteResponse{ID: s.exampleItem.ID})
 
 		actual, err := c.CreateItem(s.ctx, exampleInput)
 		require.NotNil(t, actual)

@@ -377,7 +377,7 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 		t.Parallel()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookDatabaseCreationInputFromWebhook(exampleWebhook)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
@@ -424,7 +424,7 @@ func TestQuerier_CreateWebhook(T *testing.T) {
 		t.Parallel()
 
 		exampleWebhook := fakes.BuildFakeWebhook()
-		exampleInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+		exampleInput := fakes.BuildFakeWebhookDatabaseCreationInputFromWebhook(exampleWebhook)
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)

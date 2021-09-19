@@ -64,3 +64,18 @@ func BuildFakeWebhookCreationInputFromWebhook(webhook *types.Webhook) *types.Web
 		BelongsToAccount: webhook.BelongsToAccount,
 	}
 }
+
+// BuildFakeWebhookDatabaseCreationInputFromWebhook builds a faked WebhookCreationInput.
+func BuildFakeWebhookDatabaseCreationInputFromWebhook(webhook *types.Webhook) *types.WebhookDatabaseCreationInput {
+	return &types.WebhookDatabaseCreationInput{
+		ID:               webhook.ID,
+		Name:             webhook.Name,
+		ContentType:      webhook.ContentType,
+		URL:              webhook.URL,
+		Method:           webhook.Method,
+		Events:           webhook.Events,
+		DataTypes:        webhook.DataTypes,
+		Topics:           webhook.Topics,
+		BelongsToAccount: webhook.BelongsToAccount,
+	}
+}

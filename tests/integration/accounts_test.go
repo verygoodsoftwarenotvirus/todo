@@ -245,8 +245,13 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			// create a webhook
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			createdWebhook, creationErr := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, createdWebhook, creationErr)
+			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			requireNotNilAndNoProblems(t, createdWebhookID, err)
+
+			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
+
+			createdWebhook, err := testClients.main.GetWebhook(ctx, createdWebhookID)
+			requireNotNilAndNoProblems(t, createdWebhook, err)
 			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
 
 			t.Logf("created webhook %s for account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
@@ -360,8 +365,13 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			// create a webhook
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			createdWebhook, creationErr := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, createdWebhook, creationErr)
+			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			requireNotNilAndNoProblems(t, createdWebhookID, err)
+
+			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
+
+			createdWebhook, err := testClients.main.GetWebhook(ctx, createdWebhookID)
+			requireNotNilAndNoProblems(t, createdWebhook, err)
 
 			t.Logf("created webhook %s belonging to account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
 			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)

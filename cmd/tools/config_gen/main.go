@@ -238,8 +238,10 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
 			Webhooks: webhooksservice.Config{
-				Debug:   true,
-				Enabled: false,
+				PreWritesTopicName:   preWritesTopicName,
+				PreArchivesTopicName: preArchivesTopicName,
+				Debug:                true,
+				Enabled:              false,
 			},
 			Items: itemsservice.Config{
 				PreWritesTopicName:   preWritesTopicName,
@@ -313,8 +315,10 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
 			Webhooks: webhooksservice.Config{
-				Debug:   true,
-				Enabled: false,
+				PreWritesTopicName:   preWritesTopicName,
+				PreArchivesTopicName: preArchivesTopicName,
+				Debug:                true,
+				Enabled:              false,
 			},
 			Items: itemsservice.Config{
 				SearchIndexPath:      fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
@@ -412,8 +416,10 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 				Frontend: buildLocalFrontendServiceConfig(),
 				Webhooks: webhooksservice.Config{
-					Debug:   true,
-					Enabled: false,
+					PreWritesTopicName:   preWritesTopicName,
+					PreArchivesTopicName: preArchivesTopicName,
+					Debug:                true,
+					Enabled:              false,
 				},
 				Items: itemsservice.Config{
 					PreWritesTopicName:   preWritesTopicName,

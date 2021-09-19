@@ -50,21 +50,23 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check session context data for parsed input struct.
-	input := new(types.ItemDatabaseCreationInput)
-	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+	providedInput := new(types.ItemCreationInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, providedInput); err != nil {
 		observability.AcknowledgeError(err, logger, span, "decoding request")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 		return
 	}
 
-	input.ID = ksuid.New().String()
-	input.BelongsToAccount = sessionCtxData.ActiveAccountID
-
-	if err = input.ValidateWithContext(ctx); err != nil {
-		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
+	if err = providedInput.ValidateWithContext(ctx); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	input := types.ItemDatabaseCreationInputFromItemCreationInput(providedInput)
+	input.ID = ksuid.New().String()
+	input.BelongsToAccount = sessionCtxData.ActiveAccountID
+	tracing.AttachItemIDToSpan(span, input.ID)
 
 	PreWrite := &workers.PreWriteMessage{
 		MessageType:       "item",

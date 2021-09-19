@@ -48,11 +48,10 @@ type (
 
 	// ServicesConfigurations collects the various service configurations.
 	ServicesConfigurations struct {
-		_ struct{}
-
+		_        struct{}
 		Items    itemsservice.Config    `json:"items" mapstructure:"items" toml:"items,omitempty"`
-		Auth     authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Webhooks webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		Auth     authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Frontend frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 

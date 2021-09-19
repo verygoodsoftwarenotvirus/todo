@@ -173,12 +173,12 @@ func main() {
 				for j := 0; j < int(dataCount); j++ {
 					iterationLogger := userLogger.WithValue("creating", "webhooks").WithValue("iteration", j)
 
-					createdWebhook, webhookCreationErr := userClient.CreateWebhook(ctx, fakes.BuildFakeWebhookCreationInput())
+					createdWebhookID, webhookCreationErr := userClient.CreateWebhook(ctx, fakes.BuildFakeWebhookCreationInput())
 					if webhookCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("creating webhook %s: %w", j, webhookCreationErr))
 					}
 
-					iterationLogger.WithValue(keys.WebhookIDKey, createdWebhook.ID).Debug("created webhook")
+					iterationLogger.WithValue(keys.WebhookIDKey, createdWebhookID).Debug("created webhook")
 				}
 				wg.Done()
 			}(wg)

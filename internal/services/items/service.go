@@ -7,7 +7,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
@@ -16,9 +15,7 @@ import (
 )
 
 const (
-	counterName        metrics.CounterName = "items"
-	counterDescription string              = "the number of items managed by the items service"
-	serviceName        string              = "items_service"
+	serviceName string = "items_service"
 )
 
 var _ types.ItemDataService = (*service)(nil)
@@ -33,7 +30,6 @@ type (
 		itemDataManager           types.ItemDataManager
 		itemIDFetcher             func(*http.Request) string
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		itemCounter               metrics.UnitCounter
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
 		preWritesProducer         publishers.Publisher
@@ -49,7 +45,6 @@ func ProvideService(
 	cfg *Config,
 	itemDataManager types.ItemDataManager,
 	encoder encoding.ServerEncoderDecoder,
-	counterProvider metrics.UnitCounterProvider,
 	searchIndexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
 	producerProvider publishers.PublisherProvider,
@@ -83,7 +78,6 @@ func ProvideService(
 		preUpdatesProducer:        preUpdatesProducer,
 		preArchivesProducer:       preArchivesProducer,
 		encoderDecoder:            encoder,
-		itemCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		search:                    searchIndexManager,
 		tracer:                    tracing.NewTracer(serviceName),
 	}

@@ -41,6 +41,21 @@ type (
 		Topics           []string `json:"topics"`
 	}
 
+	// WebhookDatabaseCreationInput represents what a User could set as input for creating a webhook.
+	WebhookDatabaseCreationInput struct {
+		_ struct{}
+
+		ID               string   `json:"id"`
+		Name             string   `json:"name"`
+		ContentType      string   `json:"contentType"`
+		URL              string   `json:"url"`
+		Method           string   `json:"method"`
+		BelongsToAccount string   `json:"belongsToAccount"`
+		Events           []string `json:"events"`
+		DataTypes        []string `json:"dataTypes"`
+		Topics           []string `json:"topics"`
+	}
+
 	// WebhookList represents a list of webhooks.
 	WebhookList struct {
 		_ struct{}
@@ -54,7 +69,7 @@ type (
 		GetWebhook(ctx context.Context, webhookID, accountID string) (*Webhook, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
 		GetWebhooks(ctx context.Context, accountID string, filter *QueryFilter) (*WebhookList, error)
-		CreateWebhook(ctx context.Context, input *WebhookCreationInput) (*Webhook, error)
+		CreateWebhook(ctx context.Context, input *WebhookDatabaseCreationInput) (*Webhook, error)
 		ArchiveWebhook(ctx context.Context, webhookID, accountID string) error
 	}
 
@@ -78,5 +93,36 @@ func (w *WebhookCreationInput) ValidateWithContext(ctx context.Context) error {
 		validation.Field(&w.ContentType, validation.Required, validation.In("application/json", "application/xml")),
 		validation.Field(&w.Events, validation.Required),
 		validation.Field(&w.DataTypes, validation.Required),
+	)
+}
+
+// WebhookDatabaseCreationInputFromWebhookCreationInput creates a DatabaseCreationInput from a CreationInput.
+func WebhookDatabaseCreationInputFromWebhookCreationInput(input *WebhookCreationInput) *WebhookDatabaseCreationInput {
+	x := &WebhookDatabaseCreationInput{}
+
+	x.Name = input.Name
+	x.ContentType = input.ContentType
+	x.URL = input.URL
+	x.Method = input.Method
+	x.Events = input.Events
+	x.DataTypes = input.DataTypes
+	x.Topics = input.Topics
+
+	return x
+}
+
+var _ validation.ValidatableWithContext = (*WebhookDatabaseCreationInput)(nil)
+
+// ValidateWithContext validates a WebhookDatabaseCreationInput.
+func (w *WebhookDatabaseCreationInput) ValidateWithContext(ctx context.Context) error {
+	return validation.ValidateStructWithContext(ctx, w,
+		validation.Field(&w.ID, validation.Required),
+		validation.Field(&w.Name, validation.Required),
+		validation.Field(&w.URL, validation.Required, &urlValidator{}),
+		validation.Field(&w.Method, validation.Required, validation.In(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete)),
+		validation.Field(&w.ContentType, validation.Required, validation.In("application/json", "application/xml")),
+		validation.Field(&w.Events, validation.Required),
+		validation.Field(&w.DataTypes, validation.Required),
+		validation.Field(&w.BelongsToAccount, validation.Required),
 	)
 }

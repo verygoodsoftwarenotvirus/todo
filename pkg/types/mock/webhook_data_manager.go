@@ -39,7 +39,7 @@ func (m *WebhookDataManager) GetAllWebhooks(ctx context.Context, results chan []
 }
 
 // CreateWebhook satisfies our WebhookDataManager interface.
-func (m *WebhookDataManager) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (*types.Webhook, error) {
+func (m *WebhookDataManager) CreateWebhook(ctx context.Context, input *types.WebhookDatabaseCreationInput) (*types.Webhook, error) {
 	args := m.Called(ctx, input)
 	return args.Get(0).(*types.Webhook), args.Error(1)
 }

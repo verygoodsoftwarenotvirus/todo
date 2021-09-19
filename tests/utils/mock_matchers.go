@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
+
 	"github.com/stretchr/testify/mock"
 )
 
@@ -27,3 +29,12 @@ var HTTPRequestMatcher interface{} = mock.MatchedBy(func(*http.Request) bool {
 var HTTPResponseWriterMatcher interface{} = mock.MatchedBy(func(http.ResponseWriter) bool {
 	return true
 })
+
+// PreWriteMessageMatcher matches the workers.PreWriteMessage type.
+func PreWriteMessageMatcher(*workers.PreWriteMessage) bool { return true }
+
+// PreUpdateMessageMatcher matches the workers.PreUpdateMessage type.
+func PreUpdateMessageMatcher(*workers.PreUpdateMessage) bool { return true }
+
+// PreArchiveMessageMatcher matches the workers.PreArchiveMessage type.
+func PreArchiveMessageMatcher(*workers.PreArchiveMessage) bool { return true }

@@ -14,7 +14,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -42,8 +41,6 @@ func TestParseBool(t *testing.T) {
 	}
 }
 
-func PreWriteMessageMatcher(*workers.PreWriteMessage) bool { return true }
-
 func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
@@ -65,7 +62,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
-			mock.MatchedBy(PreWriteMessageMatcher),
+			mock.MatchedBy(testutils.PreWriteMessageMatcher),
 		).Return(nil)
 		helper.service.preWritesProducer = mockEventProducer
 
@@ -150,7 +147,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
-			mock.MatchedBy(PreWriteMessageMatcher),
+			mock.MatchedBy(testutils.PreWriteMessageMatcher),
 		).Return(errors.New("blah"))
 		helper.service.preWritesProducer = mockEventProducer
 
@@ -597,8 +594,6 @@ func TestItemsService_SearchHandler(T *testing.T) {
 	})
 }
 
-func PreUpdateMessageMatcher(*workers.PreUpdateMessage) bool { return true }
-
 func TestItemsService_UpdateHandler(T *testing.T) {
 	T.Parallel()
 
@@ -629,7 +624,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
-			mock.MatchedBy(PreUpdateMessageMatcher),
+			mock.MatchedBy(testutils.PreUpdateMessageMatcher),
 		).Return(nil)
 		helper.service.preUpdatesProducer = mockEventProducer
 
@@ -747,8 +742,6 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 	})
 }
 
-func PreArchiveMessageMatcher(*workers.PreArchiveMessage) bool { return true }
-
 func TestItemsService_ArchiveHandler(T *testing.T) {
 	T.Parallel()
 
@@ -770,7 +763,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
-			mock.MatchedBy(PreArchiveMessageMatcher),
+			mock.MatchedBy(testutils.PreArchiveMessageMatcher),
 		).Return(nil)
 		helper.service.preArchivesProducer = mockEventProducer
 

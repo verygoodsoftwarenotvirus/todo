@@ -14,10 +14,11 @@ import (
 
 // PreWriteMessage represents an event that asks a worker to write data to the datastore.
 type PreWriteMessage struct {
-	MessageType       string                           `json:"messageType"`
-	DataType          string                           `json:"dataType"`
-	Item              *types.ItemDatabaseCreationInput `json:"item"`
-	AttributeToUserID string                           `json:"userID"`
+	MessageType       string                              `json:"messageType"`
+	DataType          string                              `json:"dataType"`
+	Item              *types.ItemDatabaseCreationInput    `json:"item"`
+	Webhook           *types.WebhookDatabaseCreationInput `json:"webhook"`
+	AttributeToUserID string                              `json:"userID"`
 }
 
 // PreWritesWorker writes data from the pending writes topic to the database.
@@ -65,6 +66,16 @@ func (w *PreWritesWorker) HandleMessage(message []byte) error {
 
 		if w.postWritesPublisher != nil {
 			if err := w.postWritesPublisher.Publish(ctx, msg.Item); err != nil {
+				w.logger.Error(err, "publishing to post-writes topic")
+			}
+		}
+	case "webhook":
+		if _, err := w.dataManager.CreateWebhook(ctx, msg.Webhook); err != nil {
+			return observability.PrepareError(err, w.logger, span, "creating webhook")
+		}
+
+		if w.postWritesPublisher != nil {
+			if err := w.postWritesPublisher.Publish(ctx, msg.Webhook); err != nil {
 				w.logger.Error(err, "publishing to post-writes topic")
 			}
 		}

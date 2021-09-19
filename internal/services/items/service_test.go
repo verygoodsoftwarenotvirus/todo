@@ -8,8 +8,6 @@ import (
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
-	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
@@ -23,7 +21,6 @@ import (
 func buildTestService() *service {
 	return &service{
 		logger:          logging.NewNoopLogger(),
-		itemCounter:     &mockmetrics.UnitCounter{},
 		itemDataManager: &mocktypes.ItemDataManager{},
 		itemIDFetcher:   func(req *http.Request) string { return "" },
 		encoderDecoder:  mockencoding.NewMockEncoderDecoder(),
@@ -37,10 +34,6 @@ func TestProvideItemsService(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
-
-		var ucp metrics.UnitCounterProvider = func(counterName, description string) metrics.UnitCounter {
-			return &mockmetrics.UnitCounter{}
-		}
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
@@ -58,7 +51,6 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			ucp,
 			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
@@ -75,10 +67,6 @@ func TestProvideItemsService(T *testing.T) {
 	T.Run("with error providing index", func(t *testing.T) {
 		t.Parallel()
 
-		var ucp metrics.UnitCounterProvider = func(counterName, description string) metrics.UnitCounter {
-			return &mockmetrics.UnitCounter{}
-		}
-
 		cfg := Config{SearchIndexPath: "example/path"}
 
 		pp := &publishers.MockProducerProvider{}
@@ -89,7 +77,6 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			ucp,
 			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return nil, errors.New("blah")
 			},

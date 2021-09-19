@@ -131,6 +131,16 @@ func (x *ItemDatabaseCreationInput) ValidateWithContext(ctx context.Context) err
 	)
 }
 
+// ItemDatabaseCreationInputFromItemCreationInput creates a DatabaseCreationInput from a CreationInput.
+func ItemDatabaseCreationInputFromItemCreationInput(input *ItemCreationInput) *ItemDatabaseCreationInput {
+	x := &ItemDatabaseCreationInput{}
+
+	x.Name = input.Name
+	x.Details = input.Details
+
+	return x
+}
+
 var _ validation.ValidatableWithContext = (*ItemUpdateInput)(nil)
 
 // ValidateWithContext validates a ItemUpdateInput.

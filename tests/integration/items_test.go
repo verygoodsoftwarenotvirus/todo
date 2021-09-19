@@ -191,52 +191,6 @@ func (s *TestSuite) TestItems_Searching_ReturnsOnlyItemsThatBelongToYou() {
 	})
 }
 
-func (s *TestSuite) TestItems_ExistenceChecking_ReturnsFalseForNonexistentItem() {
-	s.runForEachClientExcept("should not return an error for nonexistent item", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			actual, err := testClients.main.ItemExists(ctx, nonexistentID)
-			assert.NoError(t, err)
-			assert.False(t, actual)
-		}
-	})
-}
-
-//
-func (s *TestSuite) TestItems_ExistenceChecking_ReturnsTrueForValidItem() {
-	s.runForEachClientExcept("should not return an error for existent item", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// create item
-			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			require.NoError(t, err)
-
-			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
-
-			createdItem, err := testClients.main.GetItem(ctx, createdItemID)
-			requireNotNilAndNoProblems(t, createdItem, err)
-
-			// retrieve item
-			actual, err := testClients.main.ItemExists(ctx, createdItem.ID)
-			assert.NoError(t, err)
-			assert.True(t, actual)
-
-			// clean up item
-			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		}
-	})
-}
-
 func (s *TestSuite) TestItems_Reading_Returns404ForNonexistentItem() {
 	s.runForEachClientExcept("it should return an error when trying to read an item that does not exist", func(testClients *testClientWrapper) func() {
 		return func() {

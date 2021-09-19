@@ -9,32 +9,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
-// ItemExists retrieves whether an item exists.
-func (c *Client) ItemExists(ctx context.Context, itemID string) (bool, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := c.logger
-
-	if itemID == "" {
-		return false, ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	req, err := c.requestBuilder.BuildItemExistsRequest(ctx, itemID)
-	if err != nil {
-		return false, observability.PrepareError(err, logger, span, "building item existence request")
-	}
-
-	exists, err := c.responseIsOK(ctx, req)
-	if err != nil {
-		return false, observability.PrepareError(err, logger, span, "checking existence for item %s", itemID)
-	}
-
-	return exists, nil
-}
-
 // GetItem gets an item.
 func (c *Client) GetItem(ctx context.Context, itemID string) (*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)

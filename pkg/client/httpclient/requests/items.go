@@ -16,35 +16,6 @@ const (
 	itemsBasePath = "items"
 )
 
-// BuildItemExistsRequest builds an HTTP request for checking the existence of an item.
-func (b *Builder) BuildItemExistsRequest(ctx context.Context, itemID string) (*http.Request, error) {
-	ctx, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := b.logger
-
-	if itemID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	uri := b.BuildURL(
-		ctx,
-		nil,
-		itemsBasePath,
-		itemID,
-	)
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, uri, nil)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building user status request")
-	}
-
-	return req, nil
-}
-
 // BuildGetItemRequest builds an HTTP request for fetching an item.
 func (b *Builder) BuildGetItemRequest(ctx context.Context, itemID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)

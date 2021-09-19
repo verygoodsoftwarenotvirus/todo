@@ -39,52 +39,6 @@ type itemsTestSuite struct {
 	itemsBaseSuite
 }
 
-func (s *itemsTestSuite) TestClient_ItemExists() {
-	const expectedPathFormat = "/api/v1/items/%s"
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, s.exampleItem.ID)
-
-		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
-		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
-
-		assert.NoError(t, err)
-		assert.True(t, actual)
-	})
-
-	s.Run("with invalid item ID", func() {
-		t := s.T()
-
-		c, _ := buildSimpleTestClient(t)
-		actual, err := c.ItemExists(s.ctx, "")
-
-		assert.Error(t, err)
-		assert.False(t, actual)
-	})
-
-	s.Run("with error building request", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
-
-		assert.Error(t, err)
-		assert.False(t, actual)
-	})
-
-	s.Run("with error executing request", func() {
-		t := s.T()
-
-		c, _ := buildTestClientThatWaitsTooLong(t)
-		actual, err := c.ItemExists(s.ctx, s.exampleItem.ID)
-
-		assert.Error(t, err)
-		assert.False(t, actual)
-	})
-}
-
 func (s *itemsTestSuite) TestClient_GetItem() {
 	const expectedPathFormat = "/api/v1/items/%s"
 

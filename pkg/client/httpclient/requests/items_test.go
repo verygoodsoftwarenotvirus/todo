@@ -10,49 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestBuilder_BuildItemExistsRequest(T *testing.T) {
-	T.Parallel()
-
-	const expectedPathFormat = "/api/v1/items/%s"
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-
-		exampleItem := fakes.BuildFakeItem()
-
-		actual, err := helper.builder.BuildItemExistsRequest(helper.ctx, exampleItem.ID)
-		spec := newRequestSpec(true, http.MethodHead, "", expectedPathFormat, exampleItem.ID)
-
-		assert.NoError(t, err)
-		assertRequestQuality(t, actual, spec)
-	})
-
-	T.Run("with invalid item ID", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-
-		actual, err := helper.builder.BuildItemExistsRequest(helper.ctx, "")
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	T.Run("with invalid request builder", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-		helper.builder = buildTestRequestBuilderWithInvalidURL()
-
-		exampleItem := fakes.BuildFakeItem()
-
-		actual, err := helper.builder.BuildItemExistsRequest(helper.ctx, exampleItem.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-}
-
 func TestBuilder_BuildGetItemRequest(T *testing.T) {
 	T.Parallel()
 

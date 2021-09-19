@@ -187,9 +187,6 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadItemsPermission)).
 					Get(root, s.itemsService.ReadHandler)
 				singleItemRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadItemsPermission)).
-					Head(root, s.itemsService.ExistenceHandler)
-				singleItemRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveItemsPermission)).
 					Delete(root, s.itemsService.ArchiveHandler)
 				singleItemRouter.

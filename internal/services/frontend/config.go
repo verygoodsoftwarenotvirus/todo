@@ -8,6 +8,8 @@ import (
 
 // Config configures the frontend service.
 type Config struct {
+	_ struct{}
+
 	UseFakeData bool `json:"use_fake_data" mapstructure:"use_fake_data" toml:"use_fake_data"`
 }
 

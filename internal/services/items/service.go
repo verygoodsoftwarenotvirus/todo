@@ -37,6 +37,7 @@ type (
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
 		preWritesProducer         publishers.Publisher
+		preUpdatesProducer        publishers.Publisher
 		search                    SearchIndex
 	}
 )
@@ -44,7 +45,7 @@ type (
 // ProvideService builds a new ItemsService.
 func ProvideService(
 	logger logging.Logger,
-	cfg Config,
+	cfg *Config,
 	itemDataManager types.ItemDataManager,
 	encoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
@@ -62,12 +63,18 @@ func ProvideService(
 		return nil, fmt.Errorf("setting up event producer: %w", err)
 	}
 
+	preUpdatesProducer, err := producerProvider.ProviderPublisher(cfg.PreUpdatesTopicName)
+	if err != nil {
+		return nil, fmt.Errorf("setting up event producer: %w", err)
+	}
+
 	svc := &service{
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		itemIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(ItemIDURIParamKey),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		itemDataManager:           itemDataManager,
 		preWritesProducer:         preWritesProducer,
+		preUpdatesProducer:        preUpdatesProducer,
 		encoderDecoder:            encoder,
 		itemCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		search:                    searchIndexManager,

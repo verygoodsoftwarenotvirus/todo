@@ -8,6 +8,8 @@ const (
 type (
 	// Config configures a zerologLogger.
 	Config struct {
+		_ struct{}
+
 		Name     string `json:"name"  mapstructure:"name" toml:"name"`
 		Level    Level  `json:"level"  mapstructure:"level" toml:"level"`
 		Provider string `json:"provider" mapstructure:"provider" toml:"provider"`

@@ -55,7 +55,7 @@ func TestProvideItemsService(T *testing.T) {
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
-			cfg,
+			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,
@@ -86,7 +86,7 @@ func TestProvideItemsService(T *testing.T) {
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
-			cfg,
+			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
 			ucp,

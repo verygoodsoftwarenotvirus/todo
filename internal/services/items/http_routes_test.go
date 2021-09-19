@@ -45,6 +45,8 @@ func TestParseBool(t *testing.T) {
 
 func PreWriteMessageMatcher(*workers.PreWriteMessage) bool { return true }
 
+func PreUpdateMessageMatcher(*workers.PreUpdateMessage) bool { return true }
+
 func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
 
@@ -729,28 +731,21 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			helper.exampleItem.ID,
 			helper.exampleAccount.ID,
 		).Return(helper.exampleItem, nil)
-
-		itemDataManager.On(
-			"UpdateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.Item{}),
-		).Return(nil)
 		helper.service.itemDataManager = itemDataManager
 
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Index",
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
 			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleItem,
+			mock.MatchedBy(PreUpdateMessageMatcher),
 		).Return(nil)
-		helper.service.search = indexManager
+		helper.service.preUpdatesProducer = mockEventProducer
 
 		helper.service.UpdateHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
+		mock.AssertExpectationsForObjects(t, itemDataManager)
 	})
 
 	T.Run("with invalid input", func(t *testing.T) {
@@ -857,87 +852,6 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager)
-	})
-
-	T.Run("with error updating item", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(helper.exampleItem, nil)
-
-		itemDataManager.On(
-			"UpdateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.Item{}),
-		).Return(errors.New("blah"))
-		helper.service.itemDataManager = itemDataManager
-
-		helper.service.UpdateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager)
-	})
-
-	T.Run("with error updating search index", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(helper.exampleItem, nil)
-
-		itemDataManager.On(
-			"UpdateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.Item{}),
-		).Return(nil)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Index",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleItem,
-		).Return(errors.New("blah"))
-		helper.service.search = indexManager
-
-		helper.service.UpdateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
 	})
 }
 

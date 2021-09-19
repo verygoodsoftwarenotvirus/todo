@@ -330,6 +330,8 @@ func (s *TestSuite) TestItems_Updating() {
 			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
 			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
 
+			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
+
 			// retrieve changed item
 			actual, err := testClients.main.GetItem(ctx, createdItem.ID)
 			requireNotNilAndNoProblems(t, actual, err)

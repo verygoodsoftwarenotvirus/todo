@@ -14,9 +14,10 @@ import (
 
 // PreWriteMessage represents an event that asks a worker to write data to the datastore.
 type PreWriteMessage struct {
-	MessageType          string                           `json:"messageType"`
-	Item                 *types.ItemDatabaseCreationInput `json:"item"`
-	AttributableToUserID string                           `json:"userID"`
+	MessageType       string                           `json:"messageType"`
+	DataType          string                           `json:"dataType"`
+	Item              *types.ItemDatabaseCreationInput `json:"item"`
+	AttributeToUserID string                           `json:"userID"`
 }
 
 // PreWritesWorker writes data from the pending writes topic to the database.
@@ -52,19 +53,18 @@ func (w *PreWritesWorker) HandleMessage(message []byte) error {
 		return observability.PrepareError(err, w.logger, span, "unmarshalling message")
 	}
 
-	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
+	tracing.AttachUserIDToSpan(span, msg.AttributeToUserID)
 
 	w.logger.WithValue("message_type", msg.MessageType).WithValue("item", msg.Item).Debug("message read")
 
 	switch msg.MessageType {
 	case "item":
-		_, err := w.dataManager.CreateItem(ctx, msg.Item)
-		if err != nil {
+		if _, err := w.dataManager.CreateItem(ctx, msg.Item); err != nil {
 			return observability.PrepareError(err, w.logger, span, "creating item")
 		}
 
 		if w.postWritesPublisher != nil {
-			if err = w.postWritesPublisher.Publish(ctx, msg.Item); err != nil {
+			if err := w.postWritesPublisher.Publish(ctx, msg.Item); err != nil {
 				w.logger.Error(err, "publishing to post-writes topic")
 			}
 		}

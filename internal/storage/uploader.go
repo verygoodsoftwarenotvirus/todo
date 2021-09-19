@@ -46,6 +46,8 @@ type (
 
 	// Config configures our UploadManager.
 	Config struct {
+		_ struct{}
+
 		FilesystemConfig  *FilesystemConfig `json:"filesystem" mapstructure:"filesystem" toml:"filesystem,omitempty"`
 		AzureConfig       *AzureConfig      `json:"azure" mapstructure:"azure" toml:"azure,omitempty"`
 		GCSConfig         *GCSConfig        `json:"gcs" mapstructure:"gcs" toml:"gcs,omitempty"`

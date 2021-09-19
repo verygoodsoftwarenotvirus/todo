@@ -84,7 +84,7 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	accountDataService := accounts.ProvideService(logger, accountDataManager, accountUserMembershipDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
 	apiclientsConfig := apiclients.ProvideConfig(authenticationConfig)
 	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, routeParamManager, apiclientsConfig)
-	itemsConfig := servicesConfigurations.Items
+	itemsConfig := &servicesConfigurations.Items
 	itemDataManager := database.ProvideItemDataManager(dataManager)
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
 	publishersConfig := &cfg.Events

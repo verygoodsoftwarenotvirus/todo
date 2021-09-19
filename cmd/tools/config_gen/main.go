@@ -54,6 +54,10 @@ const (
 	// search index paths.
 	defaultItemsSearchIndexPath = "items.bleve"
 
+	// message provider topics
+	preWritesTopicName  = "pre_writes"
+	preUpdatesTopicName = "pre_updates"
+
 	pasetoSecretSize      = 32
 	maxAttempts           = 50
 	defaultPASETOLifetime = 1 * time.Minute
@@ -237,8 +241,9 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				Enabled: false,
 			},
 			Items: itemsservice.Config{
-				PreWritesTopicName: "pre_writes",
-				SearchIndexPath:    fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				PreWritesTopicName:  preWritesTopicName,
+				PreUpdatesTopicName: preUpdatesTopicName,
+				SearchIndexPath:     fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
@@ -310,8 +315,9 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				Enabled: false,
 			},
 			Items: itemsservice.Config{
-				SearchIndexPath:    fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
-				PreWritesTopicName: "pre_writes",
+				SearchIndexPath:     fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				PreWritesTopicName:  preWritesTopicName,
+				PreUpdatesTopicName: preUpdatesTopicName,
 				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
@@ -407,8 +413,9 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					Enabled: false,
 				},
 				Items: itemsservice.Config{
-					PreWritesTopicName: "pre_writes",
-					SearchIndexPath:    fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+					PreWritesTopicName:  preWritesTopicName,
+					PreUpdatesTopicName: preUpdatesTopicName,
+					SearchIndexPath:     fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 					Logging: logging.Config{
 						Name:     "items",
 						Level:    logging.InfoLevel,

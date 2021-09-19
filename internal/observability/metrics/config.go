@@ -36,6 +36,8 @@ const (
 type (
 	// Config contains settings related to .
 	Config struct {
+		_ struct{}
+
 		// Provider indicates where our metrics should go.
 		Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		// RouteToken indicates how the metrics route should be authenticated.

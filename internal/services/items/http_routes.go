@@ -67,9 +67,9 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	PreWrite := &workers.PreWriteMessage{
-		MessageType:          "item",
-		Item:                 input,
-		AttributableToUserID: sessionCtxData.Requester.UserID,
+		MessageType:       "item",
+		Item:              input,
+		AttributeToUserID: sessionCtxData.Requester.UserID,
 	}
 	if err = s.preWritesProducer.Publish(ctx, PreWrite); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item write message")
@@ -121,7 +121,7 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 	s.encoderDecoder.RespondWithData(ctx, res, x)
 }
 
-// ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
+// ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise. DELETEME.
 func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
 	ctx, span := s.tracer.StartSpan(req.Context())
 	defer span.End()
@@ -297,16 +297,15 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// update the item.
 	item.Update(input)
 
-	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, item); err != nil {
-		observability.AcknowledgeError(err, logger, span, "updating item")
+	pum := &workers.PreUpdateMessage{
+		MessageType:       "item",
+		Item:              item,
+		AttributeToUserID: sessionCtxData.Requester.UserID,
+	}
+	if err = s.preUpdatesProducer.Publish(ctx, pum); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
-	}
-
-	// notify interested parties.
-	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
-		observability.AcknowledgeError(err, logger, span, "updating item in search index")
 	}
 
 	// encode our response and peace.

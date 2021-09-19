@@ -18,8 +18,10 @@ import (
 )
 
 const (
-	preWritesTopicName  = "pre_writes"
-	postWritesTopicName = "post_writes"
+	preWritesTopicName   = "pre_writes"
+	postWritesTopicName  = "post_writes"
+	preUpdatesTopicName  = "pre_updates"
+	postUpdatesTopicName = "post_updates"
 )
 
 func initializeLocalSecretManager(ctx context.Context, envVarKey string) secrets.SecretManager {
@@ -102,11 +104,15 @@ func main() {
 		DB:       0,  // use default DB
 	})
 
+	if err = setupPreWritesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
+		logger.Fatal(err)
+	}
+
 	if err = setupPostWritesWorker(ctx, logger, redisClient); err != nil {
 		logger.Fatal(err)
 	}
 
-	if err = setupPreWritesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
+	if err = setupPreUpdatesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
 		logger.Fatal(err)
 	}
 
@@ -127,12 +133,12 @@ func setupPreWritesWorker(ctx context.Context, logger logging.Logger, dataManage
 		return err
 	}
 
-	pww := workers.ProvidePreWritesWorker(logger, dataManager, postWritesPublisher)
+	worker := workers.ProvidePreWritesWorker(logger, dataManager, postWritesPublisher)
 
 	// Consume messages.
 	go func() {
 		for msg := range preWritesSubscription.Channel() {
-			if err = pww.HandleMessage([]byte(msg.Payload)); err != nil {
+			if err = worker.HandleMessage([]byte(msg.Payload)); err != nil {
 				logger.Error(err, "handling pre-write message")
 			}
 		}
@@ -142,20 +148,42 @@ func setupPreWritesWorker(ctx context.Context, logger logging.Logger, dataManage
 }
 
 func setupPostWritesWorker(ctx context.Context, logger logging.Logger, redisClient *redis.Client) error {
-	preWritesSubscription := redisClient.Subscribe(ctx, "post_writes")
+	preWritesSubscription := redisClient.Subscribe(ctx, postWritesTopicName)
 
 	// Wait for confirmation that subscription is created before publishing anything.
 	if _, err := preWritesSubscription.Receive(ctx); err != nil {
 		return err
 	}
 
-	pww := workers.ProvidePostWritesWorker(logger)
+	worker := workers.ProvidePostWritesWorker(logger)
 
 	// Consume messages.
 	go func() {
 		for msg := range preWritesSubscription.Channel() {
-			if err := pww.HandleMessage([]byte(msg.Payload)); err != nil {
+			if err := worker.HandleMessage([]byte(msg.Payload)); err != nil {
 				logger.Error(err, "handling post-write message")
+			}
+		}
+	}()
+
+	return nil
+}
+
+func setupPreUpdatesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
+	preUpdatesSubscription := redisClient.Subscribe(ctx, preUpdatesTopicName)
+
+	postUpdatesPublisher, err := publisherProvider.ProviderPublisher(postUpdatesTopicName)
+	if err != nil {
+		return err
+	}
+
+	worker := workers.ProvidePreUpdatesWorker(logger, dataManager, postUpdatesPublisher)
+
+	// Consume messages.
+	go func() {
+		for msg := range preUpdatesSubscription.Channel() {
+			if err = worker.HandleMessage([]byte(msg.Payload)); err != nil {
+				logger.Error(err, "handling pre-write message")
 			}
 		}
 	}()

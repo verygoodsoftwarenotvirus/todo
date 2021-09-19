@@ -12,6 +12,8 @@ import (
 type (
 	// Config contains settings about how we report our metrics.
 	Config struct {
+		_ struct{}
+
 		Tracing tracing.Config `json:"tracing" mapstructure:"tracing" toml:"tracing,omitempty"`
 		Metrics metrics.Config `json:"metrics" mapstructure:"metrics" toml:"metrics,omitempty"`
 	}

@@ -22,6 +22,8 @@ const (
 type (
 	// Config represents our database configuration.
 	Config struct {
+		_ struct{}
+
 		CreateTestUser    *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
 		Provider          string                        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		ConnectionDetails database.ConnectionDetails    `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`

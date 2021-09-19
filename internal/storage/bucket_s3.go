@@ -14,6 +14,8 @@ const (
 type (
 	// S3Config configures an S3-based storage provider.
 	S3Config struct {
+		_ struct{}
+
 		BucketName string `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`
 	}
 )

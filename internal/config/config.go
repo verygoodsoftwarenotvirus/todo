@@ -48,6 +48,8 @@ type (
 
 	// ServicesConfigurations collects the various service configurations.
 	ServicesConfigurations struct {
+		_ struct{}
+
 		Items    itemsservice.Config    `json:"items" mapstructure:"items" toml:"items,omitempty"`
 		Auth     authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
 		Webhooks webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
@@ -56,6 +58,8 @@ type (
 
 	// InstanceConfig configures an instance of the service. It is composed of all the other setting structs.
 	InstanceConfig struct {
+		_ struct{}
+
 		Events        publishers.Config      `json:"events" mapstructure:"events" toml:"events,omitempty"`
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"encoding,omitempty"`

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"sync"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -54,22 +55,34 @@ func (r *redisPublisher) Publish(ctx context.Context, data interface{}) error {
 	return r.redisClient.Publish(ctx, r.topic, b.Bytes()).Err()
 }
 
-type producerProvider struct {
-	logger logging.Logger
-	addr   string
+type publisherProvider struct {
+	logger            logging.Logger
+	publisherCache    map[string]Publisher
+	addr              string
+	publisherCacheHat sync.RWMutex
 }
 
 // ProvideRedisProducerProvider returns a PublisherProvider for a given address.
 func ProvideRedisProducerProvider(logger logging.Logger, queueAddress string) PublisherProvider {
-	return &producerProvider{
-		logger: logging.EnsureLogger(logger),
-		addr:   queueAddress,
+	return &publisherProvider{
+		logger:         logging.EnsureLogger(logger),
+		addr:           queueAddress,
+		publisherCache: map[string]Publisher{},
 	}
 }
 
 // ProviderPublisher returns a Publisher for a given topic.
-func (p *producerProvider) ProviderPublisher(topic string) (Publisher, error) {
+func (p *publisherProvider) ProviderPublisher(topic string) (Publisher, error) {
 	logger := logging.EnsureLogger(p.logger).WithValue("topic", topic)
 
-	return provideRedisPublisher(logger, MessageQueueAddress(p.addr), topic), nil
+	p.publisherCacheHat.Lock()
+	defer p.publisherCacheHat.Unlock()
+	if cachedPub, ok := p.publisherCache[topic]; ok {
+		return cachedPub, nil
+	}
+
+	pub := provideRedisPublisher(logger, MessageQueueAddress(p.addr), topic)
+	p.publisherCache[topic] = pub
+
+	return pub, nil
 }

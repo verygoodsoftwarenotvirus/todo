@@ -23,6 +23,8 @@ const (
 type (
 	// AzureRetryConfig configures storage retries.
 	AzureRetryConfig struct {
+		_ struct{}
+
 		RetryReadsFromSecondaryHost string        `json:"retry_reads_from_secondary_host" mapstructure:"retry_reads_from_secondary_host" toml:"retry_reads_from_secondary_host,omitempty"`
 		TryTimeout                  time.Duration `json:"try_timeout" mapstructure:"try_timeout" toml:"try_timeout,omitempty"`
 		RetryDelay                  time.Duration `json:"retry_delay" mapstructure:"retry_delay" toml:"retry_delay,omitempty"`
@@ -32,6 +34,8 @@ type (
 
 	// AzureConfig configures an azure instance of an UploadManager.
 	AzureConfig struct {
+		_ struct{}
+
 		AuthMethod                   string            `json:"auth_method" mapstructure:"auth_method" toml:"auth_method,omitempty"`
 		AccountName                  string            `json:"account_name" mapstructure:"account_name" toml:"account_name,omitempty"`
 		BucketName                   string            `json:"bucket_name" mapstructure:"bucket_name" toml:"bucket_name,omitempty"`

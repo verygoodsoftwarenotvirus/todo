@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -36,7 +36,7 @@ type (
 		itemCounter               metrics.UnitCounter
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
-		pendingWritesProducer     messagequeue.Producer
+		preWritesProducer         publishers.Publisher
 		search                    SearchIndex
 	}
 )
@@ -50,14 +50,14 @@ func ProvideService(
 	counterProvider metrics.UnitCounterProvider,
 	searchIndexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
-	producerProvider messagequeue.ProducerProvider,
+	producerProvider publishers.PublisherProvider,
 ) (types.ItemDataService, error) {
 	searchIndexManager, err := searchIndexProvider(search.IndexPath(cfg.SearchIndexPath), "items", logger)
 	if err != nil {
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
-	pendingWritesProducer, err := producerProvider.ProviderProducer(cfg.PendingWritesTopicName)
+	preWritesProducer, err := producerProvider.ProviderPublisher(cfg.PreWritesTopicName)
 	if err != nil {
 		return nil, fmt.Errorf("setting up event producer: %w", err)
 	}
@@ -67,7 +67,7 @@ func ProvideService(
 		itemIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(ItemIDURIParamKey),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		itemDataManager:           itemDataManager,
-		pendingWritesProducer:     pendingWritesProducer,
+		preWritesProducer:         preWritesProducer,
 		encoderDecoder:            encoder,
 		itemCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		search:                    searchIndexManager,

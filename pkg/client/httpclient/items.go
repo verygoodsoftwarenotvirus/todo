@@ -132,7 +132,7 @@ func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput)
 		return "", observability.PrepareError(err, logger, span, "building create item request")
 	}
 
-	var pwr *types.PendingWriteResponse
+	var pwr *types.PreWriteResponse
 	if err = c.fetchAndUnmarshal(ctx, req, &pwr); err != nil {
 		return "", observability.PrepareError(err, logger, span, "creating item")
 	}

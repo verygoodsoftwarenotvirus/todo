@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"log"
 	"os"
 	"path/filepath"
@@ -175,8 +175,9 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Events: messagequeue.ProducerConfig{
-			Address: eventsServerAddress,
+		Events: publishers.Config{
+			Provider:     "redis",
+			QueueAddress: eventsServerAddress,
 		},
 		Server: localServer,
 		Database: dbconfig.Config{
@@ -236,8 +237,8 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				Enabled: false,
 			},
 			Items: itemsservice.Config{
-				PendingWritesTopicName: "pending_writes",
-				SearchIndexPath:        fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				PreWritesTopicName: "pre_writes",
+				SearchIndexPath:    fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
@@ -259,8 +260,9 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Events: messagequeue.ProducerConfig{
-			Address: eventsServerAddress,
+		Events: publishers.Config{
+			Provider:     "redis",
+			QueueAddress: eventsServerAddress,
 		},
 		Server: localServer,
 		Database: dbconfig.Config{
@@ -308,8 +310,8 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				Enabled: false,
 			},
 			Items: itemsservice.Config{
-				SearchIndexPath:        fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
-				PendingWritesTopicName: "pending_writes",
+				SearchIndexPath:    fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				PreWritesTopicName: "pre_writes",
 				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
@@ -334,8 +336,9 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Debug:   false,
 				RunMode: testingEnv,
 			},
-			Events: messagequeue.ProducerConfig{
-				Address: eventsServerAddress,
+			Events: publishers.Config{
+				Provider:     "redis",
+				QueueAddress: eventsServerAddress,
 			},
 			Encoding: encoding.Config{
 				ContentType: contentTypeJSON,
@@ -404,8 +407,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					Enabled: false,
 				},
 				Items: itemsservice.Config{
-					PendingWritesTopicName: "pending_writes",
-					SearchIndexPath:        fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+					PreWritesTopicName: "pre_writes",
+					SearchIndexPath:    fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 					Logging: logging.Config{
 						Name:     "items",
 						Level:    logging.InfoLevel,

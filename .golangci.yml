@@ -227,7 +227,6 @@ linters:
     - gocyclo          # Computes and checks the cyclomatic complexity of functions
     - godot            # Check if comments end in a period
     - godox            # Tool for detection of FIXME, TODO and other comment keywords
-    - goerr113         # Golang linter to check the errors handling expressions
     - gofmt            # Gofmt checks whether code was gofmt-ed. By default this tool runs with -s option to check for code simplification
     # - gofumpt          # Gofumpt checks whether code was gofumpt-ed.
     - goheader         # Checks is file header matches to pattern
@@ -267,6 +266,7 @@ linters:
     # - wsl              # Whitespace Linter - Forces you to use empty lines!
 
   disable:
+    - goerr113         # Golang linter to check the errors handling expressions
     - exhaustivestruct # Checks if all struct's fields are initialized
     - gci              # control package import order and make it always deterministic.
     - gochecknoinits   # Checks that no init functions are present in Go code

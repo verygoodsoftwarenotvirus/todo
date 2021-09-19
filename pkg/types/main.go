@@ -36,8 +36,8 @@ type (
 		Code    int    `json:"code"`
 	}
 
-	// PendingWriteResponse is what we respond with when the data requested to be written has not yet been written.
-	PendingWriteResponse struct {
+	// PreWriteResponse is what we respond with when the data requested to be written has not yet been written.
+	PreWriteResponse struct {
 		_ struct{}
 
 		ID string `json:"id"`

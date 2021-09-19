@@ -41,8 +41,6 @@ golang-format-check:
 golang-lint:
   stage: quality
   image: golangci/golangci-lint:v1.42 # v1.18
-  variables:
-    GO111MODULE: "on"
   script:
     - go mod vendor
     - golangci-lint run --config=.golangci.yml --deadline=15m

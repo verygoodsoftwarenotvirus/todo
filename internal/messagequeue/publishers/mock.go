@@ -1,4 +1,4 @@
-package messagequeue
+package publishers
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-var _ Producer = (*MockProducer)(nil)
+var _ Publisher = (*MockProducer)(nil)
 
 // MockProducer implements our interface.
 type MockProducer struct {
@@ -28,9 +28,9 @@ type MockProducerProvider struct {
 	mock.Mock
 }
 
-// ProviderProducer implements our interface.
-func (m *MockProducerProvider) ProviderProducer(topic string) (Producer, error) {
+// ProviderPublisher implements our interface.
+func (m *MockProducerProvider) ProviderPublisher(topic string) (Publisher, error) {
 	args := m.Called(topic)
 
-	return args.Get(0).(Producer), args.Error(1)
+	return args.Get(0).(Publisher), args.Error(1)
 }

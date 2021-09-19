@@ -11,7 +11,7 @@ import (
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
@@ -43,7 +43,7 @@ func TestParseBool(t *testing.T) {
 	}
 }
 
-func pendingWriteMessageMatcher(*workers.PendingWriteMessage) bool { return true }
+func PreWriteMessageMatcher(*workers.PreWriteMessage) bool { return true }
 
 func TestItemsService_CreateHandler(T *testing.T) {
 	T.Parallel()
@@ -62,13 +62,13 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &messagequeue.MockProducer{}
+		mockEventProducer := &publishers.MockProducer{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
-			mock.MatchedBy(pendingWriteMessageMatcher),
+			mock.MatchedBy(PreWriteMessageMatcher),
 		).Return(nil)
-		helper.service.pendingWritesProducer = mockEventProducer
+		helper.service.preWritesProducer = mockEventProducer
 
 		helper.service.CreateHandler(helper.res, helper.req)
 
@@ -147,13 +147,13 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &messagequeue.MockProducer{}
+		mockEventProducer := &publishers.MockProducer{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
-			mock.MatchedBy(pendingWriteMessageMatcher),
+			mock.MatchedBy(PreWriteMessageMatcher),
 		).Return(errors.New("blah"))
-		helper.service.pendingWritesProducer = mockEventProducer
+		helper.service.preWritesProducer = mockEventProducer
 
 		helper.service.CreateHandler(helper.res, helper.req)
 

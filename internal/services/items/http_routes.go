@@ -66,18 +66,18 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	pendingWrite := &workers.PendingWriteMessage{
+	PreWrite := &workers.PreWriteMessage{
 		MessageType:          "item",
 		Item:                 input,
 		AttributableToUserID: sessionCtxData.Requester.UserID,
 	}
-	if err = s.pendingWritesProducer.Publish(ctx, pendingWrite); err != nil {
-		observability.AcknowledgeError(err, logger, span, "publishing item pending write")
+	if err = s.preWritesProducer.Publish(ctx, PreWrite); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	pwr := types.PendingWriteResponse{ID: input.ID}
+	pwr := types.PreWriteResponse{ID: input.ID}
 
 	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusCreated)
 }

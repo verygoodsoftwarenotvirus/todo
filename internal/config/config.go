@@ -13,7 +13,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/mysql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
@@ -56,17 +56,17 @@ type (
 
 	// InstanceConfig configures an instance of the service. It is composed of all the other setting structs.
 	InstanceConfig struct {
-		Events        messagequeue.ProducerConfig `json:"events" mapstructure:"events" toml:"events,omitempty"`
-		Search        search.Config               `json:"search" mapstructure:"search" toml:"search,omitempty"`
-		Encoding      encoding.Config             `json:"encoding" mapstructure:"encoding" toml:"encoding,omitempty"`
-		Uploads       uploads.Config              `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
-		Observability observability.Config        `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
-		Routing       routing.Config              `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
-		Capitalism    capitalism.Config           `json:"capitalism" mapstructure:"capitalism" toml:"capitalism,omitempty"`
-		Meta          MetaSettings                `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Database      dbconfig.Config             `json:"database" mapstructure:"database" toml:"database,omitempty"`
-		Services      ServicesConfigurations      `json:"services" mapstructure:"services" toml:"services,omitempty"`
-		Server        server.Config               `json:"server" mapstructure:"server" toml:"server,omitempty"`
+		Events        publishers.Config      `json:"events" mapstructure:"events" toml:"events,omitempty"`
+		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
+		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"encoding,omitempty"`
+		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
+		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
+		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
+		Capitalism    capitalism.Config      `json:"capitalism" mapstructure:"capitalism" toml:"capitalism,omitempty"`
+		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
+		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
+		Services      ServicesConfigurations `json:"services" mapstructure:"services" toml:"services,omitempty"`
+		Server        server.Config          `json:"server" mapstructure:"server" toml:"server,omitempty"`
 	}
 )
 

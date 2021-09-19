@@ -2,17 +2,24 @@ package main
 
 import (
 	"context"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 
 	"github.com/go-redis/redis/v8"
+)
+
+const (
+	preWritesTopicName  = "pre_writes"
+	postWritesTopicName = "post_writes"
 )
 
 func initializeLocalSecretManager(ctx context.Context, envVarKey string) secrets.SecretManager {
@@ -52,6 +59,8 @@ func main() {
 		Provider: logging.ProviderZerolog,
 	})
 
+	logger.Info("starting workers...")
+
 	// find and validate our configuration filepath.
 	configFilepath := os.Getenv(configFilepathEnvVar)
 	if configFilepath == "" {
@@ -77,31 +86,79 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	rdb := redis.NewClient(&redis.Options{
+	pcfg := &publishers.Config{
+		Provider:     "redis",
+		QueueAddress: addr,
+	}
+
+	publisherProvider, err := publishers.ProvidePublisherProvider(logger, pcfg)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	redisClient := redis.NewClient(&redis.Options{
 		Addr:     addr,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
 
-	pubsub := rdb.Subscribe(ctx, "pending_writes")
-
-	// Wait for confirmation that subscription is created before publishing anything.
-	if _, err = pubsub.Receive(ctx); err != nil {
+	if err = setupPostWritesWorker(ctx, logger, redisClient); err != nil {
 		logger.Fatal(err)
 	}
 
-	pww := workers.ProvidePendingWritesWorker(logger, dataManager)
-
-	// Consume messages.
-	for msg := range pubsub.Channel() {
-		if err = pww.HandleMessage([]byte(msg.Payload)); err != nil {
-
-		}
+	if err = setupPreWritesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
+		logger.Fatal(err)
 	}
+
+	logger.Info("working...")
 
 	// wait for signal to exit
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigChan
+}
+
+func setupPreWritesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
+	preWritesSubscription := redisClient.Subscribe(ctx, preWritesTopicName)
+
+	postWritesPublisher, err := publisherProvider.ProviderPublisher(postWritesTopicName)
+	if err != nil {
+		return err
+	}
+
+	pww := workers.ProvidePreWritesWorker(logger, dataManager, postWritesPublisher)
+
+	// Consume messages.
+	go func() {
+		for msg := range preWritesSubscription.Channel() {
+			if err = pww.HandleMessage([]byte(msg.Payload)); err != nil {
+				logger.Error(err, "handling pre-write message")
+			}
+		}
+	}()
+
+	return nil
+}
+
+func setupPostWritesWorker(ctx context.Context, logger logging.Logger, redisClient *redis.Client) error {
+	preWritesSubscription := redisClient.Subscribe(ctx, "post_writes")
+
+	// Wait for confirmation that subscription is created before publishing anything.
+	if _, err := preWritesSubscription.Receive(ctx); err != nil {
+		return err
+	}
+
+	pww := workers.ProvidePostWritesWorker(logger)
+
+	// Consume messages.
+	go func() {
+		for msg := range preWritesSubscription.Channel() {
+			if err := pww.HandleMessage([]byte(msg.Payload)); err != nil {
+				logger.Error(err, "handling post-write message")
+			}
+		}
+	}()
+
+	return nil
 }

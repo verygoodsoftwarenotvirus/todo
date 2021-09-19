@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
@@ -87,10 +87,12 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	itemsConfig := servicesConfigurations.Items
 	itemDataManager := database.ProvideItemDataManager(dataManager)
 	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	producerConfig := cfg.Events
-	eventQueueAddress := producerConfig.Address
-	producerProvider := messagequeue.NewProducerProvider(logger, eventQueueAddress)
-	itemDataService, err := items.ProvideService(logger, itemsConfig, itemDataManager, serverEncoderDecoder, unitCounterProvider, indexManagerProvider, routeParamManager, producerProvider)
+	publishersConfig := &cfg.Events
+	publisherProvider, err := publishers.ProvidePublisherProvider(logger, publishersConfig)
+	if err != nil {
+		return nil, err
+	}
+	itemDataService, err := items.ProvideService(logger, itemsConfig, itemDataManager, serverEncoderDecoder, unitCounterProvider, indexManagerProvider, routeParamManager, publisherProvider)
 	if err != nil {
 		return nil, err
 	}

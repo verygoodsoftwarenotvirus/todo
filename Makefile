@@ -44,7 +44,7 @@ configs:
 
 ensure-wire:
 ifndef $(shell command -v wire 2> /dev/null)
-	$(shell GO111MODULE=off go install github.com/google/wire/cmd/wire)
+	$(shell GO111MODULE=off go install github.com/google/wire/cmd/wire@latest)
 endif
 
 ensure-fieldalign:
@@ -54,7 +54,7 @@ endif
 
 ensure-scc:
 ifndef $(shell command -v scc 2> /dev/null)
-	$(shell GO111MODULE=off go install github.com/boyter/scc)
+	$(shell GO111MODULE=off go install github.com/boyter/scc@latest)
 endif
 
 ensure-pnpm:
@@ -147,7 +147,6 @@ lint:
 		--rm \
 		--volume `pwd`:`pwd` \
 		--workdir=`pwd` \
-		--env=GO111MODULE=on \
 		golangci/golangci-lint:v1.42 golangci-lint run --config=.golangci.yml ./...
 
 .PHONY: clean-coverage

@@ -108,6 +108,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, _ := buildSimpleTestClient(t)
@@ -126,6 +127,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with good status but unmarshallable response", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, _ := buildSimpleTestClient(t)
@@ -142,6 +144,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with an erroneous error code", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, _ := buildSimpleTestClient(t)
@@ -167,6 +170,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with an erroneous error code and unmarshallable body", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, _ := buildSimpleTestClient(t)
@@ -184,6 +188,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with nil target variable", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, _ := buildSimpleTestClient(t)
@@ -194,6 +199,7 @@ func TestUnmarshalBody(T *testing.T) {
 
 	T.Run("with erroneous reader", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, _ := buildSimpleTestClient(t)

@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	defaultLimit             = types.DefaultLimit
 	commaSeparator           = ","
 	columnCountQueryTemplate = `COUNT(%s.id)`
 	userOwnershipColumn      = "belongs_to_user"

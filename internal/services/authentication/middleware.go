@@ -190,8 +190,9 @@ func (s *service) PermissionFilterMiddleware(permissions ...authorization.Permis
 			}
 
 			for _, perm := range permissions {
-				if !sessionContextData.ServiceRolePermissionChecker().HasPermission(perm) &&
-					!sessionContextData.AccountRolePermissionsChecker().HasPermission(perm) {
+				doesNotHaveServicePermission := !sessionContextData.ServiceRolePermissionChecker().HasPermission(perm)
+				doesNotHaveAccountPermission := !sessionContextData.AccountRolePermissionsChecker().HasPermission(perm)
+				if doesNotHaveServicePermission && doesNotHaveAccountPermission {
 					logger.WithValue("deficient_permission", perm.ID()).Debug("request filtered out")
 					s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
 					return

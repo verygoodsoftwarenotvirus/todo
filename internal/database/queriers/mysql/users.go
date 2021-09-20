@@ -49,7 +49,9 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 	defer span.End()
 
 	logger := q.logger.WithValue("include_counts", includeCounts)
-	user = &types.User{}
+	user = &types.User{
+		ServiceRoles: []string{},
+	}
 	var rawRoles string
 
 	targetVars := []interface{}{
@@ -79,8 +81,6 @@ func (q *SQLQuerier) scanUser(ctx context.Context, scan database.Scanner, includ
 
 	if roles := strings.Split(rawRoles, serviceRolesSeparator); len(roles) > 0 {
 		user.ServiceRoles = roles
-	} else {
-		user.ServiceRoles = []string{}
 	}
 
 	return user, filteredCount, totalCount, nil

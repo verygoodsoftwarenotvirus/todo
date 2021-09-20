@@ -44,7 +44,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			mock.MatchedBy(testutils.PreWriteMessageMatcher),
 		).Return(nil)
-		helper.service.preWritesProducer = mockEventProducer
+		helper.service.preWritesPublisher = mockEventProducer
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
@@ -116,6 +116,34 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
+	})
+
+	T.Run("with error publishing to pre-writes queue", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
+
+		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
+			testutils.ContextMatcher,
+			mock.MatchedBy(testutils.PreWriteMessageMatcher),
+		).Return(errors.New("blah"))
+		helper.service.preWritesPublisher = mockEventProducer
+
+		helper.service.CreateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})
 }
 

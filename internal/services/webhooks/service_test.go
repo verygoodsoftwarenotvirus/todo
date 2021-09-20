@@ -1,6 +1,7 @@
 package webhooks
 
 import (
+	"errors"
 	"net/http"
 	"testing"
 
@@ -37,10 +38,14 @@ func TestProvideWebhooksService(T *testing.T) {
 			WebhookIDURIParamKey,
 		).Return(func(*http.Request) string { return "" })
 
-		cfg := &Config{}
+		cfg := &Config{
+			PreWritesTopicName:   "pre-writes",
+			PreArchivesTopicName: "pre-archives",
+		}
 
 		pp := &publishers.MockProducerProvider{}
 		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
+		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return(&publishers.MockProducer{}, nil)
 
 		actual, err := ProvideWebhooksService(
 			logging.NewNoopLogger(),
@@ -54,6 +59,59 @@ func TestProvideWebhooksService(T *testing.T) {
 		assert.NotNil(t, actual)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, rpm)
+		mock.AssertExpectationsForObjects(t, rpm, pp)
+	})
+
+	T.Run("with error providing pre-writes publisher", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := &Config{
+			PreWritesTopicName:   "pre-writes",
+			PreArchivesTopicName: "pre-archives",
+		}
+
+		pp := &publishers.MockProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
+
+		actual, err := ProvideWebhooksService(
+			logging.NewNoopLogger(),
+			cfg,
+			&mocktypes.WebhookDataManager{},
+			mockencoding.NewMockEncoderDecoder(),
+			nil,
+			pp,
+		)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, pp)
+	})
+
+	T.Run("with error providing pre-archives publisher", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := &Config{
+			PreWritesTopicName:   "pre-writes",
+			PreArchivesTopicName: "pre-archives",
+		}
+
+		pp := &publishers.MockProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
+		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
+
+		actual, err := ProvideWebhooksService(
+			logging.NewNoopLogger(),
+			cfg,
+			&mocktypes.WebhookDataManager{},
+			mockencoding.NewMockEncoderDecoder(),
+			nil,
+			pp,
+		)
+
+		assert.Nil(t, actual)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, pp)
 	})
 }

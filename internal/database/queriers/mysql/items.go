@@ -230,19 +230,23 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID string, filter *typ
 }
 
 const getItemsWithIDsQuery = `
-	SELECT items.id, 
-items.name, 
-items.details, 
-items.created_on, 
-items.last_updated_on, 
-items.archived_on, 
-items.belongs_to_account FROM (SELECT items.id, 
-items.name, 
-items.details, 
-items.created_on, 
-items.last_updated_on, 
-items.archived_on, 
-items.belongs_to_account FROM items JOIN unnest('{%s}'::text[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT 20) AS items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id IN (?,?,?)
+SELECT 
+	items.id, 
+	items.name, 
+	items.details, 
+	items.created_on, 
+	items.last_updated_on, 
+	items.archived_on, 
+	items.belongs_to_account FROM (SELECT items.id, 
+	items.name, 
+	items.details, 
+	items.created_on, 
+	items.last_updated_on, 
+	items.archived_on, 
+	items.belongs_to_account FROM items JOIN unnest('{%s}'::text[]) WITH ORDINALITY t(id, ord) USING (id) 
+ORDER BY t.ord LIMIT 20) AS items WHERE items.archived_on IS NULL
+AND items.belongs_to_account = ? 
+AND items.id IN (?,?,?)
 `
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
@@ -257,6 +261,10 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 	}
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
+
+	if ids == nil {
+		return nil, ErrNilInputProvided
+	}
 
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)

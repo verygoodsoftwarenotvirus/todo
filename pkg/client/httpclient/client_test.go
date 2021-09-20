@@ -232,6 +232,7 @@ func TestClient_IsUp(T *testing.T) {
 
 	T.Run("returns error with invalid url", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c := buildTestClientWithInvalidURL(t)
@@ -242,6 +243,7 @@ func TestClient_IsUp(T *testing.T) {
 
 	T.Run("with bad status code", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusInternalServerError)
@@ -251,6 +253,7 @@ func TestClient_IsUp(T *testing.T) {
 
 	T.Run("with timeout", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, _ := buildTestClientThatWaitsTooLong(t)
@@ -267,6 +270,7 @@ func TestClient_fetchAndUnmarshal(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(true, http.MethodPost, "", "/")
@@ -282,6 +286,7 @@ func TestClient_fetchAndUnmarshal(T *testing.T) {
 
 	T.Run("with timeout", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(true, http.MethodPost, "", "/")
@@ -297,6 +302,7 @@ func TestClient_fetchAndUnmarshal(T *testing.T) {
 
 	T.Run("with 401", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(true, http.MethodPost, "", "/")
@@ -311,6 +317,7 @@ func TestClient_fetchAndUnmarshal(T *testing.T) {
 
 	T.Run("with 404", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(true, http.MethodPost, "", "/")
@@ -325,6 +332,7 @@ func TestClient_fetchAndUnmarshal(T *testing.T) {
 
 	T.Run("with unreadable response", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(true, http.MethodPost, "", "/")
@@ -343,6 +351,7 @@ func TestClient_fetchResponseToRequest(T *testing.T) {
 
 	T.Run("with error", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -378,6 +387,7 @@ func TestClient_checkExistence(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectedMethod := http.MethodHead
@@ -396,6 +406,7 @@ func TestClient_checkExistence(T *testing.T) {
 
 	T.Run("with timeout", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectedMethod := http.MethodHead
@@ -417,6 +428,7 @@ func TestClient_retrieve(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -435,6 +447,7 @@ func TestClient_retrieve(T *testing.T) {
 
 	T.Run("with nil passed in", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, ts := buildSimpleTestClient(t)
@@ -449,6 +462,7 @@ func TestClient_retrieve(T *testing.T) {
 
 	T.Run("with timeout", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectedMethod := http.MethodPost
@@ -489,6 +503,7 @@ func TestClient_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(false, expectedMethod, "", "/")
@@ -509,6 +524,7 @@ func TestClient_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 
 	T.Run("with 401", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(false, expectedMethod, "", "/")
@@ -530,6 +546,7 @@ func TestClient_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 
 	T.Run("with 404", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(false, expectedMethod, "", "/")
@@ -551,6 +568,7 @@ func TestClient_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 
 	T.Run("with timeout", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, ts := buildTestClientThatWaitsTooLong(t)
@@ -570,6 +588,7 @@ func TestClient_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 
 	T.Run("with nil as output", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c, ts := buildSimpleTestClient(t)
@@ -589,6 +608,7 @@ func TestClient_fetchAndUnmarshalWithoutAuthentication(T *testing.T) {
 
 	T.Run("with unreadable response", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		spec := newRequestSpec(false, expectedMethod, "", "/")

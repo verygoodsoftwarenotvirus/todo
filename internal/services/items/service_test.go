@@ -41,10 +41,17 @@ func TestProvideItemsService(T *testing.T) {
 			ItemIDURIParamKey,
 		).Return(func(*http.Request) string { return "" })
 
-		cfg := Config{SearchIndexPath: "example/path"}
+		cfg := Config{
+			SearchIndexPath:      "example/path",
+			PreWritesTopicName:   "pre-writes",
+			PreUpdatesTopicName:  "pre-updates",
+			PreArchivesTopicName: "pre-archives",
+		}
 
 		pp := &publishers.MockProducerProvider{}
 		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&publishers.MockProducer{}, nil)
+		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return(&publishers.MockProducer{}, nil)
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
@@ -61,16 +68,114 @@ func TestProvideItemsService(T *testing.T) {
 		assert.NotNil(t, s)
 		assert.NoError(t, err)
 
-		mock.AssertExpectationsForObjects(t, rpm)
+		mock.AssertExpectationsForObjects(t, rpm, pp)
+	})
+
+	T.Run("with error providing pre-writes producer", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := Config{
+			SearchIndexPath:      "example/path",
+			PreWritesTopicName:   "pre-writes",
+			PreUpdatesTopicName:  "pre-updates",
+			PreArchivesTopicName: "pre-archives",
+		}
+
+		pp := &publishers.MockProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
+
+		s, err := ProvideService(
+			logging.NewNoopLogger(),
+			&cfg,
+			&mocktypes.ItemDataManager{},
+			mockencoding.NewMockEncoderDecoder(),
+			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+				return &mocksearch.IndexManager{}, nil
+			},
+			nil,
+			pp,
+		)
+
+		assert.Nil(t, s)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, pp)
+	})
+
+	T.Run("with error providing pre-updates producer", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := Config{
+			SearchIndexPath:      "example/path",
+			PreWritesTopicName:   "pre-writes",
+			PreUpdatesTopicName:  "pre-updates",
+			PreArchivesTopicName: "pre-archives",
+		}
+
+		pp := &publishers.MockProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
+
+		s, err := ProvideService(
+			logging.NewNoopLogger(),
+			&cfg,
+			&mocktypes.ItemDataManager{},
+			mockencoding.NewMockEncoderDecoder(),
+			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+				return &mocksearch.IndexManager{}, nil
+			},
+			nil,
+			pp,
+		)
+
+		assert.Nil(t, s)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, pp)
+	})
+
+	T.Run("with error providing pre-archives producer", func(t *testing.T) {
+		t.Parallel()
+
+		cfg := Config{
+			SearchIndexPath:      "example/path",
+			PreWritesTopicName:   "pre-writes",
+			PreUpdatesTopicName:  "pre-updates",
+			PreArchivesTopicName: "pre-archives",
+		}
+
+		pp := &publishers.MockProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&publishers.MockProducer{}, nil)
+		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
+
+		s, err := ProvideService(
+			logging.NewNoopLogger(),
+			&cfg,
+			&mocktypes.ItemDataManager{},
+			mockencoding.NewMockEncoderDecoder(),
+			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+				return &mocksearch.IndexManager{}, nil
+			},
+			nil,
+			pp,
+		)
+
+		assert.Nil(t, s)
+		assert.Error(t, err)
+
+		mock.AssertExpectationsForObjects(t, pp)
 	})
 
 	T.Run("with error providing index", func(t *testing.T) {
 		t.Parallel()
 
-		cfg := Config{SearchIndexPath: "example/path"}
-
-		pp := &publishers.MockProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
+		cfg := Config{
+			SearchIndexPath:      "example/path",
+			PreWritesTopicName:   "pre-writes",
+			PreUpdatesTopicName:  "pre-updates",
+			PreArchivesTopicName: "pre-archives",
+		}
 
 		s, err := ProvideService(
 			logging.NewNoopLogger(),
@@ -81,7 +186,7 @@ func TestProvideItemsService(T *testing.T) {
 				return nil, errors.New("blah")
 			},
 			mockrouting.NewRouteParamManager(),
-			pp,
+			nil,
 		)
 
 		assert.Nil(t, s)

@@ -44,7 +44,9 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 	_, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
-	x = &types.AccountUserMembership{}
+	x = &types.AccountUserMembership{
+		AccountRoles: []string{},
+	}
 
 	var (
 		rawAccountRoles string
@@ -67,8 +69,6 @@ func (q *SQLQuerier) scanAccountUserMembership(ctx context.Context, scan databas
 
 	if roles := strings.Split(rawAccountRoles, accountMemberRolesSeparator); len(roles) > 0 {
 		x.AccountRoles = roles
-	} else {
-		x.AccountRoles = []string{}
 	}
 
 	return x, nil

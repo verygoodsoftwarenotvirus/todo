@@ -32,9 +32,9 @@ type (
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
-		preWritesProducer         publishers.Publisher
-		preUpdatesProducer        publishers.Publisher
-		preArchivesProducer       publishers.Publisher
+		preWritesPublisher        publishers.Publisher
+		preUpdatesPublisher       publishers.Publisher
+		preArchivesPublisher      publishers.Publisher
 		search                    SearchIndex
 	}
 )
@@ -47,24 +47,24 @@ func ProvideService(
 	encoder encoding.ServerEncoderDecoder,
 	searchIndexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
-	producerProvider publishers.PublisherProvider,
+	publisherProvider publishers.PublisherProvider,
 ) (types.ItemDataService, error) {
 	searchIndexManager, err := searchIndexProvider(search.IndexPath(cfg.SearchIndexPath), "items", logger)
 	if err != nil {
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
-	preWritesProducer, err := producerProvider.ProviderPublisher(cfg.PreWritesTopicName)
+	preWritesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreWritesTopicName)
 	if err != nil {
 		return nil, fmt.Errorf("setting up event producer: %w", err)
 	}
 
-	preUpdatesProducer, err := producerProvider.ProviderPublisher(cfg.PreUpdatesTopicName)
+	preUpdatesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreUpdatesTopicName)
 	if err != nil {
 		return nil, fmt.Errorf("setting up event producer: %w", err)
 	}
 
-	preArchivesProducer, err := producerProvider.ProviderPublisher(cfg.PreArchivesTopicName)
+	preArchivesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreArchivesTopicName)
 	if err != nil {
 		return nil, fmt.Errorf("setting up event producer: %w", err)
 	}
@@ -74,9 +74,9 @@ func ProvideService(
 		itemIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(ItemIDURIParamKey),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		itemDataManager:           itemDataManager,
-		preWritesProducer:         preWritesProducer,
-		preUpdatesProducer:        preUpdatesProducer,
-		preArchivesProducer:       preArchivesProducer,
+		preWritesPublisher:        preWritesPublisher,
+		preUpdatesPublisher:       preUpdatesPublisher,
+		preArchivesPublisher:      preArchivesPublisher,
 		encoderDecoder:            encoder,
 		search:                    searchIndexManager,
 		tracer:                    tracing.NewTracer(serviceName),

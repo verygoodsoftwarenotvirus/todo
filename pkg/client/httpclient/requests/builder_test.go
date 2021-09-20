@@ -275,6 +275,7 @@ func TestBuilder_BuildHealthCheckRequest(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -289,6 +290,7 @@ func TestBuilder_BuildHealthCheckRequest(T *testing.T) {
 
 	T.Run("with invalid request builder", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c := buildTestRequestBuilderWithInvalidURL()

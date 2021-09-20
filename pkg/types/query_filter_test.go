@@ -151,6 +151,7 @@ func TestExtractQueryFilter(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expected := &QueryFilter{

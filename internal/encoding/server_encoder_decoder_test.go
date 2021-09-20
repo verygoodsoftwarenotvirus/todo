@@ -320,6 +320,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectation := "name"
@@ -345,6 +346,7 @@ func TestServerEncoderDecoder_DecodeRequest(T *testing.T) {
 
 	T.Run("as XML", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectation := "name"

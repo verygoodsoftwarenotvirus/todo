@@ -61,7 +61,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		Webhook:           input,
 		AttributeToUserID: sessionCtxData.Requester.UserID,
 	}
-	if err = s.preWritesProducer.Publish(ctx, PreWrite); err != nil {
+	if err = s.preWritesPublisher.Publish(ctx, PreWrite); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

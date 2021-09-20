@@ -73,7 +73,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 		Item:              input,
 		AttributeToUserID: sessionCtxData.Requester.UserID,
 	}
-	if err = s.preWritesProducer.Publish(ctx, PreWrite); err != nil {
+	if err = s.preWritesPublisher.Publish(ctx, PreWrite); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -269,7 +269,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 		Item:              item,
 		AttributeToUserID: sessionCtxData.Requester.UserID,
 	}
-	if err = s.preUpdatesProducer.Publish(ctx, pum); err != nil {
+	if err = s.preUpdatesPublisher.Publish(ctx, pum); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item update message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -305,6 +305,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	exists, err := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		observability.AcknowledgeError(err, logger, span, "checking item existence")
 		return
 	} else if !exists || errors.Is(err, sql.ErrNoRows) {
@@ -318,7 +319,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		AccountID:         sessionCtxData.ActiveAccountID,
 		AttributeToUserID: sessionCtxData.Requester.UserID,
 	}
-	if err = s.preArchivesProducer.Publish(ctx, pam); err != nil {
+	if err = s.preArchivesPublisher.Publish(ctx, pam); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item archive message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return

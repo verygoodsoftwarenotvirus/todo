@@ -18,12 +18,10 @@ import (
 )
 
 const (
-	preWritesTopicName    = "pre_writes"
-	postWritesTopicName   = "post_writes"
-	preUpdatesTopicName   = "pre_updates"
-	postUpdatesTopicName  = "post_updates"
-	preArchivesTopicName  = "pre_archives"
-	postArchivesTopicName = "post_archives"
+	preWritesTopicName   = "pre_writes"
+	dataChangesTopicName = "data_changes"
+	preUpdatesTopicName  = "pre_updates"
+	preArchivesTopicName = "pre_archives"
 )
 
 func initializeLocalSecretManager(ctx context.Context, envVarKey string) secrets.SecretManager {
@@ -106,11 +104,11 @@ func main() {
 		DB:       0,  // use default DB
 	})
 
-	if err = setupPreWritesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
+	if err = setupDataChangesWorker(ctx, logger, redisClient); err != nil {
 		logger.Fatal(err)
 	}
 
-	if err = setupPostWritesWorker(ctx, logger, redisClient); err != nil {
+	if err = setupPreWritesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
 		logger.Fatal(err)
 	}
 
@@ -134,7 +132,7 @@ func main() {
 func setupPreWritesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
 	preWritesSubscription := redisClient.Subscribe(ctx, preWritesTopicName)
 
-	postWritesPublisher, err := publisherProvider.ProviderPublisher(postWritesTopicName)
+	postWritesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
 	if err != nil {
 		return err
 	}
@@ -153,11 +151,11 @@ func setupPreWritesWorker(ctx context.Context, logger logging.Logger, dataManage
 	return nil
 }
 
-func setupPostWritesWorker(ctx context.Context, logger logging.Logger, redisClient *redis.Client) error {
-	preWritesSubscription := redisClient.Subscribe(ctx, postWritesTopicName)
+func setupDataChangesWorker(ctx context.Context, logger logging.Logger, redisClient *redis.Client) error {
+	dataChangesSubscription := redisClient.Subscribe(ctx, dataChangesTopicName)
 
 	// Wait for confirmation that subscription is created before publishing anything.
-	if _, err := preWritesSubscription.Receive(ctx); err != nil {
+	if _, err := dataChangesSubscription.Receive(ctx); err != nil {
 		return err
 	}
 
@@ -165,7 +163,7 @@ func setupPostWritesWorker(ctx context.Context, logger logging.Logger, redisClie
 
 	// Consume messages.
 	go func() {
-		for msg := range preWritesSubscription.Channel() {
+		for msg := range dataChangesSubscription.Channel() {
 			if err := worker.HandleMessage([]byte(msg.Payload)); err != nil {
 				logger.Error(err, "handling post-write message")
 			}
@@ -178,7 +176,7 @@ func setupPostWritesWorker(ctx context.Context, logger logging.Logger, redisClie
 func setupPreUpdatesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
 	preUpdatesSubscription := redisClient.Subscribe(ctx, preUpdatesTopicName)
 
-	postUpdatesPublisher, err := publisherProvider.ProviderPublisher(postUpdatesTopicName)
+	postUpdatesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
 	if err != nil {
 		return err
 	}
@@ -200,7 +198,7 @@ func setupPreUpdatesWorker(ctx context.Context, logger logging.Logger, dataManag
 func setupPreArchivesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
 	preArchivesSubscription := redisClient.Subscribe(ctx, preArchivesTopicName)
 
-	postArchivesPublisher, err := publisherProvider.ProviderPublisher(postArchivesTopicName)
+	postArchivesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
 	if err != nil {
 		return err
 	}

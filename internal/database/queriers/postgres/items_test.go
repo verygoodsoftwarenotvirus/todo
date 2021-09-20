@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 	"testing"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -273,6 +274,7 @@ func TestQuerier_GetTotalItemCount(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		exampleCount := uint64(123)
@@ -286,6 +288,23 @@ func TestQuerier_GetTotalItemCount(T *testing.T) {
 		actual, err := c.GetTotalItemCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("error executing query", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectQuery(formatQueryForSQLMock(getAllItemsCountQuery)).
+			WithArgs().
+			WillReturnError(errors.New("blah"))
+
+		actual, err := c.GetTotalItemCount(ctx)
+		assert.Error(t, err)
+		assert.Zero(t, actual)
 
 		mock.AssertExpectationsForObjects(t, db)
 	})
@@ -435,6 +454,118 @@ func TestQuerier_GetItems(T *testing.T) {
 		actual, err := c.GetItems(ctx, exampleAccountID, filter)
 		assert.Error(t, err)
 		assert.Nil(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+}
+
+func TestQuerier_GetItemsWithIDs(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountID := fakes.BuildFakeID()
+		exampleItemList := fakes.BuildFakeItemList()
+
+		exampleArgs := []interface{}{exampleAccountID}
+		var exampleIDs []string
+		for _, x := range exampleItemList.Items {
+			exampleArgs = append(exampleArgs, x.ID)
+			exampleIDs = append(exampleIDs, x.ID)
+		}
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		query := fmt.Sprintf(getItemsWithIDsQuery, joinIDs(exampleIDs))
+		db.ExpectQuery(formatQueryForSQLMock(query)).
+			WithArgs(interfaceToDriverValue(exampleArgs)...).
+			WillReturnRows(buildMockRowsFromItems(false, 0, exampleItemList.Items...))
+
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccountID, 0, exampleIDs)
+		assert.NoError(t, err)
+		assert.Equal(t, exampleItemList.Items, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetItemsWithIDs(ctx, "", defaultLimit, nil)
+		assert.Error(t, err)
+		assert.Empty(t, actual)
+	})
+
+	T.Run("with invalid IDs", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountID := fakes.BuildFakeID()
+
+		ctx := context.Background()
+		c, _ := buildTestClient(t)
+
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccountID, defaultLimit, nil)
+		assert.Error(t, err)
+		assert.Empty(t, actual)
+	})
+
+	T.Run("with error executing query", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountID := fakes.BuildFakeID()
+		exampleItemList := fakes.BuildFakeItemList()
+
+		exampleArgs := []interface{}{exampleAccountID}
+		var exampleIDs []string
+		for _, x := range exampleItemList.Items {
+			exampleArgs = append(exampleArgs, x.ID)
+			exampleIDs = append(exampleIDs, x.ID)
+		}
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		query := fmt.Sprintf(getItemsWithIDsQuery, joinIDs(exampleIDs))
+		db.ExpectQuery(formatQueryForSQLMock(query)).
+			WithArgs(interfaceToDriverValue(exampleArgs)...).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccountID, defaultLimit, exampleIDs)
+		assert.Error(t, err)
+		assert.Empty(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with error scanning query results", func(t *testing.T) {
+		t.Parallel()
+
+		exampleAccountID := fakes.BuildFakeID()
+		exampleItemList := fakes.BuildFakeItemList()
+
+		exampleArgs := []interface{}{exampleAccountID}
+		var exampleIDs []string
+		for _, x := range exampleItemList.Items {
+			exampleArgs = append(exampleArgs, x.ID)
+			exampleIDs = append(exampleIDs, x.ID)
+		}
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		query := fmt.Sprintf(getItemsWithIDsQuery, joinIDs(exampleIDs))
+		db.ExpectQuery(formatQueryForSQLMock(query)).
+			WithArgs(interfaceToDriverValue(exampleArgs)...).
+			WillReturnRows(buildErroneousMockRow())
+
+		actual, err := c.GetItemsWithIDs(ctx, exampleAccountID, defaultLimit, exampleIDs)
+		assert.Error(t, err)
+		assert.Empty(t, actual)
 
 		mock.AssertExpectationsForObjects(t, db)
 	})

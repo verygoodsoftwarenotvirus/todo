@@ -29,8 +29,8 @@ type (
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		webhookIDFetcher          func(*http.Request) string
 		encoderDecoder            encoding.ServerEncoderDecoder
-		preWritesProducer         publishers.Publisher
-		preArchivesProducer       publishers.Publisher
+		preWritesPublisher        publishers.Publisher
+		preArchivesPublisher      publishers.Publisher
 		tracer                    tracing.Tracer
 	}
 )
@@ -42,24 +42,24 @@ func ProvideWebhooksService(
 	webhookDataManager types.WebhookDataManager,
 	encoder encoding.ServerEncoderDecoder,
 	routeParamManager routing.RouteParamManager,
-	producerProvider publishers.PublisherProvider,
+	publisherProvider publishers.PublisherProvider,
 ) (types.WebhookDataService, error) {
-	preWritesProducer, err := producerProvider.ProviderPublisher(cfg.PreWritesTopicName)
+	preWritesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreWritesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up event producer: %w", err)
+		return nil, fmt.Errorf("setting up pre-writes producer: %w", err)
 	}
 
-	preArchivesProducer, err := producerProvider.ProviderPublisher(cfg.PreArchivesTopicName)
+	preArchivesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreArchivesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up event producer: %w", err)
+		return nil, fmt.Errorf("setting up pre-archives producer: %w", err)
 	}
 
 	s := &service{
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		webhookDataManager:        webhookDataManager,
 		encoderDecoder:            encoder,
-		preWritesProducer:         preWritesProducer,
-		preArchivesProducer:       preArchivesProducer,
+		preWritesPublisher:        preWritesPublisher,
+		preArchivesPublisher:      preArchivesPublisher,
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		webhookIDFetcher:          routeParamManager.BuildRouteParamStringIDFetcher(WebhookIDURIParamKey),
 		tracer:                    tracing.NewTracer(serviceName),

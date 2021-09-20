@@ -64,7 +64,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			mock.MatchedBy(testutils.PreWriteMessageMatcher),
 		).Return(nil)
-		helper.service.preWritesProducer = mockEventProducer
+		helper.service.preWritesPublisher = mockEventProducer
 
 		helper.service.CreateHandler(helper.res, helper.req)
 
@@ -149,7 +149,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			mock.MatchedBy(testutils.PreWriteMessageMatcher),
 		).Return(errors.New("blah"))
-		helper.service.preWritesProducer = mockEventProducer
+		helper.service.preWritesPublisher = mockEventProducer
 
 		helper.service.CreateHandler(helper.res, helper.req)
 
@@ -626,7 +626,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			mock.MatchedBy(testutils.PreUpdateMessageMatcher),
 		).Return(nil)
-		helper.service.preUpdatesProducer = mockEventProducer
+		helper.service.preUpdatesPublisher = mockEventProducer
 
 		helper.service.UpdateHandler(helper.res, helper.req)
 
@@ -740,6 +740,44 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, itemDataManager)
 	})
+
+	T.Run("with error publishing to message queue", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
+
+		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		itemDataManager := &mocktypes.ItemDataManager{}
+		itemDataManager.On(
+			"GetItem",
+			testutils.ContextMatcher,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+		).Return(helper.exampleItem, nil)
+		helper.service.itemDataManager = itemDataManager
+
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
+			testutils.ContextMatcher,
+			mock.MatchedBy(testutils.PreUpdateMessageMatcher),
+		).Return(errors.New("blah"))
+		helper.service.preUpdatesPublisher = mockEventProducer
+
+		helper.service.UpdateHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
+	})
 }
 
 func TestItemsService_ArchiveHandler(T *testing.T) {
@@ -765,7 +803,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 			testutils.ContextMatcher,
 			mock.MatchedBy(testutils.PreArchiveMessageMatcher),
 		).Return(nil)
-		helper.service.preArchivesProducer = mockEventProducer
+		helper.service.preArchivesPublisher = mockEventProducer
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
 
@@ -825,5 +863,55 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		assert.Equal(t, http.StatusNotFound, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, encoderDecoder)
+	})
+
+	T.Run("with error checking for item in database", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		itemDataManager := &mocktypes.ItemDataManager{}
+		itemDataManager.On(
+			"ItemExists",
+			testutils.ContextMatcher,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+		).Return(false, errors.New("blah"))
+		helper.service.itemDataManager = itemDataManager
+
+		helper.service.ArchiveHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, itemDataManager)
+	})
+
+	T.Run("with error publishing to message queue", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		itemDataManager := &mocktypes.ItemDataManager{}
+		itemDataManager.On(
+			"ItemExists",
+			testutils.ContextMatcher,
+			helper.exampleItem.ID,
+			helper.exampleAccount.ID,
+		).Return(true, nil)
+		helper.service.itemDataManager = itemDataManager
+
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
+			testutils.ContextMatcher,
+			mock.MatchedBy(testutils.PreArchiveMessageMatcher),
+		).Return(errors.New("blah"))
+		helper.service.preArchivesPublisher = mockEventProducer
+
+		helper.service.ArchiveHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
 	})
 }

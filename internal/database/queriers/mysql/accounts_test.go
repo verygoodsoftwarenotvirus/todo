@@ -247,9 +247,7 @@ func TestQuerier_GetAllAccountsCount(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-
 		exampleCount := uint64(123)
-
 		c, db := buildTestClient(t)
 
 		db.ExpectQuery(formatQueryForSQLMock(getAllAccountsCountQuery)).
@@ -259,6 +257,23 @@ func TestQuerier_GetAllAccountsCount(T *testing.T) {
 		actual, err := c.GetAllAccountsCount(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, exampleCount, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with error executing query", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		db.ExpectQuery(formatQueryForSQLMock(getAllAccountsCountQuery)).
+			WithArgs().
+			WillReturnError(errors.New("blah"))
+
+		actual, err := c.GetAllAccountsCount(ctx)
+		assert.Error(t, err)
+		assert.Zero(t, actual)
 
 		mock.AssertExpectationsForObjects(t, db)
 	})

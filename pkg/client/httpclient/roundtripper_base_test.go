@@ -30,6 +30,7 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		ts := httptest.NewServer(http.HandlerFunc(

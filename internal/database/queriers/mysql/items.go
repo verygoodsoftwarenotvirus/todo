@@ -124,13 +124,18 @@ func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID string) (
 }
 
 const getItemQuery = `
-	SELECT items.id, 
-items.name, 
-items.details, 
-items.created_on, 
-items.last_updated_on, 
-items.archived_on, 
-items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id = ?
+SELECT 
+	items.id, 
+	items.name, 
+	items.details, 
+	items.created_on, 
+	items.last_updated_on, 
+	items.archived_on, 
+	items.belongs_to_account 
+FROM items 
+WHERE items.archived_on IS NULL 
+AND items.belongs_to_account = ? 
+AND items.id = ?
 `
 
 // GetItem fetches an item from the database.

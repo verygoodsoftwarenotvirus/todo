@@ -66,6 +66,7 @@ type (
 
 	// WebhookDataManager describes a structure capable of storing webhooks.
 	WebhookDataManager interface {
+		WebhookExists(ctx context.Context, webhookID, accountID string) (bool, error)
 		GetWebhook(ctx context.Context, webhookID, accountID string) (*Webhook, error)
 		GetAllWebhooksCount(ctx context.Context) (uint64, error)
 		GetWebhooks(ctx context.Context, accountID string, filter *QueryFilter) (*WebhookList, error)

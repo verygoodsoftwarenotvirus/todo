@@ -129,6 +129,28 @@ func main() {
 	<-sigChan
 }
 
+func setupDataChangesWorker(ctx context.Context, logger logging.Logger, redisClient *redis.Client) error {
+	dataChangesSubscription := redisClient.Subscribe(ctx, dataChangesTopicName)
+
+	// Wait for confirmation that subscription is created before publishing anything.
+	if _, err := dataChangesSubscription.Receive(ctx); err != nil {
+		return err
+	}
+
+	worker := workers.ProvidePostWritesWorker(logger)
+
+	// Consume messages.
+	go func() {
+		for msg := range dataChangesSubscription.Channel() {
+			if err := worker.HandleMessage([]byte(msg.Payload)); err != nil {
+				logger.Error(err, "handling data changes message")
+			}
+		}
+	}()
+
+	return nil
+}
+
 func setupPreWritesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
 	preWritesSubscription := redisClient.Subscribe(ctx, preWritesTopicName)
 
@@ -144,28 +166,6 @@ func setupPreWritesWorker(ctx context.Context, logger logging.Logger, dataManage
 		for msg := range preWritesSubscription.Channel() {
 			if err = worker.HandleMessage([]byte(msg.Payload)); err != nil {
 				logger.Error(err, "handling pre-write message")
-			}
-		}
-	}()
-
-	return nil
-}
-
-func setupDataChangesWorker(ctx context.Context, logger logging.Logger, redisClient *redis.Client) error {
-	dataChangesSubscription := redisClient.Subscribe(ctx, dataChangesTopicName)
-
-	// Wait for confirmation that subscription is created before publishing anything.
-	if _, err := dataChangesSubscription.Receive(ctx); err != nil {
-		return err
-	}
-
-	worker := workers.ProvidePostWritesWorker(logger)
-
-	// Consume messages.
-	go func() {
-		for msg := range dataChangesSubscription.Channel() {
-			if err := worker.HandleMessage([]byte(msg.Payload)); err != nil {
-				logger.Error(err, "handling post-write message")
 			}
 		}
 	}()

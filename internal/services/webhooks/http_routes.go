@@ -180,14 +180,24 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachWebhookIDToSpan(span, webhookID)
 	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
 
-	// do the deed.
-	err = s.webhookDataManager.ArchiveWebhook(ctx, webhookID, sessionCtxData.ActiveAccountID)
-	if errors.Is(err, sql.ErrNoRows) {
-		logger.Debug("no rows found for webhook")
+	exists, err := s.webhookDataManager.WebhookExists(ctx, webhookID, sessionCtxData.ActiveAccountID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		observability.AcknowledgeError(err, logger, span, "checking item existence")
+		return
+	} else if !exists || errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "archiving webhook")
+	}
+
+	pam := &workers.PreArchiveMessage{
+		MessageType:       "webhook",
+		RelevantID:        webhookID,
+		AccountID:         sessionCtxData.ActiveAccountID,
+		AttributeToUserID: sessionCtxData.Requester.UserID,
+	}
+	if err = s.preArchivesPublisher.Publish(ctx, pam); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing webhook archive message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}

@@ -129,6 +129,40 @@ func (q *SQLQuerier) scanWebhooks(ctx context.Context, rows database.ResultItera
 	return webhooks, filteredCount, totalCount, nil
 }
 
+const webhookExistenceQuery = "SELECT EXISTS ( SELECT webhooks.id FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_account = ? AND webhooks.id = ? )"
+
+// WebhookExists fetches whether a webhook exists from the database.
+func (q *SQLQuerier) WebhookExists(ctx context.Context, webhookID, accountID string) (exists bool, err error) {
+	ctx, span := q.tracer.StartSpan(ctx)
+	defer span.End()
+
+	logger := q.logger
+
+	if webhookID == "" {
+		return false, ErrInvalidIDProvided
+	}
+	logger = logger.WithValue(keys.WebhookIDKey, webhookID)
+	tracing.AttachWebhookIDToSpan(span, webhookID)
+
+	if accountID == "" {
+		return false, ErrInvalidIDProvided
+	}
+	logger = logger.WithValue(keys.AccountIDKey, accountID)
+	tracing.AttachAccountIDToSpan(span, accountID)
+
+	args := []interface{}{
+		accountID,
+		webhookID,
+	}
+
+	result, err := q.performBooleanQuery(ctx, q.db, webhookExistenceQuery, args)
+	if err != nil {
+		return false, observability.PrepareError(err, logger, span, "performing webhook existence check")
+	}
+
+	return result, nil
+}
+
 const getWebhookQuery = `
 	SELECT webhooks.id, webhooks.name, webhooks.content_type, webhooks.url, webhooks.method, webhooks.events, webhooks.data_types, webhooks.topics, webhooks.created_on, webhooks.last_updated_on, webhooks.archived_on, webhooks.belongs_to_account FROM webhooks WHERE webhooks.archived_on IS NULL AND webhooks.belongs_to_account = ? AND webhooks.id = ?
 `

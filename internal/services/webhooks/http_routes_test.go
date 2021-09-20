@@ -360,12 +360,20 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
-			"ArchiveWebhook",
+			"WebhookExists",
 			testutils.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
-		).Return(nil)
+		).Return(true, nil)
 		helper.service.webhookDataManager = wd
+
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
+			testutils.ContextMatcher,
+			mock.MatchedBy(testutils.PreArchiveMessageMatcher),
+		).Return(nil)
+		helper.service.preArchivesPublisher = mockEventProducer
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
@@ -384,6 +392,34 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code)
 	})
 
+	T.Run("with error checking webhook existence", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+
+		wd := &mocktypes.WebhookDataManager{}
+		wd.On(
+			"WebhookExists",
+			testutils.ContextMatcher,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+		).Return(false, errors.New("blah"))
+		helper.service.webhookDataManager = wd
+
+		encoderDecoder := mockencoding.NewMockEncoderDecoder()
+		encoderDecoder.On(
+			"EncodeUnspecifiedInternalServerErrorResponse",
+			testutils.ContextMatcher,
+			testutils.HTTPResponseWriterMatcher,
+		).Return()
+		helper.service.encoderDecoder = encoderDecoder
+
+		helper.service.ArchiveHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, wd)
+	})
+
 	T.Run("with no webhook in database", func(t *testing.T) {
 		t.Parallel()
 
@@ -391,11 +427,11 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
-			"ArchiveWebhook",
+			"WebhookExists",
 			testutils.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
-		).Return(sql.ErrNoRows)
+		).Return(false, sql.ErrNoRows)
 		helper.service.webhookDataManager = wd
 
 		encoderDecoder := mockencoding.NewMockEncoderDecoder()
@@ -412,31 +448,31 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, wd, encoderDecoder)
 	})
 
-	T.Run("with error reading from database", func(t *testing.T) {
+	T.Run("with error publishing to message queue", func(t *testing.T) {
 		t.Parallel()
 
 		helper := newTestHelper(t)
 
 		wd := &mocktypes.WebhookDataManager{}
 		wd.On(
-			"ArchiveWebhook",
+			"WebhookExists",
 			testutils.ContextMatcher,
 			helper.exampleWebhook.ID,
 			helper.exampleAccount.ID,
-		).Return(errors.New("blah"))
+		).Return(true, nil)
 		helper.service.webhookDataManager = wd
 
-		encoderDecoder := mockencoding.NewMockEncoderDecoder()
-		encoderDecoder.On(
-			"EncodeUnspecifiedInternalServerErrorResponse",
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
 			testutils.ContextMatcher,
-			testutils.HTTPResponseWriterMatcher,
-		).Return()
-		helper.service.encoderDecoder = encoderDecoder
+			mock.MatchedBy(testutils.PreArchiveMessageMatcher),
+		).Return(errors.New("blah"))
+		helper.service.preArchivesPublisher = mockEventProducer
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, wd, encoderDecoder)
+		mock.AssertExpectationsForObjects(t, wd)
 	})
 }

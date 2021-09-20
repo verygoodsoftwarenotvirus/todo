@@ -15,6 +15,12 @@ type WebhookDataManager struct {
 	mock.Mock
 }
 
+// WebhookExists satisfies our WebhookDataManager interface.
+func (m *WebhookDataManager) WebhookExists(ctx context.Context, webhookID, accountID string) (bool, error) {
+	args := m.Called(ctx, webhookID, accountID)
+	return args.Bool(0), args.Error(1)
+}
+
 // GetWebhook satisfies our WebhookDataManager interface.
 func (m *WebhookDataManager) GetWebhook(ctx context.Context, webhookID, accountID string) (*types.Webhook, error) {
 	args := m.Called(ctx, webhookID, accountID)

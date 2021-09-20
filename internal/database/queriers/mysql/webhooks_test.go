@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
 	"database/sql/driver"
 	"errors"
 	"strings"
@@ -117,6 +118,115 @@ func TestQuerier_ScanWebhooks(T *testing.T) {
 
 		_, _, _, err := q.scanWebhooks(ctx, mockRows, false)
 		assert.Error(t, err)
+	})
+}
+
+func TestQuerier_WebhookExists(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+
+		exampleAccountID := fakes.BuildFakeID()
+		exampleWebhookID := fakes.BuildFakeID()
+
+		c, db := buildTestClient(t)
+		args := []interface{}{
+			exampleAccountID,
+			exampleWebhookID,
+		}
+
+		db.ExpectQuery(formatQueryForSQLMock(webhookExistenceQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
+			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
+
+		actual, err := c.WebhookExists(ctx, exampleWebhookID, exampleAccountID)
+		assert.NoError(t, err)
+		assert.True(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with invalid webhook ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+
+		exampleAccountID := fakes.BuildFakeID()
+
+		c, _ := buildTestClient(t)
+
+		actual, err := c.WebhookExists(ctx, "", exampleAccountID)
+		assert.Error(t, err)
+		assert.False(t, actual)
+	})
+
+	T.Run("with invalid account ID", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+
+		exampleWebhookID := fakes.BuildFakeID()
+
+		c, db := buildTestClient(t)
+
+		actual, err := c.WebhookExists(ctx, exampleWebhookID, "")
+		assert.Error(t, err)
+		assert.False(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with sql.ErrNoRows", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+
+		exampleAccountID := fakes.BuildFakeID()
+		exampleWebhookID := fakes.BuildFakeID()
+
+		c, db := buildTestClient(t)
+		args := []interface{}{
+			exampleAccountID,
+			exampleWebhookID,
+		}
+
+		db.ExpectQuery(formatQueryForSQLMock(webhookExistenceQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
+			WillReturnError(sql.ErrNoRows)
+
+		actual, err := c.WebhookExists(ctx, exampleWebhookID, exampleAccountID)
+		assert.NoError(t, err)
+		assert.False(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with error executing query", func(t *testing.T) {
+		t.Parallel()
+
+		ctx := context.Background()
+
+		exampleAccountID := fakes.BuildFakeID()
+		exampleWebhookID := fakes.BuildFakeID()
+
+		c, db := buildTestClient(t)
+		args := []interface{}{
+			exampleAccountID,
+			exampleWebhookID,
+		}
+
+		db.ExpectQuery(formatQueryForSQLMock(webhookExistenceQuery)).
+			WithArgs(interfaceToDriverValue(args)...).
+			WillReturnError(errors.New("blah"))
+
+		actual, err := c.WebhookExists(ctx, exampleWebhookID, exampleAccountID)
+		assert.Error(t, err)
+		assert.False(t, actual)
+
+		mock.AssertExpectationsForObjects(t, db)
 	})
 }
 

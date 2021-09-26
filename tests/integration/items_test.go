@@ -3,13 +3,19 @@ package integration
 import (
 	"fmt"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
+)
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+const (
+	creationTimeout = 10 * time.Second
+	waitPeriod      = 100 * time.Millisecond
 )
 
 func checkItemEquality(t *testing.T, expected, actual *types.Item) {
@@ -21,8 +27,42 @@ func checkItemEquality(t *testing.T, expected, actual *types.Item) {
 	assert.NotZero(t, actual.CreatedOn)
 }
 
-func (s *TestSuite) TestItems_Creating() {
-	s.runForEachClientExcept("should be creatable", func(testClients *testClientWrapper) func() {
+func (s *TestSuite) TestItems_CompleteLifecycle() {
+	s.runForCookieClient("should be creatable and readable and deletable", func(testClients *testClientWrapper) func() {
+		return func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			stopChan := make(chan bool, 1)
+			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
+			require.NotNil(t, notificationsChan)
+			require.NoError(t, err)
+
+			// Create item.
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
+			require.NoError(t, err)
+
+			n := <-notificationsChan
+			assert.Equal(t, n.DataType, types.ItemDataType)
+			require.NotNil(t, n.Item)
+			checkItemEquality(t, exampleItem, n.Item)
+
+			createdItem, err := testClients.main.GetItem(ctx, createdItemID)
+			requireNotNilAndNoProblems(t, createdItem, err)
+
+			// assert item equality
+			checkItemEquality(t, exampleItem, createdItem)
+
+			// Clean up item.
+			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
+		}
+	})
+
+	s.runForPASETOClient("should be creatable", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -35,10 +75,12 @@ func (s *TestSuite) TestItems_Creating() {
 			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 			require.NoError(t, err)
 
-			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
-
-			createdItem, err := testClients.main.GetItem(ctx, createdItemID)
-			requireNotNilAndNoProblems(t, createdItem, err)
+			var createdItem *types.Item
+			checkFunc := func() bool {
+				createdItem, err = testClients.main.GetItem(ctx, createdItemID)
+				return assert.NotNil(t, createdItem) && assert.NoError(t, err)
+			}
+			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
 
 			// assert item equality
 			checkItemEquality(t, exampleItem, createdItem)
@@ -50,7 +92,57 @@ func (s *TestSuite) TestItems_Creating() {
 }
 
 func (s *TestSuite) TestItems_Listing() {
-	s.runForEachClientExcept("should be readable in paginated form", func(testClients *testClientWrapper) func() {
+	s.runForCookieClient("should be readable in paginated form", func(testClients *testClientWrapper) func() {
+		return func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			stopChan := make(chan bool, 1)
+			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
+			require.NotNil(t, notificationsChan)
+			require.NoError(t, err)
+
+			// create items
+			var expected []*types.Item
+			for i := 0; i < 5; i++ {
+				// Create item.
+				exampleItem := fakes.BuildFakeItem()
+				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+				createdItemID, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
+				require.NoError(t, itemCreationErr)
+
+				n := <-notificationsChan
+				assert.Equal(t, n.DataType, types.ItemDataType)
+				require.NotNil(t, n.Item)
+				checkItemEquality(t, exampleItem, n.Item)
+
+				createdItem, itemCreationErr := testClients.main.GetItem(ctx, createdItemID)
+				requireNotNilAndNoProblems(t, createdItem, itemCreationErr)
+
+				expected = append(expected, createdItem)
+			}
+
+			// assert item list equality
+			actual, err := testClients.main.GetItems(ctx, nil)
+			requireNotNilAndNoProblems(t, actual, err)
+			assert.True(
+				t,
+				len(expected) <= len(actual.Items),
+				"expected %d to be <= %d",
+				len(expected),
+				len(actual.Items),
+			)
+
+			// clean up
+			for _, createdItem := range actual.Items {
+				assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
+			}
+		}
+	})
+
+	s.runForPASETOClient("should be readable in paginated form", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -66,9 +158,13 @@ func (s *TestSuite) TestItems_Listing() {
 				createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 				require.NoError(t, err)
 
-				waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
+				var createdItem *types.Item
+				checkFunc := func() bool {
+					createdItem, err = testClients.main.GetItem(ctx, createdItemID)
+					return assert.NotNil(t, createdItem) && assert.NoError(t, err)
+				}
+				assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
 
-				createdItem, err := testClients.main.GetItem(ctx, createdItemID)
 				requireNotNilAndNoProblems(t, createdItem, err)
 
 				expected = append(expected, createdItem)
@@ -96,27 +192,35 @@ func (s *TestSuite) TestItems_Listing() {
 func (s *TestSuite) TestItems_Searching() {
 	s.T().SkipNow()
 
-	s.runForEachClientExcept("should be able to be search for items", func(testClients *testClientWrapper) func() {
+	s.runForCookieClient("should be able to be search for items", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
+			stopChan := make(chan bool, 1)
+			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
+			require.NotNil(t, notificationsChan)
+			require.NoError(t, err)
+
 			// create items
 			exampleItem := fakes.BuildFakeItem()
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
+				// Create item.
 				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
+				createdItemID, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
+				require.NoError(t, itemCreationErr)
 
-				createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
-				require.NoError(t, err)
+				n := <-notificationsChan
+				assert.Equal(t, n.DataType, types.ItemDataType)
+				require.NotNil(t, n.Item)
+				checkItemEquality(t, exampleItem, n.Item)
 
-				waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
-
-				createdItem, err := testClients.main.GetItem(ctx, createdItemID)
-				requireNotNilAndNoProblems(t, createdItem, err)
+				createdItem, itemCreationErr := testClients.main.GetItem(ctx, createdItemID)
+				requireNotNilAndNoProblems(t, createdItem, itemCreationErr)
 
 				expected = append(expected, createdItem)
 			}
@@ -140,12 +244,8 @@ func (s *TestSuite) TestItems_Searching() {
 			}
 		}
 	})
-}
 
-func (s *TestSuite) TestItems_Searching_ReturnsOnlyItemsThatBelongToYou() {
-	s.T().SkipNow()
-
-	s.runForEachClientExcept("should only receive your own items", func(testClients *testClientWrapper) func() {
+	s.runForPASETOClient("should be able to be search for items", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -162,9 +262,12 @@ func (s *TestSuite) TestItems_Searching_ReturnsOnlyItemsThatBelongToYou() {
 				createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 				require.NoError(t, err)
 
-				waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
-
-				createdItem, err := testClients.main.GetItem(ctx, createdItemID)
+				var createdItem *types.Item
+				checkFunc := func() bool {
+					createdItem, err = testClients.main.GetItem(ctx, createdItemID)
+					return assert.NotNil(t, createdItem) && assert.NoError(t, err)
+				}
+				assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
 				requireNotNilAndNoProblems(t, createdItem, err)
 
 				expected = append(expected, createdItem)
@@ -205,38 +308,6 @@ func (s *TestSuite) TestItems_Reading_Returns404ForNonexistentItem() {
 	})
 }
 
-func (s *TestSuite) TestItems_Reading() {
-	s.runForEachClientExcept("it should be readable", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// create item
-			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			require.NoError(t, err)
-
-			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
-
-			createdItem, err := testClients.main.GetItem(ctx, createdItemID)
-			requireNotNilAndNoProblems(t, createdItem, err)
-
-			// retrieve item
-			actual, err := testClients.main.GetItem(ctx, createdItem.ID)
-			requireNotNilAndNoProblems(t, actual, err)
-
-			// assert item equality
-			checkItemEquality(t, exampleItem, actual)
-
-			// clean up item
-			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		}
-	})
-}
-
 func (s *TestSuite) TestItems_Updating_Returns404ForNonexistentItem() {
 	s.runForEachClientExcept("it should return an error when trying to update something that does not exist", func(testClients *testClientWrapper) func() {
 		return func() {
@@ -262,20 +333,28 @@ func convertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateInput {
 }
 
 func (s *TestSuite) TestItems_Updating() {
-	s.runForEachClientExcept("it should be possible to update an item", func(testClients *testClientWrapper) func() {
+	s.runForCookieClient("it should be possible to update an item", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			// create item
+			stopChan := make(chan bool, 1)
+			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
+			require.NotNil(t, notificationsChan)
+			require.NoError(t, err)
+
+			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
 			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 			require.NoError(t, err)
 
-			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
+			n := <-notificationsChan
+			assert.Equal(t, n.DataType, types.ItemDataType)
+			require.NotNil(t, n.Item)
+			checkItemEquality(t, exampleItem, n.Item)
 
 			createdItem, err := testClients.main.GetItem(ctx, createdItemID)
 			requireNotNilAndNoProblems(t, createdItem, err)
@@ -284,10 +363,53 @@ func (s *TestSuite) TestItems_Updating() {
 			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
 			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
 
-			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
+			n = <-notificationsChan
+			assert.Equal(t, n.DataType, types.ItemDataType)
 
-			// retrieve changed item
-			actual, err := testClients.main.GetItem(ctx, createdItem.ID)
+			actual, err := testClients.main.GetItem(ctx, createdItemID)
+			requireNotNilAndNoProblems(t, actual, err)
+
+			// assert item equality
+			checkItemEquality(t, exampleItem, actual)
+			assert.NotNil(t, actual.LastUpdatedOn)
+
+			// clean up item
+			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
+		}
+	})
+
+	s.runForPASETOClient("it should be possible to update an item", func(testClients *testClientWrapper) func() {
+		return func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// create item.
+			exampleItem := fakes.BuildFakeItem()
+			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
+			require.NoError(t, err)
+
+			var createdItem *types.Item
+			checkFunc := func() bool {
+				createdItem, err = testClients.main.GetItem(ctx, createdItemID)
+				return assert.NotNil(t, createdItem) && assert.NoError(t, err)
+			}
+			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
+
+			// change item
+			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
+			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
+
+			// retrieve updated item
+			var actual *types.Item
+			checkFunc = func() bool {
+				actual, err = testClients.main.GetItem(ctx, createdItemID)
+				return assert.NotNil(t, createdItem) && assert.NoError(t, err)
+			}
+			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
+
 			requireNotNilAndNoProblems(t, actual, err)
 
 			// assert item equality
@@ -309,31 +431,6 @@ func (s *TestSuite) TestItems_Archiving_Returns404ForNonexistentItem() {
 			defer span.End()
 
 			assert.Error(t, testClients.main.ArchiveItem(ctx, nonexistentID))
-		}
-	})
-}
-
-func (s *TestSuite) TestItems_Archiving() {
-	s.runForEachClientExcept("it should be possible to delete an item", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// create item
-			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
-			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			require.NoError(t, err)
-
-			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
-
-			createdItem, err := testClients.main.GetItem(ctx, createdItemID)
-			requireNotNilAndNoProblems(t, createdItem, err)
-
-			// clean up item
-			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItemID))
 		}
 	})
 }

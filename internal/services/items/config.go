@@ -3,9 +3,9 @@ package items
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 // Config configures the service.
@@ -29,6 +29,7 @@ func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 		validation.Field(&cfg.Logging, validation.Required),
 		validation.Field(&cfg.PreWritesTopicName, validation.Required),
 		validation.Field(&cfg.PreUpdatesTopicName, validation.Required),
+		validation.Field(&cfg.PreArchivesTopicName, validation.Required),
 		validation.Field(&cfg.SearchIndexPath, validation.Required),
 	)
 }

@@ -10,17 +10,17 @@ import (
 	"image/png"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
 	"github.com/pquerna/otp/totp"
 	"github.com/segmentio/ksuid"
 	passwordvalidator "github.com/wagslane/go-password-validator"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 const (

@@ -1,4 +1,4 @@
-package publishers
+package config
 
 import (
 	"github.com/google/wire"
@@ -7,11 +7,7 @@ import (
 var (
 	// Providers are what we provide to dependency injection.
 	Providers = wire.NewSet(
+		ProvideConsumerProvider,
 		ProvidePublisherProvider,
-		wire.FieldsOf(
-			new(Config),
-			"Provider",
-			"QueueAddress",
-		),
 	)
 )

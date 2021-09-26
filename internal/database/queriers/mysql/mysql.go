@@ -8,6 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Masterminds/squirrel"
+	"github.com/alexedwards/scs/mysqlstore"
+	"github.com/alexedwards/scs/v2"
+	"github.com/go-sql-driver/mysql"
+	"github.com/luna-duclos/instrumentedsql"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -15,12 +21,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/Masterminds/squirrel"
-	"github.com/alexedwards/scs/mysqlstore"
-	"github.com/alexedwards/scs/v2"
-	"github.com/go-sql-driver/mysql"
-	"github.com/luna-duclos/instrumentedsql"
 )
 
 const (

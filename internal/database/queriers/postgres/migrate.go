@@ -5,14 +5,14 @@ import (
 	_ "embed"
 	"fmt"
 
+	"github.com/GuiaBolso/darwin"
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/GuiaBolso/darwin"
-	"github.com/segmentio/ksuid"
 )
 
 const (

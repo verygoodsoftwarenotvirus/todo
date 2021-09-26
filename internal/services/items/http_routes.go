@@ -6,13 +6,12 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -68,12 +67,13 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 	tracing.AttachItemIDToSpan(span, input.ID)
 
-	PreWrite := &workers.PreWriteMessage{
-		MessageType:       "item",
-		Item:              input,
-		AttributeToUserID: sessionCtxData.Requester.UserID,
+	preWrite := &types.PreWriteMessage{
+		DataType:                types.ItemDataType,
+		Item:                    input,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: sessionCtxData.ActiveAccountID,
 	}
-	if err = s.preWritesPublisher.Publish(ctx, PreWrite); err != nil {
+	if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -81,7 +81,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 	pwr := types.PreWriteResponse{ID: input.ID}
 
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
 }
 
 // ReadHandler returns a GET handler that returns an item.
@@ -264,10 +264,11 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// update the item.
 	item.Update(input)
 
-	pum := &workers.PreUpdateMessage{
-		MessageType:       "item",
-		Item:              item,
-		AttributeToUserID: sessionCtxData.Requester.UserID,
+	pum := &types.PreUpdateMessage{
+		DataType:                types.ItemDataType,
+		Item:                    item,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: sessionCtxData.ActiveAccountID,
 	}
 	if err = s.preUpdatesPublisher.Publish(ctx, pum); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item update message")
@@ -313,11 +314,11 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	pam := &workers.PreArchiveMessage{
-		MessageType:       "item",
-		RelevantID:        itemID,
-		AccountID:         sessionCtxData.ActiveAccountID,
-		AttributeToUserID: sessionCtxData.Requester.UserID,
+	pam := &types.PreArchiveMessage{
+		DataType:                types.ItemDataType,
+		RelevantID:              itemID,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: sessionCtxData.ActiveAccountID,
 	}
 	if err = s.preArchivesPublisher.Publish(ctx, pam); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing item archive message")

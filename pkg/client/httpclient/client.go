@@ -9,6 +9,9 @@ import (
 	"path"
 	"time"
 
+	"github.com/gorilla/websocket"
+	"github.com/moul/http2curl"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
@@ -17,8 +20,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/moul/http2curl"
 )
 
 const (
@@ -47,6 +48,8 @@ type Client struct {
 	unauthenticatedClient *http.Client
 	authedClient          *http.Client
 	authMethod            *authMethod
+	authHeaderBuilder     authHeaderBuilder
+	websocketDialer       *websocket.Dialer
 	accountID             string
 	debug                 bool
 }
@@ -88,6 +91,7 @@ func NewClient(u *url.URL, options ...option) (*Client, error) {
 		encoder:               encoding.ProvideClientEncoder(l, encoding.ContentTypeJSON),
 		authedClient:          &http.Client{Transport: buildWrappedTransport(defaultTimeout), Timeout: defaultTimeout},
 		unauthenticatedClient: &http.Client{Transport: buildWrappedTransport(defaultTimeout), Timeout: defaultTimeout},
+		websocketDialer:       websocket.DefaultDialer,
 	}
 
 	requestBuilder, err := requests.NewBuilder(c.url, c.logger, encoding.ProvideClientEncoder(l, defaultContentType))

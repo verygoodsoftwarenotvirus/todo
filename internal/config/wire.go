@@ -26,6 +26,8 @@ var (
 			"Auth",
 			"Frontend",
 			"Webhooks",
+			"Websockets",
+			"Accounts",
 			"Items",
 		),
 	)

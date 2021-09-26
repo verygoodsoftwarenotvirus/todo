@@ -14,7 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
+	config3 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
@@ -28,6 +28,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/websockets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
@@ -81,17 +82,29 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	}
 	uploadManager := uploads.ProvideUploadManager(uploader)
 	userDataService := users.ProvideUsersService(authenticationConfig, logger, userDataManager, accountDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, imageUploadProcessor, uploadManager, routeParamManager)
-	accountDataService := accounts.ProvideService(logger, accountDataManager, accountUserMembershipDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager)
-	apiclientsConfig := apiclients.ProvideConfig(authenticationConfig)
-	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, routeParamManager, apiclientsConfig)
-	itemsConfig := &servicesConfigurations.Items
-	itemDataManager := database.ProvideItemDataManager(dataManager)
-	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	publishersConfig := &cfg.Events
-	publisherProvider, err := publishers.ProvidePublisherProvider(logger, publishersConfig)
+	accountsConfig := servicesConfigurations.Accounts
+	configConfig := &cfg.Events
+	publisherProvider, err := config3.ProvidePublisherProvider(logger, configConfig)
 	if err != nil {
 		return nil, err
 	}
+	accountDataService, err := accounts.ProvideService(logger, accountsConfig, accountDataManager, accountUserMembershipDataManager, serverEncoderDecoder, unitCounterProvider, routeParamManager, publisherProvider)
+	if err != nil {
+		return nil, err
+	}
+	apiclientsConfig := apiclients.ProvideConfig(authenticationConfig)
+	apiClientDataService := apiclients.ProvideAPIClientsService(logger, apiClientDataManager, userDataManager, authenticator, serverEncoderDecoder, unitCounterProvider, routeParamManager, apiclientsConfig)
+	consumerProvider, err := config3.ProvideConsumerProvider(logger, configConfig)
+	if err != nil {
+		return nil, err
+	}
+	websocketDataService, err := websockets.ProvideService(ctx, authenticationConfig, logger, serverEncoderDecoder, consumerProvider)
+	if err != nil {
+		return nil, err
+	}
+	itemsConfig := &servicesConfigurations.Items
+	itemDataManager := database.ProvideItemDataManager(dataManager)
+	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
 	itemDataService, err := items.ProvideService(logger, itemsConfig, itemDataManager, serverEncoderDecoder, indexManagerProvider, routeParamManager, publisherProvider)
 	if err != nil {
 		return nil, err
@@ -112,7 +125,7 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	paymentManager := stripe.ProvideStripePaymentManager(logger, stripeConfig)
 	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dataManager, routeParamManager, paymentManager)
 	router := chi.NewRouter(logger)
-	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, userDataService, accountDataService, apiClientDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
+	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, userDataService, accountDataService, apiClientDataService, websocketDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
 	if err != nil {
 		return nil, err
 	}

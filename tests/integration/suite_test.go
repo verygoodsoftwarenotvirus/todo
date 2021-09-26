@@ -6,12 +6,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 const (
@@ -59,6 +59,20 @@ func (s *TestSuite) SetupTest() {
 	s.ctx, _ = tracing.StartCustomSpan(ctx, testName)
 	s.user, s.cookie, s.cookieClient, s.pasetoClient = createUserAndClientForTest(s.ctx, t)
 	s.adminCookieClient, s.adminPASETOClient = buildAdminCookieAndPASETOClients(s.ctx, t)
+}
+
+func (s *TestSuite) runForCookieClient(name string, subtestBuilder func(*testClientWrapper) func()) {
+	for a, c := range s.eachClientExcept(pasetoAuthType) {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("%s via %s", name, authType), subtestBuilder(testClients))
+	}
+}
+
+func (s *TestSuite) runForPASETOClient(name string, subtestBuilder func(*testClientWrapper) func()) {
+	for a, c := range s.eachClientExcept(cookieAuthType) {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("%s via %s", name, authType), subtestBuilder(testClients))
+	}
 }
 
 func (s *TestSuite) runForEachClientExcept(name string, subtestBuilder func(*testClientWrapper) func(), exceptions ...string) {

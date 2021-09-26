@@ -5,10 +5,10 @@ import (
 	"encoding/base64"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 )
 
 func buildExampleKey(ctx context.Context, t *testing.T) string {

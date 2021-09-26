@@ -4,16 +4,17 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func buildTestService() *service {
@@ -45,16 +46,26 @@ func TestProvideAccountsService(t *testing.T) {
 		UserIDURIParamKey,
 	).Return(func(*http.Request) string { return "" })
 
-	s := ProvideService(
+	cfg := Config{
+		PreWritesTopicName: "pre-writes",
+	}
+
+	pp := &publishers.MockProducerProvider{}
+	pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
+
+	s, err := ProvideService(
 		logging.NewNoopLogger(),
+		cfg,
 		&mocktypes.AccountDataManager{},
 		&mocktypes.AccountUserMembershipDataManager{},
 		mockencoding.NewMockEncoderDecoder(),
 		ucp,
 		rpm,
+		pp,
 	)
 
 	assert.NotNil(t, s)
+	assert.NoError(t, err)
 
 	mock.AssertExpectationsForObjects(t, rpm)
 }

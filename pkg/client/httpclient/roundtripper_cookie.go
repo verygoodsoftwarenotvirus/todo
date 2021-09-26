@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	"context"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -63,4 +64,15 @@ func (t *cookieRoundtripper) RoundTrip(req *http.Request) (*http.Response, error
 	}
 
 	return res, nil
+}
+
+// BuildRequestHeaders builds an example request header.
+func (t *cookieRoundtripper) BuildRequestHeaders(ctx context.Context) (http.Header, error) {
+	_, span := t.tracer.StartSpan(ctx)
+	defer span.End()
+
+	r := http.Request{Header: http.Header{}}
+	r.AddCookie(t.cookie)
+
+	return r.Header, nil
 }

@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pquerna/otp/totp"
+	flag "github.com/spf13/pflag"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/pquerna/otp/totp"
-	flag "github.com/spf13/pflag"
 )
 
 var (

@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/go-redis/redis/v8"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"github.com/go-redis/redis/v8"
 )
 
 type (
@@ -23,23 +23,6 @@ type (
 		topic       string
 	}
 )
-
-// provideRedisPublisher provides a redis-backed Publisher.
-func provideRedisPublisher(logger logging.Logger, addr MessageQueueAddress, topic string) *redisPublisher {
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     string(addr),
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
-
-	return &redisPublisher{
-		redisClient: redisClient,
-		topic:       topic,
-		encoder:     encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
-		logger:      logging.EnsureLogger(logger),
-		tracer:      tracing.NewTracer(fmt.Sprintf("%s_writer", topic)),
-	}
-}
 
 func (r *redisPublisher) Publish(ctx context.Context, data interface{}) error {
 	_, span := r.tracer.StartSpan(ctx)
@@ -55,18 +38,35 @@ func (r *redisPublisher) Publish(ctx context.Context, data interface{}) error {
 	return r.redisClient.Publish(ctx, r.topic, b.Bytes()).Err()
 }
 
+// provideRedisPublisher provides a redis-backed Publisher.
+func provideRedisPublisher(logger logging.Logger, redisClient *redis.Client, topic string) *redisPublisher {
+	return &redisPublisher{
+		redisClient: redisClient,
+		topic:       topic,
+		encoder:     encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
+		logger:      logging.EnsureLogger(logger),
+		tracer:      tracing.NewTracer(fmt.Sprintf("%s_publisher", topic)),
+	}
+}
+
 type publisherProvider struct {
 	logger            logging.Logger
 	publisherCache    map[string]Publisher
-	addr              string
+	redisClient       *redis.Client
 	publisherCacheHat sync.RWMutex
 }
 
-// ProvideRedisProducerProvider returns a PublisherProvider for a given address.
-func ProvideRedisProducerProvider(logger logging.Logger, queueAddress string) PublisherProvider {
+// ProvideRedisPublisherProvider returns a PublisherProvider for a given address.
+func ProvideRedisPublisherProvider(logger logging.Logger, address string) PublisherProvider {
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     address,
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+
 	return &publisherProvider{
 		logger:         logging.EnsureLogger(logger),
-		addr:           queueAddress,
+		redisClient:    redisClient,
 		publisherCache: map[string]Publisher{},
 	}
 }
@@ -81,7 +81,7 @@ func (p *publisherProvider) ProviderPublisher(topic string) (Publisher, error) {
 		return cachedPub, nil
 	}
 
-	pub := provideRedisPublisher(logger, MessageQueueAddress(p.addr), topic)
+	pub := provideRedisPublisher(logger, p.redisClient, topic)
 	p.publisherCache[topic] = pub
 
 	return pub, nil

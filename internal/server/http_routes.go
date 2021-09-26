@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/heptiolabs/healthcheck"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
@@ -12,8 +14,6 @@ import (
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
-
-	"github.com/heptiolabs/healthcheck"
 )
 
 const (
@@ -146,6 +146,11 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveAPIClientsPermission)).
 					Delete(root, s.apiClientsService.ArchiveHandler)
 			})
+		})
+
+		// Notifications
+		v1Router.Route("/websockets", func(notificationsRouter routing.Router) {
+			notificationsRouter.Get("/data_changes", s.websocketsService.SubscribeHandler)
 		})
 
 		// Webhooks

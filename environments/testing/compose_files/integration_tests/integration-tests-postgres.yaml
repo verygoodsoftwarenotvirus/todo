@@ -16,6 +16,7 @@ services:
             - todo-server
         links:
             - worker_queue
+            - tracing-server
             - database
         build:
             context: '../../../../'
@@ -33,6 +34,7 @@ services:
             USE_NOOP_LOGGER: 'nope'
         links:
             - worker_queue
+            - tracing-server
             - database
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-postgres.config'

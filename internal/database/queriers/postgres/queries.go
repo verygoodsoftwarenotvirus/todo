@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Masterminds/squirrel"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/Masterminds/squirrel"
 )
 
 const (

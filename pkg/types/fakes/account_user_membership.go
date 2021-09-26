@@ -1,11 +1,11 @@
 package fakes
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/segmentio/ksuid"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // BuildFakeAccountUserMembership builds a faked AccountUserMembership.

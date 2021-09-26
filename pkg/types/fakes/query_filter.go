@@ -1,9 +1,9 @@
 package fakes
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	fake "github.com/brianvoe/gofakeit/v5"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // BuildFleshedOutQueryFilter builds a fully fleshed out QueryFilter.

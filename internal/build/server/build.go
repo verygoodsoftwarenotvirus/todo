@@ -6,6 +6,8 @@ package server
 import (
 	"context"
 
+	"github.com/google/wire"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
@@ -13,7 +15,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
+	msgconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
@@ -28,11 +30,10 @@ import (
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	websocketsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/websockets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads/images"
-
-	"github.com/google/wire"
 )
 
 // Build builds a server.
@@ -46,8 +47,8 @@ func Build(
 		config.Providers,
 		database.Providers,
 		dbconfig.Providers,
-		publishers.Providers,
 		encoding.Providers,
+		msgconfig.Providers,
 		server.Providers,
 		metrics.Providers,
 		images.Providers,
@@ -63,6 +64,7 @@ func Build(
 		accountsservice.Providers,
 		apiclientsservice.Providers,
 		webhooksservice.Providers,
+		websocketsservice.Providers,
 		adminservice.Providers,
 		frontendservice.Providers,
 		itemsservice.Providers,

@@ -6,12 +6,12 @@ import (
 	"net/url"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	useragent "github.com/mssola/user_agent"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 func attachUint8ToSpan(span trace.Span, attachmentKey string, id uint8) {

@@ -9,18 +9,19 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestAccountsService_ListHandler(T *testing.T) {
@@ -696,19 +697,19 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
-		accountMembershipDataManager.On(
-			"AddUserToAccount",
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
 			testutils.ContextMatcher,
-			mock.IsType(&types.AddUserToAccountInput{}),
+			mock.MatchedBy(testutils.PreWriteMessageMatcher),
 		).Return(nil)
-		helper.service.accountMembershipDataManager = accountMembershipDataManager
+		helper.service.preWritesPublisher = mockEventProducer
 
 		helper.service.AddMemberHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, accountMembershipDataManager)
+		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -767,7 +768,7 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, helper.res.Code)
 	})
 
-	T.Run("with error writing to database", func(t *testing.T) {
+	T.Run("with error publishing to event queue", func(t *testing.T) {
 		t.Parallel()
 
 		helper := buildTestHelper(t)
@@ -781,19 +782,19 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
-		accountMembershipDataManager.On(
-			"AddUserToAccount",
+		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer.On(
+			"Publish",
 			testutils.ContextMatcher,
-			mock.IsType(&types.AddUserToAccountInput{}),
+			mock.MatchedBy(testutils.PreWriteMessageMatcher),
 		).Return(errors.New("blah"))
-		helper.service.accountMembershipDataManager = accountMembershipDataManager
+		helper.service.preWritesPublisher = mockEventProducer
 
 		helper.service.AddMemberHandler(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
-		mock.AssertExpectationsForObjects(t, accountMembershipDataManager)
+		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})
 }
 

@@ -3,9 +3,9 @@ package mysql
 import (
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/Masterminds/squirrel"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // applyFilterToQueryBuilder applies the query filter to a query builder.

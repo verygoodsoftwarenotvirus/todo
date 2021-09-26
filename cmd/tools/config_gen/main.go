@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"log"
 	"os"
 	"path/filepath"
@@ -15,6 +14,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	msgconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
@@ -22,11 +22,12 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	websocketsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/websockets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -180,9 +181,11 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Events: publishers.Config{
-			Provider:     "redis",
-			QueueAddress: eventsServerAddress,
+		Events: msgconfig.Config{
+			Provider: msgconfig.ProviderRedis,
+			RedisConfig: msgconfig.RedisConfig{
+				QueueAddress: eventsServerAddress,
+			},
 		},
 		Server: localServer,
 		Database: dbconfig.Config{
@@ -224,6 +227,9 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
+			Accounts: accounts.Config{
+				PreWritesTopicName: preWritesTopicName,
+			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -242,6 +248,9 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				PreArchivesTopicName: preArchivesTopicName,
 				Debug:                true,
 				Enabled:              false,
+			},
+			Websockets: websocketsservice.Config{
+				//
 			},
 			Items: itemsservice.Config{
 				PreWritesTopicName:   preWritesTopicName,
@@ -269,9 +278,11 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		Encoding: encoding.Config{
 			ContentType: contentTypeJSON,
 		},
-		Events: publishers.Config{
-			Provider:     "redis",
-			QueueAddress: eventsServerAddress,
+		Events: msgconfig.Config{
+			Provider: msgconfig.ProviderRedis,
+			RedisConfig: msgconfig.RedisConfig{
+				QueueAddress: eventsServerAddress,
+			},
 		},
 		Server: localServer,
 		Database: dbconfig.Config{
@@ -301,6 +312,9 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			Provider: "bleve",
 		},
 		Services: config.ServicesConfigurations{
+			Accounts: accounts.Config{
+				PreWritesTopicName: preWritesTopicName,
+			},
 			Auth: authservice.Config{
 				PASETO: authservice.PASETOConfig{
 					Issuer:       "todo_service",
@@ -319,6 +333,9 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				PreArchivesTopicName: preArchivesTopicName,
 				Debug:                true,
 				Enabled:              false,
+			},
+			Websockets: websocketsservice.Config{
+				//
 			},
 			Items: itemsservice.Config{
 				SearchIndexPath:      fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
@@ -349,9 +366,11 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Debug:   false,
 				RunMode: testingEnv,
 			},
-			Events: publishers.Config{
-				Provider:     "redis",
-				QueueAddress: eventsServerAddress,
+			Events: msgconfig.Config{
+				Provider: msgconfig.ProviderRedis,
+				RedisConfig: msgconfig.RedisConfig{
+					QueueAddress: eventsServerAddress,
+				},
 			},
 			Encoding: encoding.Config{
 				ContentType: contentTypeJSON,
@@ -396,6 +415,9 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Provider: "bleve",
 			},
 			Services: config.ServicesConfigurations{
+				Accounts: accounts.Config{
+					PreWritesTopicName: preWritesTopicName,
+				},
 				Auth: authservice.Config{
 					PASETO: authservice.PASETOConfig{
 						Issuer:       "todo_service",
@@ -420,6 +442,9 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					PreArchivesTopicName: preArchivesTopicName,
 					Debug:                true,
 					Enabled:              false,
+				},
+				Websockets: websocketsservice.Config{
+					//
 				},
 				Items: itemsservice.Config{
 					PreWritesTopicName:   preWritesTopicName,

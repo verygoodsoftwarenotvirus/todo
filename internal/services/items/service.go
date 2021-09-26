@@ -56,17 +56,17 @@ func ProvideService(
 
 	preWritesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreWritesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up event producer: %w", err)
+		return nil, fmt.Errorf("setting up event publisher: %w", err)
 	}
 
 	preUpdatesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreUpdatesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up event producer: %w", err)
+		return nil, fmt.Errorf("setting up event publisher: %w", err)
 	}
 
 	preArchivesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreArchivesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up event producer: %w", err)
+		return nil, fmt.Errorf("setting up event publisher: %w", err)
 	}
 
 	svc := &service{

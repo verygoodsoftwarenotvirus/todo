@@ -3,10 +3,10 @@ package mock
 import (
 	"net/http"
 
+	"github.com/stretchr/testify/mock"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/stretchr/testify/mock"
 )
 
 // NewRouteParamManager returns a new RouteParamManager.

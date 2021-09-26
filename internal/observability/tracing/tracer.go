@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/trace/jaeger"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 type errorHandler struct {
@@ -35,6 +35,7 @@ func (c *Config) SetupJaeger() (func(), error) {
 			sdktrace.WithSampler(sdktrace.TraceIDRatioBased(c.SpanCollectionProbability)),
 			sdktrace.WithResource(resource.NewWithAttributes(
 				attribute.String("exporter", "jaeger"),
+				attribute.String("service.name", c.Jaeger.ServiceName),
 			)),
 		),
 	)

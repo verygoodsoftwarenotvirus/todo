@@ -5,12 +5,12 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -301,14 +301,21 @@ func (s *service) AddMemberHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
-	// create account in database.
-	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input); err != nil {
-		observability.AcknowledgeError(err, logger, span, "adding user to account")
+	preWrite := &types.PreWriteMessage{
+		DataType:                types.UserMembershipDataType,
+		UserMembership:          input,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: accountID,
+	}
+	if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	res.WriteHeader(http.StatusAccepted)
+	pwr := types.PreWriteResponse{ID: input.ID}
+
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
 }
 
 // ModifyMemberPermissionsHandler is our account creation route.

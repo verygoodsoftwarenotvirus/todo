@@ -7,25 +7,27 @@ import (
 	"os"
 	"strings"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/mysql"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
+	msgconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
+	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	websocketsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/websockets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
@@ -48,26 +50,27 @@ type (
 
 	// ServicesConfigurations collects the various service configurations.
 	ServicesConfigurations struct {
-		_        struct{}
-		Items    itemsservice.Config    `json:"items" mapstructure:"items" toml:"items,omitempty"`
-		Webhooks webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		Auth     authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Frontend frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
+		_          struct{}
+		Items      itemsservice.Config      `json:"items" mapstructure:"items" toml:"items,omitempty"`
+		Websockets websocketsservice.Config `json:"websockets" mapstructure:"websockets" toml:"websockets,omitempty"`
+		Webhooks   webhooksservice.Config   `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		Accounts   accountsservice.Config   `json:"accounts" mapstructure:"accounts" toml:"accounts,omitempty"`
+		Auth       authservice.Config       `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
+		Frontend   frontendservice.Config   `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 
 	// InstanceConfig configures an instance of the service. It is composed of all the other setting structs.
 	InstanceConfig struct {
-		_ struct{}
-
-		Events        publishers.Config      `json:"events" mapstructure:"events" toml:"events,omitempty"`
+		_             struct{}
+		Events        msgconfig.Config       `json:"events" mapstructure:"events" toml:"events,omitempty"`
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"encoding,omitempty"`
 		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
 		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
+		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Capitalism    capitalism.Config      `json:"capitalism" mapstructure:"capitalism" toml:"capitalism,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Services      ServicesConfigurations `json:"services" mapstructure:"services" toml:"services,omitempty"`
 		Server        server.Config          `json:"server" mapstructure:"server" toml:"server,omitempty"`
 	}

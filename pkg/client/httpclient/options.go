@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gorilla/websocket"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient/requests"
@@ -95,8 +97,11 @@ func UsingCookie(cookie *http.Cookie) func(*Client) error {
 			return ErrCookieRequired
 		}
 
+		crt := newCookieRoundTripper(c, cookie)
 		c.authMethod = cookieAuthMethod
-		c.authedClient.Transport = newCookieRoundTripper(c, cookie)
+		c.authedClient.Transport = crt
+		c.authHeaderBuilder = crt
+		c.websocketDialer = websocket.DefaultDialer
 		c.authedClient = buildRetryingClient(c.authedClient, c.logger, c.tracer)
 
 		c.logger.Debug("set client auth cookie")
@@ -108,8 +113,12 @@ func UsingCookie(cookie *http.Cookie) func(*Client) error {
 // UsingPASETO sets the authCookie value on the client.
 func UsingPASETO(clientID string, secretKey []byte) func(*Client) error {
 	return func(c *Client) error {
+		prt := newPASETORoundTripper(c, clientID, secretKey)
+
 		c.authMethod = pasetoAuthMethod
-		c.authedClient.Transport = newPASETORoundTripper(c, clientID, secretKey)
+		c.authedClient.Transport = prt
+		c.authHeaderBuilder = prt
+		c.websocketDialer = websocket.DefaultDialer
 		c.authedClient = buildRetryingClient(c.authedClient, c.logger, c.tracer)
 
 		return nil

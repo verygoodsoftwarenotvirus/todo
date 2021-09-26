@@ -6,15 +6,15 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Masterminds/squirrel"
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/Masterminds/squirrel"
-	"github.com/segmentio/ksuid"
 )
 
 const (

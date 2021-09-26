@@ -4,30 +4,24 @@ import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
-// PostWriteMessage represents an event that asks a worker to write data to the datastore.
-type PostWriteMessage struct {
-	MessageType          string                           `json:"messageType"`
-	Item                 *types.ItemDatabaseCreationInput `json:"item"`
-	AttributableToUserID string                           `json:"userID"`
-}
-
-// PostWritesWorker writes data from the pending writes topic to the database.
-type PostWritesWorker struct {
+// DataChangesWorker writes data from the pending writes topic to the database.
+type DataChangesWorker struct {
 	logger  logging.Logger
 	tracer  tracing.Tracer
 	encoder encoding.ClientEncoder
 }
 
-// ProvidePostWritesWorker provides a PostWritesWorker.
-func ProvidePostWritesWorker(logger logging.Logger) *PostWritesWorker {
+// ProvideDataChangesWorker provides a DataChangesWorker.
+func ProvideDataChangesWorker(logger logging.Logger) *DataChangesWorker {
 	name := "post_writes"
 
-	return &PostWritesWorker{
+	return &DataChangesWorker{
 		logger:  logging.EnsureLogger(logger).WithName(name),
 		tracer:  tracing.NewTracer(name),
 		encoder: encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
@@ -35,9 +29,17 @@ func ProvidePostWritesWorker(logger logging.Logger) *PostWritesWorker {
 }
 
 // HandleMessage handles a pending write.
-func (w *PostWritesWorker) HandleMessage(message []byte) error {
-	_, span := w.tracer.StartSpan(context.Background())
+func (w *DataChangesWorker) HandleMessage(ctx context.Context, message []byte) error {
+	ctx, span := w.tracer.StartSpan(ctx)
 	defer span.End()
+
+	var msg *types.DataChangeMessage
+
+	if err := w.encoder.Unmarshal(ctx, message, &msg); err != nil {
+		return observability.PrepareError(err, w.logger, span, "unmarshalling message")
+	}
+
+	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
 
 	w.logger.WithValue("message", message).Info("message received")
 

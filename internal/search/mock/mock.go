@@ -3,9 +3,9 @@ package mocksearch
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 )
 
 var _ search.IndexManager = (*IndexManager)(nil)

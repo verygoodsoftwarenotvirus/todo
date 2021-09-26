@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 func TestQueryFilter_ApplyFilterToQueryBuilder(T *testing.T) {

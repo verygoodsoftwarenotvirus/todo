@@ -11,15 +11,15 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
+	"github.com/gorilla/securecookie"
+	"github.com/o1egl/paseto"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/google/uuid"
-	"github.com/gorilla/securecookie"
-	"github.com/o1egl/paseto"
 )
 
 func (s *service) issueSessionManagedCookie(ctx context.Context, accountID, requesterID string) (cookie *http.Cookie, err error) {

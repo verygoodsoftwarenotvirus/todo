@@ -6,6 +6,11 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+const (
+	// UserMembershipDataType indicates an event is user membership-related.
+	UserMembershipDataType dataType = "user_membership"
+)
+
 type (
 	// AccountUserMembership defines a relationship between a user and an account.
 	AccountUserMembership struct {

@@ -9,15 +9,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
-
-// PreArchiveMessage represents an event that asks a worker to archive data to the datastore.
-type PreArchiveMessage struct {
-	MessageType       string `json:"messageType"`
-	RelevantID        string `json:"relevantID"`
-	AccountID         string `json:"accountID"`
-	AttributeToUserID string `json:"userID"`
-}
 
 // PreArchivesWorker archives data from the pending archives topic to the database.
 type PreArchivesWorker struct {
@@ -41,36 +34,56 @@ func ProvidePreArchivesWorker(logger logging.Logger, dataManager database.DataMa
 	}
 }
 
-const (
-	itemMessageType = "item"
-)
-
 // HandleMessage handles a pending archive.
-func (w *PreArchivesWorker) HandleMessage(message []byte) error {
-	ctx, span := w.tracer.StartSpan(context.Background())
+func (w *PreArchivesWorker) HandleMessage(ctx context.Context, message []byte) error {
+	ctx, span := w.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var msg *PreArchiveMessage
+	var msg *types.PreArchiveMessage
 
 	if err := w.encoder.Unmarshal(ctx, message, &msg); err != nil {
 		return observability.PrepareError(err, w.logger, span, "unmarshalling message")
 	}
 
-	tracing.AttachUserIDToSpan(span, msg.AttributeToUserID)
+	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
 
-	w.logger.WithValue("message_type", msg.MessageType).Debug("message read")
+	w.logger.WithValue("data_type", msg.DataType).Debug("message read")
 
-	switch msg.MessageType {
-	case itemMessageType:
-		if err := w.dataManager.ArchiveItem(ctx, msg.RelevantID, msg.AccountID); err != nil {
+	switch msg.DataType {
+	case types.ItemDataType:
+		if err := w.dataManager.ArchiveItem(ctx, msg.RelevantID, msg.AttributableToAccountID); err != nil {
 			return observability.PrepareError(err, w.logger, span, "creating item")
 		}
 
 		if w.postArchivesPublisher != nil {
-			if err := w.postArchivesPublisher.Publish(ctx, msg.RelevantID); err != nil {
+			dcm := &types.DataChangeMessage{
+				DataType:                msg.DataType,
+				AttributableToUserID:    msg.AttributableToUserID,
+				AttributableToAccountID: msg.AttributableToAccountID,
+			}
+
+			if err := w.postArchivesPublisher.Publish(ctx, dcm); err != nil {
 				w.logger.Error(err, "publishing to post-archives topic")
 			}
 		}
+	case types.WebhookDataType:
+		if err := w.dataManager.ArchiveWebhook(ctx, msg.RelevantID, msg.AttributableToAccountID); err != nil {
+			return observability.PrepareError(err, w.logger, span, "creating item")
+		}
+
+		if w.postArchivesPublisher != nil {
+			dcm := &types.DataChangeMessage{
+				DataType:                msg.DataType,
+				AttributableToUserID:    msg.AttributableToUserID,
+				AttributableToAccountID: msg.AttributableToAccountID,
+			}
+
+			if err := w.postArchivesPublisher.Publish(ctx, dcm); err != nil {
+				w.logger.Error(err, "publishing to post-archives topic")
+			}
+		}
+	case types.UserMembershipDataType:
+		break
 	}
 
 	return nil

@@ -9,6 +9,9 @@ import (
 	"os"
 	"time"
 
+	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+	"golang.org/x/net/http2"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
@@ -17,9 +20,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
-	"golang.org/x/net/http2"
 )
 
 const (
@@ -38,6 +38,7 @@ type (
 		apiClientsService types.APIClientDataService
 		webhooksService   types.WebhookDataService
 		itemsService      types.ItemDataService
+		websocketsService types.WebsocketDataService
 		encoder           encoding.ServerEncoderDecoder
 		logger            logging.Logger
 		router            routing.Router
@@ -56,6 +57,7 @@ func ProvideHTTPServer(
 	usersService types.UserDataService,
 	accountsService types.AccountDataService,
 	apiClientsService types.APIClientDataService,
+	websocketsService types.WebsocketDataService,
 	itemsService types.ItemDataService,
 	webhooksService types.WebhookDataService,
 	adminService types.AdminService,
@@ -79,6 +81,7 @@ func ProvideHTTPServer(
 		usersService:      usersService,
 		accountsService:   accountsService,
 		authService:       authService,
+		websocketsService: websocketsService,
 		itemsService:      itemsService,
 		apiClientsService: apiClientsService,
 	}

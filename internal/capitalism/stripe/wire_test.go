@@ -3,9 +3,9 @@ package stripe
 import (
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 )
 
 func TestProvideAPIKey(T *testing.T) {

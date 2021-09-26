@@ -8,6 +8,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/pquerna/otp/totp"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -15,14 +18,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/pquerna/otp/totp"
-	"github.com/stretchr/testify/require"
 )
-
-func waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet() {
-	time.Sleep(3 * time.Second)
-}
 
 func requireNotNilAndNoProblems(t *testing.T, i interface{}, err error) {
 	t.Helper()

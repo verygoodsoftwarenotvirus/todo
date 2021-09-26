@@ -3,14 +3,14 @@ package integration
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
@@ -215,7 +215,7 @@ func (s *TestSuite) TestAccounts_Archiving() {
 }
 
 func (s *TestSuite) TestAccounts_ChangingMemberships() {
-	s.runForEachClientExcept("should be possible to change members of an account", func(testClients *testClientWrapper) func() {
+	s.runForCookieClient("should be possible to change members of an account", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -242,13 +242,21 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			t.Logf("switched main test client active account to %s, creating webhook", account.ID)
 
-			// create a webhook
+			stopChan := make(chan bool, 1)
+			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
+			require.NotNil(t, notificationsChan)
+			require.NoError(t, err)
+
+			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, createdWebhookID, err)
+			require.NoError(t, err)
 
-			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
+			n := <-notificationsChan
+			assert.Equal(t, n.DataType, types.WebhookDataType)
+			require.NotNil(t, n.Webhook)
+			checkWebhookEquality(t, exampleWebhook, n.Webhook)
 
 			createdWebhook, err := testClients.main.GetWebhook(ctx, createdWebhookID)
 			requireNotNilAndNoProblems(t, createdWebhook, err)
@@ -289,6 +297,9 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 					AccountRoles: []string{authorization.AccountAdminRole.String()},
 				}))
 				t.Logf("added user %q to account %s", users[i].ID, account.ID)
+
+				n := <-notificationsChan
+				assert.Equal(t, n.DataType, types.UserMembershipDataType)
 
 				t.Logf("setting user %q's client to account %s", users[i].ID, account.ID)
 				require.NoError(t, clients[i].SwitchActiveAccount(ctx, account.ID))
@@ -335,10 +346,220 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			}
 		}
 	})
+
+	s.runForPASETOClient("should be possible to change members of an account", func(testClients *testClientWrapper) func() {
+		return func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			const userCount = 1
+
+			currentStatus, statusErr := testClients.main.UserStatus(s.ctx)
+			requireNotNilAndNoProblems(t, currentStatus, statusErr)
+			t.Logf("initial account is %s; initial user ID is %s", currentStatus.ActiveAccount, s.user.ID)
+
+			// fetch account data
+			accountCreationInput := &types.AccountCreationInput{
+				Name: fakes.BuildFakeAccount().Name,
+			}
+			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
+			require.NoError(t, accountCreationErr)
+			require.NotNil(t, account)
+
+			t.Logf("created account %s", account.ID)
+
+			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
+
+			t.Logf("switched main test client active account to %s, creating webhook", account.ID)
+
+			// Create webhook.
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			require.NoError(t, err)
+
+			var createdWebhook *types.Webhook
+			checkFunc := func() bool {
+				createdWebhook, err = testClients.main.GetWebhook(ctx, createdWebhookID)
+				return assert.NotNil(t, createdWebhook) && assert.NoError(t, err)
+			}
+			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
+
+			// assert webhook equality
+			requireNotNilAndNoProblems(t, createdWebhook, err)
+			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
+
+			t.Logf("created webhook %s for account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
+
+			// create dummy users
+			users := []*types.User{}
+			clients := []*httpclient.Client{}
+
+			// create users
+			for i := 0; i < userCount; i++ {
+				u, _, c, _ := createUserAndClientForTest(ctx, t)
+				users = append(users, u)
+				clients = append(clients, c)
+
+				currentStatus, statusErr = c.UserStatus(s.ctx)
+				requireNotNilAndNoProblems(t, currentStatus, statusErr)
+				t.Logf("created user user %q with account %s", u.ID, currentStatus.ActiveAccount)
+			}
+
+			// check that each user cannot see the unreachable webhook
+			for i := 0; i < userCount; i++ {
+				t.Logf("checking that user %q CANNOT see webhook %s belonging to account %s", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
+				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+				require.Nil(t, webhook)
+				require.Error(t, err)
+			}
+
+			// add them to the account
+			for i := 0; i < userCount; i++ {
+				t.Logf("adding user %q to account %s", users[i].ID, account.ID)
+				require.NoError(t, testClients.main.AddUserToAccount(ctx, &types.AddUserToAccountInput{
+					UserID:       users[i].ID,
+					AccountID:    account.ID,
+					Reason:       t.Name(),
+					AccountRoles: []string{authorization.AccountAdminRole.String()},
+				}))
+				t.Logf("added user %q to account %s", users[i].ID, account.ID)
+
+				t.Logf("setting user %q's client to account %s", users[i].ID, account.ID)
+				checkFunc = func() bool {
+					return assert.NoError(t, clients[i].SwitchActiveAccount(ctx, account.ID))
+				}
+				assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
+
+				currentStatus, statusErr = clients[i].UserStatus(s.ctx)
+				requireNotNilAndNoProblems(t, currentStatus, statusErr)
+				require.Equal(t, currentStatus.ActiveAccount, account.ID)
+				t.Logf("set user %q's current active account to %s", users[i].ID, account.ID)
+			}
+
+			// grant all permissions
+			for i := 0; i < userCount; i++ {
+				input := &types.ModifyUserPermissionsInput{
+					Reason:   t.Name(),
+					NewRoles: []string{authorization.AccountAdminRole.String()},
+				}
+				require.NoError(t, testClients.main.ModifyMemberPermissions(ctx, account.ID, users[i].ID, input))
+			}
+
+			// check that each user can see the webhook
+			for i := 0; i < userCount; i++ {
+				t.Logf("checking if user %q CAN now see webhook %s belonging to account %s", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
+				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+				requireNotNilAndNoProblems(t, webhook, err)
+			}
+
+			// remove users from account
+			for i := 0; i < userCount; i++ {
+				require.NoError(t, testClients.main.RemoveUserFromAccount(ctx, account.ID, users[i].ID))
+			}
+
+			// check that each user cannot see the webhook
+			for i := 0; i < userCount; i++ {
+				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+				require.Nil(t, webhook)
+				require.Error(t, err)
+			}
+
+			// Clean up.
+			require.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
+
+			for i := 0; i < userCount; i++ {
+				require.NoError(t, testClients.admin.ArchiveUser(ctx, users[i].ID))
+			}
+		}
+	})
 }
 
 func (s *TestSuite) TestAccounts_OwnershipTransfer() {
-	s.runForEachClientExcept("should be possible to transfer ownership of an account", func(testClients *testClientWrapper) func() {
+	s.runForCookieClient("should be possible to transfer ownership of an account", func(testClients *testClientWrapper) func() {
+		return func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			// create users
+			futureOwner, _, _, futureOwnerClient := createUserAndClientForTest(ctx, t)
+
+			// fetch account data
+			accountCreationInput := &types.AccountCreationInput{
+				Name: fakes.BuildFakeAccount().Name,
+			}
+			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
+			require.NoError(t, accountCreationErr)
+			require.NotNil(t, account)
+
+			t.Logf("created account %s", account.ID)
+
+			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
+
+			t.Logf("switched to active account: %s", account.ID)
+
+			// create a webhook
+			stopChan := make(chan bool, 1)
+			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
+			require.NotNil(t, notificationsChan)
+			require.NoError(t, err)
+
+			// Create webhook.
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			require.NoError(t, err)
+
+			n := <-notificationsChan
+			assert.Equal(t, n.DataType, types.WebhookDataType)
+			require.NotNil(t, n.Webhook)
+			checkWebhookEquality(t, exampleWebhook, n.Webhook)
+
+			createdWebhook, err := testClients.main.GetWebhook(ctx, createdWebhookID)
+			requireNotNilAndNoProblems(t, createdWebhook, err)
+
+			t.Logf("created webhook %s belonging to account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
+			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
+
+			// check that user cannot see the webhook
+			webhook, err := futureOwnerClient.GetWebhook(ctx, createdWebhook.ID)
+			require.Nil(t, webhook)
+			require.Error(t, err)
+
+			// add them to the account
+			require.NoError(t, testClients.main.TransferAccountOwnership(ctx, account.ID, &types.AccountOwnershipTransferInput{
+				Reason:       t.Name(),
+				CurrentOwner: account.BelongsToUser,
+				NewOwner:     futureOwner.ID,
+			}))
+
+			t.Logf("transferred account %s from user %s to user %s", account.ID, account.BelongsToUser, futureOwner.ID)
+
+			require.NoError(t, futureOwnerClient.SwitchActiveAccount(ctx, account.ID))
+
+			// check that user can see the webhook
+			webhook, err = futureOwnerClient.GetWebhook(ctx, createdWebhook.ID)
+			requireNotNilAndNoProblems(t, webhook, err)
+
+			// check that old user cannot see the webhook
+			webhook, err = testClients.main.GetWebhook(ctx, createdWebhook.ID)
+			require.Nil(t, webhook)
+			require.Error(t, err)
+
+			// check that new owner can delete the webhook
+			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
+
+			// Clean up.
+			require.Error(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
+			require.NoError(t, testClients.admin.ArchiveUser(ctx, futureOwner.ID))
+		}
+	})
+
+	s.runForPASETOClient("should be possible to transfer ownership of an account", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -366,11 +587,15 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
 			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, createdWebhookID, err)
+			require.NoError(t, err)
 
-			waitForAsynchronousStuffBecauseProperWebhookNotificationsHaveNotBeenImplementedYet()
+			var createdWebhook *types.Webhook
+			checkFunc := func() bool {
+				createdWebhook, err = testClients.main.GetWebhook(ctx, createdWebhookID)
+				return assert.NotNil(t, createdWebhook) && assert.NoError(t, err)
+			}
+			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
 
-			createdWebhook, err := testClients.main.GetWebhook(ctx, createdWebhookID)
 			requireNotNilAndNoProblems(t, createdWebhook, err)
 
 			t.Logf("created webhook %s belonging to account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)

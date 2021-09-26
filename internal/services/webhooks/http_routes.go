@@ -5,13 +5,12 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -56,13 +55,14 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachWebhookIDToSpan(span, input.ID)
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 
-	PreWrite := &workers.PreWriteMessage{
-		MessageType:       "webhook",
-		Webhook:           input,
-		AttributeToUserID: sessionCtxData.Requester.UserID,
+	preWrite := &types.PreWriteMessage{
+		DataType:                types.WebhookDataType,
+		Webhook:                 input,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: sessionCtxData.ActiveAccountID,
 	}
-	if err = s.preWritesPublisher.Publish(ctx, PreWrite); err != nil {
-		observability.AcknowledgeError(err, logger, span, "publishing item write message")
+	if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing webhook write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
@@ -190,11 +190,11 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	pam := &workers.PreArchiveMessage{
-		MessageType:       "webhook",
-		RelevantID:        webhookID,
-		AccountID:         sessionCtxData.ActiveAccountID,
-		AttributeToUserID: sessionCtxData.Requester.UserID,
+	pam := &types.PreArchiveMessage{
+		DataType:                types.WebhookDataType,
+		RelevantID:              webhookID,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: sessionCtxData.ActiveAccountID,
 	}
 	if err = s.preArchivesPublisher.Publish(ctx, pam); err != nil {
 		observability.AcknowledgeError(err, logger, span, "publishing webhook archive message")

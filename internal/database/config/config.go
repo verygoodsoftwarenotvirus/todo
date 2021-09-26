@@ -4,12 +4,12 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/alexedwards/scs/v2"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/alexedwards/scs/v2"
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (

@@ -5,10 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
-
-	"github.com/go-chi/chi"
 )
 
 type chiRouteParamManager struct{}

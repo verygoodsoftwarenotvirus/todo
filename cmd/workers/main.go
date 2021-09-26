@@ -7,14 +7,13 @@ import (
 	"os/signal"
 	"syscall"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 
-	"github.com/go-redis/redis/v8"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
+	msgconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/config"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/consumers"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 )
 
 const (
@@ -81,6 +80,18 @@ func main() {
 		logger.Fatal(err)
 	}
 
+	cfg.Observability.Tracing.Jaeger.ServiceName = "workers"
+
+	flushFunc, initializeTracerErr := cfg.Observability.Tracing.Initialize(logger)
+	if initializeTracerErr != nil {
+		logger.Error(initializeTracerErr, "initializing tracer")
+	}
+
+	// if tracing is disabled, this will be nil
+	if flushFunc != nil {
+		defer flushFunc()
+	}
+
 	cfg.Database.RunMigrations = false
 
 	dataManager, err := config.ProvideDatabaseClient(ctx, logger, cfg)
@@ -88,37 +99,75 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	pcfg := &publishers.Config{
-		Provider:     "redis",
-		QueueAddress: addr,
+	pcfg := &msgconfig.Config{
+		Provider: msgconfig.ProviderRedis,
+		RedisConfig: msgconfig.RedisConfig{
+			QueueAddress: addr,
+		},
 	}
 
-	publisherProvider, err := publishers.ProvidePublisherProvider(logger, pcfg)
+	consumerProvider := consumers.ProvideRedisConsumerProvider(logger, addr)
+
+	publisherProvider, err := msgconfig.ProvidePublisherProvider(logger, pcfg)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: "", // no password set
-		DB:       0,  // use default DB
-	})
+	// post-writes worker
 
-	if err = setupDataChangesWorker(ctx, logger, redisClient); err != nil {
+	postWritesWorker := workers.ProvideDataChangesWorker(logger)
+	postWritesConsumer, err := consumerProvider.ProviderConsumer(ctx, dataChangesTopicName, postWritesWorker.HandleMessage)
+	if err != nil {
 		logger.Fatal(err)
 	}
 
-	if err = setupPreWritesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
+	go postWritesConsumer.Consume(nil, nil)
+
+	// pre-writes worker
+
+	postWritesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	preWritesWorker := workers.ProvidePreWritesWorker(logger, dataManager, postWritesPublisher)
+
+	preWritesConsumer, err := consumerProvider.ProviderConsumer(ctx, preWritesTopicName, preWritesWorker.HandleMessage)
+	if err != nil {
 		logger.Fatal(err)
 	}
 
-	if err = setupPreUpdatesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
+	go preWritesConsumer.Consume(nil, nil)
+	// pre-updates worker
+
+	postUpdatesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
+	if err != nil {
 		logger.Fatal(err)
 	}
 
-	if err = setupPreArchivesWorker(ctx, logger, dataManager, redisClient, publisherProvider); err != nil {
+	preUpdatesWorker := workers.ProvidePreUpdatesWorker(logger, dataManager, postUpdatesPublisher)
+
+	preUpdatesConsumer, err := consumerProvider.ProviderConsumer(ctx, preUpdatesTopicName, preUpdatesWorker.HandleMessage)
+	if err != nil {
 		logger.Fatal(err)
 	}
+
+	go preUpdatesConsumer.Consume(nil, nil)
+
+	// pre-archives worker
+
+	postArchivesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	preArchivesWorker := workers.ProvidePreArchivesWorker(logger, dataManager, postArchivesPublisher)
+
+	preArchivesConsumer, err := consumerProvider.ProviderConsumer(ctx, preArchivesTopicName, preArchivesWorker.HandleMessage)
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	go preArchivesConsumer.Consume(nil, nil)
 
 	logger.Info("working...")
 
@@ -127,92 +176,4 @@ func main() {
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
 	<-sigChan
-}
-
-func setupDataChangesWorker(ctx context.Context, logger logging.Logger, redisClient *redis.Client) error {
-	dataChangesSubscription := redisClient.Subscribe(ctx, dataChangesTopicName)
-
-	// Wait for confirmation that subscription is created before publishing anything.
-	if _, err := dataChangesSubscription.Receive(ctx); err != nil {
-		return err
-	}
-
-	worker := workers.ProvidePostWritesWorker(logger)
-
-	// Consume messages.
-	go func() {
-		for msg := range dataChangesSubscription.Channel() {
-			if err := worker.HandleMessage([]byte(msg.Payload)); err != nil {
-				logger.Error(err, "handling data changes message")
-			}
-		}
-	}()
-
-	return nil
-}
-
-func setupPreWritesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
-	preWritesSubscription := redisClient.Subscribe(ctx, preWritesTopicName)
-
-	postWritesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
-	if err != nil {
-		return err
-	}
-
-	worker := workers.ProvidePreWritesWorker(logger, dataManager, postWritesPublisher)
-
-	// Consume messages.
-	go func() {
-		for msg := range preWritesSubscription.Channel() {
-			if err = worker.HandleMessage([]byte(msg.Payload)); err != nil {
-				logger.Error(err, "handling pre-write message")
-			}
-		}
-	}()
-
-	return nil
-}
-
-func setupPreUpdatesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
-	preUpdatesSubscription := redisClient.Subscribe(ctx, preUpdatesTopicName)
-
-	postUpdatesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
-	if err != nil {
-		return err
-	}
-
-	worker := workers.ProvidePreUpdatesWorker(logger, dataManager, postUpdatesPublisher)
-
-	// Consume messages.
-	go func() {
-		for msg := range preUpdatesSubscription.Channel() {
-			if err = worker.HandleMessage([]byte(msg.Payload)); err != nil {
-				logger.Error(err, "handling pre-write message")
-			}
-		}
-	}()
-
-	return nil
-}
-
-func setupPreArchivesWorker(ctx context.Context, logger logging.Logger, dataManager database.DataManager, redisClient *redis.Client, publisherProvider publishers.PublisherProvider) error {
-	preArchivesSubscription := redisClient.Subscribe(ctx, preArchivesTopicName)
-
-	postArchivesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
-	if err != nil {
-		return err
-	}
-
-	worker := workers.ProvidePreArchivesWorker(logger, dataManager, postArchivesPublisher)
-
-	// Consume messages.
-	go func() {
-		for msg := range preArchivesSubscription.Channel() {
-			if err = worker.HandleMessage([]byte(msg.Payload)); err != nil {
-				logger.Error(err, "handling pre-write message")
-			}
-		}
-	}()
-
-	return nil
 }

@@ -3,10 +3,10 @@ package observability
 import (
 	"context"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 type (

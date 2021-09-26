@@ -12,15 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
-// PreWriteMessage represents an event that asks a worker to write data to the datastore.
-type PreWriteMessage struct {
-	MessageType       string                              `json:"messageType"`
-	DataType          string                              `json:"dataType"`
-	Item              *types.ItemDatabaseCreationInput    `json:"item"`
-	Webhook           *types.WebhookDatabaseCreationInput `json:"webhook"`
-	AttributeToUserID string                              `json:"userID"`
-}
-
 // PreWritesWorker writes data from the pending writes topic to the database.
 type PreWritesWorker struct {
 	logger              logging.Logger
@@ -44,38 +35,61 @@ func ProvidePreWritesWorker(logger logging.Logger, dataManager database.DataMana
 }
 
 // HandleMessage handles a pending write.
-func (w *PreWritesWorker) HandleMessage(message []byte) error {
-	ctx, span := w.tracer.StartSpan(context.Background())
+func (w *PreWritesWorker) HandleMessage(ctx context.Context, message []byte) error {
+	ctx, span := w.tracer.StartSpan(ctx)
 	defer span.End()
 
-	var msg *PreWriteMessage
+	var msg *types.PreWriteMessage
 
 	if err := w.encoder.Unmarshal(ctx, message, &msg); err != nil {
 		return observability.PrepareError(err, w.logger, span, "unmarshalling message")
 	}
 
-	tracing.AttachUserIDToSpan(span, msg.AttributeToUserID)
+	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
 
-	w.logger.WithValue("message_type", msg.MessageType).WithValue("item", msg.Item).Debug("message read")
+	w.logger.WithValue("data_type", msg.DataType).Debug("message read")
 
-	switch msg.MessageType {
-	case "item":
-		if _, err := w.dataManager.CreateItem(ctx, msg.Item); err != nil {
+	switch msg.DataType {
+	case types.ItemDataType:
+		item, err := w.dataManager.CreateItem(ctx, msg.Item)
+		if err != nil {
 			return observability.PrepareError(err, w.logger, span, "creating item")
-		}
-
-		if w.postWritesPublisher != nil {
-			if err := w.postWritesPublisher.Publish(ctx, msg.Item); err != nil {
+		} else if w.postWritesPublisher != nil {
+			dcm := &types.DataChangeMessage{
+				DataType:                msg.DataType,
+				Item:                    item,
+				AttributableToUserID:    msg.AttributableToUserID,
+				AttributableToAccountID: msg.AttributableToAccountID,
+			}
+			if err = w.postWritesPublisher.Publish(ctx, dcm); err != nil {
 				w.logger.Error(err, "publishing to post-writes topic")
 			}
 		}
-	case "webhook":
-		if _, err := w.dataManager.CreateWebhook(ctx, msg.Webhook); err != nil {
+	case types.WebhookDataType:
+		webhook, err := w.dataManager.CreateWebhook(ctx, msg.Webhook)
+		if err != nil {
 			return observability.PrepareError(err, w.logger, span, "creating webhook")
+		} else if w.postWritesPublisher != nil {
+			dcm := &types.DataChangeMessage{
+				DataType:                msg.DataType,
+				Webhook:                 webhook,
+				AttributableToUserID:    msg.AttributableToUserID,
+				AttributableToAccountID: msg.AttributableToAccountID,
+			}
+			if err = w.postWritesPublisher.Publish(ctx, dcm); err != nil {
+				w.logger.Error(err, "publishing to post-writes topic")
+			}
 		}
-
-		if w.postWritesPublisher != nil {
-			if err := w.postWritesPublisher.Publish(ctx, msg.Webhook); err != nil {
+	case types.UserMembershipDataType:
+		if err := w.dataManager.AddUserToAccount(ctx, msg.UserMembership); err != nil {
+			return observability.PrepareError(err, w.logger, span, "creating webhook")
+		} else if w.postWritesPublisher != nil {
+			dcm := &types.DataChangeMessage{
+				DataType:                msg.DataType,
+				AttributableToUserID:    msg.AttributableToUserID,
+				AttributableToAccountID: msg.AttributableToAccountID,
+			}
+			if err = w.postWritesPublisher.Publish(ctx, dcm); err != nil {
 				w.logger.Error(err, "publishing to post-writes topic")
 			}
 		}

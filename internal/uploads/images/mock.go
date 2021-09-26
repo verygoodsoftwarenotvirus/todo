@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 )
 
 var _ ImageUploadProcessor = (*MockImageUploadProcessor)(nil)

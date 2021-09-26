@@ -3,9 +3,9 @@ package mock
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 var _ types.AccountUserMembershipDataManager = (*AccountUserMembershipDataManager)(nil)

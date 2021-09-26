@@ -3,9 +3,9 @@ package tracing
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"github.com/luna-duclos/instrumentedsql"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 // NewInstrumentedSQLTracer wraps a Tracer for instrumentedsql.

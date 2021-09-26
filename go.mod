@@ -40,6 +40,7 @@ require (
 	github.com/google/uuid v1.2.0
 	github.com/google/wire v0.5.0
 	github.com/gorilla/securecookie v1.1.1
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.0
 	github.com/hashicorp/vault/api v1.1.0
@@ -60,8 +61,9 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/nicksnyder/go-i18n/v2 v2.1.2
 	github.com/nleeper/goment v1.4.1
-	github.com/nsqio/go-nsq v1.0.8
+	github.com/nsqio/go-nsq v1.0.8 // indirect
 	github.com/o1egl/paseto v1.0.0
+	github.com/olahol/melody v0.0.0-20180227134253-7bd65910e5ab // indirect
 	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/pquerna/otp v1.3.0
 	github.com/prometheus/common v0.23.0 // indirect
@@ -77,6 +79,7 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/stripe/stripe-go/v72 v72.45.0
 	github.com/tkuchiki/go-timezone v0.2.2 // indirect
+	github.com/tmaxmax/go-sse v0.3.0 // indirect
 	github.com/unrolled/secure v1.0.8
 	github.com/wagslane/go-password-validator v0.3.0
 	github.com/willf/bitset v1.1.11 // indirect

@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/Azure/azure-storage-blob-go/azblob"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"gocloud.dev/blob"
 	"gocloud.dev/blob/azureblob"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 const (

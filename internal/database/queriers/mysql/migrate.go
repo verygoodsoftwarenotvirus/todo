@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/GuiaBolso/darwin"
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/GuiaBolso/darwin"
-	"github.com/segmentio/ksuid"
 )
 
 const (
@@ -214,6 +214,25 @@ var (
 		},
 		{
 			Version:     0.08,
+			Description: "create notifications table",
+			Script: strings.Join([]string{
+				"CREATE TABLE IF NOT EXISTS notifications (",
+				"    `id` CHAR(27) NOT NULL,",
+				"    `title` LONGTEXT NOT NULL,",
+				"    `description` LONGTEXT NOT NULL,",
+				"    `created_on` BIGINT UNSIGNED NOT NULL,",
+				"    `last_updated_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `seen_on` BIGINT UNSIGNED DEFAULT NULL,",
+				"    `belongs_to_account` CHAR(27) NOT NULL,",
+				"    `belongs_to_user` CHAR(27) NOT NULL,",
+				"    PRIMARY KEY (`id`),",
+				"    FOREIGN KEY (`belongs_to_account`) REFERENCES accounts(`id`) ON DELETE CASCADE,",
+				"    FOREIGN KEY (`belongs_to_user`) REFERENCES users(`id`) ON DELETE CASCADE",
+				");",
+			}, "\n"),
+		},
+		{
+			Version:     0.09,
 			Description: "create items table",
 			Script: strings.Join([]string{
 				"CREATE TABLE IF NOT EXISTS items (",

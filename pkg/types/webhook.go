@@ -7,6 +7,11 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+const (
+	// WebhookDataType indicates an event is webhook-related.
+	WebhookDataType dataType = "webhook"
+)
+
 type (
 	// Webhook represents a webhook listener, an endpoint to send an HTTP request to upon an event.
 	Webhook struct {

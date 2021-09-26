@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-
 	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 )
 
 var _ DataManager = (*MockDatabase)(nil)

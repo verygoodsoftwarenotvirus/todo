@@ -3,9 +3,9 @@ package uploads
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 )
 
 // Config contains settings regarding search indices.

@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
-
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 )
 
 func TestConfig_ValidateWithContext(T *testing.T) {

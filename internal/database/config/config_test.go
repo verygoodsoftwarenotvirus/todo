@@ -4,11 +4,11 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-
 	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 )
 
 func TestConfig_ValidateWithContext(T *testing.T) {

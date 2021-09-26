@@ -3,12 +3,16 @@ package logging
 import (
 	"net/http"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-
 	"github.com/rs/zerolog"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 )
+
+const here = "gitlab.com/verygoodsoftwarenotvirus/todo/"
 
 func init() {
 	zerolog.CallerSkipFrameCount += 2
@@ -16,6 +20,9 @@ func init() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 	zerolog.TimestampFunc = func() time.Time {
 		return time.Now().UTC()
+	}
+	zerolog.CallerMarshalFunc = func(file string, line int) string {
+		return strings.TrimPrefix(file, here) + ":" + strconv.Itoa(line)
 	}
 }
 

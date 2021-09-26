@@ -9,6 +9,10 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
@@ -18,10 +22,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func TestParseBool(t *testing.T) {
@@ -68,7 +68,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 
 		helper.service.CreateHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusCreated, helper.res.Code)
+		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})

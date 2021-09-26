@@ -3,12 +3,12 @@ package authentication
 import (
 	"context"
 
+	"github.com/alexedwards/argon2id"
+	"github.com/pquerna/otp/totp"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"github.com/alexedwards/argon2id"
-	"github.com/pquerna/otp/totp"
 )
 
 const (

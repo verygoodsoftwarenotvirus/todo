@@ -4,10 +4,10 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/stretchr/testify/mock"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/stretchr/testify/mock"
 )
 
 var _ types.AuthService = (*AuthService)(nil)

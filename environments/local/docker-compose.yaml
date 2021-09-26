@@ -1,7 +1,28 @@
 version: "3.3"
 services:
+    nsqlookupd:
+        image: nsqio/nsq:v1.2.1
+        hostname: nsqlookupd
+        ports:
+            - "4160:4160"
+            - "4161:4161"
+        command: /nsqlookupd
+        logging:
+            driver: none
+    events:
+        image: nsqio/nsq:v1.2.1
+        hostname: nsqd
+        links:
+            - nsqlookupd
+        ports:
+            - "4150:4150"
+            - "4151:4151"
+        command: /nsqd -broadcast-address=nsqd --lookupd-tcp-address=nsqlookupd:4160
+        logging:
+            driver: none
     database:
-        image: postgres:latest
+        container_name: database
+        image: postgres:13
         environment:
             POSTGRES_DB: 'todo'
             POSTGRES_PASSWORD: 'hunter2'
@@ -9,20 +30,40 @@ services:
         logging:
             driver: none
         ports:
-            - 2345:5432
+            - "2345:5432"
+    workers:
+        container_name: workers
+        links:
+            - database
+            - nsqlookupd
+        volumes:
+            - source: '../../environments/testing/config_files/integration-tests-postgres.config'
+              target: '/etc/service.config'
+              type: 'bind'
+            - source: '../../'
+              target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo/cmd/workers'
+              type: 'bind'
+        build:
+            context: '../../'
+            dockerfile: 'environments/local/workers.Dockerfile'
     todo-server:
+        container_name: server
         environment:
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
+            TODO_SERVICE_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+            CONFIGURATION_FILEPATH: '/etc/service.config'
             JAEGER_DISABLED: 'false'
         ports:
-            - 8888:8888
+            - "8888:8888"
+        depends_on:
+            - nsqlookupd
         links:
-#            - tracing-server
             - database
-#            - prometheus
+            - events
+        #            - tracing-server
+        #            - prometheus
         volumes:
             - source: '../../environments/local/service.config'
-              target: '/etc/config.toml'
+              target: '/etc/service.config'
               type: 'bind'
             - source: '../../'
               target: '/go/src/gitlab.com/verygoodsoftwarenotvirus/todo'
@@ -30,6 +71,16 @@ services:
         build:
             context: '../../'
             dockerfile: 'environments/local/Dockerfile'
+#    nsqadmin:
+#        image: nsqio/nsq:v1.2.1
+#        hostname: nsqadmin
+#        links:
+#            - events
+#        ports:
+#            - "4171:4171"
+#        command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+#        logging:
+#            driver: none
 #    tracing-server:
 #        image: jaegertracing/all-in-one:1.22.0
 #        logging:

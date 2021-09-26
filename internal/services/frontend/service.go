@@ -5,6 +5,8 @@ import (
 	"html/template"
 	"net/http"
 
+	"github.com/nicksnyder/go-i18n/v2/i18n"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -14,8 +16,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/nicksnyder/go-i18n/v2/i18n"
 )
 
 const (
@@ -52,13 +52,13 @@ type (
 		panicker                  panicking.Panicker
 		authService               AuthService
 		dataStore                 database.DataManager
-		itemIDFetcher             func(*http.Request) uint64
+		itemIDFetcher             func(*http.Request) string
 		localizer                 *i18n.Localizer
 		templateFuncMap           template.FuncMap
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		accountIDFetcher          func(*http.Request) uint64
-		apiClientIDFetcher        func(*http.Request) uint64
-		webhookIDFetcher          func(*http.Request) uint64
+		accountIDFetcher          func(*http.Request) string
+		apiClientIDFetcher        func(*http.Request) string
+		webhookIDFetcher          func(*http.Request) string
 		useFakeData               bool
 	}
 )
@@ -84,10 +84,10 @@ func ProvideService(
 		usersService:              usersService,
 		paymentManager:            paymentManager,
 		dataStore:                 dataStore,
-		apiClientIDFetcher:        routeParamManager.BuildRouteParamIDFetcher(logger, apiClientIDURLParamKey, "API client"),
-		accountIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, accountIDURLParamKey, "account"),
-		webhookIDFetcher:          routeParamManager.BuildRouteParamIDFetcher(logger, webhookIDURLParamKey, "webhook"),
-		itemIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, itemIDURLParamKey, "item"),
+		apiClientIDFetcher:        routeParamManager.BuildRouteParamStringIDFetcher(apiClientIDURLParamKey),
+		accountIDFetcher:          routeParamManager.BuildRouteParamStringIDFetcher(accountIDURLParamKey),
+		webhookIDFetcher:          routeParamManager.BuildRouteParamStringIDFetcher(webhookIDURLParamKey),
+		itemIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(itemIDURLParamKey),
 		templateFuncMap: map[string]interface{}{
 			"relativeTime":        relativeTime,
 			"relativeTimeFromPtr": relativeTimeFromPtr,

@@ -223,6 +223,12 @@ func (e *serverEncoderDecoder) DecodeRequest(ctx context.Context, req *http.Requ
 		d = json.NewDecoder(req.Body)
 	}
 
+	defer func() {
+		if err := req.Body.Close(); err != nil {
+			e.logger.Error(err, "closing request body")
+		}
+	}()
+
 	return d.Decode(v)
 }
 

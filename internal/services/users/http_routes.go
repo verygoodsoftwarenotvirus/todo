@@ -10,16 +10,17 @@ import (
 	"image/png"
 	"net/http"
 
+	"github.com/boombuler/barcode"
+	"github.com/boombuler/barcode/qr"
+	"github.com/pquerna/otp/totp"
+	"github.com/segmentio/ksuid"
+	passwordvalidator "github.com/wagslane/go-password-validator"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/boombuler/barcode"
-	"github.com/boombuler/barcode/qr"
-	"github.com/pquerna/otp/totp"
-	passwordvalidator "github.com/wagslane/go-password-validator"
 )
 
 const (
@@ -34,7 +35,7 @@ const (
 
 // validateCredentialChangeRequest takes a user's credentials and determines
 // if they match what is on record.
-func (s *service) validateCredentialChangeRequest(ctx context.Context, userID uint64, password, totpToken string) (user *types.User, httpStatus int) {
+func (s *service) validateCredentialChangeRequest(ctx context.Context, userID, password, totpToken string) (user *types.User, httpStatus int) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -123,6 +124,7 @@ func (s *service) RegisterUser(ctx context.Context, registrationInput *types.Use
 	}
 
 	input := &types.UserDataStoreCreationInput{
+		ID:              ksuid.New().String(),
 		Username:        registrationInput.Username,
 		HashedPassword:  hp,
 		TwoFactorSecret: "",
@@ -453,7 +455,7 @@ func (s *service) NewTOTPSecretHandler(res http.ResponseWriter, req *http.Reques
 	user.TwoFactorSecretVerifiedOn = nil
 
 	// update the user in the database.
-	if err = s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
+	if err = s.userDataManager.UpdateUser(ctx, user); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating 2FA secret")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -582,7 +584,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 		return
 	}
 
-	internalPath := fmt.Sprintf("avatar_%d", sessionCtxData.Requester.UserID)
+	internalPath := fmt.Sprintf("avatar_%s", sessionCtxData.Requester.UserID)
 	logger = logger.WithValue("file_size", len(img.Data)).WithValue("internal_path", internalPath)
 
 	if err = s.uploadManager.SaveFile(ctx, internalPath, img.Data); err != nil {
@@ -593,7 +595,7 @@ func (s *service) AvatarUploadHandler(res http.ResponseWriter, req *http.Request
 
 	user.AvatarSrc = stringPointer(internalPath)
 
-	if err = s.userDataManager.UpdateUser(ctx, user, nil); err != nil {
+	if err = s.userDataManager.UpdateUser(ctx, user); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating user info")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -629,31 +631,4 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 	// we're all good.
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an audit log entry.
-func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	tracing.AttachRequestToSpan(span, req)
-
-	// figure out who this is for.
-	userID := s.userIDFetcher(req)
-	logger = logger.WithValue(keys.UserIDKey, userID)
-	tracing.AttachUserIDToSpan(span, userID)
-
-	x, err := s.userDataManager.GetAuditLogEntriesForUser(ctx, userID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching audit log entries for user")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

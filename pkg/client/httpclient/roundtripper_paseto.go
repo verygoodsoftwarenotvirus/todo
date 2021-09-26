@@ -1,6 +1,7 @@
 package httpclient
 
 import (
+	"context"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
@@ -67,4 +68,20 @@ func (t *pasetoRoundTripper) RoundTrip(req *http.Request) (*http.Response, error
 	}
 
 	return res, nil
+}
+
+// BuildRequestHeaders builds an example request header.
+func (t *pasetoRoundTripper) BuildRequestHeaders(ctx context.Context) (http.Header, error) {
+	ctx, span := t.tracer.StartSpan(ctx)
+	defer span.End()
+
+	token, err := t.client.fetchAuthTokenForAPIClient(ctx, pasetoRoundTripperClient, t.clientID, t.secretKey)
+	if err != nil {
+		return nil, observability.PrepareError(err, t.logger, span, "fetching prerequisite PASETO")
+	}
+
+	h := http.Header{}
+	h.Add("Authorization", token)
+
+	return h, nil
 }

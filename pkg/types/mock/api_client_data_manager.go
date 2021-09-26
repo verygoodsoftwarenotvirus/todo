@@ -3,9 +3,9 @@ package mock
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 var _ types.APIClientDataManager = (*APIClientDataManager)(nil)
@@ -22,7 +22,7 @@ func (m *APIClientDataManager) GetAPIClientByClientID(ctx context.Context, clien
 }
 
 // GetAPIClientByDatabaseID is a mock function.
-func (m *APIClientDataManager) GetAPIClientByDatabaseID(ctx context.Context, clientID, userID uint64) (*types.APIClient, error) {
+func (m *APIClientDataManager) GetAPIClientByDatabaseID(ctx context.Context, clientID, userID string) (*types.APIClient, error) {
 	args := m.Called(ctx, clientID, userID)
 	return args.Get(0).(*types.APIClient), args.Error(1)
 }
@@ -33,30 +33,19 @@ func (m *APIClientDataManager) GetTotalAPIClientCount(ctx context.Context) (uint
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-// GetAllAPIClients is a mock function.
-func (m *APIClientDataManager) GetAllAPIClients(ctx context.Context, results chan []*types.APIClient, bucketSize uint16) error {
-	return m.Called(ctx, results, bucketSize).Error(0)
-}
-
 // GetAPIClients is a mock function.
-func (m *APIClientDataManager) GetAPIClients(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.APIClientList, error) {
+func (m *APIClientDataManager) GetAPIClients(ctx context.Context, userID string, filter *types.QueryFilter) (*types.APIClientList, error) {
 	args := m.Called(ctx, userID, filter)
 	return args.Get(0).(*types.APIClientList), args.Error(1)
 }
 
 // CreateAPIClient is a mock function.
-func (m *APIClientDataManager) CreateAPIClient(ctx context.Context, input *types.APIClientCreationInput, createdByUser uint64) (*types.APIClient, error) {
-	args := m.Called(ctx, input, createdByUser)
+func (m *APIClientDataManager) CreateAPIClient(ctx context.Context, input *types.APIClientCreationInput) (*types.APIClient, error) {
+	args := m.Called(ctx, input)
 	return args.Get(0).(*types.APIClient), args.Error(1)
 }
 
 // ArchiveAPIClient is a mock function.
-func (m *APIClientDataManager) ArchiveAPIClient(ctx context.Context, clientID, accountID, archivedByUser uint64) error {
-	return m.Called(ctx, clientID, accountID, archivedByUser).Error(0)
-}
-
-// GetAuditLogEntriesForAPIClient is a mock function.
-func (m *APIClientDataManager) GetAuditLogEntriesForAPIClient(ctx context.Context, clientID uint64) ([]*types.AuditLogEntry, error) {
-	args := m.Called(ctx, clientID)
-	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
+func (m *APIClientDataManager) ArchiveAPIClient(ctx context.Context, clientID, accountID string) error {
+	return m.Called(ctx, clientID, accountID).Error(0)
 }

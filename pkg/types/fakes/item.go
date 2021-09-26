@@ -1,20 +1,20 @@
 package fakes
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/segmentio/ksuid"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // BuildFakeItem builds a faked item.
 func BuildFakeItem() *types.Item {
 	return &types.Item{
-		ID:               uint64(fake.Uint32()),
-		ExternalID:       fake.UUID(),
+		ID:               ksuid.New().String(),
 		Name:             fake.Word(),
 		Details:          fake.Word(),
 		CreatedOn:        uint64(uint32(fake.Date().Unix())),
-		BelongsToAccount: fake.Uint64(),
+		BelongsToAccount: fake.UUID(),
 	}
 }
 
@@ -64,6 +64,23 @@ func BuildFakeItemCreationInput() *types.ItemCreationInput {
 // BuildFakeItemCreationInputFromItem builds a faked ItemCreationInput from an item.
 func BuildFakeItemCreationInputFromItem(item *types.Item) *types.ItemCreationInput {
 	return &types.ItemCreationInput{
+		ID:               item.ID,
+		Name:             item.Name,
+		Details:          item.Details,
+		BelongsToAccount: item.BelongsToAccount,
+	}
+}
+
+// BuildFakeItemDatabaseCreationInput builds a faked ItemDatabaseCreationInput.
+func BuildFakeItemDatabaseCreationInput() *types.ItemDatabaseCreationInput {
+	item := BuildFakeItem()
+	return BuildFakeItemDatabaseCreationInputFromItem(item)
+}
+
+// BuildFakeItemDatabaseCreationInputFromItem builds a faked ItemCreationInput from an item.
+func BuildFakeItemDatabaseCreationInputFromItem(item *types.Item) *types.ItemDatabaseCreationInput {
+	return &types.ItemDatabaseCreationInput{
+		ID:               item.ID,
 		Name:             item.Name,
 		Details:          item.Details,
 		BelongsToAccount: item.BelongsToAccount,

@@ -14,12 +14,11 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	fake "github.com/brianvoe/gofakeit/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 func init() {
@@ -66,25 +65,6 @@ func BuildArbitraryImagePNGBytes(widthAndHeight int) []byte {
 	}
 
 	return b.Bytes()
-}
-
-// AssertAppropriateNumberOfTestsRan ensures the expected number of tests are run in a given suite.
-func AssertAppropriateNumberOfTestsRan(t *testing.T, totalExpectedTestCount uint, stats *suite.SuiteInformation) {
-	t.Helper()
-
-	/*
-		Acknowledged that this:
-			1. a corny thing to do
-			2. an annoying thing to have to update when you add new tests
-			3. the source of a false negative when debugging a singular test
-
-		That said, in the event someone boo-boos and leaves something in globalClientExceptions, this part will fail,
-		which is worth it.
-	*/
-
-	if stats.Passed() {
-		require.Equal(t, int(totalExpectedTestCount), len(stats.TestStats), "expected total number of tests run to equal %d, but it was %d", totalExpectedTestCount, len(stats.TestStats))
-	}
 }
 
 // BuildTestRequest builds an arbitrary *http.Request.

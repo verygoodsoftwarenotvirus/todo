@@ -8,15 +8,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pquerna/otp/totp"
+	flag "github.com/spf13/pflag"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/pquerna/otp/totp"
-	flag "github.com/spf13/pflag"
 )
 
 var (
@@ -96,7 +96,7 @@ func main() {
 		go func(x int, wg *sync.WaitGroup) {
 			createdUser, userCreationErr := testutils.CreateServiceUser(ctx, uri, "")
 			if userCreationErr != nil {
-				quitter.ComplainAndQuit(fmt.Errorf("creating user #%d: %w", x, userCreationErr))
+				quitter.ComplainAndQuit(fmt.Errorf("creating user %q: %w", x, userCreationErr))
 			}
 
 			if x == 0 && singleUserMode {
@@ -131,7 +131,7 @@ func main() {
 
 					createdAccount, accountCreationError := userClient.CreateAccount(ctx, fakes.BuildFakeAccountCreationInput())
 					if accountCreationError != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("creating account #%d: %w", j, accountCreationError))
+						quitter.ComplainAndQuit(fmt.Errorf("creating account %s: %w", j, accountCreationError))
 					}
 
 					iterationLogger.WithValue(keys.AccountIDKey, createdAccount.ID).Debug("created account")
@@ -146,7 +146,7 @@ func main() {
 
 					code, codeErr := totp.GenerateCode(strings.ToUpper(createdUser.TwoFactorSecret), time.Now().UTC())
 					if codeErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("creating API Client #%d: %w", j, codeErr))
+						quitter.ComplainAndQuit(fmt.Errorf("creating API Client %s: %w", j, codeErr))
 					}
 
 					fakeInput := fakes.BuildFakeAPIClientCreationInput()
@@ -160,7 +160,7 @@ func main() {
 						Name: fakeInput.Name,
 					})
 					if apiClientCreationErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("API Client webhook #%d: %w", j, apiClientCreationErr))
+						quitter.ComplainAndQuit(fmt.Errorf("API Client webhook %s: %w", j, apiClientCreationErr))
 					}
 
 					iterationLogger.WithValue(keys.APIClientDatabaseIDKey, createdAPIClient.ID).Debug("created API Client")
@@ -173,12 +173,12 @@ func main() {
 				for j := 0; j < int(dataCount); j++ {
 					iterationLogger := userLogger.WithValue("creating", "webhooks").WithValue("iteration", j)
 
-					createdWebhook, webhookCreationErr := userClient.CreateWebhook(ctx, fakes.BuildFakeWebhookCreationInput())
+					createdWebhookID, webhookCreationErr := userClient.CreateWebhook(ctx, fakes.BuildFakeWebhookCreationInput())
 					if webhookCreationErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("creating webhook #%d: %w", j, webhookCreationErr))
+						quitter.ComplainAndQuit(fmt.Errorf("creating webhook %s: %w", j, webhookCreationErr))
 					}
 
-					iterationLogger.WithValue(keys.WebhookIDKey, createdWebhook.ID).Debug("created webhook")
+					iterationLogger.WithValue(keys.WebhookIDKey, createdWebhookID).Debug("created webhook")
 				}
 				wg.Done()
 			}(wg)
@@ -189,12 +189,12 @@ func main() {
 					iterationLogger := userLogger.WithValue("creating", "items").WithValue("iteration", j)
 
 					// create item
-					createdItem, itemCreationErr := userClient.CreateItem(ctx, fakes.BuildFakeItemCreationInput())
+					createdItemID, itemCreationErr := userClient.CreateItem(ctx, fakes.BuildFakeItemCreationInput())
 					if itemCreationErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("creating item #%d: %w", j, itemCreationErr))
+						quitter.ComplainAndQuit(fmt.Errorf("creating item %d: %w", j, itemCreationErr))
 					}
 
-					iterationLogger.WithValue(keys.ItemIDKey, createdItem.ID).Debug("created item")
+					iterationLogger.WithValue(keys.ItemIDKey, createdItemID).Debug("created item")
 				}
 				wg.Done()
 			}(wg)

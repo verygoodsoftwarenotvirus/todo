@@ -12,11 +12,11 @@ import (
 )
 
 // GetUser retrieves a user.
-func (c *Client) GetUser(ctx context.Context, userID uint64) (*types.User, error) {
+func (c *Client) GetUser(ctx context.Context, userID string) (*types.User, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -109,11 +109,11 @@ func (c *Client) CreateUser(ctx context.Context, input *types.UserRegistrationIn
 }
 
 // ArchiveUser archives a user.
-func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
+func (c *Client) ArchiveUser(ctx context.Context, userID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -129,30 +129,6 @@ func (c *Client) ArchiveUser(ctx context.Context, userID uint64) error {
 	}
 
 	return nil
-}
-
-// GetAuditLogForUser retrieves a list of audit log entries pertaining to a user.
-func (c *Client) GetAuditLogForUser(ctx context.Context, userID uint64) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if userID == 0 {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := c.logger.WithValue(keys.UserIDKey, userID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForUserRequest(ctx, userID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building get audit log entries for user request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "retrieving audit log entries for user")
-	}
-
-	return entries, nil
 }
 
 const (

@@ -3,9 +3,9 @@ package mock
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 var _ types.AccountDataManager = (*AccountDataManager)(nil)
@@ -16,13 +16,13 @@ type AccountDataManager struct {
 }
 
 // AccountExists is a mock function.
-func (m *AccountDataManager) AccountExists(ctx context.Context, accountID, userID uint64) (bool, error) {
+func (m *AccountDataManager) AccountExists(ctx context.Context, accountID, userID string) (bool, error) {
 	args := m.Called(ctx, accountID, userID)
 	return args.Bool(0), args.Error(1)
 }
 
 // GetAccount is a mock function.
-func (m *AccountDataManager) GetAccount(ctx context.Context, accountID, userID uint64) (*types.Account, error) {
+func (m *AccountDataManager) GetAccount(ctx context.Context, accountID, userID string) (*types.Account, error) {
 	args := m.Called(ctx, accountID, userID)
 	return args.Get(0).(*types.Account), args.Error(1)
 }
@@ -40,7 +40,7 @@ func (m *AccountDataManager) GetAllAccounts(ctx context.Context, results chan []
 }
 
 // GetAccounts is a mock function.
-func (m *AccountDataManager) GetAccounts(ctx context.Context, userID uint64, filter *types.QueryFilter) (*types.AccountList, error) {
+func (m *AccountDataManager) GetAccounts(ctx context.Context, userID string, filter *types.QueryFilter) (*types.AccountList, error) {
 	args := m.Called(ctx, userID, filter)
 	return args.Get(0).(*types.AccountList), args.Error(1)
 }
@@ -52,23 +52,17 @@ func (m *AccountDataManager) GetAccountsForAdmin(ctx context.Context, filter *ty
 }
 
 // CreateAccount is a mock function.
-func (m *AccountDataManager) CreateAccount(ctx context.Context, input *types.AccountCreationInput, createdByUser uint64) (*types.Account, error) {
-	args := m.Called(ctx, input, createdByUser)
+func (m *AccountDataManager) CreateAccount(ctx context.Context, input *types.AccountCreationInput) (*types.Account, error) {
+	args := m.Called(ctx, input)
 	return args.Get(0).(*types.Account), args.Error(1)
 }
 
 // UpdateAccount is a mock function.
-func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.Account, changedByUser uint64, changes []*types.FieldChangeSummary) error {
-	return m.Called(ctx, updated, changedByUser, changes).Error(0)
+func (m *AccountDataManager) UpdateAccount(ctx context.Context, updated *types.Account) error {
+	return m.Called(ctx, updated).Error(0)
 }
 
 // ArchiveAccount is a mock function.
-func (m *AccountDataManager) ArchiveAccount(ctx context.Context, accountID, userID, archivedByUser uint64) error {
-	return m.Called(ctx, accountID, userID, archivedByUser).Error(0)
-}
-
-// GetAuditLogEntriesForAccount is a mock function.
-func (m *AccountDataManager) GetAuditLogEntriesForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
-	args := m.Called(ctx, accountID)
-	return args.Get(0).([]*types.AuditLogEntry), args.Error(1)
+func (m *AccountDataManager) ArchiveAccount(ctx context.Context, accountID, userID string) error {
+	return m.Called(ctx, accountID, userID).Error(0)
 }

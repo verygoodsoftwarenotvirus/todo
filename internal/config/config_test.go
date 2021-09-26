@@ -2,12 +2,14 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
@@ -16,12 +18,8 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestServerConfig_EncodeToFile(T *testing.T) {
@@ -50,9 +48,6 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				},
 			},
 			Services: ServicesConfigurations{
-				AuditLog: auditservice.Config{
-					Enabled: true,
-				},
 				Auth: authservice.Config{
 					Cookies: authservice.CookieConfig{
 						Name:     "todo_cookie",
@@ -68,11 +63,10 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 				},
 			},
 			Database: config.Config{
-				Provider:                  "postgres",
-				MetricsCollectionInterval: 2 * time.Second,
-				Debug:                     true,
-				RunMigrations:             true,
-				ConnectionDetails:         database.ConnectionDetails("postgres://username:passwords@host/table"),
+				Provider:          "postgres",
+				Debug:             true,
+				RunMigrations:     true,
+				ConnectionDetails: database.ConnectionDetails("postgres://username:passwords@host/table"),
 			},
 		}
 
@@ -105,29 +99,17 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		ctx := context.Background()
 		logger := logging.NewNoopLogger()
 
-		for _, provider := range []string{"sqlite", "postgres", "mariadb"} {
+		for _, provider := range []string{"postgres", "mysql"} {
 			cfg := &InstanceConfig{
 				Database: config.Config{
 					Provider: provider,
 				},
 			}
 
-			x, err := ProvideDatabaseClient(ctx, logger, &sql.DB{}, cfg)
+			x, err := ProvideDatabaseClient(ctx, logger, cfg)
 			assert.NotNil(t, x)
 			assert.NoError(t, err)
 		}
-	})
-
-	T.Run("with nil *sql.DB", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		logger := logging.NewNoopLogger()
-		cfg := &InstanceConfig{}
-
-		x, err := ProvideDatabaseClient(ctx, logger, nil, cfg)
-		assert.Nil(t, x)
-		assert.Error(t, err)
 	})
 
 	T.Run("with invalid provider", func(t *testing.T) {
@@ -142,7 +124,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 			},
 		}
 
-		x, err := ProvideDatabaseClient(ctx, logger, &sql.DB{}, cfg)
+		x, err := ProvideDatabaseClient(ctx, logger, cfg)
 		assert.Nil(t, x)
 		assert.Error(t, err)
 	})

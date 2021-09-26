@@ -4,6 +4,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
@@ -15,9 +18,6 @@ import (
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func buildTestService(t *testing.T) *service {
@@ -29,7 +29,7 @@ func buildTestService(t *testing.T) *service {
 		encoderDecoder:            mockencoding.NewMockEncoderDecoder(),
 		authenticator:             &authentication.MockAuthenticator{},
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
-		urlClientIDExtractor:      func(req *http.Request) uint64 { return 0 },
+		urlClientIDExtractor:      func(req *http.Request) string { return "" },
 		apiClientCounter:          &mockmetrics.UnitCounter{},
 		secretGenerator:           &random.MockGenerator{},
 		tracer:                    tracing.NewTracer(serviceName),
@@ -46,11 +46,9 @@ func TestProvideAPIClientsService(T *testing.T) {
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNoopLogger()),
+			"BuildRouteParamStringIDFetcher",
 			APIClientIDURIParamKey,
-			"api client",
-		).Return(func(*http.Request) uint64 { return 0 })
+		).Return(func(*http.Request) string { return "" })
 
 		s := ProvideAPIClientsService(
 			logging.NewNoopLogger(),

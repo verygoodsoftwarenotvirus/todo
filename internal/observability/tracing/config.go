@@ -2,11 +2,12 @@ package tracing
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 const (
@@ -17,6 +18,8 @@ const (
 type (
 	// Config contains settings related to tracing.
 	Config struct {
+		_ struct{}
+
 		// Jaeger configures the Jaeger tracer.
 		Jaeger   *JaegerConfig `json:"jaeger" mapstructure:"jaeger" toml:"jaeger,omitempty"`
 		Provider string        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
@@ -26,6 +29,8 @@ type (
 
 	// JaegerConfig contains settings related to tracing with Jaeger.
 	JaegerConfig struct {
+		_ struct{}
+
 		CollectorEndpoint string `json:"collector_endpoint" mapstructure:"collector_endpoint" toml:"collector_endpoint,omitempty"`
 		ServiceName       string `json:"service_name" mapstructure:"service_name" toml:"service_name,omitempty"`
 	}
@@ -36,13 +41,17 @@ func (c *Config) Initialize(l logging.Logger) (flushFunc func(), err error) {
 	logger := l.WithValue("tracing_provider", c.Provider)
 	logger.Info("setting tracing provider")
 
-	switch strings.TrimSpace(strings.ToLower(c.Provider)) {
+	p := strings.TrimSpace(strings.ToLower(c.Provider))
+
+	switch p {
 	case Jaeger:
 		logger.Debug("setting up jaeger")
 		return c.SetupJaeger()
+	case "":
+		return nil, nil
 	default:
 		logger.Debug("invalid tracing config")
-		return nil, nil
+		return nil, fmt.Errorf("invalid tracing provider: %q", p)
 	}
 }
 
@@ -51,7 +60,7 @@ var _ validation.ValidatableWithContext = (*Config)(nil)
 // ValidateWithContext validates the config struct.
 func (c *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, c,
-		// validation.Field(&c.Provider, validation.In(Jaeger)),
+		validation.Field(&c.Provider, validation.In("", Jaeger)),
 		validation.Field(&c.Jaeger, validation.When(c.Provider == Jaeger, validation.Required).Else(validation.Nil)),
 	)
 }

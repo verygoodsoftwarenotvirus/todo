@@ -1,9 +1,9 @@
 package metrics
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"github.com/google/wire"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 var (

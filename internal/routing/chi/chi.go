@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
-
 	"github.com/go-chi/chi"
 	chimiddleware "github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/unrolled/secure"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 )
 
 const (
@@ -150,7 +150,7 @@ func (r *router) WithMiddleware(middleware ...routing.Middleware) routing.Router
 
 // LogRoutes logs the described routes.
 func (r *router) LogRoutes() {
-	if err := chi.Walk(r.router, func(method string, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
+	if err := chi.Walk(r.router, func(method, route string, _ http.Handler, _ ...func(http.Handler) http.Handler) error {
 		r.logger.WithValues(map[string]interface{}{
 			"method": method,
 			"route":  route,

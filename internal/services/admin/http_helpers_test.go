@@ -6,13 +6,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	"github.com/stretchr/testify/require"
 )
 
 type adminServiceHTTPRoutesTestHelper struct {
@@ -37,7 +37,7 @@ func (helper *adminServiceHTTPRoutesTestHelper) neuterAdminUser() {
 				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 			},
 			ActiveAccountID: helper.exampleAccount.ID,
-			AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+			AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
 				helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 			},
 		}, nil
@@ -74,7 +74,7 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 		},
 		ActiveAccountID: helper.exampleAccount.ID,
-		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+		AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
 			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	}
@@ -83,7 +83,7 @@ func buildTestHelper(t *testing.T) *adminServiceHTTPRoutesTestHelper {
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
-	helper.service.userIDFetcher = func(req *http.Request) uint64 {
+	helper.service.userIDFetcher = func(req *http.Request) string {
 		return helper.exampleUser.ID
 	}
 

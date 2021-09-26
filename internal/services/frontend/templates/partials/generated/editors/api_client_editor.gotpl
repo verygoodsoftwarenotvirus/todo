@@ -18,13 +18,6 @@
                     <div class="invalid-feedback" style="width: 100%;">client_id is required.</div>
                 </div>
             </div>
-            <div class="mb3">
-                <label for="external ID">ExternalID</label>
-                <div class="input-group">
-                    <input class="form-control" type="text" id="" name="external_id" placeholder="" required="" value="{{ .ExternalID }}" />
-                    <div class="invalid-feedback" style="width: 100%;">external ID is required.</div>
-                </div>
-            </div>
             <hr class="mb-4" />
             <button class="btn btn-primary btn-lg btn-block" type="submit">Save</button>
         </form>

@@ -4,28 +4,28 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/heptiolabs/healthcheck"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	apiclientsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/apiclients"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	usersservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/users"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
-
-	"github.com/heptiolabs/healthcheck"
 )
 
 const (
-	root             = "/"
-	auditRoute       = "/audit"
-	searchRoot       = "/search"
-	numericIDPattern = "{%s:[0-9]+}"
+	root       = "/"
+	searchRoot = "/search"
 )
 
-func buildNumericIDURLChunk(key string) string {
-	return fmt.Sprintf(root+numericIDPattern, key)
+func buildURLVarChunk(key, pattern string) string {
+	if pattern != "" {
+		return fmt.Sprintf("/{%s:%s}", key, pattern)
+	}
+	return fmt.Sprintf("/{%s}", key)
 }
 
 func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, metricsHandler metrics.Handler) {
@@ -77,18 +77,6 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 			adminRouter.
 				WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.UpdateUserStatusPermission)).
 				Post("/users/status", s.adminService.UserReputationChangeHandler)
-
-			adminRouter.Route("/audit_log", func(auditRouter routing.Router) {
-				entryIDRouteParam := buildNumericIDURLChunk(auditservice.LogEntryURIParamKey)
-				auditRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadAllAuditLogEntriesPermission)).
-					Get(root, s.auditService.ListHandler)
-				auditRouter.Route(entryIDRouteParam, func(singleEntryRouter routing.Router) {
-					singleEntryRouter.
-						WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadAllAuditLogEntriesPermission)).
-						Get(root, s.auditService.ReadHandler)
-				})
-			})
 		})
 
 		// Users
@@ -102,14 +90,11 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 			usersRouter.Post("/avatar/upload", s.usersService.AvatarUploadHandler)
 			usersRouter.Get("/self", s.usersService.SelfHandler)
 
-			singleUserRoute := buildNumericIDURLChunk(usersservice.UserIDURIParamKey)
+			singleUserRoute := buildURLVarChunk(usersservice.UserIDURIParamKey, "")
 			usersRouter.Route(singleUserRoute, func(singleUserRouter routing.Router) {
 				singleUserRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadUserPermission)).
 					Get(root, s.usersService.ReadHandler)
-				singleUserRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadUserAuditLogEntriesPermission)).
-					Get(auditRoute, s.usersService.AuditEntryHandler)
 
 				singleUserRouter.Delete(root, s.usersService.ArchiveHandler)
 			})
@@ -120,17 +105,14 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 			accountsRouter.Post(root, s.accountsService.CreateHandler)
 			accountsRouter.Get(root, s.accountsService.ListHandler)
 
-			singleUserRoute := buildNumericIDURLChunk(accountsservice.UserIDURIParamKey)
-			singleAccountRoute := buildNumericIDURLChunk(accountsservice.AccountIDURIParamKey)
+			singleUserRoute := buildURLVarChunk(accountsservice.UserIDURIParamKey, "")
+			singleAccountRoute := buildURLVarChunk(accountsservice.AccountIDURIParamKey, "")
 			accountsRouter.Route(singleAccountRoute, func(singleAccountRouter routing.Router) {
 				singleAccountRouter.Get(root, s.accountsService.ReadHandler)
 				singleAccountRouter.Put(root, s.accountsService.UpdateHandler)
 				singleAccountRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveAccountPermission)).
 					Delete(root, s.accountsService.ArchiveHandler)
-				singleAccountRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadAccountAuditLogEntriesPermission)).
-					Get(auditRoute, s.accountsService.AuditEntryHandler)
 
 				singleAccountRouter.Post("/default", s.accountsService.MarkAsDefaultAccountHandler)
 				singleAccountRouter.
@@ -155,7 +137,7 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 				WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.CreateAPIClientsPermission)).
 				Post(root, s.apiClientsService.CreateHandler)
 
-			singleClientRoute := buildNumericIDURLChunk(apiclientsservice.APIClientIDURIParamKey)
+			singleClientRoute := buildURLVarChunk(apiclientsservice.APIClientIDURIParamKey, "")
 			clientRouter.Route(singleClientRoute, func(singleClientRouter routing.Router) {
 				singleClientRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadAPIClientsPermission)).
@@ -163,15 +145,17 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 				singleClientRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveAPIClientsPermission)).
 					Delete(root, s.apiClientsService.ArchiveHandler)
-				singleClientRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadAPIClientAuditLogEntriesPermission)).
-					Get(auditRoute, s.apiClientsService.AuditEntryHandler)
 			})
+		})
+
+		// Notifications
+		v1Router.Route("/websockets", func(notificationsRouter routing.Router) {
+			notificationsRouter.Get("/data_changes", s.websocketsService.SubscribeHandler)
 		})
 
 		// Webhooks
 		v1Router.Route("/webhooks", func(webhookRouter routing.Router) {
-			singleWebhookRoute := buildNumericIDURLChunk(webhooksservice.WebhookIDURIParamKey)
+			singleWebhookRoute := buildURLVarChunk(webhooksservice.WebhookIDURIParamKey, "")
 			webhookRouter.
 				WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadWebhooksPermission)).
 				Get(root, s.webhooksService.ListHandler)
@@ -185,19 +169,13 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 				singleWebhookRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveWebhooksPermission)).
 					Delete(root, s.webhooksService.ArchiveHandler)
-				singleWebhookRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.UpdateWebhooksPermission)).
-					Put(root, s.webhooksService.UpdateHandler)
-				singleWebhookRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadWebhooksAuditLogEntriesPermission)).
-					Get(auditRoute, s.webhooksService.AuditEntryHandler)
 			})
 		})
 
 		// Items
 		itemPath := "items"
 		itemsRouteWithPrefix := fmt.Sprintf("/%s", itemPath)
-		itemIDRouteParam := buildNumericIDURLChunk(itemsservice.ItemIDURIParamKey)
+		itemIDRouteParam := buildURLVarChunk(itemsservice.ItemIDURIParamKey, "")
 		v1Router.Route(itemsRouteWithPrefix, func(itemsRouter routing.Router) {
 			itemsRouter.
 				WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.CreateItemsPermission)).
@@ -214,17 +192,11 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadItemsPermission)).
 					Get(root, s.itemsService.ReadHandler)
 				singleItemRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadItemsPermission)).
-					Head(root, s.itemsService.ExistenceHandler)
-				singleItemRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ArchiveItemsPermission)).
 					Delete(root, s.itemsService.ArchiveHandler)
 				singleItemRouter.
 					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.UpdateItemsPermission)).
 					Put(root, s.itemsService.UpdateHandler)
-				singleItemRouter.
-					WithMiddleware(s.authService.PermissionFilterMiddleware(authorization.ReadItemsAuditLogEntriesPermission)).
-					Get(auditRoute, s.itemsService.AuditEntryHandler)
 			})
 		})
 	})

@@ -4,17 +4,17 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/alexedwards/scs/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-
-	"github.com/alexedwards/scs/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 func buildTestService(t *testing.T) *service {
@@ -24,15 +24,15 @@ func buildTestService(t *testing.T) *service {
 
 	rpm := mockrouting.NewRouteParamManager()
 	rpm.On(
-		"BuildRouteParamIDFetcher",
-		mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+		"BuildRouteParamStringIDFetcher",
+		UserIDURIParamKey,
+	).Return(func(*http.Request) string { return "" })
 
 	s := ProvideService(
 		logger,
 		&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
 		&authentication.MockAuthenticator{},
 		&mocktypes.AdminUserDataManager{},
-		&mocktypes.AuditLogEntryDataManager{},
 		scs.New(),
 		encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON),
 		rpm,
@@ -56,15 +56,15 @@ func TestProvideAdminService(T *testing.T) {
 
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
-			"BuildRouteParamIDFetcher",
-			mock.IsType(logging.NewNoopLogger()), UserIDURIParamKey, "user").Return(func(*http.Request) uint64 { return 0 })
+			"BuildRouteParamStringIDFetcher",
+			UserIDURIParamKey,
+		).Return(func(*http.Request) string { return "" })
 
 		s := ProvideService(
 			logger,
 			&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
 			&authentication.MockAuthenticator{},
 			&mocktypes.AdminUserDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
 			scs.New(),
 			encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON),
 			rpm,

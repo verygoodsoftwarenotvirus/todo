@@ -13,17 +13,13 @@ type (
 		UserReputationChangeHandler(res http.ResponseWriter, req *http.Request)
 	}
 
-	// AdminAuditManager describes a structure capable of managing audit entries for admin events.
-	AdminAuditManager interface {
-		LogUserBanEvent(ctx context.Context, banGiver, banReceiver uint64, reason string)
-		LogAccountTerminationEvent(ctx context.Context, terminator, terminee uint64, reason string)
-	}
-
 	// UserReputationUpdateInput represents what an admin User could provide as input for changing statuses.
 	UserReputationUpdateInput struct {
+		_ struct{}
+
 		NewReputation accountStatus `json:"newReputation"`
 		Reason        string        `json:"reason"`
-		TargetUserID  uint64        `json:"targetUserID"`
+		TargetUserID  string        `json:"targetUserID"`
 	}
 
 	// FrontendService serves static frontend files.
@@ -39,6 +35,6 @@ func (i *UserReputationUpdateInput) ValidateWithContext(ctx context.Context) err
 	return validation.ValidateStructWithContext(ctx, i,
 		validation.Field(&i.NewReputation, validation.Required),
 		validation.Field(&i.Reason, validation.Required),
-		validation.Field(&i.TargetUserID, validation.Required, validation.Min(uint64(1))),
+		validation.Field(&i.TargetUserID, validation.Required),
 	)
 }

@@ -10,16 +10,16 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func TestBuilder_BuildGetUserRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/users/%d"
+	const expectedPathFormat = "/api/v1/users/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -39,7 +39,7 @@ func TestBuilder_BuildGetUserRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetUserRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetUserRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -174,7 +174,7 @@ func TestBuilder_BuildCreateUserRequest(T *testing.T) {
 func TestBuilder_BuildArchiveUserRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/users/%d"
+	const expectedPathFormat = "/api/v1/users/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -194,7 +194,7 @@ func TestBuilder_BuildArchiveUserRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildArchiveUserRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildArchiveUserRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -319,45 +319,5 @@ func TestBuilder_BuildAvatarUploadRequest(T *testing.T) {
 		actual, err := helper.builder.BuildAvatarUploadRequest(helper.ctx, avatarBytes, "png")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
-	})
-}
-
-func TestBuilder_BuildGetAuditLogForUserRequest(T *testing.T) {
-	T.Parallel()
-
-	const expectedPath = "/api/v1/users/%d/audit"
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-
-		actual, err := helper.builder.BuildGetAuditLogForUserRequest(helper.ctx, helper.exampleUser.ID)
-		require.NotNil(t, actual)
-		assert.NoError(t, err)
-
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, helper.exampleUser.ID)
-		assertRequestQuality(t, actual, spec)
-	})
-
-	T.Run("with invalid user ID", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-
-		actual, err := helper.builder.BuildGetAuditLogForUserRequest(helper.ctx, 0)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	T.Run("with invalid request builder", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-		helper.builder = buildTestRequestBuilderWithInvalidURL()
-
-		actual, err := helper.builder.BuildGetAuditLogForUserRequest(helper.ctx, helper.exampleUser.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
 	})
 }

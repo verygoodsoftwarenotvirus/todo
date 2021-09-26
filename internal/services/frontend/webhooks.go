@@ -68,7 +68,7 @@ func (s *service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 
 		tmplFuncMap := map[string]interface{}{
 			"componentTitle": func(x *types.Webhook) string {
-				return fmt.Sprintf("Webhook #%d", x.ID)
+				return fmt.Sprintf("Webhook %s", x.ID)
 			},
 		}
 
@@ -77,7 +77,7 @@ func (s *service) buildWebhookEditorView(includeBaseTemplate bool) func(http.Res
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
-				Title:       fmt.Sprintf("Webhook #%d", webhook.ID),
+				Title:       fmt.Sprintf("Webhook %s", webhook.ID),
 				ContentData: webhook,
 			}
 			if sessionCtxData != nil {
@@ -141,11 +141,11 @@ func (s *service) buildWebhooksTableView(includeBaseTemplate bool) func(http.Res
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Webhook) template.URL {
 				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/webhooks/%d", x.ID))
+				return template.URL(fmt.Sprintf("/webhooks/%s", x.ID))
 			},
 			"pushURL": func(x *types.Webhook) template.URL {
 				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/webhooks/%d", x.ID))
+				return template.URL(fmt.Sprintf("/webhooks/%s", x.ID))
 			},
 		}
 

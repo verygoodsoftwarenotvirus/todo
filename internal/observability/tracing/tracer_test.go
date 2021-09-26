@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 func Test_tracingErrorHandler_Handle(T *testing.T) {

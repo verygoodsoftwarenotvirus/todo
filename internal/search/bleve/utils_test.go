@@ -4,9 +4,10 @@ import (
 	"fmt"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
+	"github.com/segmentio/ksuid"
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
@@ -14,34 +15,34 @@ func TestEnsureQueryIsRestrictedToUser(T *testing.T) {
 
 	T.Run("leaves good queries alone", func(t *testing.T) {
 		t.Parallel()
-		exampleUserID := fakes.BuildFakeUser().ID
+		exampleAccountID := fakes.BuildFakeAccount().ID
 
-		exampleQuery := fmt.Sprintf("things +belongsToAccount:%d", exampleUserID)
-		expectation := fmt.Sprintf("things +belongsToAccount:%d", exampleUserID)
+		exampleQuery := fmt.Sprintf("things +belongsToAccount:%s", exampleAccountID)
+		expectation := fmt.Sprintf("things +belongsToAccount:%s", exampleAccountID)
 
-		actual := ensureQueryIsRestrictedToUser(exampleQuery, exampleUserID)
+		actual := ensureQueryIsRestrictedToAccount(exampleQuery, exampleAccountID)
 		assert.Equal(t, expectation, actual, "expected %q to equal %q", expectation, actual)
 	})
 
 	T.Run("basic replacement", func(t *testing.T) {
 		t.Parallel()
-		exampleUserID := fakes.BuildFakeUser().ID
+		exampleAccountID := fakes.BuildFakeAccount().ID
 
 		exampleQuery := "things"
-		expectation := fmt.Sprintf("things +belongsToAccount:%d", exampleUserID)
+		expectation := fmt.Sprintf("things +belongsToAccount:%s", exampleAccountID)
 
-		actual := ensureQueryIsRestrictedToUser(exampleQuery, exampleUserID)
+		actual := ensureQueryIsRestrictedToAccount(exampleQuery, exampleAccountID)
 		assert.Equal(t, expectation, actual, "expected %q to equal %q", expectation, actual)
 	})
 
-	T.Run("with invalid user restriction", func(t *testing.T) {
+	T.Run("with invalid account restriction", func(t *testing.T) {
 		t.Parallel()
-		exampleUserID := fakes.BuildFakeUser().ID
+		exampleAccountID := ksuid.New().String()
 
-		exampleQuery := fmt.Sprintf("stuff belongsToAccount:%d", exampleUserID)
-		expectation := fmt.Sprintf("stuff +belongsToAccount:%d", exampleUserID)
+		exampleQuery := fmt.Sprintf("stuff belongsToAccount:%s", exampleAccountID)
+		expectation := fmt.Sprintf("stuff +belongsToAccount:%s", exampleAccountID)
 
-		actual := ensureQueryIsRestrictedToUser(exampleQuery, exampleUserID)
+		actual := ensureQueryIsRestrictedToAccount(exampleQuery, exampleAccountID)
 		assert.Equal(t, expectation, actual, "expected %q to equal %q", expectation, actual)
 	})
 }

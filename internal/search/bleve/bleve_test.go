@@ -8,27 +8,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type (
 	exampleType struct {
 		Name          string
-		ID            uint64
-		BelongsToUser uint64
-	}
-
-	exampleTypeWithStringID struct {
 		ID            string
-		Name          string
-		BelongsToUser uint64
+		BelongsToUser string
 	}
 )
 
@@ -42,7 +36,7 @@ type bleveIndexManagerTestSuite struct {
 
 	ctx              context.Context
 	indexPath        string
-	exampleAccountID uint64
+	exampleAccountID string
 }
 
 func createTmpIndexPath(t *testing.T) string {
@@ -114,7 +108,7 @@ func (s *bleveIndexManagerTestSuite) TestIndex() {
 	require.NotNil(t, im)
 
 	x := &exampleType{
-		ID:            123,
+		ID:            "123",
 		Name:          exampleQuery,
 		BelongsToUser: s.exampleAccountID,
 	}
@@ -133,7 +127,7 @@ func (s *bleveIndexManagerTestSuite) TestSearch() {
 	require.NotNil(t, im)
 
 	x := exampleType{
-		ID:            123,
+		ID:            "123",
 		Name:          exampleQuery,
 		BelongsToUser: s.exampleAccountID,
 	}
@@ -183,35 +177,13 @@ func (s *bleveIndexManagerTestSuite) TestSearchWithClosedIndex() {
 	require.NotNil(t, im)
 
 	x := &exampleType{
-		ID:            123,
+		ID:            "123",
 		Name:          exampleQuery,
 		BelongsToUser: s.exampleAccountID,
 	}
 	assert.NoError(t, im.Index(s.ctx, x.ID, x))
 
 	assert.NoError(t, im.(*bleveIndexManager).index.Close())
-
-	results, err := im.Search(s.ctx, x.Name, s.exampleAccountID)
-	assert.Empty(t, results)
-	assert.Error(t, err)
-}
-
-func (s *bleveIndexManagerTestSuite) TestSearchWithInvalidID() {
-	t := s.T()
-
-	const exampleQuery = "search_test"
-	exampleIndexPath := search.IndexPath(filepath.Join(s.indexPath, "search_test_invalid_id.bleve"))
-
-	im, err := NewBleveIndexManager(exampleIndexPath, testingSearchIndexName, logging.NewNoopLogger())
-	assert.NoError(t, err)
-	require.NotNil(t, im)
-
-	x := &exampleTypeWithStringID{
-		ID:            "whatever",
-		Name:          exampleQuery,
-		BelongsToUser: s.exampleAccountID,
-	}
-	assert.NoError(t, im.(*bleveIndexManager).index.Index(x.ID, x))
 
 	results, err := im.Search(s.ctx, x.Name, s.exampleAccountID)
 	assert.Empty(t, results)
@@ -229,7 +201,7 @@ func (s *bleveIndexManagerTestSuite) TestSearchForAdmin() {
 	require.NotNil(t, im)
 
 	x := exampleType{
-		ID:            123,
+		ID:            "123",
 		Name:          exampleQuery,
 		BelongsToUser: s.exampleAccountID,
 	}
@@ -251,7 +223,7 @@ func (s *bleveIndexManagerTestSuite) TestDelete() {
 	require.NotNil(t, im)
 
 	x := &exampleType{
-		ID:            123,
+		ID:            "123",
 		Name:          exampleQuery,
 		BelongsToUser: s.exampleAccountID,
 	}

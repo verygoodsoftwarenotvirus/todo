@@ -1,9 +1,15 @@
 version: "3.3"
 services:
+    worker_queue:
+        image: redis:6-buster
+        container_name: worker_queue
     todo-server:
         environment:
-            CONFIGURATION_FILEPATH: '/etc/config.toml'
-            JAEGER_DISABLED: 'true'
+            CONFIGURATION_FILEPATH: '/etc/service.config'
+            JAEGER_DISABLED: 'false'
+        links:
+            - worker_queue
+            - tracing-server
         ports:
             - 80:8888
         build:
@@ -14,24 +20,24 @@ services:
             TARGET_ADDRESS: 'http://todo-server:8888'
         links:
             - todo-server
-#            - tracing-server
+            - tracing-server
 #            - prometheus
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/integration-tests.Dockerfile'
         container_name: 'integration_tests'
-#    tracing-server:
-#        image: jaegertracing/all-in-one:1.22.0
-#        logging:
-#            driver: none
-#        ports:
-#            - "5775:5775/udp"
-#            - "6831:6831/udp"
-#            - "6832:6832/udp"
-#            - "5778:5778"
-#            - "16686:16686"
-#            - "14268:14268"
-#            - "9411:9411"
+    tracing-server:
+        image: jaegertracing/all-in-one:1.22.0
+        logging:
+            driver: none
+        ports:
+            - "5775:5775/udp"
+            - "6831:6831/udp"
+            - "6832:6832/udp"
+            - "5778:5778"
+            - "16686:16686"
+            - "14268:14268"
+            - "9411:9411"
 #    prometheus:
 #        image: quay.io/prometheus/prometheus:v2.25.0
 #        logging:

@@ -9,40 +9,14 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
-// ItemExists retrieves whether an item exists.
-func (c *Client) ItemExists(ctx context.Context, itemID uint64) (bool, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := c.logger
-
-	if itemID == 0 {
-		return false, ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	req, err := c.requestBuilder.BuildItemExistsRequest(ctx, itemID)
-	if err != nil {
-		return false, observability.PrepareError(err, logger, span, "building item existence request")
-	}
-
-	exists, err := c.responseIsOK(ctx, req)
-	if err != nil {
-		return false, observability.PrepareError(err, logger, span, "checking existence for item #%d", itemID)
-	}
-
-	return exists, nil
-}
-
 // GetItem gets an item.
-func (c *Client) GetItem(ctx context.Context, itemID uint64) (*types.Item, error) {
+func (c *Client) GetItem(ctx context.Context, itemID string) (*types.Item, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -113,31 +87,31 @@ func (c *Client) GetItems(ctx context.Context, filter *types.QueryFilter) (*type
 }
 
 // CreateItem creates an item.
-func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (*types.Item, error) {
+func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger
 
 	if input == nil {
-		return nil, ErrNilInputProvided
+		return "", ErrNilInputProvided
 	}
 
 	if err := input.ValidateWithContext(ctx); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "validating input")
+		return "", observability.PrepareError(err, logger, span, "validating input")
 	}
 
 	req, err := c.requestBuilder.BuildCreateItemRequest(ctx, input)
 	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building create item request")
+		return "", observability.PrepareError(err, logger, span, "building create item request")
 	}
 
-	var item *types.Item
-	if err = c.fetchAndUnmarshal(ctx, req, &item); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "creating item")
+	var pwr *types.PreWriteResponse
+	if err = c.fetchAndUnmarshal(ctx, req, &pwr); err != nil {
+		return "", observability.PrepareError(err, logger, span, "creating item")
 	}
 
-	return item, nil
+	return pwr.ID, nil
 }
 
 // UpdateItem updates an item.
@@ -159,20 +133,20 @@ func (c *Client) UpdateItem(ctx context.Context, item *types.Item) error {
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, &item); err != nil {
-		return observability.PrepareError(err, logger, span, "updating item #%d", item.ID)
+		return observability.PrepareError(err, logger, span, "updating item %s", item.ID)
 	}
 
 	return nil
 }
 
 // ArchiveItem archives an item.
-func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
+func (c *Client) ArchiveItem(ctx context.Context, itemID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
 	logger := c.logger
 
-	if itemID == 0 {
+	if itemID == "" {
 		return ErrInvalidIDProvided
 	}
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
@@ -184,34 +158,8 @@ func (c *Client) ArchiveItem(ctx context.Context, itemID uint64) error {
 	}
 
 	if err = c.fetchAndUnmarshal(ctx, req, nil); err != nil {
-		return observability.PrepareError(err, logger, span, "archiving item #%d", itemID)
+		return observability.PrepareError(err, logger, span, "archiving item %s", itemID)
 	}
 
 	return nil
-}
-
-// GetAuditLogForItem retrieves a list of audit log entries pertaining to an item.
-func (c *Client) GetAuditLogForItem(ctx context.Context, itemID uint64) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	logger := c.logger
-
-	if itemID == 0 {
-		return nil, ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-	tracing.AttachItemIDToSpan(span, itemID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForItemRequest(ctx, itemID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building get audit log entries for item request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "retrieving plan")
-	}
-
-	return entries, nil
 }

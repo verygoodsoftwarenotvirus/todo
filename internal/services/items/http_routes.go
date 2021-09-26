@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -47,39 +49,39 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check session context data for parsed input struct.
-	input := new(types.ItemCreationInput)
-	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
+	providedInput := new(types.ItemCreationInput)
+	if err = s.encoderDecoder.DecodeRequest(ctx, req, providedInput); err != nil {
 		observability.AcknowledgeError(err, logger, span, "decoding request")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 		return
 	}
 
-	if err = input.ValidateWithContext(ctx); err != nil {
-		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
+	if err = providedInput.ValidateWithContext(ctx); err != nil {
+		logger.WithValue(keys.ValidationErrorKey, err).Debug("provided input was invalid")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	input := types.ItemDatabaseCreationInputFromItemCreationInput(providedInput)
+	input.ID = ksuid.New().String()
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
+	tracing.AttachItemIDToSpan(span, input.ID)
 
-	// create item in database.
-	item, err := s.itemDataManager.CreateItem(ctx, input, sessionCtxData.Requester.UserID)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "creating item")
+	preWrite := &types.PreWriteMessage{
+		DataType:                types.ItemDataType,
+		Item:                    input,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: sessionCtxData.ActiveAccountID,
+	}
+	if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	tracing.AttachItemIDToSpan(span, item.ID)
-	logger = logger.WithValue(keys.ItemIDKey, item.ID)
+	pwr := types.PreWriteResponse{ID: input.ID}
 
-	// notify interested parties.
-	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
-		observability.AcknowledgeError(err, logger, span, "adding item to search index")
-	}
-	s.itemCounter.Increment(ctx)
-
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, item, http.StatusCreated)
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
 }
 
 // ReadHandler returns a GET handler that returns an item.
@@ -119,41 +121,6 @@ func (s *service) ReadHandler(res http.ResponseWriter, req *http.Request) {
 
 	// encode our response and peace.
 	s.encoderDecoder.RespondWithData(ctx, res, x)
-}
-
-// ExistenceHandler returns a HEAD handler that returns 200 if an item exists, 404 otherwise.
-func (s *service) ExistenceHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	tracing.AttachRequestToSpan(span, req)
-
-	// determine user ID.
-	sessionCtxData, err := s.sessionContextDataFetcher(req)
-	if err != nil {
-		s.logger.Error(err, "retrieving session context data")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
-
-	// determine item ID.
-	itemID := s.itemIDFetcher(req)
-	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-
-	// check the database.
-	exists, err := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
-	if !errors.Is(err, sql.ErrNoRows) {
-		observability.AcknowledgeError(err, logger, span, "checking item existence")
-	}
-
-	if !exists || errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-	}
 }
 
 // ListHandler is our list route.
@@ -295,19 +262,18 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update the item.
-	changeReport := item.Update(input)
-	tracing.AttachChangeSummarySpan(span, "item", changeReport)
+	item.Update(input)
 
-	// update item in database.
-	if err = s.itemDataManager.UpdateItem(ctx, item, sessionCtxData.Requester.UserID, changeReport); err != nil {
-		observability.AcknowledgeError(err, logger, span, "updating item")
+	pum := &types.PreUpdateMessage{
+		DataType:                types.ItemDataType,
+		Item:                    item,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: sessionCtxData.ActiveAccountID,
+	}
+	if err = s.preUpdatesPublisher.Publish(ctx, pum); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item update message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
-	}
-
-	// notify interested parties.
-	if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
-		observability.AcknowledgeError(err, logger, span, "updating item in search index")
 	}
 
 	// encode our response and peace.
@@ -338,62 +304,28 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
-	// archive the item in the database.
-	err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "archiving item")
+	exists, err := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		observability.AcknowledgeError(err, logger, span, "checking item existence")
+		return
+	} else if !exists || errors.Is(err, sql.ErrNoRows) {
+		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
 	}
 
-	// notify interested parties.
-	s.itemCounter.Decrement(ctx)
-
-	if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
-		observability.AcknowledgeError(err, logger, span, "removing from search index")
+	pam := &types.PreArchiveMessage{
+		DataType:                types.ItemDataType,
+		RelevantID:              itemID,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: sessionCtxData.ActiveAccountID,
+	}
+	if err = s.preArchivesPublisher.Publish(ctx, pam); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item archive message")
+		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+		return
 	}
 
 	// encode our response and peace.
 	res.WriteHeader(http.StatusNoContent)
-}
-
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an item.
-func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	tracing.AttachRequestToSpan(span, req)
-
-	// determine user ID.
-	sessionCtxData, err := s.sessionContextDataFetcher(req)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-	logger = sessionCtxData.AttachToLogger(logger)
-
-	// determine item ID.
-	itemID := s.itemIDFetcher(req)
-	tracing.AttachItemIDToSpan(span, itemID)
-	logger = logger.WithValue(keys.ItemIDKey, itemID)
-
-	x, err := s.itemDataManager.GetAuditLogEntriesForItem(ctx, itemID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	} else if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving audit log entries for item")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

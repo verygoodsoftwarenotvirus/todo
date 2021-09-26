@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 
+	"gocloud.dev/secrets"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"gocloud.dev/secrets"
 )
 
 const (

@@ -4,15 +4,14 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
-	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-
 	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 )
 
 func buildTestService(t *testing.T) *service {
@@ -36,12 +35,10 @@ func buildTestService(t *testing.T) *service {
 		},
 		&authentication.MockAuthenticator{},
 		&mocktypes.UserDataManager{},
-		&mocktypes.AuditLogEntryDataManager{},
 		&mocktypes.APIClientDataManager{},
 		&mocktypes.AccountUserMembershipDataManager{},
 		scs.New(),
 		encoderDecoder,
-		chi.NewRouteParamManager(),
 	)
 	require.NoError(t, err)
 
@@ -66,12 +63,10 @@ func TestProvideService(T *testing.T) {
 			},
 			&authentication.MockAuthenticator{},
 			&mocktypes.UserDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
 			&mocktypes.APIClientDataManager{},
 			&mocktypes.AccountUserMembershipDataManager{},
 			scs.New(),
 			encoderDecoder,
-			chi.NewRouteParamManager(),
 		)
 
 		assert.NotNil(t, s)
@@ -93,12 +88,10 @@ func TestProvideService(T *testing.T) {
 			},
 			&authentication.MockAuthenticator{},
 			&mocktypes.UserDataManager{},
-			&mocktypes.AuditLogEntryDataManager{},
 			&mocktypes.APIClientDataManager{},
 			&mocktypes.AccountUserMembershipDataManager{},
 			scs.New(),
 			encoderDecoder,
-			chi.NewRouteParamManager(),
 		)
 
 		assert.Nil(t, s)

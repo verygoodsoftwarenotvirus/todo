@@ -10,11 +10,11 @@ import (
 )
 
 // SwitchActiveAccount will switch the account on whose behalf requests are made.
-func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) error {
+func (c *Client) SwitchActiveAccount(ctx context.Context, accountID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -38,11 +38,11 @@ func (c *Client) SwitchActiveAccount(ctx context.Context, accountID uint64) erro
 }
 
 // GetAccount retrieves an account.
-func (c *Client) GetAccount(ctx context.Context, accountID uint64) (*types.Account, error) {
+func (c *Client) GetAccount(ctx context.Context, accountID string) (*types.Account, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -137,11 +137,11 @@ func (c *Client) UpdateAccount(ctx context.Context, account *types.Account) erro
 }
 
 // ArchiveAccount archives an account.
-func (c *Client) ArchiveAccount(ctx context.Context, accountID uint64) error {
+func (c *Client) ArchiveAccount(ctx context.Context, accountID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -190,11 +190,11 @@ func (c *Client) AddUserToAccount(ctx context.Context, input *types.AddUserToAcc
 }
 
 // MarkAsDefault marks a given account as the default for a given user.
-func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
+func (c *Client) MarkAsDefault(ctx context.Context, accountID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -214,27 +214,23 @@ func (c *Client) MarkAsDefault(ctx context.Context, accountID uint64) error {
 }
 
 // RemoveUserFromAccount removes a user from an account.
-func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID uint64, reason string) error {
+func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
-	if userID == 0 {
+	if userID == "" {
 		return ErrInvalidIDProvided
-	}
-
-	if reason == "" {
-		return ErrEmptyInputProvided
 	}
 
 	logger := c.logger.WithValue(keys.AccountIDKey, accountID).WithValue(keys.UserIDKey, userID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	req, err := c.requestBuilder.BuildRemoveUserRequest(ctx, accountID, userID, reason)
+	req, err := c.requestBuilder.BuildRemoveUserRequest(ctx, accountID, userID, "")
 	if err != nil {
 		return observability.PrepareError(err, logger, span, "building remove user from account request")
 	}
@@ -247,15 +243,15 @@ func (c *Client) RemoveUserFromAccount(ctx context.Context, accountID, userID ui
 }
 
 // ModifyMemberPermissions modifies a given user's permissions for a given account.
-func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID uint64, input *types.ModifyUserPermissionsInput) error {
+func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID string, input *types.ModifyUserPermissionsInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
-	if userID == 0 {
+	if userID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -284,11 +280,11 @@ func (c *Client) ModifyMemberPermissions(ctx context.Context, accountID, userID 
 }
 
 // TransferAccountOwnership transfers ownership of an account to a given user.
-func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64, input *types.AccountOwnershipTransferInput) error {
+func (c *Client) TransferAccountOwnership(ctx context.Context, accountID string, input *types.AccountOwnershipTransferInput) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if accountID == 0 {
+	if accountID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -317,29 +313,4 @@ func (c *Client) TransferAccountOwnership(ctx context.Context, accountID uint64,
 	}
 
 	return nil
-}
-
-// GetAuditLogForAccount retrieves a list of audit log entries pertaining to an account.
-func (c *Client) GetAuditLogForAccount(ctx context.Context, accountID uint64) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if accountID == 0 {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := c.logger.WithValue(keys.AccountIDKey, accountID)
-	tracing.AttachAccountIDToSpan(span, accountID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForAccountRequest(ctx, accountID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building fetch audit log entries for account request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "fetching audit log entries for account")
-	}
-
-	return entries, nil
 }

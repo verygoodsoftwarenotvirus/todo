@@ -3,9 +3,9 @@ package integration
 import (
 	"context"
 	"fmt"
-	"math"
 	"net/url"
 	"strings"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	debug                = true
-	nonexistentID uint64 = math.MaxUint32
+	debug         = true
+	nonexistentID = "_NOT_REAL_LOL_"
 )
 
 var (
@@ -24,7 +24,7 @@ var (
 	parsedURLToUse *url.URL
 
 	premadeAdminUser = &types.User{
-		ID:              1,
+		ID:              "1",
 		TwoFactorSecret: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
 		Username:        "exampleUser",
 		HashedPassword:  "integration-tests-are-cool",
@@ -44,4 +44,5 @@ func init() {
 
 	fiftySpaces := strings.Repeat("\n", 50)
 	fmt.Printf("%s\tRunning tests%s", fiftySpaces, fiftySpaces)
+	time.Sleep(2 * time.Second)
 }

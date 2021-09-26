@@ -92,7 +92,7 @@ func TestTOTPSecretVerificationInput_ValidateWithContext(T *testing.T) {
 
 		ctx := context.Background()
 		x := &TOTPSecretVerificationInput{
-			UserID:    123,
+			UserID:    "123",
 			TOTPToken: "123456",
 		}
 

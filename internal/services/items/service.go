@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
@@ -15,9 +15,7 @@ import (
 )
 
 const (
-	counterName        metrics.CounterName = "items"
-	counterDescription string              = "the number of items managed by the items service"
-	serviceName        string              = "items_service"
+	serviceName string = "items_service"
 )
 
 var _ types.ItemDataService = (*service)(nil)
@@ -30,11 +28,13 @@ type (
 	service struct {
 		logger                    logging.Logger
 		itemDataManager           types.ItemDataManager
-		itemIDFetcher             func(*http.Request) uint64
+		itemIDFetcher             func(*http.Request) string
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		itemCounter               metrics.UnitCounter
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
+		preWritesPublisher        publishers.Publisher
+		preUpdatesPublisher       publishers.Publisher
+		preArchivesPublisher      publishers.Publisher
 		search                    SearchIndex
 	}
 )
@@ -42,25 +42,42 @@ type (
 // ProvideService builds a new ItemsService.
 func ProvideService(
 	logger logging.Logger,
-	cfg Config,
+	cfg *Config,
 	itemDataManager types.ItemDataManager,
 	encoder encoding.ServerEncoderDecoder,
-	counterProvider metrics.UnitCounterProvider,
 	searchIndexProvider search.IndexManagerProvider,
 	routeParamManager routing.RouteParamManager,
+	publisherProvider publishers.PublisherProvider,
 ) (types.ItemDataService, error) {
 	searchIndexManager, err := searchIndexProvider(search.IndexPath(cfg.SearchIndexPath), "items", logger)
 	if err != nil {
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
+	preWritesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreWritesTopicName)
+	if err != nil {
+		return nil, fmt.Errorf("setting up event publisher: %w", err)
+	}
+
+	preUpdatesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreUpdatesTopicName)
+	if err != nil {
+		return nil, fmt.Errorf("setting up event publisher: %w", err)
+	}
+
+	preArchivesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreArchivesTopicName)
+	if err != nil {
+		return nil, fmt.Errorf("setting up event publisher: %w", err)
+	}
+
 	svc := &service{
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
-		itemIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, ItemIDURIParamKey, "item"),
+		itemIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(ItemIDURIParamKey),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		itemDataManager:           itemDataManager,
+		preWritesPublisher:        preWritesPublisher,
+		preUpdatesPublisher:       preUpdatesPublisher,
+		preArchivesPublisher:      preArchivesPublisher,
 		encoderDecoder:            encoder,
-		itemCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		search:                    searchIndexManager,
 		tracer:                    tracing.NewTracer(serviceName),
 	}

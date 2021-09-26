@@ -6,10 +6,10 @@ import (
 	"math"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"github.com/Azure/azure-pipeline-go/pipeline"
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 func TestAzureConfig_ValidateWithContext(T *testing.T) {

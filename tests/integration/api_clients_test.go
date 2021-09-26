@@ -4,24 +4,21 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"github.com/stretchr/testify/assert"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func checkAPIClientEquality(t *testing.T, expected, actual *types.APIClient) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
-	assert.Equal(t, expected.Name, actual.Name, "expected LabelName for API client #%d to be %q, but it was %q ", actual.ID, expected.Name, actual.Name)
-	assert.NotEmpty(t, actual.ExternalID, "expected ExternalID for API client #%d to not be empty, but it was", actual.ID)
-	assert.NotEmpty(t, actual.ClientID, "expected ClientID for API client #%d to not be empty, but it was", actual.ID)
-	assert.Empty(t, actual.ClientSecret, "expected ClientSecret for API client #%d to not be empty, but it was", actual.ID)
-	assert.NotZero(t, actual.BelongsToUser, "expected BelongsToUser for API client #%d to not be zero, but it was", actual.ID)
+	assert.Equal(t, expected.Name, actual.Name, "expected LabelName for API client %s to be %q, but it was %q ", actual.ID, expected.Name, actual.Name)
+	assert.NotEmpty(t, actual.ClientID, "expected ClientID for API client %s to not be empty, but it was", actual.ID)
+	assert.Empty(t, actual.ClientSecret, "expected ClientSecret for API client %s to not be empty, but it was", actual.ID)
+	assert.NotZero(t, actual.BelongsToUser, "expected BelongsToUser for API client %s to not be zero, but it was", actual.ID)
 	assert.NotZero(t, actual.CreatedOn)
 }
 
@@ -46,16 +43,8 @@ func (s *TestSuite) TestAPIClients_Creating() {
 			requireNotNilAndNoProblems(t, createdAPIClient, err)
 
 			// Assert API client equality.
-			assert.NotEmpty(t, createdAPIClient.ClientID, "expected ClientID for API client #%d to not be empty, but it was", createdAPIClient.ID)
-			assert.NotEmpty(t, createdAPIClient.ClientSecret, "expected ClientSecret for API client #%d to not be empty, but it was", createdAPIClient.ID)
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.APIClientCreationEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAPIClient.ID, audit.APIClientAssignmentKey)
+			assert.NotEmpty(t, createdAPIClient.ClientID, "expected ClientID for API client %s to not be empty, but it was", createdAPIClient.ID)
+			assert.NotEmpty(t, createdAPIClient.ClientSecret, "expected ClientSecret for API client %s to not be empty, but it was", createdAPIClient.ID)
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
@@ -74,7 +63,7 @@ func (s *TestSuite) TestAPIClients_Listing() {
 			defer span.End()
 
 			// Create API clients.
-			var expected []uint64
+			var expected []string
 			for i := 0; i < clientsToMake; i++ {
 				// Create API client.
 				exampleAPIClient := fakes.BuildFakeAPIClient()
@@ -189,46 +178,6 @@ func (s *TestSuite) TestAPIClients_Archiving() {
 
 			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
 			requireNotNilAndNoProblems(t, createdAPIClient, err)
-
-			// Clean up API client.
-			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.APIClientCreationEvent},
-				{EventType: audit.APIClientArchiveEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAPIClient.ID, audit.APIClientAssignmentKey)
-		}
-	})
-}
-
-func (s *TestSuite) TestAPIClients_Auditing() {
-	s.runForEachClientExcept("should be possible to audit API clients", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// Create API client.
-			exampleAPIClient := fakes.BuildFakeAPIClient()
-			exampleAPIClientInput := fakes.BuildFakeAPIClientCreationInputFromClient(exampleAPIClient)
-			exampleAPIClientInput.UserLoginInput = types.UserLoginInput{
-				Username:  s.user.Username,
-				Password:  s.user.HashedPassword,
-				TOTPToken: generateTOTPTokenForUser(t, s.user),
-			}
-
-			createdAPIClient, err := testClients.main.CreateAPIClient(ctx, s.cookie, exampleAPIClientInput)
-			requireNotNilAndNoProblems(t, createdAPIClient, err)
-
-			// fetch audit log entries
-			actual, err := testClients.admin.GetAuditLogForAPIClient(ctx, createdAPIClient.ID)
-			assert.NoError(t, err)
-			assert.NotNil(t, actual)
 
 			// Clean up API client.
 			assert.NoError(t, testClients.main.ArchiveAPIClient(ctx, createdAPIClient.ID))

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
+	"go.opentelemetry.io/otel/trace"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
-	"go.opentelemetry.io/otel/trace"
 )
 
 // PrepareError standardizes our error handling by logging, tracing, and formatting an error consistently.

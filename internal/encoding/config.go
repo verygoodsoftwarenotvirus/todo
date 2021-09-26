@@ -8,6 +8,8 @@ import (
 
 // Config configures input/output encoding for the service.
 type Config struct {
+	_ struct{}
+
 	ContentType string `json:"content_type" mapstructure:"content_type" toml:"content_type,omitempty"`
 }
 

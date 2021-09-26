@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // ContextMatcher is a matcher for use with testify/mock's MatchBy function. It provides some level of type
@@ -30,9 +30,11 @@ var HTTPResponseWriterMatcher interface{} = mock.MatchedBy(func(http.ResponseWri
 	return true
 })
 
-// AuditLogEntryCreationInputMatcher is a matcher for use with testify/mock's MatchBy function.
-func AuditLogEntryCreationInputMatcher(eventType string) func(*types.AuditLogEntryCreationInput) bool {
-	return func(input *types.AuditLogEntryCreationInput) bool {
-		return input.EventType == eventType
-	}
-}
+// PreWriteMessageMatcher matches the types.PreWriteMessage type.
+func PreWriteMessageMatcher(*types.PreWriteMessage) bool { return true }
+
+// PreUpdateMessageMatcher matches the types.PreUpdateMessage type.
+func PreUpdateMessageMatcher(*types.PreUpdateMessage) bool { return true }
+
+// PreArchiveMessageMatcher matches the types.PreArchiveMessage type.
+func PreArchiveMessageMatcher(*types.PreArchiveMessage) bool { return true }

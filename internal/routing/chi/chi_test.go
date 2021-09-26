@@ -6,13 +6,13 @@ import (
 	"strconv"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
 	"github.com/go-chi/chi"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func buildRouterForTest() routing.Router {
@@ -295,7 +295,7 @@ func Test_router_BuildRouteParamIDFetcher(T *testing.T) {
 		assert.NoError(t, err)
 		require.NotNil(t, req)
 
-		expected := fakes.BuildFakeUser().ID
+		expected := fakes.BuildFakeNumericID()
 
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
 			URLParams: chi.RouteParams{
@@ -345,8 +345,7 @@ func Test_router_BuildRouteParamStringIDFetcher(T *testing.T) {
 		assert.NoError(t, err)
 		require.NotNil(t, req)
 
-		exampleID := fakes.BuildFakeUser().ID
-		expected := strconv.FormatUint(exampleID, 10)
+		expected := fakes.BuildFakeUser().ID
 
 		req = req.WithContext(context.WithValue(req.Context(), chi.RouteCtxKey, &chi.Context{
 			URLParams: chi.RouteParams{

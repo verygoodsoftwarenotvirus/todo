@@ -12,6 +12,8 @@ const (
 
 // Config configures the authentication portion of the service.
 type Config struct {
+	_ struct{}
+
 	Provider string `json:"provider" mapstructure:"provider" xml:"provider"`
 }
 

@@ -7,16 +7,16 @@ import (
 	"io/ioutil"
 	"net/http"
 
+	"github.com/stripe/stripe-go/v72"
+	"github.com/stripe/stripe-go/v72/client"
+	"github.com/stripe/stripe-go/v72/webhook"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/stripe/stripe-go/v72"
-	"github.com/stripe/stripe-go/v72/client"
-	"github.com/stripe/stripe-go/v72/webhook"
 )
 
 const (
@@ -63,7 +63,7 @@ func ProvideStripePaymentManager(logger logging.Logger, cfg *capitalism.StripeCo
 }
 
 func buildCustomerName(account *types.Account) string {
-	return fmt.Sprintf("%s (%d)", account.Name, account.ID)
+	return fmt.Sprintf("%s (%s)", account.Name, account.ID)
 }
 
 func buildGetCustomerParams(a *types.Account) *stripe.CustomerParams {
@@ -73,7 +73,6 @@ func buildGetCustomerParams(a *types.Account) *stripe.CustomerParams {
 		Phone:   stripe.String(a.ContactPhone),
 		Address: &stripe.AddressParams{},
 	}
-	p.AddMetadata(keys.AccountIDKey, a.ExternalID)
 
 	return p
 }

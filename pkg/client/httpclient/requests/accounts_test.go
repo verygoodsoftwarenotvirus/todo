@@ -6,11 +6,10 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestBuilder_BuildSwitchActiveAccountRequest(T *testing.T) {
@@ -37,7 +36,7 @@ func TestBuilder_BuildSwitchActiveAccountRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildSwitchActiveAccountRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildSwitchActiveAccountRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -58,7 +57,7 @@ func TestBuilder_BuildSwitchActiveAccountRequest(T *testing.T) {
 func TestBuilder_BuildGetAccountRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/accounts/%d"
+	const expectedPathFormat = "/api/v1/accounts/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -79,7 +78,7 @@ func TestBuilder_BuildGetAccountRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildGetAccountRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildGetAccountRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -187,7 +186,7 @@ func TestBuilder_BuildCreateAccountRequest(T *testing.T) {
 func TestBuilder_BuildUpdateAccountRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/accounts/%d"
+	const expectedPathFormat = "/api/v1/accounts/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -229,7 +228,7 @@ func TestBuilder_BuildUpdateAccountRequest(T *testing.T) {
 func TestBuilder_BuildArchiveAccountRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/accounts/%d"
+	const expectedPathFormat = "/api/v1/accounts/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -250,7 +249,7 @@ func TestBuilder_BuildArchiveAccountRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildArchiveAccountRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildArchiveAccountRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -271,7 +270,7 @@ func TestBuilder_BuildArchiveAccountRequest(T *testing.T) {
 func TestBuilder_BuildAddUserRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/accounts/%d/member"
+	const expectedPathFormat = "/api/v1/accounts/%s/member"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -324,7 +323,7 @@ func TestBuilder_BuildAddUserRequest(T *testing.T) {
 func TestBuilder_BuildMarkAsDefaultRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/accounts/%d/default"
+	const expectedPathFormat = "/api/v1/accounts/%s/default"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -345,7 +344,7 @@ func TestBuilder_BuildMarkAsDefaultRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildMarkAsDefaultRequest(helper.ctx, 0)
+		actual, err := helper.builder.BuildMarkAsDefaultRequest(helper.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -366,7 +365,7 @@ func TestBuilder_BuildMarkAsDefaultRequest(T *testing.T) {
 func TestBuilder_BuildRemoveUserRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/accounts/%d/members/%d"
+	const expectedPathFormat = "/api/v1/accounts/%s/members/%s"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -391,7 +390,7 @@ func TestBuilder_BuildRemoveUserRequest(T *testing.T) {
 
 		reason := t.Name()
 
-		actual, err := helper.builder.BuildRemoveUserRequest(helper.ctx, 0, helper.exampleUser.ID, reason)
+		actual, err := helper.builder.BuildRemoveUserRequest(helper.ctx, "", helper.exampleUser.ID, reason)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -404,7 +403,7 @@ func TestBuilder_BuildRemoveUserRequest(T *testing.T) {
 
 		reason := t.Name()
 
-		actual, err := helper.builder.BuildRemoveUserRequest(helper.ctx, exampleAccountID, 0, reason)
+		actual, err := helper.builder.BuildRemoveUserRequest(helper.ctx, exampleAccountID, "", reason)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -427,7 +426,7 @@ func TestBuilder_BuildRemoveUserRequest(T *testing.T) {
 func TestBuilder_BuildModifyMemberPermissionsRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/accounts/%d/members/%d/permissions"
+	const expectedPathFormat = "/api/v1/accounts/%s/members/%s/permissions"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -451,7 +450,7 @@ func TestBuilder_BuildModifyMemberPermissionsRequest(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUserPermissionModificationInput()
 
-		actual, err := helper.builder.BuildModifyMemberPermissionsRequest(helper.ctx, 0, helper.exampleUser.ID, exampleInput)
+		actual, err := helper.builder.BuildModifyMemberPermissionsRequest(helper.ctx, "", helper.exampleUser.ID, exampleInput)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -464,7 +463,7 @@ func TestBuilder_BuildModifyMemberPermissionsRequest(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeUserPermissionModificationInput()
 
-		actual, err := helper.builder.BuildModifyMemberPermissionsRequest(helper.ctx, exampleAccountID, 0, exampleInput)
+		actual, err := helper.builder.BuildModifyMemberPermissionsRequest(helper.ctx, exampleAccountID, "", exampleInput)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -509,7 +508,7 @@ func TestBuilder_BuildModifyMemberPermissionsRequest(T *testing.T) {
 func TestBuilder_BuildTransferAccountOwnershipRequest(T *testing.T) {
 	T.Parallel()
 
-	const expectedPathFormat = "/api/v1/accounts/%d/transfer"
+	const expectedPathFormat = "/api/v1/accounts/%s/transfer"
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
@@ -533,7 +532,7 @@ func TestBuilder_BuildTransferAccountOwnershipRequest(T *testing.T) {
 
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
 
-		actual, err := helper.builder.BuildTransferAccountOwnershipRequest(helper.ctx, 0, exampleInput)
+		actual, err := helper.builder.BuildTransferAccountOwnershipRequest(helper.ctx, "", exampleInput)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -570,48 +569,6 @@ func TestBuilder_BuildTransferAccountOwnershipRequest(T *testing.T) {
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
 
 		actual, err := helper.builder.BuildTransferAccountOwnershipRequest(helper.ctx, exampleAccountID, exampleInput)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-}
-
-func TestBuilder_BuildGetAuditLogForAccountRequest(T *testing.T) {
-	T.Parallel()
-
-	const expectedPath = "/api/v1/accounts/%d/audit"
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-		exampleAccountID := fakes.BuildFakeID()
-
-		actual, err := helper.builder.BuildGetAuditLogForAccountRequest(helper.ctx, exampleAccountID)
-		require.NotNil(t, actual)
-		assert.NoError(t, err)
-
-		spec := newRequestSpec(true, http.MethodGet, "", expectedPath, exampleAccountID)
-		assertRequestQuality(t, actual, spec)
-	})
-
-	T.Run("with invalid account ID", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-
-		actual, err := helper.builder.BuildGetAuditLogForAccountRequest(helper.ctx, 0)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	T.Run("with invalid request builder", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper()
-		helper.builder = buildTestRequestBuilderWithInvalidURL()
-		exampleAccountID := fakes.BuildFakeID()
-
-		actual, err := helper.builder.BuildGetAuditLogForAccountRequest(helper.ctx, exampleAccountID)
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

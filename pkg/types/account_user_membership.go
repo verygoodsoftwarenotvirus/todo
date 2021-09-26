@@ -6,68 +6,89 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
+const (
+	// UserMembershipDataType indicates an event is user membership-related.
+	UserMembershipDataType dataType = "user_membership"
+)
+
 type (
 	// AccountUserMembership defines a relationship between a user and an account.
 	AccountUserMembership struct {
+		_ struct{}
+
 		ArchivedOn       *uint64  `json:"archivedOn"`
 		LastUpdatedOn    *uint64  `json:"lastUpdatedOn"`
+		ID               string   `json:"id"`
+		BelongsToUser    string   `json:"belongsToUser"`
+		BelongsToAccount string   `json:"belongsToAccount"`
 		AccountRoles     []string `json:"accountRole"`
-		BelongsToUser    uint64   `json:"belongsToUser"`
-		BelongsToAccount uint64   `json:"belongsToAccount"`
 		CreatedOn        uint64   `json:"createdOn"`
-		ID               uint64   `json:"id"`
 		DefaultAccount   bool     `json:"defaultAccount"`
 	}
 
 	// AccountUserMembershipList represents a list of account user memberships.
 	AccountUserMembershipList struct {
+		_ struct{}
+
 		AccountUserMemberships []*AccountUserMembership `json:"accountUserMemberships"`
 		Pagination
 	}
 
 	// AccountUserMembershipCreationInput represents what a User could set as input for creating account user memberships.
 	AccountUserMembershipCreationInput struct {
-		BelongsToUser    uint64 `json:"belongsToUser"`
-		BelongsToAccount uint64 `json:"belongsToAccount"`
+		_ struct{}
+
+		ID               string `json:"-"`
+		BelongsToUser    string `json:"belongsToUser"`
+		BelongsToAccount string `json:"belongsToAccount"`
 	}
 
 	// AccountUserMembershipUpdateInput represents what a User could set as input for updating account user memberships.
 	AccountUserMembershipUpdateInput struct {
-		BelongsToUser    uint64 `json:"belongsToUser"`
-		BelongsToAccount uint64 `json:"belongsToAccount"`
+		_ struct{}
+
+		BelongsToUser    string `json:"belongsToUser"`
+		BelongsToAccount string `json:"belongsToAccount"`
 	}
 
 	// AddUserToAccountInput represents what a User could set as input for updating account user memberships.
 	AddUserToAccountInput struct {
+		_ struct{}
+
+		ID           string   `json:"-"`
 		Reason       string   `json:"reason"`
+		UserID       string   `json:"userID"`
+		AccountID    string   `json:"accountID"`
 		AccountRoles []string `json:"accountRole"`
-		UserID       uint64   `json:"userID"`
-		AccountID    uint64   `json:"accountID"`
 	}
 
 	// AccountOwnershipTransferInput represents what a User could set as input for updating account user memberships.
 	AccountOwnershipTransferInput struct {
+		_ struct{}
+
 		Reason       string `json:"reason"`
-		CurrentOwner uint64 `json:"currentOwner"`
-		NewOwner     uint64 `json:"newOwner"`
+		CurrentOwner string `json:"currentOwner"`
+		NewOwner     string `json:"newOwner"`
 	}
 
 	// ModifyUserPermissionsInput  represents what a User could set as input for updating account user memberships.
 	ModifyUserPermissionsInput struct {
+		_ struct{}
+
 		Reason   string   `json:"reason"`
 		NewRoles []string `json:"newRoles"`
 	}
 
 	// AccountUserMembershipDataManager describes a structure capable of storing accountUserMemberships permanently.
 	AccountUserMembershipDataManager interface {
-		BuildSessionContextDataForUser(ctx context.Context, userID uint64) (*SessionContextData, error)
-		GetDefaultAccountIDForUser(ctx context.Context, userID uint64) (uint64, error)
-		MarkAccountAsUserDefault(ctx context.Context, userID, accountID, changedByUser uint64) error
-		UserIsMemberOfAccount(ctx context.Context, userID, accountID uint64) (bool, error)
-		ModifyUserPermissions(ctx context.Context, accountID, userID, changedByUser uint64, input *ModifyUserPermissionsInput) error
-		TransferAccountOwnership(ctx context.Context, accountID uint64, transferredBy uint64, input *AccountOwnershipTransferInput) error
-		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput, addedByUser uint64) error
-		RemoveUserFromAccount(ctx context.Context, userID, accountID, removedByUser uint64, reason string) error
+		BuildSessionContextDataForUser(ctx context.Context, userID string) (*SessionContextData, error)
+		GetDefaultAccountIDForUser(ctx context.Context, userID string) (string, error)
+		MarkAccountAsUserDefault(ctx context.Context, userID, accountID string) error
+		UserIsMemberOfAccount(ctx context.Context, userID, accountID string) (bool, error)
+		ModifyUserPermissions(ctx context.Context, accountID, userID string, input *ModifyUserPermissionsInput) error
+		TransferAccountOwnership(ctx context.Context, accountID string, input *AccountOwnershipTransferInput) error
+		AddUserToAccount(ctx context.Context, input *AddUserToAccountInput) error
+		RemoveUserFromAccount(ctx context.Context, userID, accountID string) error
 	}
 )
 

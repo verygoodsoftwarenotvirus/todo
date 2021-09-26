@@ -7,14 +7,14 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func attachCookieToRequestForTest(t *testing.T, s *service, req *http.Request, user *types.User) (context.Context, *http.Request, string) {
@@ -49,8 +49,8 @@ type authServiceHTTPRoutesTestHelper struct {
 	exampleUser         *types.User
 	exampleAccount      *types.Account
 	exampleAPIClient    *types.APIClient
-	examplePerms        map[uint64]*types.UserAccountMembershipInfo
-	examplePermCheckers map[uint64]authorization.AccountRolePermissionsChecker
+	examplePerms        map[string]*types.UserAccountMembershipInfo
+	examplePermCheckers map[string]authorization.AccountRolePermissionsChecker
 	exampleLoginInput   *types.UserLoginInput
 }
 
@@ -88,13 +88,13 @@ func buildTestHelper(t *testing.T) *authServiceHTTPRoutesTestHelper {
 	helper.exampleAPIClient.BelongsToUser = helper.exampleUser.ID
 	helper.exampleLoginInput = fakes.BuildFakeUserLoginInputFromUser(helper.exampleUser)
 
-	helper.examplePerms = map[uint64]*types.UserAccountMembershipInfo{
+	helper.examplePerms = map[string]*types.UserAccountMembershipInfo{
 		helper.exampleAccount.ID: {
 			AccountName:  helper.exampleAccount.Name,
 			AccountRoles: []string{authorization.AccountMemberRole.String()},
 		},
 	}
-	helper.examplePermCheckers = map[uint64]authorization.AccountRolePermissionsChecker{
+	helper.examplePermCheckers = map[string]authorization.AccountRolePermissionsChecker{
 		helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 	}
 

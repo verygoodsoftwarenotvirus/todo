@@ -1,9 +1,9 @@
 package bleve
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-
 	"github.com/google/wire"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 )
 
 var (

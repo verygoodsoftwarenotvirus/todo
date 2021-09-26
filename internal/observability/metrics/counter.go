@@ -3,9 +3,9 @@ package metrics
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"go.opentelemetry.io/otel/metric"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 )
 
 var _ UnitCounter = (*unitCounter)(nil)

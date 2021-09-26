@@ -34,7 +34,7 @@ func newTestHelper(t *testing.T) *usersServiceHTTPRoutesTestHelper {
 	helper.exampleAccount = fakes.BuildFakeAccount()
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 
-	helper.service.userIDFetcher = func(*http.Request) uint64 {
+	helper.service.userIDFetcher = func(*http.Request) string {
 		return helper.exampleUser.ID
 	}
 
@@ -46,7 +46,7 @@ func newTestHelper(t *testing.T) *usersServiceHTTPRoutesTestHelper {
 			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 		},
 		ActiveAccountID: helper.exampleAccount.ID,
-		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+		AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
 			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	}

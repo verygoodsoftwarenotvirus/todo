@@ -4,9 +4,9 @@ import (
 	"context"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // UsersService is a mock types.UsersService.
@@ -36,11 +36,6 @@ func (m *UsersService) TOTPSecretVerificationInputMiddleware(next http.Handler) 
 
 // ListHandler satisfies our interface contract.
 func (m *UsersService) ListHandler(res http.ResponseWriter, req *http.Request) {
-	m.Called(res, req)
-}
-
-// AuditEntryHandler satisfies our interface contract.
-func (m *UsersService) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
 	m.Called(res, req)
 }
 

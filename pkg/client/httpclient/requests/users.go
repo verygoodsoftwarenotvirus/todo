@@ -20,18 +20,18 @@ const (
 )
 
 // BuildGetUserRequest builds an HTTP request for fetching a user.
-func (b *Builder) BuildGetUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+func (b *Builder) BuildGetUserRequest(ctx context.Context, userID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
 	logger := b.logger.WithValue(keys.UserIDKey, userID)
 	tracing.AttachUserIDToSpan(span, userID)
 
-	uri := b.BuildURL(ctx, nil, usersBasePath, id(userID))
+	uri := b.BuildURL(ctx, nil, usersBasePath, userID)
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 	if err != nil {
@@ -103,11 +103,11 @@ func (b *Builder) BuildCreateUserRequest(ctx context.Context, input *types.UserR
 }
 
 // BuildArchiveUserRequest builds an HTTP request for archiving a user.
-func (b *Builder) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
+func (b *Builder) BuildArchiveUserRequest(ctx context.Context, userID string) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -116,7 +116,7 @@ func (b *Builder) BuildArchiveUserRequest(ctx context.Context, userID uint64) (*
 
 	// deliberately not validating here, maybe there should make a client-side validate method vs a server-side?
 
-	uri := b.buildAPIV1URL(ctx, nil, usersBasePath, id(userID)).String()
+	uri := b.buildAPIV1URL(ctx, nil, usersBasePath, userID).String()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodDelete, uri, nil)
 	if err != nil {
@@ -175,29 +175,6 @@ func (b *Builder) BuildAvatarUploadRequest(ctx context.Context, avatar []byte, e
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
 	req.Header.Set("X-Upload-Content-Type", ct)
-
-	return req, nil
-}
-
-// BuildGetAuditLogForUserRequest builds an HTTP request for fetching a list of audit log entries for a user.
-func (b *Builder) BuildGetAuditLogForUserRequest(ctx context.Context, userID uint64) (*http.Request, error) {
-	ctx, span := b.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if userID == 0 {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := b.logger.WithValue(keys.UserIDKey, userID)
-	tracing.AttachUserIDToSpan(span, userID)
-
-	uri := b.BuildURL(ctx, nil, usersBasePath, id(userID), "audit")
-	tracing.AttachRequestURIToSpan(span, uri)
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building user status request")
-	}
 
 	return req, nil
 }

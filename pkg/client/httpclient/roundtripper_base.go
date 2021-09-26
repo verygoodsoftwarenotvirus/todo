@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"github.com/hashicorp/go-retryablehttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 )
 
 const (
@@ -27,6 +27,10 @@ const (
 	idleConnTimeout       = 3 * defaultTimeout
 	maxIdleConns          = 100
 )
+
+type authHeaderBuilder interface {
+	BuildRequestHeaders(ctx context.Context) (http.Header, error)
+}
 
 type defaultRoundTripper struct {
 	baseRoundTripper http.RoundTripper

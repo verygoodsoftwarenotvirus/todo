@@ -8,13 +8,13 @@ import (
 	"net/url"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 )
 
 type (
@@ -275,6 +275,7 @@ func TestBuilder_BuildHealthCheckRequest(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expectedMethod := http.MethodGet
@@ -289,6 +290,7 @@ func TestBuilder_BuildHealthCheckRequest(T *testing.T) {
 
 	T.Run("with invalid request builder", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		c := buildTestRequestBuilderWithInvalidURL()

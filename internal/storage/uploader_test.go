@@ -6,11 +6,11 @@ import (
 	"os"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
 )
 
 func TestConfig_ValidateWithContext(T *testing.T) {

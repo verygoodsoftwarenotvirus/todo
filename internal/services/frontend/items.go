@@ -94,7 +94,7 @@ const (
 )
 
 // parseFormEncodedItemCreationInput checks a request for an ItemCreationInput.
-func (s *service) parseFormEncodedItemCreationInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemCreationInput) {
+func (s *service) parseFormEncodedItemCreationInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemDatabaseCreationInput) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -107,16 +107,10 @@ func (s *service) parseFormEncodedItemCreationInput(ctx context.Context, req *ht
 		return nil
 	}
 
-	creationInput = &types.ItemCreationInput{
+	creationInput = &types.ItemDatabaseCreationInput{
 		Name:             form.Get(itemCreationInputNameFormKey),
 		Details:          form.Get(itemCreationInputDetailsFormKey),
 		BelongsToAccount: sessionCtxData.ActiveAccountID,
-	}
-
-	if err = creationInput.ValidateWithContext(ctx); err != nil {
-		logger = logger.WithValue("input", creationInput)
-		observability.AcknowledgeError(err, logger, span, "invalid item creation input")
-		return nil
 	}
 
 	return creationInput
@@ -149,7 +143,7 @@ func (s *service) handleItemCreationRequest(res http.ResponseWriter, req *http.R
 
 	logger.Debug("item creation input parsed successfully")
 
-	if _, err = s.dataStore.CreateItem(ctx, creationInput, sessionCtxData.Requester.UserID); err != nil {
+	if _, err = s.dataStore.CreateItem(ctx, creationInput); err != nil {
 		observability.AcknowledgeError(err, logger, span, "writing item to datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -188,7 +182,7 @@ func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 
 		tmplFuncMap := map[string]interface{}{
 			"componentTitle": func(x *types.Item) string {
-				return fmt.Sprintf("Item #%d", x.ID)
+				return fmt.Sprintf("Item %s", x.ID)
 			},
 		}
 
@@ -197,7 +191,7 @@ func (s *service) buildItemEditorView(includeBaseTemplate bool) func(http.Respon
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
-				Title:       fmt.Sprintf("Item #%d", item.ID),
+				Title:       fmt.Sprintf("Item %s", item.ID),
 				ContentData: item,
 			}
 			if sessionCtxData != nil {
@@ -263,11 +257,11 @@ func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.Item) template.URL {
 				// #nosec G203
-				return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
+				return template.URL(fmt.Sprintf("/dashboard_pages/items/%s", x.ID))
 			},
 			"pushURL": func(x *types.Item) template.URL {
 				// #nosec G203
-				return template.URL(fmt.Sprintf("/items/%d", x.ID))
+				return template.URL(fmt.Sprintf("/items/%s", x.ID))
 			},
 		}
 
@@ -349,9 +343,9 @@ func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 		return
 	}
 
-	changes := item.Update(updateInput)
+	item.Update(updateInput)
 
-	if err = s.dataStore.UpdateItem(ctx, item, sessionCtxData.Requester.UserID, changes); err != nil {
+	if err = s.dataStore.UpdateItem(ctx, item); err != nil {
 		observability.AcknowledgeError(err, logger, span, "fetching item from datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -359,7 +353,7 @@ func (s *service) handleItemUpdateRequest(res http.ResponseWriter, req *http.Req
 
 	tmplFuncMap := map[string]interface{}{
 		"componentTitle": func(x *types.Item) string {
-			return fmt.Sprintf("Item #%d", x.ID)
+			return fmt.Sprintf("Item %s", x.ID)
 		},
 	}
 
@@ -386,7 +380,7 @@ func (s *service) handleItemArchiveRequest(res http.ResponseWriter, req *http.Re
 	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
-	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID, sessionCtxData.Requester.UserID); err != nil {
+	if err = s.dataStore.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "archiving items in datastore")
 		res.WriteHeader(http.StatusInternalServerError)
 		return
@@ -402,11 +396,11 @@ func (s *service) handleItemArchiveRequest(res http.ResponseWriter, req *http.Re
 	tmplFuncMap := map[string]interface{}{
 		"individualURL": func(x *types.Item) template.URL {
 			// #nosec G203
-			return template.URL(fmt.Sprintf("/dashboard_pages/items/%d", x.ID))
+			return template.URL(fmt.Sprintf("/dashboard_pages/items/%s", x.ID))
 		},
 		"pushURL": func(x *types.Item) template.URL {
 			// #nosec G203
-			return template.URL(fmt.Sprintf("/items/%d", x.ID))
+			return template.URL(fmt.Sprintf("/items/%s", x.ID))
 		},
 	}
 

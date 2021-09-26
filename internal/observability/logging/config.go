@@ -8,6 +8,8 @@ const (
 type (
 	// Config configures a zerologLogger.
 	Config struct {
+		_ struct{}
+
 		Name     string `json:"name"  mapstructure:"name" toml:"name"`
 		Level    Level  `json:"level"  mapstructure:"level" toml:"level"`
 		Provider string `json:"provider" mapstructure:"provider" toml:"provider"`
@@ -26,7 +28,10 @@ func ProvideLogger(cfg Config) Logger {
 	}
 
 	l.SetLevel(cfg.Level)
-	l = l.WithName(cfg.Name)
+
+	if cfg.Name != "" {
+		l = l.WithName(cfg.Name)
+	}
 
 	return l
 }

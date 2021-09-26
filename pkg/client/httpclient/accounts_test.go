@@ -3,10 +3,8 @@ package httpclient
 import (
 	"context"
 	"net/http"
-	"net/url"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 
@@ -46,7 +44,7 @@ func (s *accountsTestSuite) TestClient_SwitchActiveAccount() {
 	s.Run("standard", func() {
 		t := s.T()
 
-		s.exampleAccount.BelongsToUser = 0
+		s.exampleAccount.BelongsToUser = ""
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusAccepted)
@@ -61,7 +59,7 @@ func (s *accountsTestSuite) TestClient_SwitchActiveAccount() {
 		c, _ := buildSimpleTestClient(t)
 		c.authMethod = cookieAuthMethod
 
-		assert.Error(t, c.SwitchActiveAccount(s.ctx, 0))
+		assert.Error(t, c.SwitchActiveAccount(s.ctx, ""))
 	})
 
 	s.Run("with error building request", func() {
@@ -84,7 +82,7 @@ func (s *accountsTestSuite) TestClient_SwitchActiveAccount() {
 }
 
 func (s *accountsTestSuite) TestClient_GetAccount() {
-	const expectedPathFormat = "/api/v1/accounts/%d"
+	const expectedPathFormat = "/api/v1/accounts/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -104,7 +102,7 @@ func (s *accountsTestSuite) TestClient_GetAccount() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.GetAccount(s.ctx, 0)
+		actual, err := c.GetAccount(s.ctx, "")
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
@@ -178,7 +176,7 @@ func (s *accountsTestSuite) TestClient_CreateAccount() {
 	s.Run("standard", func() {
 		t := s.T()
 
-		s.exampleAccount.BelongsToUser = 0
+		s.exampleAccount.BelongsToUser = ""
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
 
 		c := buildTestClientWithRequestBodyValidation(t, spec, exampleInput, exampleInput, s.exampleAccount)
@@ -224,7 +222,7 @@ func (s *accountsTestSuite) TestClient_CreateAccount() {
 	s.Run("with error executing request", func() {
 		t := s.T()
 
-		s.exampleAccount.BelongsToUser = 0
+		s.exampleAccount.BelongsToUser = ""
 		exampleInput := fakes.BuildFakeAccountCreationInputFromAccount(s.exampleAccount)
 
 		c, _ := buildTestClientThatWaitsTooLong(t)
@@ -236,7 +234,7 @@ func (s *accountsTestSuite) TestClient_CreateAccount() {
 }
 
 func (s *accountsTestSuite) TestClient_UpdateAccount() {
-	const expectedPathFormat = "/api/v1/accounts/%d"
+	const expectedPathFormat = "/api/v1/accounts/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -274,7 +272,7 @@ func (s *accountsTestSuite) TestClient_UpdateAccount() {
 }
 
 func (s *accountsTestSuite) TestClient_ArchiveAccount() {
-	const expectedPathFormat = "/api/v1/accounts/%d"
+	const expectedPathFormat = "/api/v1/accounts/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -290,7 +288,7 @@ func (s *accountsTestSuite) TestClient_ArchiveAccount() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		assert.Error(t, c.ArchiveAccount(s.ctx, 0), "no error should be returned")
+		assert.Error(t, c.ArchiveAccount(s.ctx, ""), "no error should be returned")
 	})
 
 	s.Run("with error building request", func() {
@@ -310,7 +308,7 @@ func (s *accountsTestSuite) TestClient_ArchiveAccount() {
 }
 
 func (s *accountsTestSuite) TestClient_AddUserToAccount() {
-	const expectedPathFormat = "/api/v1/accounts/%d/member"
+	const expectedPathFormat = "/api/v1/accounts/%s/member"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -358,7 +356,7 @@ func (s *accountsTestSuite) TestClient_AddUserToAccount() {
 }
 
 func (s *accountsTestSuite) TestClient_MarkAsDefault() {
-	const expectedPathFormat = "/api/v1/accounts/%d/default"
+	const expectedPathFormat = "/api/v1/accounts/%s/default"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -374,7 +372,7 @@ func (s *accountsTestSuite) TestClient_MarkAsDefault() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		assert.Error(t, c.MarkAsDefault(s.ctx, 0))
+		assert.Error(t, c.MarkAsDefault(s.ctx, ""))
 	})
 
 	s.Run("with error building request", func() {
@@ -395,16 +393,15 @@ func (s *accountsTestSuite) TestClient_MarkAsDefault() {
 }
 
 func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
-	const expectedPathFormat = "/api/v1/accounts/%d/members/%d"
+	const expectedPathFormat = "/api/v1/accounts/%s/members/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
 
-		query := url.Values{keys.ReasonKey: []string{t.Name()}}.Encode()
-		spec := newRequestSpec(true, http.MethodDelete, query, expectedPathFormat, s.exampleAccount.ID, s.exampleUser.ID)
+		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAccount.ID, s.exampleUser.ID)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
-		assert.NoError(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID, t.Name()))
+		assert.NoError(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID))
 	})
 
 	s.Run("with invalid account ID", func() {
@@ -412,7 +409,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, 0, s.exampleUser.ID, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(s.ctx, "", s.exampleUser.ID))
 	})
 
 	s.Run("with invalid user ID", func() {
@@ -420,15 +417,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, 0, t.Name()))
-	})
-
-	s.Run("with invalid reason", func() {
-		t := s.T()
-
-		c, _ := buildSimpleTestClient(t)
-
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID, ""))
+		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, ""))
 	})
 
 	s.Run("with error building request", func() {
@@ -436,7 +425,7 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 
 		c := buildTestClientWithInvalidURL(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID))
 	})
 
 	s.Run("with error executing request", func() {
@@ -444,12 +433,12 @@ func (s *accountsTestSuite) TestClient_RemoveUserFromAccount() {
 
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
-		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID, t.Name()))
+		assert.Error(t, c.RemoveUserFromAccount(s.ctx, s.exampleAccount.ID, s.exampleUser.ID))
 	})
 }
 
 func (s *accountsTestSuite) TestClient_ModifyMemberPermissions() {
-	const expectedPathFormat = "/api/v1/accounts/%d/members/%d/permissions"
+	const expectedPathFormat = "/api/v1/accounts/%s/members/%s/permissions"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -467,7 +456,7 @@ func (s *accountsTestSuite) TestClient_ModifyMemberPermissions() {
 		c, _ := buildSimpleTestClient(t)
 		exampleInput := fakes.BuildFakeUserPermissionModificationInput()
 
-		assert.Error(t, c.ModifyMemberPermissions(s.ctx, 0, s.exampleUser.ID, exampleInput))
+		assert.Error(t, c.ModifyMemberPermissions(s.ctx, "", s.exampleUser.ID, exampleInput))
 	})
 
 	s.Run("with invalid user ID", func() {
@@ -476,7 +465,7 @@ func (s *accountsTestSuite) TestClient_ModifyMemberPermissions() {
 		c, _ := buildSimpleTestClient(t)
 		exampleInput := fakes.BuildFakeUserPermissionModificationInput()
 
-		assert.Error(t, c.ModifyMemberPermissions(s.ctx, s.exampleAccount.ID, 0, exampleInput))
+		assert.Error(t, c.ModifyMemberPermissions(s.ctx, s.exampleAccount.ID, "", exampleInput))
 	})
 
 	s.Run("with nil input", func() {
@@ -516,7 +505,7 @@ func (s *accountsTestSuite) TestClient_ModifyMemberPermissions() {
 }
 
 func (s *accountsTestSuite) TestClient_TransferAccountOwnership() {
-	const expectedPathFormat = "/api/v1/accounts/%d/transfer"
+	const expectedPathFormat = "/api/v1/accounts/%s/transfer"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -534,7 +523,7 @@ func (s *accountsTestSuite) TestClient_TransferAccountOwnership() {
 		c, _ := buildSimpleTestClient(t)
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
 
-		assert.Error(t, c.TransferAccountOwnership(s.ctx, 0, exampleInput))
+		assert.Error(t, c.TransferAccountOwnership(s.ctx, "", exampleInput))
 	})
 
 	s.Run("with nil input", func() {
@@ -570,57 +559,5 @@ func (s *accountsTestSuite) TestClient_TransferAccountOwnership() {
 		exampleInput := fakes.BuildFakeTransferAccountOwnershipInput()
 
 		assert.Error(t, c.TransferAccountOwnership(s.ctx, s.exampleAccount.ID, exampleInput))
-	})
-}
-
-func (s *accountsTestSuite) TestClient_GetAuditLogForAccount() {
-	const (
-		expectedPath   = "/api/v1/accounts/%d/audit"
-		expectedMethod = http.MethodGet
-	)
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
-
-		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-
-		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
-		require.NotNil(t, actual)
-		assert.NoError(t, err)
-		assert.Equal(t, exampleAuditLogEntryList, actual)
-	})
-
-	s.Run("with invalid account ID", func() {
-		t := s.T()
-
-		c, _ := buildSimpleTestClient(t)
-
-		actual, err := c.GetAuditLogForAccount(s.ctx, 0)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-	})
-
-	s.Run("with error building request", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-
-		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	s.Run("with error executing request", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAccount.ID)
-		c := buildTestClientWithInvalidResponse(t, spec)
-
-		actual, err := c.GetAuditLogForAccount(s.ctx, s.exampleAccount.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
 	})
 }

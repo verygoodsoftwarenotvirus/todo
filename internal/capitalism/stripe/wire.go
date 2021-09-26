@@ -1,9 +1,9 @@
 package stripe
 
 import (
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-
 	"github.com/google/wire"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 )
 
 var (

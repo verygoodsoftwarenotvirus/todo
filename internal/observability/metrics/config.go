@@ -7,13 +7,13 @@ import (
 	"sync"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"go.opentelemetry.io/contrib/instrumentation/runtime"
 	otelprom "go.opentelemetry.io/otel/exporters/metric/prometheus"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/unit"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 const (
@@ -36,6 +36,8 @@ const (
 type (
 	// Config contains settings related to .
 	Config struct {
+		_ struct{}
+
 		// Provider indicates where our metrics should go.
 		Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
 		// RouteToken indicates how the metrics route should be authenticated.

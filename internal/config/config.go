@@ -2,35 +2,32 @@ package config
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"fmt"
 	"os"
 	"strings"
-	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querier"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/mariadb"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/postgres"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/querybuilding/sqlite"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/mysql"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/postgres"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	msgconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	auditservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/audit"
+	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
 	webhooksservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/webhooks"
+	websocketsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/websockets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/uploads"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
@@ -40,14 +37,9 @@ const (
 	TestingRunMode runMode = "testing"
 	// ProductionRunMode is the run mode for a production environment.
 	ProductionRunMode runMode = "production"
-	// DefaultRunMode is the default run mode.
-	DefaultRunMode = DevelopmentRunMode
-	// DefaultStartupDeadline is the default amount of time we allow for server startup.
-	DefaultStartupDeadline = time.Minute
 )
 
 var (
-	errNilDatabaseConnection   = errors.New("nil DB connection provided")
 	errNilConfig               = errors.New("nil config provided")
 	errInvalidDatabaseProvider = errors.New("invalid database provider")
 )
@@ -58,23 +50,27 @@ type (
 
 	// ServicesConfigurations collects the various service configurations.
 	ServicesConfigurations struct {
-		Items    itemsservice.Config    `json:"items" mapstructure:"items" toml:"items,omitempty"`
-		Auth     authservice.Config     `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
-		Webhooks webhooksservice.Config `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
-		AuditLog auditservice.Config    `json:"auditLog" mapstructure:"audit_log" toml:"audit_log,omitempty"`
-		Frontend frontendservice.Config `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
+		_          struct{}
+		Items      itemsservice.Config      `json:"items" mapstructure:"items" toml:"items,omitempty"`
+		Websockets websocketsservice.Config `json:"websockets" mapstructure:"websockets" toml:"websockets,omitempty"`
+		Webhooks   webhooksservice.Config   `json:"webhooks" mapstructure:"webhooks" toml:"webhooks,omitempty"`
+		Accounts   accountsservice.Config   `json:"accounts" mapstructure:"accounts" toml:"accounts,omitempty"`
+		Auth       authservice.Config       `json:"auth" mapstructure:"auth" toml:"auth,omitempty"`
+		Frontend   frontendservice.Config   `json:"frontend" mapstructure:"frontend" toml:"frontend,omitempty"`
 	}
 
 	// InstanceConfig configures an instance of the service. It is composed of all the other setting structs.
 	InstanceConfig struct {
+		_             struct{}
+		Events        msgconfig.Config       `json:"events" mapstructure:"events" toml:"events,omitempty"`
 		Search        search.Config          `json:"search" mapstructure:"search" toml:"search,omitempty"`
 		Encoding      encoding.Config        `json:"encoding" mapstructure:"encoding" toml:"encoding,omitempty"`
 		Uploads       uploads.Config         `json:"uploads" mapstructure:"uploads" toml:"uploads,omitempty"`
 		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
+		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Capitalism    capitalism.Config      `json:"capitalism" mapstructure:"capitalism" toml:"capitalism,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
-		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
 		Services      ServicesConfigurations `json:"services" mapstructure:"services" toml:"services,omitempty"`
 		Server        server.Config          `json:"server" mapstructure:"server" toml:"server,omitempty"`
 	}
@@ -134,10 +130,6 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 		return fmt.Errorf("error validating HTTPServer portion of config: %w", err)
 	}
 
-	if err := cfg.Services.AuditLog.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating AuditLog portion of config: %w", err)
-	}
-
 	if err := cfg.Services.Auth.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating Auth service portion of config: %w", err)
 	}
@@ -159,28 +151,19 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 
 // ProvideDatabaseClient provides a database implementation dependent on the configuration.
 // NOTE: you may be tempted to move this to the database/config package. This is a fool's errand.
-func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, rawDB *sql.DB, cfg *InstanceConfig) (database.DataManager, error) {
-	if rawDB == nil {
-		return nil, errNilDatabaseConnection
-	}
-
+func ProvideDatabaseClient(ctx context.Context, logger logging.Logger, cfg *InstanceConfig) (database.DataManager, error) {
 	if cfg == nil {
 		return nil, errNilConfig
 	}
 
-	var qb querybuilding.SQLQueryBuilder
 	shouldCreateTestUser := cfg.Meta.RunMode != ProductionRunMode
 
 	switch strings.ToLower(strings.TrimSpace(cfg.Database.Provider)) {
-	case "sqlite":
-		qb = sqlite.ProvideSqlite(logger)
-	case "mariadb":
-		qb = mariadb.ProvideMariaDB(logger)
-	case "postgres":
-		qb = postgres.ProvidePostgres(logger)
+	case dbconfig.MySQLProvider:
+		return mysql.ProvideDatabaseClient(ctx, logger, &cfg.Database, shouldCreateTestUser)
+	case dbconfig.PostgresProvider:
+		return postgres.ProvideDatabaseClient(ctx, logger, &cfg.Database, shouldCreateTestUser)
 	default:
 		return nil, fmt.Errorf("%w: %q", errInvalidDatabaseProvider, cfg.Database.Provider)
 	}
-
-	return querier.ProvideDatabaseClient(ctx, logger, rawDB, &cfg.Database, qb, shouldCreateTestUser)
 }

@@ -35,7 +35,7 @@ type (
 		userDataManager           types.UserDataManager
 		authenticator             authentication.Authenticator
 		encoderDecoder            encoding.ServerEncoderDecoder
-		urlClientIDExtractor      func(req *http.Request) uint64
+		urlClientIDExtractor      func(req *http.Request) string
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		apiClientCounter          metrics.UnitCounter
 		secretGenerator           random.Generator
@@ -61,7 +61,7 @@ func ProvideAPIClientsService(
 		userDataManager:           userDataManager,
 		authenticator:             authenticator,
 		encoderDecoder:            encoderDecoder,
-		urlClientIDExtractor:      routeParamManager.BuildRouteParamIDFetcher(logger, APIClientIDURIParamKey, "api client"),
+		urlClientIDExtractor:      routeParamManager.BuildRouteParamStringIDFetcher(APIClientIDURIParamKey),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		apiClientCounter:          metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		secretGenerator:           random.NewGenerator(logger),

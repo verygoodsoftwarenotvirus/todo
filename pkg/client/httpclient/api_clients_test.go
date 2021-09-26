@@ -5,12 +5,12 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func TestAPIClients(t *testing.T) {
@@ -41,7 +41,7 @@ func (s *apiClientsTestSuite) SetupTest() {
 }
 
 func (s *apiClientsTestSuite) TestClient_GetAPIClient() {
-	const expectedPathFormat = "/api/v1/api_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -61,7 +61,7 @@ func (s *apiClientsTestSuite) TestClient_GetAPIClient() {
 		spec := newRequestSpec(true, http.MethodGet, "", expectedPathFormat, s.exampleAPIClient.ID)
 		c, _ := buildTestClientWithJSONResponse(t, spec, s.exampleAPIClient)
 
-		actual, err := c.GetAPIClient(s.ctx, 0)
+		actual, err := c.GetAPIClient(s.ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -182,7 +182,7 @@ func (s *apiClientsTestSuite) TestClient_CreateAPIClient() {
 }
 
 func (s *apiClientsTestSuite) TestClient_ArchiveAPIClient() {
-	const expectedPathFormat = "/api/v1/api_clients/%d"
+	const expectedPathFormat = "/api/v1/api_clients/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -199,7 +199,7 @@ func (s *apiClientsTestSuite) TestClient_ArchiveAPIClient() {
 		spec := newRequestSpec(true, http.MethodDelete, "", expectedPathFormat, s.exampleAPIClient.ID)
 		c, _ := buildTestClientWithStatusCodeResponse(t, spec, http.StatusOK)
 
-		assert.Error(t, c.ArchiveAPIClient(s.ctx, 0), "no error should be returned")
+		assert.Error(t, c.ArchiveAPIClient(s.ctx, ""), "no error should be returned")
 	})
 
 	s.Run("with error building request", func() {
@@ -215,60 +215,5 @@ func (s *apiClientsTestSuite) TestClient_ArchiveAPIClient() {
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
 		assert.Error(t, c.ArchiveAPIClient(s.ctx, s.exampleAPIClient.ID), "no error should be returned")
-	})
-}
-
-func (s *apiClientsTestSuite) TestClient_GetAuditLogForAPIClient() {
-	const (
-		expectedPath   = "/api/v1/api_clients/%d/audit"
-		expectedMethod = http.MethodGet
-	)
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-
-		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-
-		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
-		require.NotNil(t, actual)
-		assert.NoError(t, err)
-		assert.Equal(t, exampleAuditLogEntryList, actual)
-	})
-
-	s.Run("with invalid API client ID", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-
-		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-
-		actual, err := c.GetAuditLogForAPIClient(s.ctx, 0)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	s.Run("with error building request", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-
-		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	s.Run("with error executing request", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleAPIClient.ID)
-		c := buildTestClientWithInvalidResponse(t, spec)
-
-		actual, err := c.GetAuditLogForAPIClient(s.ctx, s.exampleAPIClient.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
 	})
 }

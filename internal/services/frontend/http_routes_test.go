@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-
-	"github.com/stretchr/testify/mock"
 )
 
 func TestService_SetupRoutes(T *testing.T) {

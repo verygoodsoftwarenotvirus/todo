@@ -68,7 +68,7 @@ func (s *service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 
 		tmplFuncMap := map[string]interface{}{
 			"componentTitle": func(x *types.APIClient) string {
-				return fmt.Sprintf("Client #%d", x.ID)
+				return fmt.Sprintf("Client %s", x.ID)
 			},
 		}
 
@@ -81,7 +81,7 @@ func (s *service) buildAPIClientEditorView(includeBaseTemplate bool) func(http.R
 
 			page := &pageData{
 				IsLoggedIn:  sessionCtxData != nil,
-				Title:       fmt.Sprintf("APIClient #%d", apiClient.ID),
+				Title:       fmt.Sprintf("APIClient %s", apiClient.ID),
 				ContentData: apiClient,
 			}
 			if sessionCtxData != nil {
@@ -141,11 +141,11 @@ func (s *service) buildAPIClientsTableView(includeBaseTemplate bool) func(http.R
 		tmplFuncMap := map[string]interface{}{
 			"individualURL": func(x *types.APIClient) template.URL {
 				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/api_clients/%d", x.ID))
+				return template.URL(fmt.Sprintf("/api_clients/%s", x.ID))
 			},
 			"pushURL": func(x *types.APIClient) template.URL {
 				/* #nosec G203 */
-				return template.URL(fmt.Sprintf("/api_clients/%d", x.ID))
+				return template.URL(fmt.Sprintf("/api_clients/%s", x.ID))
 			},
 		}
 

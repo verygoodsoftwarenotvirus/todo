@@ -16,7 +16,7 @@ func TestChangeActiveAccountInput_ValidateWithContext(T *testing.T) {
 
 		ctx := context.Background()
 		x := &ChangeActiveAccountInput{
-			AccountID: 123,
+			AccountID: "123",
 		}
 
 		assert.NoError(t, x.ValidateWithContext(ctx))

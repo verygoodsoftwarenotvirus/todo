@@ -17,15 +17,17 @@ var (
 			"Encoding",
 			"Uploads",
 			"Search",
+			"Events",
 			"Server",
 			"Services",
 		),
 		wire.FieldsOf(
 			new(*ServicesConfigurations),
-			"AuditLog",
 			"Auth",
 			"Frontend",
 			"Webhooks",
+			"Websockets",
+			"Accounts",
 			"Items",
 		),
 	)

@@ -6,12 +6,12 @@ import (
 	"net/url"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	useragent "github.com/mssola/user_agent"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 func attachUint8ToSpan(span trace.Span, attachmentKey string, id uint8) {
@@ -56,36 +56,19 @@ func AttachFilterToSpan(span trace.Span, page uint64, limit uint8, sortBy string
 	attachStringToSpan(span, keys.FilterSortByKey, sortBy)
 }
 
-// AttachAuditLogEntryIDToSpan attaches an audit log entry ID to a given span.
-func AttachAuditLogEntryIDToSpan(span trace.Span, entryID uint64) {
-	attachUint64ToSpan(span, keys.AuditLogEntryIDKey, entryID)
-}
-
-// AttachAuditLogEntryEventTypeToSpan attaches an audit log entry ID to a given span.
-func AttachAuditLogEntryEventTypeToSpan(span trace.Span, eventType string) {
-	attachStringToSpan(span, keys.AuditLogEntryEventTypeKey, eventType)
-}
-
 // AttachAccountIDToSpan provides a consistent way to attach an account's ID to a span.
-func AttachAccountIDToSpan(span trace.Span, accountID uint64) {
-	attachUint64ToSpan(span, keys.AccountIDKey, accountID)
+func AttachAccountIDToSpan(span trace.Span, accountID string) {
+	attachStringToSpan(span, keys.AccountIDKey, accountID)
 }
 
 // AttachActiveAccountIDToSpan provides a consistent way to attach an account's ID to a span.
-func AttachActiveAccountIDToSpan(span trace.Span, accountID uint64) {
-	attachUint64ToSpan(span, keys.ActiveAccountIDKey, accountID)
+func AttachActiveAccountIDToSpan(span trace.Span, accountID string) {
+	attachStringToSpan(span, keys.ActiveAccountIDKey, accountID)
 }
 
 // AttachRequestingUserIDToSpan provides a consistent way to attach a user's ID to a span.
-func AttachRequestingUserIDToSpan(span trace.Span, userID uint64) {
-	attachUint64ToSpan(span, keys.RequesterIDKey, userID)
-}
-
-// AttachChangeSummarySpan provides a consistent way to attach a SessionContextData object to a span.
-func AttachChangeSummarySpan(span trace.Span, typeName string, changes []*types.FieldChangeSummary) {
-	for i, change := range changes {
-		span.SetAttributes(attribute.Any(fmt.Sprintf("%s.field_changes.%d", typeName, i), change))
-	}
+func AttachRequestingUserIDToSpan(span trace.Span, userID string) {
+	attachStringToSpan(span, keys.RequesterIDKey, userID)
 }
 
 // AttachSessionContextDataToSpan provides a consistent way to attach a SessionContextData object to a span.
@@ -100,8 +83,8 @@ func AttachSessionContextDataToSpan(span trace.Span, sessionCtxData *types.Sessi
 }
 
 // AttachAPIClientDatabaseIDToSpan is a consistent way to attach an API client's database row ID to a span.
-func AttachAPIClientDatabaseIDToSpan(span trace.Span, clientID uint64) {
-	attachUint64ToSpan(span, keys.APIClientDatabaseIDKey, clientID)
+func AttachAPIClientDatabaseIDToSpan(span trace.Span, clientID string) {
+	attachStringToSpan(span, keys.APIClientDatabaseIDKey, clientID)
 }
 
 // AttachAPIClientClientIDToSpan is a consistent way to attach an API client's ID to a span.
@@ -118,8 +101,8 @@ func AttachUserToSpan(span trace.Span, user *types.User) {
 }
 
 // AttachUserIDToSpan provides a consistent way to attach a user's ID to a span.
-func AttachUserIDToSpan(span trace.Span, userID uint64) {
-	attachUint64ToSpan(span, keys.UserIDKey, userID)
+func AttachUserIDToSpan(span trace.Span, userID string) {
+	attachStringToSpan(span, keys.UserIDKey, userID)
 }
 
 // AttachUsernameToSpan provides a consistent way to attach a user's username to a span.
@@ -128,8 +111,8 @@ func AttachUsernameToSpan(span trace.Span, username string) {
 }
 
 // AttachWebhookIDToSpan provides a consistent way to attach a webhook's ID to a span.
-func AttachWebhookIDToSpan(span trace.Span, webhookID uint64) {
-	attachUint64ToSpan(span, keys.WebhookIDKey, webhookID)
+func AttachWebhookIDToSpan(span trace.Span, webhookID string) {
+	attachStringToSpan(span, keys.WebhookIDKey, webhookID)
 }
 
 // AttachURLToSpan attaches a given URI to a span.
@@ -234,6 +217,6 @@ func AttachUserAgentDataToSpan(span trace.Span, ua *useragent.UserAgent) {
 }
 
 // AttachItemIDToSpan attaches an item ID to a given span.
-func AttachItemIDToSpan(span trace.Span, itemID uint64) {
-	attachUint64ToSpan(span, keys.ItemIDKey, itemID)
+func AttachItemIDToSpan(span trace.Span, itemID string) {
+	attachStringToSpan(span, keys.ItemIDKey, itemID)
 }

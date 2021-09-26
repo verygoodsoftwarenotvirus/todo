@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 )
 
 func TestAddUserToAccountInput_ValidateWithContext(T *testing.T) {
@@ -17,7 +17,7 @@ func TestAddUserToAccountInput_ValidateWithContext(T *testing.T) {
 
 		ctx := context.Background()
 		x := &AddUserToAccountInput{
-			UserID: 123,
+			UserID: "123",
 		}
 
 		assert.NoError(t, x.ValidateWithContext(ctx))
@@ -32,8 +32,8 @@ func TestTransferAccountOwnershipInput_ValidateWithContext(T *testing.T) {
 
 		ctx := context.Background()
 		x := &AccountOwnershipTransferInput{
-			CurrentOwner: 123,
-			NewOwner:     321,
+			CurrentOwner: "123",
+			NewOwner:     "321",
 			Reason:       t.Name(),
 		}
 

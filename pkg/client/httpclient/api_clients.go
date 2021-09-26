@@ -11,11 +11,11 @@ import (
 )
 
 // GetAPIClient gets an API client.
-func (c *Client) GetAPIClient(ctx context.Context, apiClientDatabaseID uint64) (*types.APIClient, error) {
+func (c *Client) GetAPIClient(ctx context.Context, apiClientDatabaseID string) (*types.APIClient, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if apiClientDatabaseID == 0 {
+	if apiClientDatabaseID == "" {
 		return nil, ErrInvalidIDProvided
 	}
 
@@ -87,11 +87,11 @@ func (c *Client) CreateAPIClient(ctx context.Context, cookie *http.Cookie, input
 }
 
 // ArchiveAPIClient archives an API client.
-func (c *Client) ArchiveAPIClient(ctx context.Context, apiClientDatabaseID uint64) error {
+func (c *Client) ArchiveAPIClient(ctx context.Context, apiClientDatabaseID string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if apiClientDatabaseID == 0 {
+	if apiClientDatabaseID == "" {
 		return ErrInvalidIDProvided
 	}
 
@@ -107,28 +107,4 @@ func (c *Client) ArchiveAPIClient(ctx context.Context, apiClientDatabaseID uint6
 	}
 
 	return nil
-}
-
-// GetAuditLogForAPIClient retrieves a list of audit log entries pertaining to an API client.
-func (c *Client) GetAuditLogForAPIClient(ctx context.Context, apiClientDatabaseID uint64) ([]*types.AuditLogEntry, error) {
-	ctx, span := c.tracer.StartSpan(ctx)
-	defer span.End()
-
-	if apiClientDatabaseID == 0 {
-		return nil, ErrInvalidIDProvided
-	}
-
-	logger := c.logger.WithValue(keys.APIClientDatabaseIDKey, apiClientDatabaseID)
-
-	req, err := c.requestBuilder.BuildGetAuditLogForAPIClientRequest(ctx, apiClientDatabaseID)
-	if err != nil {
-		return nil, observability.PrepareError(err, logger, span, "building retrieve audit log entries for API client request")
-	}
-
-	var entries []*types.AuditLogEntry
-	if err = c.fetchAndUnmarshal(ctx, req, &entries); err != nil {
-		return nil, observability.PrepareError(err, logger, span, "retrieving plan")
-	}
-
-	return entries, nil
 }

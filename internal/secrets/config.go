@@ -37,6 +37,8 @@ var (
 
 // Config is how we configure the secret manager.
 type Config struct {
+	_ struct{}
+
 	Provider string
 	Key      string
 }

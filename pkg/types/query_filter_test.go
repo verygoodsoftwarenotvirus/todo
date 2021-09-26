@@ -7,10 +7,10 @@ import (
 	"strconv"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 func TestQueryFilter_AttachToLogger(T *testing.T) {
@@ -151,6 +151,7 @@ func TestExtractQueryFilter(T *testing.T) {
 
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
+
 		ctx := context.Background()
 
 		expected := &QueryFilter{

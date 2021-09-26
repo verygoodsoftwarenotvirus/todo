@@ -9,21 +9,20 @@ import (
 	"errors"
 	"math"
 	"net/http"
-	"strconv"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/gorilla/securecookie"
+	"github.com/o1egl/paseto"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/google/uuid"
-	"github.com/gorilla/securecookie"
-	"github.com/o1egl/paseto"
 )
 
-func (s *service) issueSessionManagedCookie(ctx context.Context, accountID, requesterID uint64) (cookie *http.Cookie, err error) {
+func (s *service) issueSessionManagedCookie(ctx context.Context, accountID, requesterID string) (cookie *http.Cookie, err error) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -87,7 +86,6 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 	tracing.AttachUserToSpan(span, user)
 
 	if user.IsBanned() {
-		s.auditLog.LogBannedUserLoginAttemptEvent(ctx, user.ID)
 		return user, nil, ErrUserBanned
 	}
 
@@ -96,10 +94,8 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 
 	if err != nil {
 		if errors.Is(err, authentication.ErrInvalidTOTPToken) {
-			s.auditLog.LogUnsuccessfulLoginBad2FATokenEvent(ctx, user.ID)
 			return user, nil, ErrInvalidCredentials
 		} else if errors.Is(err, authentication.ErrPasswordDoesNotMatch) {
-			s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 			return user, nil, ErrInvalidCredentials
 		}
 
@@ -108,7 +104,6 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 		return user, nil, observability.PrepareError(err, logger, span, "validating login")
 	} else if !loginValid {
 		logger.Debug("login was invalid")
-		s.auditLog.LogUnsuccessfulLoginBadPasswordEvent(ctx, user.ID)
 		return user, nil, ErrInvalidCredentials
 	}
 
@@ -121,8 +116,6 @@ func (s *service) AuthenticateUser(ctx context.Context, loginData *types.UserLog
 	if err != nil {
 		return user, nil, observability.PrepareError(err, logger, span, "issuing cookie")
 	}
-
-	s.auditLog.LogSuccessfulLoginEvent(ctx, user.ID)
 
 	return user, cookie, nil
 }
@@ -261,7 +254,6 @@ func (s *service) LogoutUser(ctx context.Context, sessionCtxData *types.SessionC
 		return observability.PrepareError(cookieBuildingErr, logger, span, "building cookie")
 	}
 
-	s.auditLog.LogLogoutEvent(ctx, sessionCtxData.Requester.UserID)
 	newCookie.MaxAge = -1
 	http.SetCookie(res, newCookie)
 
@@ -350,7 +342,7 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 	requestedAccount := input.AccountID
 	logger = logger.WithValue(keys.APIClientClientIDKey, input.ClientID)
 
-	if requestedAccount != 0 {
+	if requestedAccount != "" {
 		logger = logger.WithValue("requested_account", requestedAccount)
 	}
 
@@ -405,9 +397,9 @@ func (s *service) PASETOHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	var requestedAccountID uint64
+	var requestedAccountID string
 
-	if requestedAccount != 0 {
+	if requestedAccount != "" {
 		if _, isMember := sessionCtxData.AccountPermissions[requestedAccount]; !isMember {
 			logger.Debug("invalid account ID requested for token")
 			s.encoderDecoder.EncodeUnauthorizedResponse(ctx, res)
@@ -445,8 +437,8 @@ func (s *service) buildPASETOToken(ctx context.Context, sessionCtxData *types.Se
 	expiry := now.Add(lifetime)
 
 	jsonToken := paseto.JSONToken{
-		Audience:   strconv.FormatUint(client.BelongsToUser, 10),
-		Subject:    strconv.FormatUint(client.BelongsToUser, 10),
+		Audience:   client.BelongsToUser,
+		Subject:    client.BelongsToUser,
 		Jti:        uuid.NewString(),
 		Issuer:     s.config.PASETO.Issuer,
 		IssuedAt:   now,
@@ -507,8 +499,6 @@ func (s *service) CycleCookieSecretHandler(res http.ResponseWriter, req *http.Re
 		securecookie.GenerateRandomKey(cookieSecretSize),
 		[]byte(s.config.Cookies.SigningKey),
 	)
-
-	s.auditLog.LogCycleCookieSecretEvent(ctx, sessionCtxData.Requester.UserID)
 
 	res.WriteHeader(http.StatusAccepted)
 }

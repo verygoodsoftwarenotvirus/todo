@@ -3,17 +3,17 @@ package fakes
 import (
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/segmentio/ksuid"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 // BuildFakeWebhook builds a faked Webhook.
 func BuildFakeWebhook() *types.Webhook {
 	return &types.Webhook{
-		ID:               uint64(fake.Uint32()),
-		ExternalID:       fake.UUID(),
-		Name:             fake.Word(),
+		ID:               ksuid.New().String(),
+		Name:             fake.UUID(),
 		ContentType:      "application/json",
 		URL:              fake.URL(),
 		Method:           http.MethodPost,
@@ -22,7 +22,7 @@ func BuildFakeWebhook() *types.Webhook {
 		Topics:           []string{fake.Word()},
 		CreatedOn:        uint64(uint32(fake.Date().Unix())),
 		ArchivedOn:       nil,
-		BelongsToAccount: fake.Uint64(),
+		BelongsToAccount: fake.UUID(),
 	}
 }
 
@@ -44,35 +44,6 @@ func BuildFakeWebhookList() *types.WebhookList {
 	}
 }
 
-// BuildFakeWebhookUpdateInput builds a faked WebhookUpdateInput.
-func BuildFakeWebhookUpdateInput() *types.WebhookUpdateInput {
-	webhook := BuildFakeWebhook()
-	return &types.WebhookUpdateInput{
-		Name:             webhook.Name,
-		ContentType:      webhook.ContentType,
-		URL:              webhook.URL,
-		Method:           webhook.Method,
-		Events:           webhook.Events,
-		DataTypes:        webhook.DataTypes,
-		Topics:           webhook.Topics,
-		BelongsToAccount: webhook.BelongsToAccount,
-	}
-}
-
-// BuildFakeWebhookUpdateInputFromWebhook builds a faked WebhookUpdateInput.
-func BuildFakeWebhookUpdateInputFromWebhook(webhook *types.Webhook) *types.WebhookUpdateInput {
-	return &types.WebhookUpdateInput{
-		Name:             webhook.Name,
-		ContentType:      webhook.ContentType,
-		URL:              webhook.URL,
-		Method:           webhook.Method,
-		Events:           webhook.Events,
-		DataTypes:        webhook.DataTypes,
-		Topics:           webhook.Topics,
-		BelongsToAccount: webhook.BelongsToAccount,
-	}
-}
-
 // BuildFakeWebhookCreationInput builds a faked WebhookCreationInput.
 func BuildFakeWebhookCreationInput() *types.WebhookCreationInput {
 	webhook := BuildFakeWebhook()
@@ -82,6 +53,22 @@ func BuildFakeWebhookCreationInput() *types.WebhookCreationInput {
 // BuildFakeWebhookCreationInputFromWebhook builds a faked WebhookCreationInput.
 func BuildFakeWebhookCreationInputFromWebhook(webhook *types.Webhook) *types.WebhookCreationInput {
 	return &types.WebhookCreationInput{
+		ID:               webhook.ID,
+		Name:             webhook.Name,
+		ContentType:      webhook.ContentType,
+		URL:              webhook.URL,
+		Method:           webhook.Method,
+		Events:           webhook.Events,
+		DataTypes:        webhook.DataTypes,
+		Topics:           webhook.Topics,
+		BelongsToAccount: webhook.BelongsToAccount,
+	}
+}
+
+// BuildFakeWebhookDatabaseCreationInputFromWebhook builds a faked WebhookCreationInput.
+func BuildFakeWebhookDatabaseCreationInputFromWebhook(webhook *types.Webhook) *types.WebhookDatabaseCreationInput {
+	return &types.WebhookDatabaseCreationInput{
+		ID:               webhook.ID,
 		Name:             webhook.Name,
 		ContentType:      webhook.ContentType,
 		URL:              webhook.URL,

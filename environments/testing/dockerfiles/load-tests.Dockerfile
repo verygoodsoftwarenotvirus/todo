@@ -1,5 +1,5 @@
 # build stage
-FROM golang:stretch AS build-stage
+FROM golang:1.17-stretch AS build-stage
 
 WORKDIR /go/src/gitlab.com/verygoodsoftwarenotvirus/todo
 
@@ -10,7 +10,7 @@ COPY . .
 RUN go build -o /loadtester gitlab.com/verygoodsoftwarenotvirus/todo/tests/load
 
 # final stage
-FROM debian:stretch
+FROM debian:bullseye
 
 COPY --from=build-stage /loadtester /loadtester
 

@@ -38,7 +38,7 @@ type (
 		authenticator             authentication.Authenticator
 		logger                    logging.Logger
 		encoderDecoder            encoding.ServerEncoderDecoder
-		userIDFetcher             func(*http.Request) uint64
+		userIDFetcher             func(*http.Request) string
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		userCounter               metrics.UnitCounter
 		secretGenerator           random.Generator
@@ -66,7 +66,7 @@ func ProvideUsersService(
 		userDataManager:           userDataManager,
 		accountDataManager:        accountDataManager,
 		authenticator:             authenticator,
-		userIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		userIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(UserIDURIParamKey),
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		encoderDecoder:            encoder,
 		authSettings:              authSettings,

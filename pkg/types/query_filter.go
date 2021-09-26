@@ -21,8 +21,6 @@ const (
 	SearchQueryKey = "q"
 	// LimitQueryKey is the query param key to specify a limit in a query.
 	LimitQueryKey = "limit"
-	// AdminQueryKey is the query param key to specify a limit is on behalf of a service admin.
-	AdminQueryKey = "admin"
 
 	pageQueryKey            = "page"
 	createdBeforeQueryKey   = "createdBefore"
@@ -35,6 +33,8 @@ const (
 
 // QueryFilter represents all the filters a User could apply to a list query.
 type QueryFilter struct {
+	_ struct{}
+
 	SortBy          sortType `json:"sortBy"`
 	Page            uint64   `json:"page"`
 	CreatedAfter    uint64   `json:"createdBefore,omitempty"`

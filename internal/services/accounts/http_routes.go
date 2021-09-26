@@ -5,6 +5,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -92,10 +94,12 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 	requester := sessionCtxData.Requester.UserID
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
+
 	input.BelongsToUser = requester
+	input.ID = ksuid.New().String()
 
 	// create account in database.
-	account, err := s.accountDataManager.CreateAccount(ctx, input, requester)
+	account, err := s.accountDataManager.CreateAccount(ctx, input)
 	if err != nil {
 		observability.AcknowledgeError(err, logger, span, "creating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
@@ -202,11 +206,10 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// update the data structure.
-	changeReport := account.Update(input)
-	tracing.AttachChangeSummarySpan(span, "account", changeReport)
+	account.Update(input)
 
 	// update account in database.
-	if err = s.accountDataManager.UpdateAccount(ctx, account, requester, changeReport); err != nil {
+	if err = s.accountDataManager.UpdateAccount(ctx, account); err != nil {
 		observability.AcknowledgeError(err, logger, span, "updating account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -242,7 +245,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
 	// archive the account in the database.
-	err = s.accountDataManager.ArchiveAccount(ctx, accountID, requester, requester)
+	err = s.accountDataManager.ArchiveAccount(ctx, accountID, requester)
 	if errors.Is(err, sql.ErrNoRows) {
 		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
 		return
@@ -282,6 +285,7 @@ func (s *service) AddMemberHandler(res http.ResponseWriter, req *http.Request) {
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
 		return
 	}
+	input.ID = ksuid.New().String()
 
 	if err = input.ValidateWithContext(ctx); err != nil {
 		logger.WithValue(keys.ValidationErrorKey, err).Debug("invalid input attached to request")
@@ -297,14 +301,21 @@ func (s *service) AddMemberHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
-	// create account in database.
-	if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input, requester); err != nil {
-		observability.AcknowledgeError(err, logger, span, "adding user to account")
+	preWrite := &types.PreWriteMessage{
+		DataType:                types.UserMembershipDataType,
+		UserMembership:          input,
+		AttributableToUserID:    sessionCtxData.Requester.UserID,
+		AttributableToAccountID: accountID,
+	}
+	if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
+		observability.AcknowledgeError(err, logger, span, "publishing item write message")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
-	res.WriteHeader(http.StatusAccepted)
+	pwr := types.PreWriteResponse{ID: input.ID}
+
+	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
 }
 
 // ModifyMemberPermissionsHandler is our account creation route.
@@ -347,10 +358,10 @@ func (s *service) ModifyMemberPermissionsHandler(res http.ResponseWriter, req *h
 
 	userID := s.userIDFetcher(req)
 	logger = logger.WithValue(keys.UserIDKey, userID)
-	tracing.AttachAccountIDToSpan(span, userID)
+	tracing.AttachUserIDToSpan(span, userID)
 
 	// create account in database.
-	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, userID, accountID, requester, input); err != nil {
+	if err = s.accountMembershipDataManager.ModifyUserPermissions(ctx, accountID, userID, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "modifying user permissions")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -398,7 +409,7 @@ func (s *service) TransferAccountOwnershipHandler(res http.ResponseWriter, req *
 	logger = logger.WithValue(keys.RequesterIDKey, requester)
 
 	// transfer ownership of account in database.
-	if err = s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, requester, input); err != nil {
+	if err = s.accountMembershipDataManager.TransferAccountOwnership(ctx, accountID, input); err != nil {
 		observability.AcknowledgeError(err, logger, span, "transferring account ownership")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -440,7 +451,7 @@ func (s *service) RemoveMemberHandler(res http.ResponseWriter, req *http.Request
 	tracing.AttachUserIDToSpan(span, userID)
 
 	// remove user from account in database.
-	if err = s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID, requester, reason); err != nil {
+	if err = s.accountMembershipDataManager.RemoveUserFromAccount(ctx, userID, accountID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "removing user from account")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
@@ -474,52 +485,11 @@ func (s *service) MarkAsDefaultAccountHandler(res http.ResponseWriter, req *http
 	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
 
 	// mark account as default in database.
-	if err = s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, requester, accountID, requester); err != nil {
+	if err = s.accountMembershipDataManager.MarkAccountAsUserDefault(ctx, requester, accountID); err != nil {
 		observability.AcknowledgeError(err, logger, span, "marking account as default")
 		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 		return
 	}
 
 	res.WriteHeader(http.StatusAccepted)
-}
-
-// AuditEntryHandler returns a GET handler that returns all audit log entries related to an account.
-func (s *service) AuditEntryHandler(res http.ResponseWriter, req *http.Request) {
-	ctx, span := s.tracer.StartSpan(req.Context())
-	defer span.End()
-
-	logger := s.logger.WithRequest(req)
-	tracing.AttachRequestToSpan(span, req)
-
-	// determine user ID.
-	sessionCtxData, err := s.sessionContextDataFetcher(req)
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "retrieving session context data")
-		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
-		return
-	}
-
-	requester := sessionCtxData.Requester.UserID
-	logger = logger.WithValue(keys.RequesterIDKey, requester)
-	tracing.AttachSessionContextDataToSpan(span, sessionCtxData)
-
-	// determine account ID.
-	accountID := s.accountIDFetcher(req)
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
-	tracing.AttachAccountIDToSpan(span, accountID)
-
-	x, err := s.accountDataManager.GetAuditLogEntriesForAccount(ctx, accountID)
-	if errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	}
-
-	if err != nil {
-		observability.AcknowledgeError(err, logger, span, "fetching audit log entries")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
-
-	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, x)
 }

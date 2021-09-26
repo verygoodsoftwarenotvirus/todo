@@ -1,9 +1,11 @@
 package accounts
 
 import (
+	"fmt"
 	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -30,11 +32,12 @@ type (
 		logger                       logging.Logger
 		accountDataManager           types.AccountDataManager
 		accountMembershipDataManager types.AccountUserMembershipDataManager
-		accountIDFetcher             func(*http.Request) uint64
-		userIDFetcher                func(*http.Request) uint64
+		accountIDFetcher             func(*http.Request) string
+		userIDFetcher                func(*http.Request) string
 		sessionContextDataFetcher    func(*http.Request) (*types.SessionContextData, error)
 		accountCounter               metrics.UnitCounter
 		encoderDecoder               encoding.ServerEncoderDecoder
+		preWritesPublisher           publishers.Publisher
 		tracer                       tracing.Tracer
 	}
 )
@@ -42,21 +45,31 @@ type (
 // ProvideService builds a new AccountsService.
 func ProvideService(
 	logger logging.Logger,
+	cfg Config,
 	accountDataManager types.AccountDataManager,
 	accountMembershipDataManager types.AccountUserMembershipDataManager,
 	encoder encoding.ServerEncoderDecoder,
 	counterProvider metrics.UnitCounterProvider,
 	routeParamManager routing.RouteParamManager,
-) types.AccountDataService {
-	return &service{
+	publisherProvider publishers.PublisherProvider,
+) (types.AccountDataService, error) {
+	preWritesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreWritesTopicName)
+	if err != nil {
+		return nil, fmt.Errorf("setting up event publisher: %w", err)
+	}
+
+	s := &service{
 		logger:                       logging.EnsureLogger(logger).WithName(serviceName),
-		accountIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, AccountIDURIParamKey, "account"),
-		userIDFetcher:                routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		accountIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(AccountIDURIParamKey),
+		userIDFetcher:                routeParamManager.BuildRouteParamStringIDFetcher(UserIDURIParamKey),
 		sessionContextDataFetcher:    authservice.FetchContextFromRequest,
 		accountDataManager:           accountDataManager,
 		accountMembershipDataManager: accountMembershipDataManager,
 		encoderDecoder:               encoder,
+		preWritesPublisher:           preWritesPublisher,
 		accountCounter:               metrics.EnsureUnitCounter(counterProvider, logger, counterName, counterDescription),
 		tracer:                       tracing.NewTracer(serviceName),
 	}
+
+	return s, nil
 }

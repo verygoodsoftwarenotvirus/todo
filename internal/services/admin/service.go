@@ -3,6 +3,8 @@ package admin
 import (
 	"net/http"
 
+	"github.com/alexedwards/scs/v2"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -10,8 +12,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/alexedwards/scs/v2"
 )
 
 const (
@@ -25,11 +25,10 @@ type (
 		logger                    logging.Logger
 		authenticator             authentication.Authenticator
 		userDB                    types.AdminUserDataManager
-		auditLog                  types.AdminAuditManager
 		encoderDecoder            encoding.ServerEncoderDecoder
 		sessionManager            *scs.SessionManager
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		userIDFetcher             func(*http.Request) uint64
+		userIDFetcher             func(*http.Request) string
 		tracer                    tracing.Tracer
 	}
 )
@@ -40,7 +39,6 @@ func ProvideService(
 	cfg *authservice.Config,
 	authenticator authentication.Authenticator,
 	userDataManager types.AdminUserDataManager,
-	auditLog types.AdminAuditManager,
 	sessionManager *scs.SessionManager,
 	encoder encoding.ServerEncoderDecoder,
 	routeParamManager routing.RouteParamManager,
@@ -50,11 +48,10 @@ func ProvideService(
 		encoderDecoder:            encoder,
 		config:                    cfg,
 		userDB:                    userDataManager,
-		auditLog:                  auditLog,
 		authenticator:             authenticator,
 		sessionManager:            sessionManager,
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
-		userIDFetcher:             routeParamManager.BuildRouteParamIDFetcher(logger, UserIDURIParamKey, "user"),
+		userIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(UserIDURIParamKey),
 		tracer:                    tracing.NewTracer(serviceName),
 	}
 	svc.sessionManager.Lifetime = cfg.Cookies.Lifetime

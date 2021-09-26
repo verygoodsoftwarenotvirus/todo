@@ -5,28 +5,27 @@ import (
 	"encoding/base64"
 	"errors"
 	"net/http"
-	"strconv"
 	"testing"
 	"time"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 
 	"github.com/google/uuid"
 	"github.com/o1egl/paseto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 func buildArbitraryPASETO(t *testing.T, helper *authServiceHTTPRoutesTestHelper, issueTime time.Time, lifetime time.Duration, pasetoData string) *types.PASETOResponse {
 	t.Helper()
 
 	jsonToken := paseto.JSONToken{
-		Audience:   strconv.FormatUint(helper.exampleAPIClient.BelongsToUser, 10),
-		Subject:    strconv.FormatUint(helper.exampleAPIClient.BelongsToUser, 10),
+		Audience:   helper.exampleAPIClient.BelongsToUser,
+		Subject:    helper.exampleAPIClient.BelongsToUser,
 		Jti:        uuid.NewString(),
 		Issuer:     helper.service.config.PASETO.Issuer,
 		IssuedAt:   issueTime,
@@ -395,7 +394,7 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 			AccountPermissions: helper.examplePermCheckers,
 		}
 
-		sessionCtxData.AccountPermissions = map[uint64]authorization.AccountRolePermissionsChecker{}
+		sessionCtxData.AccountPermissions = map[string]authorization.AccountRolePermissionsChecker{}
 		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 			return sessionCtxData, nil
 		}
@@ -403,6 +402,122 @@ func TestAuthenticationService_AuthorizationMiddleware(T *testing.T) {
 		helper.req = helper.req.WithContext(context.WithValue(helper.ctx, types.SessionContextDataKey, sessionCtxData))
 
 		helper.service.AuthorizationMiddleware(&testutils.MockHTTPHandler{}).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+	})
+}
+
+func TestAuthenticationService_PermissionFilterMiddleware(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
+		helper.setContextFetcher(t)
+
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
+			},
+			ActiveAccountID:    helper.exampleAccount.ID,
+			AccountPermissions: helper.examplePermCheckers,
+		}
+
+		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
+
+		mockHandler := &testutils.MockHTTPHandler{}
+		mockHandler.On(
+			"ServeHTTP",
+			testutils.HTTPResponseWriterMatcher,
+			testutils.HTTPRequestMatcher,
+		).Return()
+
+		helper.service.PermissionFilterMiddleware(authorization.AddMemberAccountPermission)(mockHandler).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, mockHandler)
+	})
+
+	T.Run("with error fetching session context data", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
+		helper.setContextFetcher(t)
+
+		helper.service.sessionContextDataFetcher = func(request *http.Request) (*types.SessionContextData, error) {
+			return nil, errors.New("blah")
+		}
+
+		helper.service.PermissionFilterMiddleware(authorization.AddMemberAccountPermission)(nil).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+	})
+
+	T.Run("unauthorized for account", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		helper.exampleUser.ServiceRoles = []string{authorization.ServiceAdminRole.String()}
+		helper.setContextFetcher(t)
+
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(),
+			},
+			ActiveAccountID:    "different account, lol",
+			AccountPermissions: helper.examplePermCheckers,
+		}
+
+		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
+		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
+			return sessionCtxData, nil
+		}
+
+		helper.service.PermissionFilterMiddleware(authorization.AddMemberAccountPermission)(nil).ServeHTTP(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+	})
+
+	T.Run("without permission to perform action", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+
+		helper.exampleUser.ServiceRoles = []string{authorization.ServiceUserRole.String()}
+		helper.setContextFetcher(t)
+
+		sessionCtxData := &types.SessionContextData{
+			Requester: types.RequesterInfo{
+				UserID:                helper.exampleUser.ID,
+				Reputation:            helper.exampleUser.ServiceAccountStatus,
+				ReputationExplanation: helper.exampleUser.ReputationExplanation,
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(authorization.ReadItemsPermission.ID()),
+			},
+			ActiveAccountID: helper.exampleAccount.ID,
+			AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
+				helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.ReadItemsPermission.ID()),
+			},
+		}
+
+		helper.req = helper.req.WithContext(context.WithValue(helper.req.Context(), types.SessionContextDataKey, sessionCtxData))
+		helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
+			return sessionCtxData, nil
+		}
+
+		helper.service.PermissionFilterMiddleware(authorization.AddMemberAccountPermission)(nil).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 	})

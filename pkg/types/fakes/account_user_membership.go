@@ -1,18 +1,19 @@
 package fakes
 
 import (
+	fake "github.com/brianvoe/gofakeit/v5"
+	"github.com/segmentio/ksuid"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	fake "github.com/brianvoe/gofakeit/v5"
 )
 
 // BuildFakeAccountUserMembership builds a faked AccountUserMembership.
 func BuildFakeAccountUserMembership() *types.AccountUserMembership {
 	return &types.AccountUserMembership{
-		ID:               uint64(fake.Uint32()),
-		BelongsToUser:    fake.Uint64(),
-		BelongsToAccount: fake.Uint64(),
+		ID:               ksuid.New().String(),
+		BelongsToUser:    fake.UUID(),
+		BelongsToAccount: fake.UUID(),
 		AccountRoles:     []string{authorization.AccountMemberRole.String()},
 		CreatedOn:        0,
 		ArchivedOn:       nil,
@@ -53,6 +54,7 @@ func BuildFakeAccountUserMembershipCreationInput() *types.AccountUserMembershipC
 // BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership builds a faked AccountUserMembershipCreationInput from an account user membership.
 func BuildFakeAccountUserMembershipCreationInputFromAccountUserMembership(accountUserMembership *types.AccountUserMembership) *types.AccountUserMembershipCreationInput {
 	return &types.AccountUserMembershipCreationInput{
+		ID:               accountUserMembership.ID,
 		BelongsToUser:    accountUserMembership.BelongsToUser,
 		BelongsToAccount: accountUserMembership.BelongsToAccount,
 	}

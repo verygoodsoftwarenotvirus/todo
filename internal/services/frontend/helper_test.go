@@ -6,6 +6,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -15,9 +18,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 type serviceHTTPRoutesTestHelper struct {
@@ -55,6 +55,11 @@ func buildTestHelper(t *testing.T) *serviceHTTPRoutesTestHelper {
 		mock.AnythingOfType("string"),
 	).Return(func(*http.Request) uint64 { return 0 })
 
+	rpm.On(
+		"BuildRouteParamStringIDFetcher",
+		mock.AnythingOfType("string"),
+	).Return(func(*http.Request) string { return "" })
+
 	var ok bool
 	helper.service, ok = ProvideService(
 		cfg,
@@ -75,7 +80,7 @@ func buildTestHelper(t *testing.T) *serviceHTTPRoutesTestHelper {
 			ServicePermissions:    authorization.NewServiceRolePermissionChecker(helper.exampleUser.ServiceRoles...),
 		},
 		ActiveAccountID: helper.exampleAccount.ID,
-		AccountPermissions: map[uint64]authorization.AccountRolePermissionsChecker{
+		AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
 			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	}

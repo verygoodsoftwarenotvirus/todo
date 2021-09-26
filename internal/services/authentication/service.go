@@ -4,15 +4,14 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/alexedwards/scs/v2"
+	"github.com/gorilla/securecookie"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/alexedwards/scs/v2"
-	"github.com/gorilla/securecookie"
 )
 
 const (
@@ -36,7 +35,6 @@ type (
 		logger                    logging.Logger
 		authenticator             authentication.Authenticator
 		userDataManager           types.UserDataManager
-		auditLog                  types.AuthAuditManager
 		apiClientManager          types.APIClientDataManager
 		accountMembershipManager  types.AccountUserMembershipDataManager
 		encoderDecoder            encoding.ServerEncoderDecoder
@@ -53,12 +51,10 @@ func ProvideService(
 	cfg *Config,
 	authenticator authentication.Authenticator,
 	userDataManager types.UserDataManager,
-	auditLog types.AuthAuditManager,
 	apiClientsService types.APIClientDataManager,
 	accountMembershipManager types.AccountUserMembershipDataManager,
 	sessionManager *scs.SessionManager,
 	encoder encoding.ServerEncoderDecoder,
-	routeParamManager routing.RouteParamManager,
 ) (types.AuthService, error) {
 	hashKey := []byte(cfg.Cookies.HashKey)
 	if len(hashKey) == 0 {
@@ -70,7 +66,6 @@ func ProvideService(
 		encoderDecoder:            encoder,
 		config:                    cfg,
 		userDataManager:           userDataManager,
-		auditLog:                  auditLog,
 		apiClientManager:          apiClientsService,
 		accountMembershipManager:  accountMembershipManager,
 		authenticator:             authenticator,

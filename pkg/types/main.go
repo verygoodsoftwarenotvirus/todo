@@ -20,6 +20,8 @@ type (
 
 	// Pagination represents a pagination request.
 	Pagination struct {
+		_ struct{}
+
 		Page          uint64 `json:"page"`
 		Limit         uint8  `json:"limit"`
 		FilteredCount uint64 `json:"filteredCount"`
@@ -28,8 +30,17 @@ type (
 
 	// ErrorResponse represents a response we might send to the User in the event of an error.
 	ErrorResponse struct {
+		_ struct{}
+
 		Message string `json:"message"`
 		Code    int    `json:"code"`
+	}
+
+	// PreWriteResponse is what we respond with when the data requested to be written has not yet been written.
+	PreWriteResponse struct {
+		_ struct{}
+
+		ID string `json:"id"`
 	}
 )
 

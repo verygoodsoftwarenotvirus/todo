@@ -155,11 +155,11 @@ func (c *Client) CycleTwoFactorSecret(ctx context.Context, cookie *http.Cookie, 
 }
 
 // VerifyTOTPSecret verifies a 2FA secret.
-func (c *Client) VerifyTOTPSecret(ctx context.Context, userID uint64, token string) error {
+func (c *Client) VerifyTOTPSecret(ctx context.Context, userID, token string) error {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
-	if userID == 0 {
+	if userID == "" {
 		return ErrInvalidIDProvided
 	}
 

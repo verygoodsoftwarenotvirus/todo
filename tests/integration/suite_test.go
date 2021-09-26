@@ -5,15 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
+
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 const (
@@ -63,6 +61,20 @@ func (s *TestSuite) SetupTest() {
 	s.adminCookieClient, s.adminPASETOClient = buildAdminCookieAndPASETOClients(s.ctx, t)
 }
 
+func (s *TestSuite) runForCookieClient(name string, subtestBuilder func(*testClientWrapper) func()) {
+	for a, c := range s.eachClientExcept(pasetoAuthType) {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("%s via %s", name, authType), subtestBuilder(testClients))
+	}
+}
+
+func (s *TestSuite) runForPASETOClient(name string, subtestBuilder func(*testClientWrapper) func()) {
+	for a, c := range s.eachClientExcept(cookieAuthType) {
+		authType, testClients := a, c
+		s.Run(fmt.Sprintf("%s via %s", name, authType), subtestBuilder(testClients))
+	}
+}
+
 func (s *TestSuite) runForEachClientExcept(name string, subtestBuilder func(*testClientWrapper) func(), exceptions ...string) {
 	for a, c := range s.eachClientExcept(exceptions...) {
 		authType, testClients := a, c
@@ -89,25 +101,4 @@ func (s *TestSuite) eachClientExcept(exceptions ...string) map[string]*testClien
 	require.NotEmpty(t, clients)
 
 	return clients
-}
-
-var _ suite.WithStats = (*TestSuite)(nil)
-
-func (s *TestSuite) checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats *suite.SuiteInformation) {
-	const minimumTestThreshold = 1 * time.Millisecond
-
-	if stats.Passed() {
-		for testName, stat := range stats.TestStats {
-			if stat.End.Sub(stat.Start) < minimumTestThreshold && stat.Passed {
-				s.T().Fatalf("suspiciously quick test execution time: %q", testName)
-			}
-		}
-	}
-}
-
-func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 69
-
-	s.checkTestRunsForPositiveResultsThatOccurredTooQuickly(stats)
-	testutils.AssertAppropriateNumberOfTestsRan(s.T(), totalExpectedTestCount, stats)
 }

@@ -6,11 +6,11 @@ import (
 	"net/http"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func TestUsers(t *testing.T) {
@@ -57,7 +57,7 @@ type usersTestSuite struct {
 }
 
 func (s *usersTestSuite) TestClient_GetUser() {
-	const expectedPathFormat = "/api/v1/users/%d"
+	const expectedPathFormat = "/api/v1/users/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -75,7 +75,7 @@ func (s *usersTestSuite) TestClient_GetUser() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.GetUser(s.ctx, 0)
+		actual, err := c.GetUser(s.ctx, "")
 		assert.Error(t, err)
 		assert.Nil(t, actual)
 	})
@@ -232,7 +232,7 @@ func (s *usersTestSuite) TestClient_CreateUser() {
 }
 
 func (s *usersTestSuite) TestClient_ArchiveUser() {
-	const expectedPathFormat = "/api/v1/users/%d"
+	const expectedPathFormat = "/api/v1/users/%s"
 
 	s.Run("standard", func() {
 		t := s.T()
@@ -249,7 +249,7 @@ func (s *usersTestSuite) TestClient_ArchiveUser() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		err := c.ArchiveUser(s.ctx, 0)
+		err := c.ArchiveUser(s.ctx, "")
 		assert.Error(t, err)
 	})
 
@@ -268,56 +268,6 @@ func (s *usersTestSuite) TestClient_ArchiveUser() {
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
 		err := c.ArchiveUser(s.ctx, s.exampleUser.ID)
-		assert.Error(t, err)
-	})
-}
-
-func (s *usersTestSuite) TestClient_GetAuditLogForUser() {
-	const (
-		expectedPath   = "/api/v1/users/%d/audit"
-		expectedMethod = http.MethodGet
-	)
-
-	s.Run("standard", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
-		exampleAuditLogEntryList := fakes.BuildFakeAuditLogEntryList().Entries
-		c, _ := buildTestClientWithJSONResponse(t, spec, exampleAuditLogEntryList)
-
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
-		assert.NoError(t, err)
-		assert.Equal(t, exampleAuditLogEntryList, actual)
-	})
-
-	s.Run("with invalid user ID", func() {
-		t := s.T()
-
-		c, _ := buildSimpleTestClient(t)
-
-		actual, err := c.GetAuditLogForUser(s.ctx, 0)
-		assert.Error(t, err)
-		assert.Nil(t, actual)
-	})
-
-	s.Run("with error building request", func() {
-		t := s.T()
-
-		c := buildTestClientWithInvalidURL(t)
-
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
-		assert.Nil(t, actual)
-		assert.Error(t, err)
-	})
-
-	s.Run("with error executing request", func() {
-		t := s.T()
-
-		spec := newRequestSpec(true, expectedMethod, "", expectedPath, s.exampleUser.ID)
-		c := buildTestClientWithInvalidResponse(t, spec)
-
-		actual, err := c.GetAuditLogForUser(s.ctx, s.exampleUser.ID)
-		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})
 }

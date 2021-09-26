@@ -6,11 +6,11 @@ import (
 	"encoding/gob"
 	"net/http"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 const (
@@ -33,49 +33,63 @@ func init() {
 type (
 	// UserAccountMembershipInfo represents key information about an account membership.
 	UserAccountMembershipInfo struct {
+		_ struct{}
+
 		AccountName  string   `json:"name"`
+		AccountID    string   `json:"accountID"`
 		AccountRoles []string `json:"-"`
-		AccountID    uint64   `json:"accountID"`
 	}
 
 	// SessionContextData represents what we encode in our passwords cookies.
 	SessionContextData struct {
-		AccountPermissions map[uint64]authorization.AccountRolePermissionsChecker `json:"-"`
+		_ struct{}
+
+		AccountPermissions map[string]authorization.AccountRolePermissionsChecker `json:"-"`
 		Requester          RequesterInfo                                          `json:"-"`
-		ActiveAccountID    uint64                                                 `json:"-"`
+		ActiveAccountID    string                                                 `json:"-"`
 	}
 
 	// RequesterInfo contains data relevant to the user making a request.
 	RequesterInfo struct {
+		_ struct{}
+
 		ServicePermissions    authorization.ServiceRolePermissionChecker `json:"-"`
 		Reputation            accountStatus                              `json:"-"`
 		ReputationExplanation string                                     `json:"-"`
-		UserID                uint64                                     `json:"-"`
+		UserID                string                                     `json:"-"`
 	}
 
 	// UserStatusResponse is what we encode when the frontend wants to check auth status.
 	UserStatusResponse struct {
+		_ struct{}
+
 		UserReputation            accountStatus `json:"accountStatus,omitempty"`
 		UserReputationExplanation string        `json:"reputationExplanation"`
-		ActiveAccount             uint64        `json:"activeAccount,omitempty"`
+		ActiveAccount             string        `json:"activeAccount,omitempty"`
 		UserIsAuthenticated       bool          `json:"isAuthenticated"`
 	}
 
 	// ChangeActiveAccountInput represents what a User could set as input for switching accounts.
 	ChangeActiveAccountInput struct {
-		AccountID uint64 `json:"accountID"`
+		_ struct{}
+
+		AccountID string `json:"accountID"`
 	}
 
 	// PASETOCreationInput is used to create a PASETO.
 	PASETOCreationInput struct {
+		_ struct{}
+
 		ClientID          string `json:"clientID"`
-		AccountID         uint64 `json:"accountID"`
+		AccountID         string `json:"accountID"`
 		RequestTime       int64  `json:"requestTime"`
 		RequestedLifetime uint64 `json:"requestedLifetime,omitempty"`
 	}
 
 	// PASETOResponse is used to respond to a PASETO request.
 	PASETOResponse struct {
+		_ struct{}
+
 		Token     string `json:"token"`
 		ExpiresAt string `json:"expiresAt"`
 	}
@@ -97,16 +111,6 @@ type (
 
 		AuthenticateUser(ctx context.Context, loginData *UserLoginInput) (*User, *http.Cookie, error)
 		LogoutUser(ctx context.Context, sessionCtxData *SessionContextData, req *http.Request, res http.ResponseWriter) error
-	}
-
-	// AuthAuditManager describes a structure capable of auditing auth events.
-	AuthAuditManager interface {
-		LogCycleCookieSecretEvent(ctx context.Context, userID uint64)
-		LogSuccessfulLoginEvent(ctx context.Context, userID uint64)
-		LogBannedUserLoginAttemptEvent(ctx context.Context, userID uint64)
-		LogUnsuccessfulLoginBadPasswordEvent(ctx context.Context, userID uint64)
-		LogUnsuccessfulLoginBad2FATokenEvent(ctx context.Context, userID uint64)
-		LogLogoutEvent(ctx context.Context, userID uint64)
 	}
 )
 

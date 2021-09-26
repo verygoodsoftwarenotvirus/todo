@@ -9,7 +9,6 @@
     <tr>
         <th>ID</th>
         <th>Name</th>
-        <th>External ID</th>
         <th>Belongs To User</th>
         <th>Last Updated On</th>
         <th>Created On</th>
@@ -19,7 +18,6 @@
     <tr>
         <td><button class="btn btn-sm btn-outline-dark" hx-push-url="{{ pushURL . }}" hx-get="{{ individualURL . }}" hx-target="#content">{{ $x.ID }}</button></td>
         <td>{{ $x.Name }}</td>
-        <td>{{ $x.ExternalID }}</td>
         <td>{{ $x.BelongsToUser }}</td>
         <td>{{ relativeTimeFromPtr $x.LastUpdatedOn }}</td>
         <td>{{ relativeTime $x.CreatedOn }}</td>

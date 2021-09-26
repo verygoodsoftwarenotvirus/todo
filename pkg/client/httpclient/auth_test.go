@@ -7,12 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func TestAuth(t *testing.T) {
@@ -350,7 +350,7 @@ func (s *authTestSuite) TestClient_VerifyTOTPSecret() {
 		exampleInput := fakes.BuildFakeTOTPSecretVerificationInputForUser(s.exampleUser)
 		c, _ := buildSimpleTestClient(t)
 
-		err := c.VerifyTOTPSecret(s.ctx, 0, exampleInput.TOTPToken)
+		err := c.VerifyTOTPSecret(s.ctx, "", exampleInput.TOTPToken)
 		assert.Error(t, err)
 	})
 

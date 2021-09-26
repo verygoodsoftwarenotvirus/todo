@@ -1,26 +1,23 @@
 package integration
 
 import (
-	"fmt"
 	"testing"
-	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/audit"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/client/httpclient"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func checkAccountEquality(t *testing.T, expected, actual *types.Account) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
-	assert.Equal(t, expected.Name, actual.Name, "expected BucketName for account #%d to be %v, but it was %v ", expected.ID, expected.Name, actual.Name)
+	assert.Equal(t, expected.Name, actual.Name, "expected BucketName for account %s to be %v, but it was %v ", expected.ID, expected.Name, actual.Name)
 	assert.NotZero(t, actual.CreatedOn)
 }
 
@@ -40,15 +37,6 @@ func (s *TestSuite) TestAccounts_Creating() {
 
 			// Assert account equality.
 			checkAccountEquality(t, exampleAccount, createdAccount)
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
 
 			// Clean up.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
@@ -187,16 +175,6 @@ func (s *TestSuite) TestAccounts_Updating() {
 			checkAccountEquality(t, exampleAccount, actual)
 			assert.NotNil(t, actual.LastUpdatedOn)
 
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.AccountUpdateEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
-
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
 		}
@@ -232,22 +210,12 @@ func (s *TestSuite) TestAccounts_Archiving() {
 
 			// Clean up account.
 			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.AccountArchiveEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, createdAccount.ID, audit.AccountAssignmentKey)
 		}
 	})
 }
 
 func (s *TestSuite) TestAccounts_ChangingMemberships() {
-	s.runForEachClientExcept("should be possible to change members of an account", func(testClients *testClientWrapper) func() {
+	s.runForCookieClient("should be possible to change members of an account", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -258,7 +226,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			currentStatus, statusErr := testClients.main.UserStatus(s.ctx)
 			requireNotNilAndNoProblems(t, currentStatus, statusErr)
-			t.Logf("initial account is #%d; initial user ID is #%d", currentStatus.ActiveAccount, s.user.ID)
+			t.Logf("initial account is %s; initial user ID is %s", currentStatus.ActiveAccount, s.user.ID)
 
 			// fetch account data
 			accountCreationInput := &types.AccountCreationInput{
@@ -268,26 +236,33 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 			require.NoError(t, accountCreationErr)
 			require.NotNil(t, account)
 
-			t.Logf("created account #%d", account.ID)
+			t.Logf("created account %s", account.ID)
 
 			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 
-			t.Logf("switched main test client active account to #%d, creating webhook", account.ID)
+			t.Logf("switched main test client active account to %s, creating webhook", account.ID)
 
-			// create a webhook
+			stopChan := make(chan bool, 1)
+			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
+			require.NotNil(t, notificationsChan)
+			require.NoError(t, err)
+
+			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			createdWebhook, creationErr := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, createdWebhook, creationErr)
+			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			require.NoError(t, err)
+
+			n := <-notificationsChan
+			assert.Equal(t, n.DataType, types.WebhookDataType)
+			require.NotNil(t, n.Webhook)
+			checkWebhookEquality(t, exampleWebhook, n.Webhook)
+
+			createdWebhook, err := testClients.main.GetWebhook(ctx, createdWebhookID)
+			requireNotNilAndNoProblems(t, createdWebhook, err)
 			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
 
-			t.Logf("created webhook #%d for account #%d", createdWebhook.ID, createdWebhook.BelongsToAccount)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.WebhookCreationEvent},
-			}
+			t.Logf("created webhook %s for account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
 
 			// create dummy users
 			users := []*types.User{}
@@ -301,12 +276,12 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 				currentStatus, statusErr = c.UserStatus(s.ctx)
 				requireNotNilAndNoProblems(t, currentStatus, statusErr)
-				t.Logf("created user user #%d with account #%d", u.ID, currentStatus.ActiveAccount)
+				t.Logf("created user user %q with account %s", u.ID, currentStatus.ActiveAccount)
 			}
 
 			// check that each user cannot see the unreachable webhook
 			for i := 0; i < userCount; i++ {
-				t.Logf("checking that user #%d CANNOT see webhook #%d belonging to account #%d", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
+				t.Logf("checking that user %q CANNOT see webhook %s belonging to account %s", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
 				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
 				require.Nil(t, webhook)
 				require.Error(t, err)
@@ -314,23 +289,25 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 
 			// add them to the account
 			for i := 0; i < userCount; i++ {
-				t.Logf("adding user #%d to account #%d", users[i].ID, account.ID)
+				t.Logf("adding user %q to account %s", users[i].ID, account.ID)
 				require.NoError(t, testClients.main.AddUserToAccount(ctx, &types.AddUserToAccountInput{
 					UserID:       users[i].ID,
 					AccountID:    account.ID,
 					Reason:       t.Name(),
 					AccountRoles: []string{authorization.AccountAdminRole.String()},
 				}))
-				t.Logf("added user #%d to account #%d", users[i].ID, account.ID)
-				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAddedToAccountEvent})
+				t.Logf("added user %q to account %s", users[i].ID, account.ID)
 
-				t.Logf("setting user #%d's client to account #%d", users[i].ID, account.ID)
+				n := <-notificationsChan
+				assert.Equal(t, n.DataType, types.UserMembershipDataType)
+
+				t.Logf("setting user %q's client to account %s", users[i].ID, account.ID)
 				require.NoError(t, clients[i].SwitchActiveAccount(ctx, account.ID))
 
 				currentStatus, statusErr = clients[i].UserStatus(s.ctx)
 				requireNotNilAndNoProblems(t, currentStatus, statusErr)
 				require.Equal(t, currentStatus.ActiveAccount, account.ID)
-				t.Logf("set user #%d's current active account to #%d", users[i].ID, account.ID)
+				t.Logf("set user %q's current active account to %s", users[i].ID, account.ID)
 			}
 
 			// grant all permissions
@@ -340,27 +317,18 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 					NewRoles: []string{authorization.AccountAdminRole.String()},
 				}
 				require.NoError(t, testClients.main.ModifyMemberPermissions(ctx, account.ID, users[i].ID, input))
-				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.UserAccountPermissionsModifiedEvent})
 			}
 
 			// check that each user can see the webhook
 			for i := 0; i < userCount; i++ {
-				t.Logf("checking if user #%d CAN now see webhook #%d belonging to account #%d", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
+				t.Logf("checking if user %q CAN now see webhook %s belonging to account %s", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
 				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
 				requireNotNilAndNoProblems(t, webhook, err)
 			}
 
-			originalWebhookName := createdWebhook.Name
-			// check that each user can update the webhook
-			for i := 0; i < userCount; i++ {
-				createdWebhook.Name = fmt.Sprintf("%s_%d", originalWebhookName, time.Now().UnixNano())
-				require.NoError(t, clients[i].UpdateWebhook(ctx, createdWebhook))
-				expectedAuditLogEntries = append(expectedAuditLogEntries, &types.AuditLogEntry{EventType: audit.WebhookUpdateEvent})
-			}
-
 			// remove users from account
 			for i := 0; i < userCount; i++ {
-				require.NoError(t, testClients.main.RemoveUserFromAccount(ctx, account.ID, users[i].ID, t.Name()))
+				require.NoError(t, testClients.main.RemoveUserFromAccount(ctx, account.ID, users[i].ID))
 			}
 
 			// check that each user cannot see the webhook
@@ -370,11 +338,134 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 				require.Error(t, err)
 			}
 
-			// check audit log entries
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, account.ID)
+			// Clean up.
+			require.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
+
+			for i := 0; i < userCount; i++ {
+				require.NoError(t, testClients.admin.ArchiveUser(ctx, users[i].ID))
+			}
+		}
+	})
+
+	s.runForPASETOClient("should be possible to change members of an account", func(testClients *testClientWrapper) func() {
+		return func() {
+			t := s.T()
+
+			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
+			defer span.End()
+
+			const userCount = 1
+
+			currentStatus, statusErr := testClients.main.UserStatus(s.ctx)
+			requireNotNilAndNoProblems(t, currentStatus, statusErr)
+			t.Logf("initial account is %s; initial user ID is %s", currentStatus.ActiveAccount, s.user.ID)
+
+			// fetch account data
+			accountCreationInput := &types.AccountCreationInput{
+				Name: fakes.BuildFakeAccount().Name,
+			}
+			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
+			require.NoError(t, accountCreationErr)
+			require.NotNil(t, account)
+
+			t.Logf("created account %s", account.ID)
+
+			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
+
+			t.Logf("switched main test client active account to %s, creating webhook", account.ID)
+
+			// Create webhook.
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
 			require.NoError(t, err)
 
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
+			var createdWebhook *types.Webhook
+			checkFunc := func() bool {
+				createdWebhook, err = testClients.main.GetWebhook(ctx, createdWebhookID)
+				return assert.NotNil(t, createdWebhook) && assert.NoError(t, err)
+			}
+			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
+
+			// assert webhook equality
+			requireNotNilAndNoProblems(t, createdWebhook, err)
+			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
+
+			t.Logf("created webhook %s for account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
+
+			// create dummy users
+			users := []*types.User{}
+			clients := []*httpclient.Client{}
+
+			// create users
+			for i := 0; i < userCount; i++ {
+				u, _, c, _ := createUserAndClientForTest(ctx, t)
+				users = append(users, u)
+				clients = append(clients, c)
+
+				currentStatus, statusErr = c.UserStatus(s.ctx)
+				requireNotNilAndNoProblems(t, currentStatus, statusErr)
+				t.Logf("created user user %q with account %s", u.ID, currentStatus.ActiveAccount)
+			}
+
+			// check that each user cannot see the unreachable webhook
+			for i := 0; i < userCount; i++ {
+				t.Logf("checking that user %q CANNOT see webhook %s belonging to account %s", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
+				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+				require.Nil(t, webhook)
+				require.Error(t, err)
+			}
+
+			// add them to the account
+			for i := 0; i < userCount; i++ {
+				t.Logf("adding user %q to account %s", users[i].ID, account.ID)
+				require.NoError(t, testClients.main.AddUserToAccount(ctx, &types.AddUserToAccountInput{
+					UserID:       users[i].ID,
+					AccountID:    account.ID,
+					Reason:       t.Name(),
+					AccountRoles: []string{authorization.AccountAdminRole.String()},
+				}))
+				t.Logf("added user %q to account %s", users[i].ID, account.ID)
+
+				t.Logf("setting user %q's client to account %s", users[i].ID, account.ID)
+				checkFunc = func() bool {
+					return assert.NoError(t, clients[i].SwitchActiveAccount(ctx, account.ID))
+				}
+				assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
+
+				currentStatus, statusErr = clients[i].UserStatus(s.ctx)
+				requireNotNilAndNoProblems(t, currentStatus, statusErr)
+				require.Equal(t, currentStatus.ActiveAccount, account.ID)
+				t.Logf("set user %q's current active account to %s", users[i].ID, account.ID)
+			}
+
+			// grant all permissions
+			for i := 0; i < userCount; i++ {
+				input := &types.ModifyUserPermissionsInput{
+					Reason:   t.Name(),
+					NewRoles: []string{authorization.AccountAdminRole.String()},
+				}
+				require.NoError(t, testClients.main.ModifyMemberPermissions(ctx, account.ID, users[i].ID, input))
+			}
+
+			// check that each user can see the webhook
+			for i := 0; i < userCount; i++ {
+				t.Logf("checking if user %q CAN now see webhook %s belonging to account %s", users[i].ID, createdWebhook.ID, createdWebhook.BelongsToAccount)
+				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+				requireNotNilAndNoProblems(t, webhook, err)
+			}
+
+			// remove users from account
+			for i := 0; i < userCount; i++ {
+				require.NoError(t, testClients.main.RemoveUserFromAccount(ctx, account.ID, users[i].ID))
+			}
+
+			// check that each user cannot see the webhook
+			for i := 0; i < userCount; i++ {
+				webhook, err := clients[i].GetWebhook(ctx, createdWebhook.ID)
+				require.Nil(t, webhook)
+				require.Error(t, err)
+			}
 
 			// Clean up.
 			require.NoError(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
@@ -387,7 +478,7 @@ func (s *TestSuite) TestAccounts_ChangingMemberships() {
 }
 
 func (s *TestSuite) TestAccounts_OwnershipTransfer() {
-	s.runForEachClientExcept("should be possible to transfer ownership of an account", func(testClients *testClientWrapper) func() {
+	s.runForCookieClient("should be possible to transfer ownership of an account", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -405,19 +496,33 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			require.NoError(t, accountCreationErr)
 			require.NotNil(t, account)
 
-			t.Logf("created account #%d", account.ID)
+			t.Logf("created account %s", account.ID)
 
 			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 
-			t.Logf("switched to active account: %d", account.ID)
+			t.Logf("switched to active account: %s", account.ID)
 
 			// create a webhook
+			stopChan := make(chan bool, 1)
+			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
+			require.NotNil(t, notificationsChan)
+			require.NoError(t, err)
+
+			// Create webhook.
 			exampleWebhook := fakes.BuildFakeWebhook()
 			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
-			createdWebhook, creationErr := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
-			requireNotNilAndNoProblems(t, createdWebhook, creationErr)
+			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			require.NoError(t, err)
 
-			t.Logf("created webhook #%d belonging to account #%d", createdWebhook.ID, createdWebhook.BelongsToAccount)
+			n := <-notificationsChan
+			assert.Equal(t, n.DataType, types.WebhookDataType)
+			require.NotNil(t, n.Webhook)
+			checkWebhookEquality(t, exampleWebhook, n.Webhook)
+
+			createdWebhook, err := testClients.main.GetWebhook(ctx, createdWebhookID)
+			requireNotNilAndNoProblems(t, createdWebhook, err)
+
+			t.Logf("created webhook %s belonging to account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
 			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
 
 			// check that user cannot see the webhook
@@ -432,7 +537,7 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 				NewOwner:     futureOwner.ID,
 			}))
 
-			t.Logf("transferred account %d from user %d to user %d", account.ID, account.BelongsToUser, futureOwner.ID)
+			t.Logf("transferred account %s from user %s to user %s", account.ID, account.BelongsToUser, futureOwner.ID)
 
 			require.NoError(t, futureOwnerClient.SwitchActiveAccount(ctx, account.ID))
 
@@ -445,93 +550,88 @@ func (s *TestSuite) TestAccounts_OwnershipTransfer() {
 			require.Nil(t, webhook)
 			require.Error(t, err)
 
-			// check that new owner can update the webhook
-			require.NoError(t, futureOwnerClient.UpdateWebhook(ctx, createdWebhook))
-
-			// check audit log entries
-			auditLogEntries, err := testClients.admin.GetAuditLogForAccount(ctx, account.ID)
-			require.NoError(t, err)
-
-			expectedAuditLogEntries := []*types.AuditLogEntry{
-				{EventType: audit.AccountCreationEvent},
-				{EventType: audit.UserAddedToAccountEvent},
-				{EventType: audit.WebhookCreationEvent},
-				{EventType: audit.AccountTransferredEvent},
-				{EventType: audit.WebhookUpdateEvent},
-			}
-			validateAuditLogEntries(t, expectedAuditLogEntries, auditLogEntries, account.ID, audit.AccountAssignmentKey)
+			// check that new owner can delete the webhook
+			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
 
 			// Clean up.
 			require.Error(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
-			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
-
 			require.NoError(t, testClients.admin.ArchiveUser(ctx, futureOwner.ID))
 		}
 	})
-}
 
-func (s *TestSuite) TestAccounts_Auditing_Returns404ForNonexistentAccount() {
-	s.runForEachClientExcept("should not be possible to audit a non-existent account", func(testClients *testClientWrapper) func() {
+	s.runForPASETOClient("should be possible to transfer ownership of an account", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
 			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
 			defer span.End()
 
-			x, err := testClients.admin.GetAuditLogForAccount(ctx, nonexistentID)
+			// create users
+			futureOwner, _, _, futureOwnerClient := createUserAndClientForTest(ctx, t)
 
-			assert.NoError(t, err)
-			assert.Empty(t, x)
-		}
-	})
-}
+			// fetch account data
+			accountCreationInput := &types.AccountCreationInput{
+				Name: fakes.BuildFakeAccount().Name,
+			}
+			account, accountCreationErr := testClients.main.CreateAccount(ctx, accountCreationInput)
+			require.NoError(t, accountCreationErr)
+			require.NotNil(t, account)
 
-func (s *TestSuite) TestAccounts_Auditing_InaccessibleToNonAdmins() {
-	s.runForEachClientExcept("should not be possible to audit an account as non-admin", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
+			t.Logf("created account %s", account.ID)
 
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
+			require.NoError(t, testClients.main.SwitchActiveAccount(ctx, account.ID))
 
-			// Create account.
-			exampleAccount := fakes.BuildFakeAccount()
-			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			requireNotNilAndNoProblems(t, createdAccount, err)
+			t.Logf("switched to active account: %s", account.ID)
 
-			// fetch audit log entries
-			actual, err := testClients.main.GetAuditLogForAccount(ctx, createdAccount.ID)
-			assert.Error(t, err)
-			assert.Nil(t, actual)
+			// create a webhook
+			exampleWebhook := fakes.BuildFakeWebhook()
+			exampleWebhookInput := fakes.BuildFakeWebhookCreationInputFromWebhook(exampleWebhook)
+			createdWebhookID, err := testClients.main.CreateWebhook(ctx, exampleWebhookInput)
+			require.NoError(t, err)
 
-			// Clean up account.
-			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
-		}
-	})
-}
+			var createdWebhook *types.Webhook
+			checkFunc := func() bool {
+				createdWebhook, err = testClients.main.GetWebhook(ctx, createdWebhookID)
+				return assert.NotNil(t, createdWebhook) && assert.NoError(t, err)
+			}
+			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
 
-func (s *TestSuite) TestAccounts_Auditing() {
-	s.runForEachClientExcept("should be possible to audit an account", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
+			requireNotNilAndNoProblems(t, createdWebhook, err)
 
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
+			t.Logf("created webhook %s belonging to account %s", createdWebhook.ID, createdWebhook.BelongsToAccount)
+			require.Equal(t, account.ID, createdWebhook.BelongsToAccount)
 
-			// Create account.
-			exampleAccount := fakes.BuildFakeAccount()
-			exampleAccountInput := fakes.BuildFakeAccountCreationInputFromAccount(exampleAccount)
-			createdAccount, err := testClients.main.CreateAccount(ctx, exampleAccountInput)
-			requireNotNilAndNoProblems(t, createdAccount, err)
+			// check that user cannot see the webhook
+			webhook, err := futureOwnerClient.GetWebhook(ctx, createdWebhook.ID)
+			require.Nil(t, webhook)
+			require.Error(t, err)
 
-			// fetch audit log entries
-			actual, err := testClients.admin.GetAuditLogForAccount(ctx, createdAccount.ID)
-			assert.NoError(t, err)
-			assert.NotNil(t, actual)
+			// add them to the account
+			require.NoError(t, testClients.main.TransferAccountOwnership(ctx, account.ID, &types.AccountOwnershipTransferInput{
+				Reason:       t.Name(),
+				CurrentOwner: account.BelongsToUser,
+				NewOwner:     futureOwner.ID,
+			}))
 
-			// Clean up account.
-			assert.NoError(t, testClients.main.ArchiveAccount(ctx, createdAccount.ID))
+			t.Logf("transferred account %s from user %s to user %s", account.ID, account.BelongsToUser, futureOwner.ID)
+
+			require.NoError(t, futureOwnerClient.SwitchActiveAccount(ctx, account.ID))
+
+			// check that user can see the webhook
+			webhook, err = futureOwnerClient.GetWebhook(ctx, createdWebhook.ID)
+			requireNotNilAndNoProblems(t, webhook, err)
+
+			// check that old user cannot see the webhook
+			webhook, err = testClients.main.GetWebhook(ctx, createdWebhook.ID)
+			require.Nil(t, webhook)
+			require.Error(t, err)
+
+			// check that new owner can delete the webhook
+			require.NoError(t, futureOwnerClient.ArchiveWebhook(ctx, createdWebhook.ID))
+
+			// Clean up.
+			require.Error(t, testClients.main.ArchiveWebhook(ctx, createdWebhook.ID))
+			require.NoError(t, testClients.admin.ArchiveUser(ctx, futureOwner.ID))
 		}
 	})
 }

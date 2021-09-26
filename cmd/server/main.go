@@ -8,14 +8,14 @@ import (
 	"os"
 	"strconv"
 
+	chimiddleware "github.com/go-chi/chi/middleware"
+	flag "github.com/spf13/pflag"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/build/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
-
-	chimiddleware "github.com/go-chi/chi/middleware"
-	flag "github.com/spf13/pflag"
 )
 
 const (
@@ -37,7 +37,7 @@ func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
 
 	cfg := &secrets.Config{
 		Provider: secrets.ProviderLocal,
-		Key:      os.Getenv("TODO_SERVICE_LOCAL_SECRET_STORE_KEY"),
+		Key:      os.Getenv("TODO_SERVICE_LOCAL_CONFIG_STORE_KEY"),
 	}
 
 	k, err := secrets.ProvideSecretKeeper(ctx, cfg)
@@ -105,7 +105,7 @@ func main() {
 	ctx, initSpan := tracing.StartSpan(ctx)
 
 	// build our server struct.
-	srv, err := server.Build(ctx, cfg, logger)
+	srv, err := server.Build(ctx, logger, cfg)
 	if err != nil {
 		logger.Fatal(fmt.Errorf("initializing HTTP server: %w", err))
 	}

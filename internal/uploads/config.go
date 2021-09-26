@@ -3,13 +3,15 @@ package uploads
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/storage"
 )
 
 // Config contains settings regarding search indices.
 type Config struct {
+	_ struct{}
+
 	Storage storage.Config `json:"storage_config" mapstructure:"storage_config" toml:"storage_config,omitempty"`
 	Debug   bool           `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
 }

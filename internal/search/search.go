@@ -15,10 +15,10 @@ type (
 
 	// IndexManager is our wrapper interface for a text search index.
 	IndexManager interface {
-		Index(ctx context.Context, id uint64, value interface{}) error
-		Search(ctx context.Context, query string, accountID uint64) (ids []uint64, err error)
-		SearchForAdmin(ctx context.Context, query string) (ids []uint64, err error)
-		Delete(ctx context.Context, id uint64) (err error)
+		Index(ctx context.Context, id string, value interface{}) error
+		Search(ctx context.Context, query, accountID string) (ids []string, err error)
+		SearchForAdmin(ctx context.Context, query string) (ids []string, err error)
+		Delete(ctx context.Context, id string) (err error)
 	}
 
 	// IndexManagerProvider is a function that provides an IndexManager for a given index.

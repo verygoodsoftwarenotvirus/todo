@@ -7,13 +7,13 @@ import (
 	"net/url"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
-
 	useragent "github.com/mssola/user_agent"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
 func Test_attachUint8ToSpan(T *testing.T) {
@@ -100,30 +100,6 @@ func TestAttachFilterToSpan(T *testing.T) {
 	})
 }
 
-func TestAttachAuditLogEntryIDToSpan(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		_, span := StartSpan(context.Background())
-
-		AttachAuditLogEntryIDToSpan(span, 123)
-	})
-}
-
-func TestAttachAuditLogEntryEventTypeToSpan(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		_, span := StartSpan(context.Background())
-
-		AttachAuditLogEntryEventTypeToSpan(span, t.Name())
-	})
-}
-
 func TestAttachAccountIDToSpan(T *testing.T) {
 	T.Parallel()
 
@@ -132,7 +108,7 @@ func TestAttachAccountIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachAccountIDToSpan(span, 123)
+		AttachAccountIDToSpan(span, "123")
 	})
 }
 
@@ -144,24 +120,7 @@ func TestAttachRequestingUserIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachRequestingUserIDToSpan(span, 123)
-	})
-}
-
-func TestAttachChangeSummarySpan(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		_, span := StartSpan(context.Background())
-
-		AttachChangeSummarySpan(span, t.Name(), []*types.FieldChangeSummary{
-			{
-				OldValue: "blah",
-				NewValue: "butt",
-			},
-		})
+		AttachRequestingUserIDToSpan(span, "123")
 	})
 }
 
@@ -178,7 +137,7 @@ func TestAttachSessionContextDataToSpan(T *testing.T) {
 			Requester: types.RequesterInfo{
 				ServicePermissions: authorization.NewServiceRolePermissionChecker(authorization.ServiceUserRole.String()),
 			},
-			ActiveAccountID: 0,
+			ActiveAccountID: "",
 		})
 	})
 }
@@ -191,7 +150,7 @@ func TestAttachAPIClientDatabaseIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachAPIClientDatabaseIDToSpan(span, 123)
+		AttachAPIClientDatabaseIDToSpan(span, "123")
 	})
 }
 
@@ -228,7 +187,7 @@ func TestAttachUserIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachUserIDToSpan(span, 123)
+		AttachUserIDToSpan(span, "123")
 	})
 }
 
@@ -252,7 +211,7 @@ func TestAttachWebhookIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachWebhookIDToSpan(span, 123)
+		AttachWebhookIDToSpan(span, "123")
 	})
 }
 
@@ -389,6 +348,6 @@ func TestAttachItemIDToSpan(T *testing.T) {
 
 		_, span := StartSpan(context.Background())
 
-		AttachItemIDToSpan(span, 123)
+		AttachItemIDToSpan(span, "123")
 	})
 }

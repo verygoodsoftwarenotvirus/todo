@@ -1,24 +1,9 @@
-version: "3.3"
+version: "3.8"
 services:
-    database:
-        image: "mysql:8"
-        environment:
-            MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
-            MYSQL_DATABASE: 'todo'
-            MYSQL_PASSWORD: 'hunter2'
-            MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-            MYSQL_USER: 'dbuser'
-        logging:
-            driver: none
-        ports:
-            - 3306:3306
     workers:
         container_name: workers
         depends_on:
             - todo-server
-        links:
-            - worker_queue
-            - database
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'
@@ -30,14 +15,17 @@ services:
               target: '/etc/service.config'
               type: 'bind'
     todo-server:
-        links:
-            - worker_queue
-            - database
+        container_name: api_server
         environment:
-            TODO_SERVICE_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+            TODO_SERVER_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
+            CONFIGURATION_FILEPATH: '/etc/service.config'
+            JAEGER_DISABLED: 'false'
+        ports:
+            - '8888:8888'
+        build:
+            context: '../../../../'
+            dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'
         volumes:
             - source: '../../../../environments/testing/config_files/integration-tests-mysql.config'
               target: '/etc/service.config'
               type: 'bind'
-    test:
-        container_name: 'mysql_integration_tests'

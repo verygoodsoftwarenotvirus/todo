@@ -1,0 +1,61 @@
+version: "3.8"
+services:
+    worker_queue:
+        image: redis:6-buster
+        container_name: worker_queue
+    postgres:
+        hostname: pgdatabase
+        container_name: database
+        image: postgres:13
+        environment:
+            POSTGRES_DB: 'todo'
+            POSTGRES_PASSWORD: 'hunter2'
+            POSTGRES_USER: 'dbuser'
+        logging:
+            driver: none
+        ports:
+            - '2345:5432'
+    tracing-server:
+        image: jaegertracing/all-in-one:1.22.0
+        logging:
+            driver: none
+        ports:
+            - "5775:5775/udp"
+            - "6831:6831/udp"
+            - "6832:6832/udp"
+            - "5778:5778"
+            - "16686:16686"
+            - "14268:14268"
+            - "9411:9411"
+    prometheus:
+        image: quay.io/prometheus/prometheus:v2.25.0
+        command: '--config.file=/etc/prometheus/config.yaml --storage.tsdb.path=/prometheus --log.level=debug'
+        logging:
+          driver: none
+        ports:
+            - 9090:9090
+        volumes:
+            - source: "../../environments/local/prometheus/config.yaml"
+              target: "/etc/prometheus/config.yaml"
+              type: 'bind'
+    grafana:
+      image: grafana/grafana:7.4.3
+      logging:
+        driver: none
+      ports:
+        - 3000:3000
+      links:
+        - prometheus
+      volumes:
+        - source: '../../environments/local/grafana/grafana.ini'
+          target: '/etc/grafana/grafana.ini'
+          type: 'bind'
+        - source: '../../environments/local/grafana/datasources.yaml'
+          target: '/etc/grafana/provisioning/datasources/datasources.yml'
+          type: 'bind'
+        - source: '../../environments/local/grafana/dashboards.yaml'
+          target: '/etc/grafana/provisioning/dashboards/dashboards.yml'
+          type: 'bind'
+        - source: '../../environments/local/grafana/dashboards'
+          target: '/etc/grafana/provisioning/dashboards/dashboards'
+          type: 'bind'

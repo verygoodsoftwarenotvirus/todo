@@ -1,49 +1,49 @@
-version: "3.3"
+version: "3.8"
 services:
-    worker_queue:
+    redis:
+        labels:
+            - "purpose=todo.integration_tests.base_infra"
+        hostname: worker_queue
         image: redis:6-buster
-        container_name: worker_queue
-    todo-server:
-        environment:
-            CONFIGURATION_FILEPATH: '/etc/service.config'
-            JAEGER_DISABLED: 'false'
-        links:
-            - worker_queue
-            - tracing-server
+        container_name: redis
         ports:
-            - 80:8888
-        build:
-            context: '../../../../'
-            dockerfile: 'environments/testing/dockerfiles/integration-server.Dockerfile'
-    test:
+            - '6379:6379'
+    postgres:
+        labels:
+            - "purpose=todo.integration_tests.base_infra"
+        container_name: postgres
+        hostname: pgdatabase
+        image: postgres:13
         environment:
-            TARGET_ADDRESS: 'http://todo-server:8888'
-        links:
-            - todo-server
-            - tracing-server
-#            - prometheus
-        build:
-            context: '../../../../'
-            dockerfile: 'environments/testing/dockerfiles/integration-tests.Dockerfile'
-        container_name: 'integration_tests'
-    tracing-server:
-        image: jaegertracing/all-in-one:1.22.0
+            POSTGRES_DB: 'todo'
+            POSTGRES_PASSWORD: 'hunter2'
+            POSTGRES_USER: 'dbuser'
         logging:
             driver: none
         ports:
-            - "5775:5775/udp"
-            - "6831:6831/udp"
-            - "6832:6832/udp"
-            - "5778:5778"
-            - "16686:16686"
-            - "14268:14268"
-            - "9411:9411"
+            - '5432:5432'
+    mysql:
+        labels:
+            - "purpose=todo.integration_tests.base_infra"
+        container_name: mysql
+        hostname: mysqldatabase
+        image: "mysql:8"
+        environment:
+            MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+            MYSQL_DATABASE: 'todo'
+            MYSQL_PASSWORD: 'hunter2'
+            MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
+            MYSQL_USER: 'dbuser'
+        logging:
+            driver: none
+        ports:
+            - '3306:3306'
 #    prometheus:
 #        image: quay.io/prometheus/prometheus:v2.25.0
 #        logging:
 #            driver: none
 #        ports:
-#            - 9090:9090
+#            - '9090:9090'
 #        volumes:
 #            - source: "../../../../environments/testing/prometheus/config.yaml"
 #              target: "/etc/prometheus/config.yaml"
@@ -54,7 +54,7 @@ services:
 #        logging:
 #            driver: none
 #        ports:
-#            - 3000:3000
+#            - '3000:3000'
 #        links:
 #            - prometheus
 #        volumes:

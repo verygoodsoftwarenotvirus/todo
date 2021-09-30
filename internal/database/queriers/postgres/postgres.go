@@ -80,7 +80,7 @@ func ProvideDatabaseClient(
 		config:     cfg,
 		tracer:     tracer,
 		timeFunc:   defaultTimeFunc,
-		logger:     logging.EnsureLogger(logger).WithName(loggerName),
+		logger:     logging.EnsureLogger(logger).WithValue("conn_deets", cfg.ConnectionDetails).WithName(loggerName),
 		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 
@@ -96,7 +96,7 @@ func ProvideDatabaseClient(
 			testUser = cfg.CreateTestUser
 		}
 
-		if err := c.Migrate(ctx, cfg.MaxPingAttempts, testUser); err != nil {
+		if err = c.Migrate(ctx, cfg.MaxPingAttempts, testUser); err != nil {
 			return nil, observability.PrepareError(err, logger, span, "migrating database")
 		}
 

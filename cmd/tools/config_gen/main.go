@@ -37,8 +37,8 @@ const (
 	defaultPort              = 8888
 	defaultCookieDomain      = "localhost"
 	debugCookieSecret        = "HEREISA32CHARSECRETWHICHISMADEUP"
-	devMySQLConnDetails      = "dbuser:hunter2@tcp(database:3306)/todo"
-	devPostgresDBConnDetails = "postgres://dbuser:hunter2@database:5432/todo?sslmode=disable"
+	devMySQLConnDetails      = "dbuser:hunter2@tcp(mysqldatabase:3306)/todo"
+	devPostgresDBConnDetails = "postgres://dbuser:hunter2@pgdatabase:5432/todo?sslmode=disable"
 	defaultCookieName        = authservice.DefaultCookieName
 
 	// run modes.
@@ -96,7 +96,7 @@ var (
 		Provider:                  "jaeger",
 		SpanCollectionProbability: 1,
 		Jaeger: &tracing.JaegerConfig{
-			CollectorEndpoint: "http://tracing-server:14268/api/traces",
+			CollectorEndpoint: "http://localhost:14268/api/traces",
 			ServiceName:       "todo_service",
 		},
 	}

@@ -182,7 +182,7 @@ func (s *TestSuite) TestAccounts_Updating() {
 }
 
 func (s *TestSuite) TestAccounts_Archiving_Returns404ForNonexistentAccount() {
-	s.runForEachClientExcept("should not be possible to archiv a non-existent account", func(testClients *testClientWrapper) func() {
+	s.runForEachClientExcept("should not be possible to archive a non-existent account", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 

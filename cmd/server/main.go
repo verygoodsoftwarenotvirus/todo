@@ -37,7 +37,7 @@ func initializeLocalSecretManager(ctx context.Context) secrets.SecretManager {
 
 	cfg := &secrets.Config{
 		Provider: secrets.ProviderLocal,
-		Key:      os.Getenv("TODO_SERVICE_LOCAL_CONFIG_STORE_KEY"),
+		Key:      os.Getenv("TODO_SERVER_LOCAL_CONFIG_STORE_KEY"),
 	}
 
 	k, err := secrets.ProvideSecretKeeper(ctx, cfg)

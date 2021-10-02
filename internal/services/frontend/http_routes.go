@@ -34,11 +34,6 @@ func (s *service) SetupRoutes(router routing.Router) {
 	router.Post("/auth/submit_registration", s.handleRegistrationSubmission)
 	router.Post("/auth/verify_two_factor_secret", s.handleTOTPVerificationSubmission)
 
-	router.Post("/billing/checkout/begin", s.handleCheckoutSessionStart)
-	router.Post("/billing/checkout/success", s.handleCheckoutSuccess)
-	router.Post("/billing/checkout/cancel", s.handleCheckoutCancel)
-	router.Post("/billing/checkout/failures", s.handleCheckoutFailure)
-
 	singleAccountPattern := fmt.Sprintf(numericIDPattern, accountIDURLParamKey)
 	router.Get("/accounts", s.buildAccountsTableView(true))
 	router.Get(fmt.Sprintf("/accounts/%s", singleAccountPattern), s.buildAccountEditorView(true))

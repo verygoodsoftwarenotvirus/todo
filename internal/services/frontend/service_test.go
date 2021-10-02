@@ -7,7 +7,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
@@ -40,7 +39,6 @@ func TestProvideService(t *testing.T) {
 		usersService,
 		dataManager,
 		rpm,
-		capitalism.NewMockPaymentManager(),
 	)
 
 	mock.AssertExpectationsForObjects(t, authService, usersService, dataManager, rpm)

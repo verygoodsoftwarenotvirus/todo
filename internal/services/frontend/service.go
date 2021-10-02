@@ -8,7 +8,6 @@ import (
 	"github.com/nicksnyder/go-i18n/v2/i18n"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -45,7 +44,6 @@ type (
 	}
 
 	service struct {
-		paymentManager            capitalism.PaymentManager
 		usersService              UsersService
 		logger                    logging.Logger
 		tracer                    tracing.Tracer
@@ -71,7 +69,6 @@ func ProvideService(
 	usersService UsersService,
 	dataStore database.DataManager,
 	routeParamManager routing.RouteParamManager,
-	paymentManager capitalism.PaymentManager,
 ) Service {
 	svc := &service{
 		useFakeData:               cfg.UseFakeData,
@@ -82,7 +79,6 @@ func ProvideService(
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,
 		authService:               authService,
 		usersService:              usersService,
-		paymentManager:            paymentManager,
 		dataStore:                 dataStore,
 		apiClientIDFetcher:        routeParamManager.BuildRouteParamStringIDFetcher(apiClientIDURLParamKey),
 		accountIDFetcher:          routeParamManager.BuildRouteParamStringIDFetcher(accountIDURLParamKey),

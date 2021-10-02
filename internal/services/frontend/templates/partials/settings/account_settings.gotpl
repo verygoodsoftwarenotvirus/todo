@@ -21,9 +21,6 @@
         <div>
             <select class="form-select form-select-lg mb-3" name="desiredPlan">
                 <option selected>Please select a plan</option>
-                {{ range $i, $subscription := .SubscriptionPlans }}
-                <option value="{{ .ID }}">{{ .Name }}: {{ renderPrice .Price }}</option>
-                {{ end }}
             </select>
             <button class="btn btn-primary btn-lg btn-block" type="submit" id="beginCheckoutButton">Checkout</button>
         </div>

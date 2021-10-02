@@ -35,24 +35,6 @@ var editorConfigs = map[string]*basicEditorTemplateConfig{
 			},
 		},
 	},
-	"internal/services/frontend/templates/partials/generated/editors/account_subscription_plan_editor.gotpl": {
-		Fields: []formField{
-			{
-				LabelName:       "name",
-				FormName:        "name",
-				StructFieldName: "Name",
-				InputType:       "text",
-				Required:        true,
-			},
-			{
-				LabelName:       "price",
-				FormName:        "price",
-				StructFieldName: "Price",
-				InputType:       "numeric",
-				Required:        true,
-			},
-		},
-	},
 	"internal/services/frontend/templates/partials/generated/editors/api_client_editor.gotpl": {
 		Fields: []formField{
 			{

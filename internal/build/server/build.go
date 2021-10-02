@@ -9,8 +9,6 @@ import (
 	"github.com/google/wire"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
@@ -55,8 +53,6 @@ func Build(
 		uploads.Providers,
 		observability.Providers,
 		storage.Providers,
-		capitalism.Providers,
-		stripe.Providers,
 		chi.Providers,
 		authentication.Providers,
 		authservice.Providers,

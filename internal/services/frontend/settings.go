@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -61,8 +60,7 @@ func (s *service) buildUserSettingsView(includeBaseTemplate bool) func(http.Resp
 var accountSettingsPageSrc string
 
 type accountSettingsPageContent struct {
-	Account           *types.Account
-	SubscriptionPlans []capitalism.SubscriptionPlan
+	Account *types.Account
 }
 
 func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.ResponseWriter, *http.Request) {
@@ -89,13 +87,10 @@ func (s *service) buildAccountSettingsView(includeBaseTemplate bool) func(http.R
 		}
 
 		contentData := &accountSettingsPageContent{
-			Account:           account,
-			SubscriptionPlans: nil,
+			Account: account,
 		}
 
-		funcMap := template.FuncMap{
-			"renderPrice": renderPrice,
-		}
+		funcMap := template.FuncMap{}
 
 		if includeBaseTemplate {
 			tmpl := s.renderTemplateIntoBaseTemplate(accountSettingsPageSrc, funcMap)

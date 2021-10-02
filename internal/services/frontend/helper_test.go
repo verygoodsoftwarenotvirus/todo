@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
@@ -68,7 +67,6 @@ func buildTestHelper(t *testing.T) *serviceHTTPRoutesTestHelper {
 		usersService,
 		dataManager,
 		rpm,
-		capitalism.NewMockPaymentManager(),
 	).(*service)
 	require.True(t, ok)
 

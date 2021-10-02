@@ -9,7 +9,6 @@ package server
 import (
 	"context"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism/stripe"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	config2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
@@ -120,10 +119,7 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	frontendConfig := &servicesConfigurations.Frontend
 	frontendAuthService := frontend.ProvideAuthService(authService)
 	usersService := frontend.ProvideUsersService(userDataService)
-	capitalismConfig := &cfg.Capitalism
-	stripeConfig := capitalismConfig.Stripe
-	paymentManager := stripe.ProvideStripePaymentManager(logger, stripeConfig)
-	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dataManager, routeParamManager, paymentManager)
+	service := frontend.ProvideService(frontendConfig, logger, frontendAuthService, usersService, dataManager, routeParamManager)
 	router := chi.NewRouter(logger)
 	httpServer, err := server.ProvideHTTPServer(ctx, serverConfig, instrumentationHandler, authService, userDataService, accountDataService, apiClientDataService, websocketDataService, itemDataService, webhookDataService, adminService, service, logger, serverEncoderDecoder, router)
 	if err != nil {

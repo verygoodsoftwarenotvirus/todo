@@ -77,7 +77,7 @@ require (
 	github.com/streadway/amqp v1.0.0 // indirect
 	github.com/stretchr/objx v0.3.0 // indirect
 	github.com/stretchr/testify v1.7.0
-	github.com/stripe/stripe-go/v72 v72.45.0
+	github.com/stripe/stripe-go/v72 v72.45.0 // indirect
 	github.com/tkuchiki/go-timezone v0.2.2 // indirect
 	github.com/tmaxmax/go-sse v0.3.0 // indirect
 	github.com/unrolled/secure v1.0.8

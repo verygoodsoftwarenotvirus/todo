@@ -9,7 +9,6 @@ import (
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/capitalism"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/queriers/mysql"
@@ -69,7 +68,6 @@ type (
 		Observability observability.Config   `json:"observability" mapstructure:"observability" toml:"observability,omitempty"`
 		Routing       routing.Config         `json:"routing" mapstructure:"routing" toml:"routing,omitempty"`
 		Database      dbconfig.Config        `json:"database" mapstructure:"database" toml:"database,omitempty"`
-		Capitalism    capitalism.Config      `json:"capitalism" mapstructure:"capitalism" toml:"capitalism,omitempty"`
 		Meta          MetaSettings           `json:"meta" mapstructure:"meta" toml:"meta,omitempty"`
 		Services      ServicesConfigurations `json:"services" mapstructure:"services" toml:"services,omitempty"`
 		Server        server.Config          `json:"server" mapstructure:"server" toml:"server,omitempty"`
@@ -104,10 +102,6 @@ func (cfg *InstanceConfig) ValidateWithContext(ctx context.Context) error {
 
 	if err := cfg.Meta.ValidateWithContext(ctx); err != nil {
 		return fmt.Errorf("error validating Meta portion of config: %w", err)
-	}
-
-	if err := cfg.Capitalism.ValidateWithContext(ctx); err != nil {
-		return fmt.Errorf("error validating Capitalism portion of config: %w", err)
 	}
 
 	if err := cfg.Encoding.ValidateWithContext(ctx); err != nil {

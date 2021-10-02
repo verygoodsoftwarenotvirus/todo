@@ -12,7 +12,6 @@ var (
 			new(*InstanceConfig),
 			"Database",
 			"Observability",
-			"Capitalism",
 			"Meta",
 			"Encoding",
 			"Uploads",

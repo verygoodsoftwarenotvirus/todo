@@ -2,6 +2,7 @@ package workers
 
 import (
 	"context"
+	"fmt"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -9,6 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -19,19 +21,35 @@ type PreArchivesWorker struct {
 	encoder               encoding.ClientEncoder
 	postArchivesPublisher publishers.Publisher
 	dataManager           database.DataManager
+	itemsIndexManager     search.IndexManager
 }
 
 // ProvidePreArchivesWorker provides a PreArchivesWorker.
-func ProvidePreArchivesWorker(logger logging.Logger, dataManager database.DataManager, postArchivesPublisher publishers.Publisher) *PreArchivesWorker {
+func ProvidePreArchivesWorker(
+	ctx context.Context,
+	logger logging.Logger,
+	dataManager database.DataManager,
+	postArchivesPublisher publishers.Publisher,
+	searchIndexLocation search.IndexPath,
+	searchIndexProvider search.IndexManagerProvider,
+) (*PreArchivesWorker, error) {
 	const name = "pre_archives"
 
-	return &PreArchivesWorker{
+	itemsIndexManager, err := searchIndexProvider(ctx, logger, searchIndexLocation, "items", "name", "description")
+	if err != nil {
+		return nil, fmt.Errorf("setting up items search index manager: %w", err)
+	}
+
+	w := &PreArchivesWorker{
 		logger:                logging.EnsureLogger(logger).WithName(name).WithValue("topic", name),
 		tracer:                tracing.NewTracer(name),
 		encoder:               encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
 		postArchivesPublisher: postArchivesPublisher,
 		dataManager:           dataManager,
+		itemsIndexManager:     itemsIndexManager,
 	}
+
+	return w, nil
 }
 
 // HandleMessage handles a pending archive.

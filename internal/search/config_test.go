@@ -15,7 +15,7 @@ func TestConfig_ValidateWithContext(T *testing.T) {
 
 		ctx := context.Background()
 		cfg := &Config{
-			Provider: BleveProvider,
+			Provider: ElasticsearchProvider,
 		}
 
 		assert.NoError(t, cfg.ValidateWithContext(ctx))

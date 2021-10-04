@@ -1,4 +1,4 @@
-package bleve
+package elasticsearch
 
 import (
 	"github.com/google/wire"
@@ -9,11 +9,11 @@ import (
 var (
 	// Providers represents what this library offers to external users in the form of dependencies.
 	Providers = wire.NewSet(
-		ProvideBleveIndexManagerProvider,
+		ProvideIndexManagerProvider,
 	)
 )
 
-// ProvideBleveIndexManagerProvider is a wrapper around NewBleveIndexManager.
-func ProvideBleveIndexManagerProvider() search.IndexManagerProvider {
-	return NewBleveIndexManager
+// ProvideIndexManagerProvider is a wrapper around NewIndexManager.
+func ProvideIndexManagerProvider() search.IndexManagerProvider {
+	return NewIndexManager
 }

@@ -53,7 +53,7 @@ const (
 	defaultPassword = "password"
 
 	// search index paths.
-	defaultItemsSearchIndexPath = "items.bleve"
+	localElasticsearchLocation = "http://elasticsearch:9200"
 
 	// message provider topics
 	preWritesTopicName   = "pre_writes"
@@ -224,7 +224,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			},
 		},
 		Search: search.Config{
-			Provider: "bleve",
+			Provider: search.ElasticsearchProvider,
 		},
 		Services: config.ServicesConfigurations{
 			Accounts: accounts.Config{
@@ -253,10 +253,10 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				//
 			},
 			Items: itemsservice.Config{
+				SearchIndexPath:      "http://elasticsearch:9200",
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
-				SearchIndexPath:      fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
@@ -309,7 +309,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 		},
 		Search: search.Config{
-			Provider: "bleve",
+			Provider: search.ElasticsearchProvider,
 		},
 		Services: config.ServicesConfigurations{
 			Accounts: accounts.Config{
@@ -338,7 +338,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				//
 			},
 			Items: itemsservice.Config{
-				SearchIndexPath:      fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				SearchIndexPath:      "http://elasticsearch:9200",
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
@@ -412,7 +412,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 			},
 			Search: search.Config{
-				Provider: "bleve",
+				Provider: search.ElasticsearchProvider,
 			},
 			Services: config.ServicesConfigurations{
 				Accounts: accounts.Config{
@@ -447,10 +447,10 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					//
 				},
 				Items: itemsservice.Config{
+					SearchIndexPath:      "http://elasticsearch:9200",
 					PreWritesTopicName:   preWritesTopicName,
 					PreUpdatesTopicName:  preUpdatesTopicName,
 					PreArchivesTopicName: preArchivesTopicName,
-					SearchIndexPath:      fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 					Logging: logging.Config{
 						Name:     "items",
 						Level:    logging.InfoLevel,

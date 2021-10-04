@@ -38,6 +38,13 @@ services:
             driver: none
         ports:
             - '3306:3306'
+    elasticsearch:
+        image: elasticsearch:7.14.1
+        ports:
+            - '9200:9200'
+            - '9300:9300'
+        environment:
+            discovery.type: 'single-node'
 #    prometheus:
 #        image: quay.io/prometheus/prometheus:v2.25.0
 #        logging:

@@ -2,6 +2,9 @@ package workers
 
 import (
 	"context"
+	"fmt"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -19,19 +22,35 @@ type PreUpdatesWorker struct {
 	encoder              encoding.ClientEncoder
 	postUpdatesPublisher publishers.Publisher
 	dataManager          database.DataManager
+	itemsIndexManager    search.IndexManager
 }
 
 // ProvidePreUpdatesWorker provides a PreUpdatesWorker.
-func ProvidePreUpdatesWorker(logger logging.Logger, dataManager database.DataManager, postUpdatesPublisher publishers.Publisher) *PreUpdatesWorker {
+func ProvidePreUpdatesWorker(
+	ctx context.Context,
+	logger logging.Logger,
+	dataManager database.DataManager,
+	postUpdatesPublisher publishers.Publisher,
+	searchIndexLocation search.IndexPath,
+	searchIndexProvider search.IndexManagerProvider,
+) (*PreUpdatesWorker, error) {
 	const name = "pre_updates"
 
-	return &PreUpdatesWorker{
+	itemsIndexManager, err := searchIndexProvider(ctx, logger, searchIndexLocation, "items", "name", "description")
+	if err != nil {
+		return nil, fmt.Errorf("setting up items search index manager: %w", err)
+	}
+
+	w := &PreUpdatesWorker{
 		logger:               logging.EnsureLogger(logger).WithName(name).WithValue("topic", name),
 		tracer:               tracing.NewTracer(name),
 		encoder:              encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
 		postUpdatesPublisher: postUpdatesPublisher,
 		dataManager:          dataManager,
+		itemsIndexManager:    itemsIndexManager,
 	}
+
+	return w, nil
 }
 
 // HandleMessage handles a pending update.
@@ -62,8 +81,13 @@ func (w *PreUpdatesWorker) HandleMessage(ctx context.Context, message []byte) er
 				AttributableToUserID:    msg.AttributableToUserID,
 				AttributableToAccountID: msg.AttributableToAccountID,
 			}
+
 			if err := w.postUpdatesPublisher.Publish(ctx, dcm); err != nil {
 				w.logger.Error(err, "publishing to post-updates topic")
+			}
+
+			if err := w.itemsIndexManager.Index(ctx, msg.Item.ID, msg.Item); err != nil {
+				observability.AcknowledgeError(err, w.logger, span, "indexing the item")
 			}
 		}
 	case types.UserMembershipDataType, types.WebhookDataType:

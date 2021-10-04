@@ -16,6 +16,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/elasticsearch"
 )
 
 // Build builds a worker.
@@ -31,6 +32,7 @@ func Build(
 		encoding.Providers,
 		observability.Providers,
 		authentication.Providers,
+		elasticsearch.Providers,
 	)
 
 	return nil

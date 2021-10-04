@@ -2,6 +2,9 @@ package workers
 
 import (
 	"context"
+	"fmt"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -19,19 +22,35 @@ type PreWritesWorker struct {
 	encoder             encoding.ClientEncoder
 	postWritesPublisher publishers.Publisher
 	dataManager         database.DataManager
+	itemsIndexManager   search.IndexManager
 }
 
 // ProvidePreWritesWorker provides a PreWritesWorker.
-func ProvidePreWritesWorker(logger logging.Logger, dataManager database.DataManager, postWritesPublisher publishers.Publisher) *PreWritesWorker {
+func ProvidePreWritesWorker(
+	ctx context.Context,
+	logger logging.Logger,
+	dataManager database.DataManager,
+	postWritesPublisher publishers.Publisher,
+	searchIndexLocation search.IndexPath,
+	searchIndexProvider search.IndexManagerProvider,
+) (*PreWritesWorker, error) {
 	const name = "pre_writes"
 
-	return &PreWritesWorker{
+	itemsIndexManager, err := searchIndexProvider(ctx, logger, searchIndexLocation, "items", "name", "description")
+	if err != nil {
+		return nil, fmt.Errorf("setting up items search index manager: %w", err)
+	}
+
+	w := &PreWritesWorker{
 		logger:              logging.EnsureLogger(logger).WithName(name).WithValue("topic", name),
 		tracer:              tracing.NewTracer(name),
 		encoder:             encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
 		postWritesPublisher: postWritesPublisher,
 		dataManager:         dataManager,
+		itemsIndexManager:   itemsIndexManager,
 	}
+
+	return w, err
 }
 
 // HandleMessage handles a pending write.
@@ -61,8 +80,13 @@ func (w *PreWritesWorker) HandleMessage(ctx context.Context, message []byte) err
 				AttributableToUserID:    msg.AttributableToUserID,
 				AttributableToAccountID: msg.AttributableToAccountID,
 			}
+
 			if err = w.postWritesPublisher.Publish(ctx, dcm); err != nil {
-				w.logger.Error(err, "publishing to post-writes topic")
+				observability.AcknowledgeError(err, w.logger, span, "publishing to post-writes topic")
+			}
+
+			if err = w.itemsIndexManager.Index(ctx, item.ID, item); err != nil {
+				observability.AcknowledgeError(err, w.logger, span, "indexing the item")
 			}
 		}
 	case types.WebhookDataType:

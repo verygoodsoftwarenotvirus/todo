@@ -18,7 +18,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/elasticsearch"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	adminservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
@@ -41,7 +41,7 @@ func Build(
 	cfg *config.InstanceConfig,
 ) (*server.HTTPServer, error) {
 	wire.Build(
-		bleve.Providers,
+		elasticsearch.Providers,
 		config.Providers,
 		database.Providers,
 		dbconfig.Providers,

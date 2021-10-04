@@ -17,7 +17,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/chi"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/bleve"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/elasticsearch"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/admin"
@@ -103,8 +103,8 @@ func Build(ctx context.Context, logger logging.Logger, cfg *config.InstanceConfi
 	}
 	itemsConfig := &servicesConfigurations.Items
 	itemDataManager := database.ProvideItemDataManager(dataManager)
-	indexManagerProvider := bleve.ProvideBleveIndexManagerProvider()
-	itemDataService, err := items.ProvideService(logger, itemsConfig, itemDataManager, serverEncoderDecoder, indexManagerProvider, routeParamManager, publisherProvider)
+	indexManagerProvider := elasticsearch.ProvideIndexManagerProvider()
+	itemDataService, err := items.ProvideService(ctx, logger, itemsConfig, itemDataManager, serverEncoderDecoder, indexManagerProvider, routeParamManager, publisherProvider)
 	if err != nil {
 		return nil, err
 	}

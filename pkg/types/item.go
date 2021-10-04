@@ -6,14 +6,9 @@ import (
 	"net/http"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 )
 
 const (
-	// ItemsSearchIndexName is the name of the index used to search through items.
-	ItemsSearchIndexName search.IndexName = "items"
-
 	// ItemDataType indicates an event is item-related.
 	ItemDataType dataType = "item"
 )

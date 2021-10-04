@@ -1,4 +1,4 @@
-package bleve
+package elasticsearch
 
 import (
 	"github.com/google/wire"

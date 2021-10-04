@@ -253,10 +253,10 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				//
 			},
 			Items: itemsservice.Config{
+				SearchIndexPath:      "http://elasticsearch:9200",
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
-				SearchIndexPath:      fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 				Logging: logging.Config{
 					Name:     "items",
 					Level:    logging.InfoLevel,
@@ -338,7 +338,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				//
 			},
 			Items: itemsservice.Config{
-				SearchIndexPath:      fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
+				SearchIndexPath:      "http://elasticsearch:9200",
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
@@ -447,10 +447,10 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					//
 				},
 				Items: itemsservice.Config{
+					SearchIndexPath:      "http://elasticsearch:9200",
 					PreWritesTopicName:   preWritesTopicName,
 					PreUpdatesTopicName:  preUpdatesTopicName,
 					PreArchivesTopicName: preArchivesTopicName,
-					SearchIndexPath:      fmt.Sprintf("/search_indices/%s", defaultItemsSearchIndexPath),
 					Logging: logging.Config{
 						Name:     "items",
 						Level:    logging.InfoLevel,

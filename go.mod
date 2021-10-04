@@ -19,13 +19,14 @@ require (
 	github.com/alexedwards/scs/postgresstore v0.0.0-20210407073823-f445396108a4
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/andybalholm/cascadia v1.2.0 // indirect
-	github.com/aws/aws-sdk-go v1.38.35
+	github.com/aws/aws-sdk-go v1.40.43
 	github.com/blevesearch/bleve/v2 v2.0.3
 	github.com/boombuler/barcode v1.0.1
 	github.com/brianvoe/gofakeit/v5 v5.11.2
 	github.com/carolynvs/magex v0.5.0 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/cznic/ql v1.2.0 // indirect
+	github.com/elastic/go-elasticsearch/v8 v8.0.0-20211001143748-fd99a833e74f // indirect
 	github.com/emicklei/hazana v1.9.6 // indirect
 	github.com/felixge/httpsnoop v1.0.2 // indirect
 	github.com/go-chi/chi v1.5.4
@@ -64,6 +65,7 @@ require (
 	github.com/nsqio/go-nsq v1.0.8 // indirect
 	github.com/o1egl/paseto v1.0.0
 	github.com/olahol/melody v0.0.0-20180227134253-7bd65910e5ab // indirect
+	github.com/olivere/elastic/v7 v7.0.29
 	github.com/pelletier/go-toml v1.9.0 // indirect
 	github.com/pquerna/otp v1.3.0
 	github.com/prometheus/common v0.23.0 // indirect
@@ -98,7 +100,7 @@ require (
 	gocloud.dev/pubsub/rabbitpubsub v0.23.0 // indirect
 	gocloud.dev/secrets/hashivault v0.23.0
 	golang.org/x/mod v0.4.2 // indirect
-	golang.org/x/net v0.0.0-20210505214959-0714010a04ed
+	golang.org/x/net v0.0.0-20210614182718-04defd469f4e
 	golang.org/x/oauth2 v0.0.0-20210427180440-81ed05c6b58c
 	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
 	golang.org/x/text v0.3.6

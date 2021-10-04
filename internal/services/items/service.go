@@ -1,6 +1,7 @@
 package items
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
@@ -41,6 +42,7 @@ type (
 
 // ProvideService builds a new ItemsService.
 func ProvideService(
+	ctx context.Context,
 	logger logging.Logger,
 	cfg *Config,
 	itemDataManager types.ItemDataManager,
@@ -49,7 +51,7 @@ func ProvideService(
 	routeParamManager routing.RouteParamManager,
 	publisherProvider publishers.PublisherProvider,
 ) (types.ItemDataService, error) {
-	searchIndexManager, err := searchIndexProvider(search.IndexPath(cfg.SearchIndexPath), "items", logger)
+	searchIndexManager, err := searchIndexProvider(ctx, logger, search.IndexPath(cfg.SearchIndexPath), "items", "name", "description")
 	if err != nil {
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}

@@ -226,6 +226,7 @@ func (s *TestSuite) TestItems_Searching() {
 			}
 
 			exampleLimit := uint8(20)
+			time.Sleep(time.Second) // give the index a moment
 
 			// assert item list equality
 			actual, err := testClients.main.SearchItems(ctx, exampleItem.Name, exampleLimit)
@@ -274,6 +275,7 @@ func (s *TestSuite) TestItems_Searching() {
 			}
 
 			exampleLimit := uint8(20)
+			time.Sleep(time.Second) // give the index a moment
 
 			// assert item list equality
 			actual, err := testClients.main.SearchItems(ctx, exampleItem.Name, exampleLimit)

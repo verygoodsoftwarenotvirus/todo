@@ -2,8 +2,6 @@ version: "3.8"
 services:
     workers:
         container_name: workers
-        depends_on:
-            - todo-server
         build:
             context: '../../../../'
             dockerfile: 'environments/testing/dockerfiles/workers.Dockerfile'
@@ -14,8 +12,9 @@ services:
             - source: '../../../../environments/testing/config_files/integration-tests-mysql.config'
               target: '/etc/service.config'
               type: 'bind'
-    todo-server:
-        container_name: api_server
+    api_server:
+        depends_on:
+            - workers
         environment:
             TODO_SERVER_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='
             CONFIGURATION_FILEPATH: '/etc/service.config'

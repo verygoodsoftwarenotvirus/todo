@@ -13,7 +13,6 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 const (
@@ -25,18 +24,18 @@ var (
 	errInvalidIndexName = errors.New("invalid index name")
 )
 
-var _ search.IndexManager = (*bleveIndexManager)(nil)
+var _ search.IndexManager = (*indexManager)(nil)
 
 type (
-	bleveIndexManager struct {
+	indexManager struct {
 		index  bleve.Index
 		logger logging.Logger
 		tracer tracing.Tracer
 	}
 )
 
-// NewBleveIndexManager instantiates a bleve index.
-func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+// NewIndexManager instantiates a bleve index.
+func NewIndexManager(ctx context.Context, logger logging.Logger, path search.IndexPath, name search.IndexName, _ ...string) (search.IndexManager, error) {
 	var index bleve.Index
 
 	preexistingIndex, err := bleve.Open(string(path))
@@ -50,7 +49,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 		switch name {
 		case testingSearchIndexName:
 			index, err = bleve.New(string(path), bleve.NewIndexMapping())
-		case types.ItemsSearchIndexName:
+		case "items":
 			index, err = bleve.New(string(path), buildItemMapping())
 		default:
 			return nil, fmt.Errorf("opening %s index: %w", name, errInvalidIndexName)
@@ -64,7 +63,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 
 	serviceName := fmt.Sprintf("%s_search", name)
 
-	im := &bleveIndexManager{
+	im := &indexManager{
 		index:  index,
 		logger: logging.EnsureLogger(logger).WithName(serviceName),
 		tracer: tracing.NewTracer(serviceName),
@@ -74,7 +73,7 @@ func NewBleveIndexManager(path search.IndexPath, name search.IndexName, logger l
 }
 
 // Index implements our IndexManager interface.
-func (sm *bleveIndexManager) Index(ctx context.Context, id string, value interface{}) error {
+func (sm *indexManager) Index(ctx context.Context, id string, value interface{}) error {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -84,7 +83,7 @@ func (sm *bleveIndexManager) Index(ctx context.Context, id string, value interfa
 }
 
 // search executes search queries.
-func (sm *bleveIndexManager) search(ctx context.Context, query, accountID string, forServiceAdmin bool) (ids []string, err error) {
+func (sm *indexManager) search(ctx context.Context, query, accountID string, forServiceAdmin bool) (ids []string, err error) {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -115,17 +114,17 @@ func (sm *bleveIndexManager) search(ctx context.Context, query, accountID string
 }
 
 // Search implements our IndexManager interface.
-func (sm *bleveIndexManager) Search(ctx context.Context, query, accountID string) (ids []string, err error) {
+func (sm *indexManager) Search(ctx context.Context, query, accountID string) (ids []string, err error) {
 	return sm.search(ctx, query, accountID, false)
 }
 
 // SearchForAdmin implements our IndexManager interface.
-func (sm *bleveIndexManager) SearchForAdmin(ctx context.Context, query string) (ids []string, err error) {
+func (sm *indexManager) SearchForAdmin(ctx context.Context, query string) (ids []string, err error) {
 	return sm.search(ctx, query, "", true)
 }
 
 // Delete implements our IndexManager interface.
-func (sm *bleveIndexManager) Delete(ctx context.Context, id string) error {
+func (sm *indexManager) Delete(ctx context.Context, id string) error {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -135,7 +134,7 @@ func (sm *bleveIndexManager) Delete(ctx context.Context, id string) error {
 		return observability.PrepareError(err, logger, span, "removing from index")
 	}
 
-	sm.logger.WithValue("id", id).Debug("removed from index")
+	logger.Debug("removed from index")
 
 	return nil
 }

@@ -1,6 +1,7 @@
 package items
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -35,6 +36,7 @@ func TestProvideItemsService(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		rpm := mockrouting.NewRouteParamManager()
 		rpm.On(
 			"BuildRouteParamStringIDFetcher",
@@ -54,11 +56,12 @@ func TestProvideItemsService(T *testing.T) {
 		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return(&publishers.MockProducer{}, nil)
 
 		s, err := ProvideService(
+			ctx,
 			logging.NewNoopLogger(),
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			rpm,
@@ -74,6 +77,7 @@ func TestProvideItemsService(T *testing.T) {
 	T.Run("with error providing pre-writes producer", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		cfg := Config{
 			SearchIndexPath:      "example/path",
 			PreWritesTopicName:   "pre-writes",
@@ -85,11 +89,12 @@ func TestProvideItemsService(T *testing.T) {
 		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
+			ctx,
 			logging.NewNoopLogger(),
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -105,6 +110,7 @@ func TestProvideItemsService(T *testing.T) {
 	T.Run("with error providing pre-updates producer", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		cfg := Config{
 			SearchIndexPath:      "example/path",
 			PreWritesTopicName:   "pre-writes",
@@ -117,11 +123,12 @@ func TestProvideItemsService(T *testing.T) {
 		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
+			ctx,
 			logging.NewNoopLogger(),
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -137,6 +144,7 @@ func TestProvideItemsService(T *testing.T) {
 	T.Run("with error providing pre-archives producer", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		cfg := Config{
 			SearchIndexPath:      "example/path",
 			PreWritesTopicName:   "pre-writes",
@@ -150,11 +158,12 @@ func TestProvideItemsService(T *testing.T) {
 		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
+			ctx,
 			logging.NewNoopLogger(),
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -170,6 +179,7 @@ func TestProvideItemsService(T *testing.T) {
 	T.Run("with error providing index", func(t *testing.T) {
 		t.Parallel()
 
+		ctx := context.Background()
 		cfg := Config{
 			SearchIndexPath:      "example/path",
 			PreWritesTopicName:   "pre-writes",
@@ -178,11 +188,12 @@ func TestProvideItemsService(T *testing.T) {
 		}
 
 		s, err := ProvideService(
+			ctx,
 			logging.NewNoopLogger(),
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
 				return nil, errors.New("blah")
 			},
 			mockrouting.NewRouteParamManager(),

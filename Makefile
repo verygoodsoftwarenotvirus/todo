@@ -183,15 +183,12 @@ frontend_tests:
 
 ## Integration tests
 
-.PHONY: wipe_local_postgres
-wipe_local_postgres: ensure_postgres_is_up
-	@echo "wiping postgres"
-	@until docker exec --interactive --tty postgres psql 'postgres://dbuser:hunter2@localhost:5432/todo?sslmode=disable' -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'; do true; done > /dev/null
+.PHONY: wipe_docker
+wipe_docker:
+	@docker stop $(shell docker ps -aq) && docker rm $(shell docker ps -aq)
 
-.PHONY: wipe_local_mysql
-wipe_local_mysql: ensure_mysql_is_up
-	@echo "wiping mysql"
-	@until docker exec --interactive --tty mysql mysql --user='dbuser' --password='hunter2' -e "DROP DATABASE todo; CREATE DATABASE todo"; do true; done > /dev/null
+.PHONY: docker_wipe
+docker_wipe: wipe_docker
 
 .PHONY: ensure_mysql_is_up
 ensure_mysql_is_up:
@@ -203,12 +200,25 @@ ensure_postgres_is_up:
 	@echo "waiting for postgres"
 	@until docker exec --interactive --tty postgres psql 'postgres://dbuser:hunter2@localhost:5432/todo?sslmode=disable' -c 'SELECT 1'; do true; done > /dev/null
 
-.PHONY: wipe_docker
-wipe_docker:
-	@docker stop $(shell docker ps -aq) && docker rm $(shell docker ps -aq)
+.PHONY: ensure_elasticsearch_is_up
+ensure_elasticsearch_is_up:
+	@echo "waiting for elasticsearch"
+	@until docker run --interactive --tty --network=host curlimages/curl:7.79.1 curl --head "http://localhost:9200/*"; do true; done > /dev/null
 
-.PHONY: docker_wipe
-docker_wipe: wipe_docker
+.PHONY: wipe_local_postgres
+wipe_local_postgres: ensure_postgres_is_up
+	@echo "wiping postgres"
+	@until docker exec --interactive --tty postgres psql 'postgres://dbuser:hunter2@localhost:5432/todo?sslmode=disable' -c 'DROP SCHEMA public CASCADE; CREATE SCHEMA public;'; do true; done > /dev/null
+
+.PHONY: wipe_local_mysql
+wipe_local_mysql: ensure_mysql_is_up
+	@echo "wiping mysql"
+	docker exec --interactive --tty mysql mysql --user='dbuser' --password='hunter2' -e "DROP DATABASE todo; CREATE DATABASE todo"
+
+.PHONY: wipe_local_elasticsearch
+wipe_local_elasticsearch:
+	@echo "wiping elasticsearch"
+	@docker run --interactive --tty --network=host curlimages/curl:7.79.1 curl -X DELETE "http://localhost:9200/*"
 
 .PHONY: deploy_base_infra
 deploy_base_infra:
@@ -249,16 +259,11 @@ run_integration_tests:
     	--env TARGET_ADDRESS='http://localhost:8888' \
     	integration-tests:latest
 
-.PHONY: deploy_local_base_infra
-deploy_local_base_infra:
-	echo "TODO: deploy_local_base_infra not yet implemented"
-	exit 1
-
 .PHONY: integration_tests_mysql
-integration_tests_mysql: deploy_integration_test_base_infra ensure_mysql_is_up wipe_local_mysql deploy-integration-tests-services-mysql run_integration_tests
+integration_tests_mysql: deploy_integration_test_base_infra ensure_mysql_is_up wipe_local_mysql ensure_elasticsearch_is_up wipe_local_elasticsearch deploy-integration-tests-services-mysql run_integration_tests
 
 .PHONY: integration_tests_postgres
-integration_tests_postgres: deploy_integration_test_base_infra ensure_postgres_is_up wipe_local_postgres deploy-integration-tests-services-postgres run_integration_tests
+integration_tests_postgres: deploy_integration_test_base_infra ensure_postgres_is_up wipe_local_postgres ensure_elasticsearch_is_up wipe_local_elasticsearch deploy-integration-tests-services-postgres run_integration_tests
 
 .PHONY: integration_tests
 integration_tests: integration_tests_mysql integration_tests_postgres

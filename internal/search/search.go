@@ -22,5 +22,5 @@ type (
 	}
 
 	// IndexManagerProvider is a function that provides an IndexManager for a given index.
-	IndexManagerProvider func(path IndexPath, name IndexName, logger logging.Logger) (IndexManager, error)
+	IndexManagerProvider func(context.Context, logging.Logger, IndexPath, IndexName, ...string) (IndexManager, error)
 )

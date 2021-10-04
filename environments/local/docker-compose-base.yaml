@@ -15,6 +15,13 @@ services:
             driver: none
         ports:
             - '2345:5432'
+    elasticsearch:
+      image: elasticsearch:7.14.1
+      ports:
+        - '9200:9200'
+        - '9300:9300'
+      environment:
+        discovery.type: 'single-node'
     tracing-server:
         image: jaegertracing/all-in-one:1.22.0
         logging:
@@ -33,7 +40,7 @@ services:
         logging:
           driver: none
         ports:
-            - 9090:9090
+            - '9090:9090'
         volumes:
             - source: "../../environments/local/prometheus/config.yaml"
               target: "/etc/prometheus/config.yaml"
@@ -43,7 +50,7 @@ services:
       logging:
         driver: none
       ports:
-        - 3000:3000
+        - '3000:3000'
       links:
         - prometheus
       volumes:

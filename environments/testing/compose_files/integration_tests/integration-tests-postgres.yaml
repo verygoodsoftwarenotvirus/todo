@@ -11,8 +11,9 @@ services:
             - source: '../../../../environments/testing/config_files/integration-tests-postgres.config'
               target: '/etc/service.config'
               type: 'bind'
-    todo-server:
-        container_name: api_server
+    api_server:
+        depends_on:
+            - workers
         environment:
             USE_NOOP_LOGGER: 'nope'
             TODO_SERVER_LOCAL_CONFIG_STORE_KEY: 'SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU='

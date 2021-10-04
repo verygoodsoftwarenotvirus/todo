@@ -20,7 +20,6 @@ require (
 	github.com/alexedwards/scs/v2 v2.4.0
 	github.com/andybalholm/cascadia v1.2.0 // indirect
 	github.com/aws/aws-sdk-go v1.40.43
-	github.com/blevesearch/bleve/v2 v2.0.3
 	github.com/boombuler/barcode v1.0.1
 	github.com/brianvoe/gofakeit/v5 v5.11.2
 	github.com/carolynvs/magex v0.5.0 // indirect

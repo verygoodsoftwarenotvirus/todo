@@ -141,7 +141,7 @@ check_formatting: check_backend_formatting check-frontend-formatting
 
 .PHONY: pre_lint
 pre_lint:
-	@fieldalignment -fix ./...
+	@until fieldalignment -fix ./...; do true; done > /dev/null
 
 .PHONY: docker_lint
 docker_lint:
@@ -203,7 +203,7 @@ ensure_postgres_is_up:
 .PHONY: ensure_elasticsearch_is_up
 ensure_elasticsearch_is_up:
 	@echo "waiting for elasticsearch"
-	@until docker run --interactive --tty --network=host curlimages/curl:7.79.1 curl --head "http://localhost:9200/*"; do true; done > /dev/null
+	@until docker run --interactive --tty --network=host curlimages/curl:7.79.1 curl --head "http://localhost:9200/*" ; do true; done > /dev/null
 
 .PHONY: wipe_local_postgres
 wipe_local_postgres: ensure_postgres_is_up

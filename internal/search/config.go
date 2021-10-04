@@ -7,8 +7,8 @@ import (
 )
 
 const (
-	// BleveProvider represents the bleve search index provider.
-	BleveProvider = "bleve"
+	// ElasticsearchProvider represents the elasticsearch search index provider.
+	ElasticsearchProvider = "elasticsearch"
 )
 
 // Config contains settings regarding search indices.
@@ -23,6 +23,6 @@ var _ validation.ValidatableWithContext = (*Config)(nil)
 // ValidateWithContext validates a Config struct.
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, cfg,
-		validation.Field(&cfg.Provider, validation.In(BleveProvider)),
+		validation.Field(&cfg.Provider, validation.In(ElasticsearchProvider)),
 	)
 }

@@ -53,7 +53,7 @@ const (
 	defaultPassword = "password"
 
 	// search index paths.
-	defaultItemsSearchIndexPath = "items.bleve"
+	localElasticsearchLocation = "http://elasticsearch:9200"
 
 	// message provider topics
 	preWritesTopicName   = "pre_writes"
@@ -224,7 +224,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			},
 		},
 		Search: search.Config{
-			Provider: "bleve",
+			Provider: search.ElasticsearchProvider,
 		},
 		Services: config.ServicesConfigurations{
 			Accounts: accounts.Config{
@@ -309,7 +309,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 		},
 		Search: search.Config{
-			Provider: "bleve",
+			Provider: search.ElasticsearchProvider,
 		},
 		Services: config.ServicesConfigurations{
 			Accounts: accounts.Config{
@@ -412,7 +412,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 			},
 			Search: search.Config{
-				Provider: "bleve",
+				Provider: search.ElasticsearchProvider,
 			},
 			Services: config.ServicesConfigurations{
 				Accounts: accounts.Config{

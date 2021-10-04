@@ -61,7 +61,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			rpm,
@@ -94,7 +94,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -128,7 +128,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -163,7 +163,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -193,7 +193,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(_ context.Context, path search.IndexPath, name search.IndexName, logger logging.Logger) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return nil, errors.New("blah")
 			},
 			mockrouting.NewRouteParamManager(),

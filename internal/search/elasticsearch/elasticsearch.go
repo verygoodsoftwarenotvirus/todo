@@ -17,11 +17,11 @@ var _ search.IndexManager = (*indexManager)(nil)
 
 type (
 	indexManager struct {
-		indexName    string
-		searchFields []string
-		esclient     *elastic.Client
 		logger       logging.Logger
 		tracer       tracing.Tracer
+		esclient     *elastic.Client
+		indexName    string
+		searchFields []string
 	}
 )
 
@@ -52,8 +52,8 @@ func NewIndexManager(ctx context.Context, logger logging.Logger, path search.Ind
 		tracer:       tracing.NewTracer("search"),
 	}
 
-	if err = im.ensureIndices(ctx); err != nil {
-		return nil, err
+	if indexErr := im.ensureIndices(ctx); indexErr != nil {
+		return nil, indexErr
 	}
 
 	return im, nil
@@ -128,7 +128,7 @@ func (sm *indexManager) search(ctx context.Context, query, accountID string, for
 		return nil, observability.PrepareError(err, logger, span, "querying elasticsearch")
 	}
 
-	var returnedItems []string
+	returnedItems := []string{}
 	for _, hit := range results.Hits.Hits {
 		var i *idContainer
 		if unmarshalErr := json.Unmarshal(hit.Source, &i); unmarshalErr != nil {

@@ -12,6 +12,10 @@ func (c *Client) SubscribeToDataChangeNotifications(ctx context.Context, stopCha
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 
+	if stopChan == nil {
+		stopChan = make(chan bool)
+	}
+
 	logger := c.logger
 	uri := c.requestBuilder.BuildSubscribeToDataChangesWebsocketURL(ctx)
 

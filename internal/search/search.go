@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
@@ -22,5 +23,5 @@ type (
 	}
 
 	// IndexManagerProvider is a function that provides an IndexManager for a given index.
-	IndexManagerProvider func(context.Context, logging.Logger, IndexPath, IndexName, ...string) (IndexManager, error)
+	IndexManagerProvider func(context.Context, logging.Logger, *http.Client, IndexPath, IndexName, ...string) (IndexManager, error)
 )

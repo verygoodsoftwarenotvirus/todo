@@ -763,6 +763,28 @@ func TestQuerier_createUser(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db)
 	})
 
+	T.Run("with invalid user ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleCreationTime := fakes.BuildFakeTime()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleUser.CreatedOn = exampleCreationTime
+
+		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
+		exampleAccount.CreatedOn = exampleCreationTime
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		fakeUserCreationQuery, fakeUserCreationArgs := fakes.BuildFakeSQLQuery()
+
+		assert.Error(t, c.createUser(ctx, &types.User{}, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
 	T.Run("with error beginning transaction", func(t *testing.T) {
 		t.Parallel()
 

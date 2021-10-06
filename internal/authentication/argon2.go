@@ -38,8 +38,8 @@ type (
 // ProvideArgon2Authenticator returns an argon2 powered Argon2Authenticator.
 func ProvideArgon2Authenticator(logger logging.Logger) Authenticator {
 	ba := &Argon2Authenticator{
-		logger: logging.EnsureLogger(logger).WithName(argon2Provider),
-		tracer: tracing.NewTracer(argon2Provider),
+		logger: logging.EnsureLogger(logger).WithName("argon2"),
+		tracer: tracing.NewTracer("argon2"),
 	}
 
 	return ba

@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 var _ search.IndexManager = (*IndexManager)(nil)
@@ -26,12 +25,6 @@ func (m *IndexManager) Index(ctx context.Context, id string, value interface{}) 
 func (m *IndexManager) Search(ctx context.Context, query, accountID string) (ids []string, err error) {
 	args := m.Called(ctx, query, accountID)
 	return args.Get(0).([]string), args.Error(1)
-}
-
-// SearchForItems implements our interface.
-func (m *IndexManager) SearchForItems(ctx context.Context, query, accountID string) (ids []*types.Item, err error) {
-	args := m.Called(ctx, query, accountID)
-	return args.Get(0).([]*types.Item), args.Error(1)
 }
 
 // SearchForAdmin implements our interface.

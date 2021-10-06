@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
@@ -51,7 +52,8 @@ func ProvideService(
 	routeParamManager routing.RouteParamManager,
 	publisherProvider publishers.PublisherProvider,
 ) (types.ItemDataService, error) {
-	searchIndexManager, err := searchIndexProvider(ctx, logger, search.IndexPath(cfg.SearchIndexPath), "items", "name", "description")
+	client := &http.Client{Transport: tracing.BuildTracedHTTPTransport(time.Second)}
+	searchIndexManager, err := searchIndexProvider(ctx, logger, client, search.IndexPath(cfg.SearchIndexPath), "items", "name", "description")
 	if err != nil {
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}

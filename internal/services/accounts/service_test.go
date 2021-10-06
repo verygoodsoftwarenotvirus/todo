@@ -4,11 +4,12 @@ import (
 	"net/http"
 	"testing"
 
+	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
@@ -50,8 +51,8 @@ func TestProvideAccountsService(t *testing.T) {
 		PreWritesTopicName: "pre-writes",
 	}
 
-	pp := &publishers.MockProducerProvider{}
-	pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
+	pp := &mock2.ProducerProvider{}
+	pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mock2.Publisher{}, nil)
 
 	s, err := ProvideService(
 		logging.NewNoopLogger(),

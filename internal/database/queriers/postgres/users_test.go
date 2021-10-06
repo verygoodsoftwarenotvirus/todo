@@ -741,7 +741,6 @@ func TestQuerier_createUser(T *testing.T) {
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		// create account user membership for created user
-
 		createAccountMembershipForNewUserArgs := []interface{}{
 			&idMatcher{},
 			exampleUser.ID,
@@ -757,6 +756,28 @@ func TestQuerier_createUser(T *testing.T) {
 		db.ExpectCommit()
 
 		assert.NoError(t, c.createUser(ctx, exampleUser, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
+
+		mock.AssertExpectationsForObjects(t, db)
+	})
+
+	T.Run("with invalid user ID", func(t *testing.T) {
+		t.Parallel()
+
+		exampleCreationTime := fakes.BuildFakeTime()
+
+		exampleUser := fakes.BuildFakeUser()
+		exampleUser.TwoFactorSecretVerifiedOn = nil
+		exampleUser.CreatedOn = exampleCreationTime
+
+		exampleAccount := fakes.BuildFakeAccountForUser(exampleUser)
+		exampleAccount.CreatedOn = exampleCreationTime
+
+		ctx := context.Background()
+		c, db := buildTestClient(t)
+
+		fakeUserCreationQuery, fakeUserCreationArgs := fakes.BuildFakeSQLQuery()
+
+		assert.Error(t, c.createUser(ctx, &types.User{}, exampleAccount, fakeUserCreationQuery, fakeUserCreationArgs))
 
 		mock.AssertExpectationsForObjects(t, db)
 	})

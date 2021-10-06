@@ -3,6 +3,8 @@ package elasticsearch
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"net/http"
 
 	"github.com/olivere/elastic/v7"
 
@@ -16,37 +18,50 @@ import (
 var _ search.IndexManager = (*indexManager)(nil)
 
 type (
+	esClient interface {
+		IndexExists(indices ...string) *elastic.IndicesExistsService
+		CreateIndex(name string) *elastic.IndicesCreateService
+		Search(indices ...string) *elastic.SearchService
+		Index() *elastic.IndexService
+		DeleteByQuery(indices ...string) *elastic.DeleteByQueryService
+	}
+
 	indexManager struct {
 		logger       logging.Logger
 		tracer       tracing.Tracer
-		esclient     *elastic.Client
+		esclient     esClient
 		indexName    string
 		searchFields []string
 	}
 )
 
 // NewIndexManager instantiates an Elasticsearch client.
-func NewIndexManager(ctx context.Context, logger logging.Logger, path search.IndexPath, name search.IndexName, fields ...string) (search.IndexManager, error) {
+func NewIndexManager(
+	ctx context.Context,
+	logger logging.Logger,
+	client *http.Client,
+	path search.IndexPath,
+	name search.IndexName,
+	fields ...string,
+) (search.IndexManager, error) {
 	l := logger.WithName("search")
 
-	client, err := elastic.NewClient(
+	c, err := elastic.NewClient(
 		elastic.SetURL(string(path)),
-		elastic.SetErrorLog(l),
-		elastic.SetInfoLog(l),
-		elastic.SetTraceLog(l),
+		elastic.SetHttpClient(client),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	_, _, err = client.Ping(string(path)).Do(ctx)
+	_, _, err = c.Ping(string(path)).Do(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	im := &indexManager{
 		indexName:    string(name),
-		esclient:     client,
+		esclient:     c,
 		logger:       l,
 		searchFields: fields,
 		tracer:       tracing.NewTracer("search"),
@@ -101,8 +116,17 @@ type idContainer struct {
 	ID string `json:"id"`
 }
 
+var (
+	// ErrEmptyQueryProvided indicates an empty query was provided as input.
+	ErrEmptyQueryProvided = errors.New("empty search query provided")
+)
+
 // search executes search queries.
-func (sm *indexManager) search(ctx context.Context, query, accountID string, forServiceAdmin bool, fields ...string) (ids []string, err error) {
+func (sm *indexManager) search(
+	ctx context.Context,
+	query,
+	accountID string,
+) (ids []string, err error) {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -110,13 +134,13 @@ func (sm *indexManager) search(ctx context.Context, query, accountID string, for
 	logger := sm.logger.WithValue(keys.SearchQueryKey, query)
 
 	if query == "" {
-		return nil, search.ErrEmptyQueryProvided
+		return nil, ErrEmptyQueryProvided
 	}
 
-	baseQuery := elastic.NewMultiMatchQuery(query, fields...).Operator("OR")
+	baseQuery := elastic.NewMultiMatchQuery(query, sm.searchFields...)
 
 	var q elastic.Query
-	if accountID == "" && forServiceAdmin {
+	if accountID == "" {
 		q = baseQuery
 	} else {
 		accountIDMatchQuery := elastic.NewMatchQuery("accountID", accountID)
@@ -132,7 +156,7 @@ func (sm *indexManager) search(ctx context.Context, query, accountID string, for
 	for _, hit := range results.Hits.Hits {
 		var i *idContainer
 		if unmarshalErr := json.Unmarshal(hit.Source, &i); unmarshalErr != nil {
-			return nil, observability.PrepareError(err, logger, span, "unmarshaling result")
+			return nil, observability.PrepareError(err, logger, span, "unmarshalling search result")
 		}
 		returnedItems = append(returnedItems, i.ID)
 	}
@@ -142,12 +166,12 @@ func (sm *indexManager) search(ctx context.Context, query, accountID string, for
 
 // Search implements our IndexManager interface.
 func (sm *indexManager) Search(ctx context.Context, query, accountID string) (ids []string, err error) {
-	return sm.search(ctx, query, accountID, false)
+	return sm.search(ctx, query, accountID)
 }
 
 // SearchForAdmin implements our IndexManager interface.
 func (sm *indexManager) SearchForAdmin(ctx context.Context, query string) (ids []string, err error) {
-	return sm.search(ctx, query, "", true)
+	return sm.search(ctx, query, "")
 }
 
 // Delete implements our IndexManager interface.
@@ -156,6 +180,11 @@ func (sm *indexManager) Delete(ctx context.Context, id string) error {
 	defer span.End()
 
 	logger := sm.logger.WithValue("id", id)
+
+	q := elastic.NewTermQuery("id", id)
+	if _, err := sm.esclient.DeleteByQuery(sm.indexName).Query(q).Do(ctx); err != nil {
+		return observability.PrepareError(err, logger, span, "deleting from elasticsearch")
+	}
 
 	logger.Debug("removed from index")
 

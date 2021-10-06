@@ -3,8 +3,6 @@ package websockets
 import (
 	"net/http"
 
-	"github.com/gorilla/websocket"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 )
@@ -31,6 +29,7 @@ func (s *service) SubscribeHandler(res http.ResponseWriter, req *http.Request) {
 	cookie, err := req.Cookie(s.cookieName)
 	if err != nil {
 		logger.Error(err, "checking websocket subscription request for cookies")
+		s.encoderDecoder.EncodeErrorResponse(ctx, res, "unauthenticated", http.StatusUnauthorized)
 	}
 
 	wsHeader := http.Header{}
@@ -51,6 +50,6 @@ func (s *service) SubscribeHandler(res http.ResponseWriter, req *http.Request) {
 	if ok {
 		s.connections[sessionCtxData.Requester.UserID] = append(s.connections[sessionCtxData.Requester.UserID], conn)
 	} else {
-		s.connections[sessionCtxData.Requester.UserID] = []*websocket.Conn{conn}
+		s.connections[sessionCtxData.Requester.UserID] = []websocketConnection{conn}
 	}
 }

@@ -38,6 +38,7 @@ func (s *service) handleDataChange(ctx context.Context, payload []byte) error {
 
 			if err := conn.SetWriteDeadline(time.Now().Add(s.websocketDeadline)); err != nil {
 				observability.AcknowledgeError(err, logger, span, "setting write deadline")
+				continue
 			}
 
 			if err := conn.WriteMessage(websocket.TextMessage, payload); err != nil {
@@ -50,14 +51,13 @@ func (s *service) handleDataChange(ctx context.Context, payload []byte) error {
 	return nil
 }
 
-func removeConnection(s []*websocket.Conn, index int) []*websocket.Conn {
+func removeConnection(s []websocketConnection, index int) []websocketConnection {
 	s[index] = s[len(s)-1]
 	return s[:len(s)-1]
 }
 
 func (s *service) pingConnections() {
-	const pollDuration = 10 * time.Second
-	ticker := time.NewTicker(pollDuration)
+	ticker := time.NewTicker(s.pollDuration)
 
 	s.logger.Debug("pinging websocket connections")
 
@@ -67,9 +67,13 @@ func (s *service) pingConnections() {
 			l := s.logger.WithValue(keys.UserIDKey, userID).WithValue("connection_count", len(connections))
 			for i, conn := range connections {
 				l = l.WithValue("connection_index", i)
-				if err := conn.WriteControl(websocket.PingMessage, []byte("ping"), time.Now().Add(pollDuration/2)); err != nil {
+				if err := conn.WriteControl(websocket.PingMessage, []byte("ping"), time.Now().Add(s.pollDuration/2)); err != nil {
 					l.Error(err, "pinging websocket connection")
+
 					s.connections[userID] = removeConnection(s.connections[userID], i)
+					if len(s.connections[userID]) == 0 {
+						delete(s.connections, userID)
+					}
 				}
 			}
 		}

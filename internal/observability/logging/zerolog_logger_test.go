@@ -45,12 +45,28 @@ func Test_zerologLogger_WithName(T *testing.T) {
 func Test_zerologLogger_SetLevel(T *testing.T) {
 	T.Parallel()
 
-	T.Run("standard", func(t *testing.T) {
+	T.Run("Info", func(t *testing.T) {
 		t.Parallel()
 
-		l := NewZerologLogger()
+		NewZerologLogger().SetLevel(InfoLevel)
+	})
 
-		l.SetLevel(ErrorLevel)
+	T.Run("Debug", func(t *testing.T) {
+		t.Parallel()
+
+		NewZerologLogger().SetLevel(DebugLevel)
+	})
+
+	T.Run("Error", func(t *testing.T) {
+		t.Parallel()
+
+		NewZerologLogger().SetLevel(ErrorLevel)
+	})
+
+	T.Run("Warn", func(t *testing.T) {
+		t.Parallel()
+
+		NewZerologLogger().SetLevel(WarnLevel)
 	})
 }
 

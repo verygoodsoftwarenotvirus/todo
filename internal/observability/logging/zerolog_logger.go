@@ -89,9 +89,7 @@ func (l *zerologLogger) Debug(input string) {
 
 // Error satisfies our contract for the logging.Logger Error method.
 func (l *zerologLogger) Error(err error, input string) {
-	if err == nil {
-		l.logger.Error().Stack().Caller().Str("err", "nil").Msg(input)
-	} else {
+	if err != nil {
 		l.logger.Error().Stack().Caller().Err(err).Msg(input)
 	}
 }

@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 
@@ -29,6 +30,7 @@ type PreUpdatesWorker struct {
 func ProvidePreUpdatesWorker(
 	ctx context.Context,
 	logger logging.Logger,
+	client *http.Client,
 	dataManager database.DataManager,
 	postUpdatesPublisher publishers.Publisher,
 	searchIndexLocation search.IndexPath,
@@ -36,7 +38,7 @@ func ProvidePreUpdatesWorker(
 ) (*PreUpdatesWorker, error) {
 	const name = "pre_updates"
 
-	itemsIndexManager, err := searchIndexProvider(ctx, logger, searchIndexLocation, "items", "name", "description")
+	itemsIndexManager, err := searchIndexProvider(ctx, logger, client, searchIndexLocation, "items", "name", "description")
 	if err != nil {
 		return nil, fmt.Errorf("setting up items search index manager: %w", err)
 	}
@@ -65,13 +67,18 @@ func (w *PreUpdatesWorker) HandleMessage(ctx context.Context, message []byte) er
 	}
 
 	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
+	logger := w.logger.WithValue("data_type", msg.DataType)
 
-	w.logger.WithValue("data_type", msg.DataType).Debug("message read")
+	logger.Debug("message read")
 
 	switch msg.DataType {
 	case types.ItemDataType:
 		if err := w.dataManager.UpdateItem(ctx, msg.Item); err != nil {
-			return observability.PrepareError(err, w.logger, span, "creating item")
+			return observability.PrepareError(err, logger, span, "creating item")
+		}
+
+		if err := w.itemsIndexManager.Index(ctx, msg.Item.ID, msg.Item); err != nil {
+			return observability.PrepareError(err, logger, span, "indexing the item")
 		}
 
 		if w.postUpdatesPublisher != nil {
@@ -83,11 +90,7 @@ func (w *PreUpdatesWorker) HandleMessage(ctx context.Context, message []byte) er
 			}
 
 			if err := w.postUpdatesPublisher.Publish(ctx, dcm); err != nil {
-				w.logger.Error(err, "publishing to post-updates topic")
-			}
-
-			if err := w.itemsIndexManager.Index(ctx, msg.Item.ID, msg.Item); err != nil {
-				observability.AcknowledgeError(err, w.logger, span, "indexing the item")
+				return observability.PrepareError(err, logger, span, "publishing data change message")
 			}
 		}
 	case types.UserMembershipDataType, types.WebhookDataType:

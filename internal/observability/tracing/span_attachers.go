@@ -131,22 +131,6 @@ func AttachRequestToSpan(span trace.Span, req *http.Request) {
 		attachStringToSpan(span, keys.RequestURIKey, req.URL.String())
 		attachStringToSpan(span, keys.RequestMethodKey, req.Method)
 
-		htmxHeaderSpanKeys := map[string]string{
-			"HX-Prompt":                  "htmx.prompt",
-			"HX-Target":                  "htmx.target",
-			"HX-Request":                 "htmx.request",
-			"HX-Trigger":                 "htmx.trigger",
-			"HX-Current-URL":             "htmx.currentURL",
-			"HX-Trigger-LabelName":       "htmx.triggerName",
-			"HX-History-Restore-Request": "htmx.historyRestoreRequest",
-		}
-
-		for header, spanKey := range htmxHeaderSpanKeys {
-			if val := req.Header.Get(header); val != "" {
-				attachStringToSpan(span, spanKey, val)
-			}
-		}
-
 		for k, v := range req.Header {
 			attachSliceToSpan(span, fmt.Sprintf("%s.%s", keys.RequestHeadersKey, k), v)
 		}

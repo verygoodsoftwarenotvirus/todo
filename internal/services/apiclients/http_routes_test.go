@@ -8,17 +8,19 @@ import (
 	"net/http"
 	"testing"
 
+	mock3 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random/mock"
+
+	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
@@ -170,7 +172,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		a := &authentication.MockAuthenticator{}
+		a := &mock2.Authenticator{}
 		a.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -181,7 +183,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.authenticator = a
 
-		sg := &random.MockGenerator{}
+		sg := &mock3.Generator{}
 		sg.On(
 			"GenerateBase64EncodedString",
 			testutils.ContextMatcher,
@@ -313,7 +315,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		a := &authentication.MockAuthenticator{}
+		a := &mock2.Authenticator{}
 		a.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -358,7 +360,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		helper.service.apiClientDataManager = mockDB
 		helper.service.userDataManager = mockDB
 
-		a := &authentication.MockAuthenticator{}
+		a := &mock2.Authenticator{}
 		a.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -395,7 +397,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 
-		a := &authentication.MockAuthenticator{}
+		a := &mock2.Authenticator{}
 		a.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -406,7 +408,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.authenticator = a
 
-		sg := &random.MockGenerator{}
+		sg := &mock3.Generator{}
 		sg.On(
 			"GenerateBase64EncodedString",
 			testutils.ContextMatcher,
@@ -450,7 +452,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = mockDB
 
-		a := &authentication.MockAuthenticator{}
+		a := &mock2.Authenticator{}
 		a.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -461,7 +463,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.authenticator = a
 
-		sg := &random.MockGenerator{}
+		sg := &mock3.Generator{}
 		sg.On(
 			"GenerateBase64EncodedString",
 			testutils.ContextMatcher,
@@ -507,7 +509,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 			helper.exampleUser.ID,
 		).Return(helper.exampleUser, nil)
 
-		a := &authentication.MockAuthenticator{}
+		a := &mock2.Authenticator{}
 		a.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -518,7 +520,7 @@ func TestAPIClientsService_CreateHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.authenticator = a
 
-		sg := &random.MockGenerator{}
+		sg := &mock3.Generator{}
 		sg.On(
 			"GenerateBase64EncodedString",
 			testutils.ContextMatcher,

@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
@@ -28,6 +29,7 @@ type PreArchivesWorker struct {
 func ProvidePreArchivesWorker(
 	ctx context.Context,
 	logger logging.Logger,
+	client *http.Client,
 	dataManager database.DataManager,
 	postArchivesPublisher publishers.Publisher,
 	searchIndexLocation search.IndexPath,
@@ -35,7 +37,7 @@ func ProvidePreArchivesWorker(
 ) (*PreArchivesWorker, error) {
 	const name = "pre_archives"
 
-	itemsIndexManager, err := searchIndexProvider(ctx, logger, searchIndexLocation, "items", "name", "description")
+	itemsIndexManager, err := searchIndexProvider(ctx, logger, client, searchIndexLocation, "items", "name", "description")
 	if err != nil {
 		return nil, fmt.Errorf("setting up items search index manager: %w", err)
 	}
@@ -64,13 +66,18 @@ func (w *PreArchivesWorker) HandleMessage(ctx context.Context, message []byte) e
 	}
 
 	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
+	logger := w.logger.WithValue("data_type", msg.DataType)
 
-	w.logger.WithValue("data_type", msg.DataType).Debug("message read")
+	logger.Debug("message read")
 
 	switch msg.DataType {
 	case types.ItemDataType:
 		if err := w.dataManager.ArchiveItem(ctx, msg.RelevantID, msg.AttributableToAccountID); err != nil {
-			return observability.PrepareError(err, w.logger, span, "creating item")
+			return observability.PrepareError(err, w.logger, span, "archiving item")
+		}
+
+		if err := w.itemsIndexManager.Delete(ctx, msg.RelevantID); err != nil {
+			return observability.PrepareError(err, w.logger, span, "removing item from index")
 		}
 
 		if w.postArchivesPublisher != nil {
@@ -81,7 +88,7 @@ func (w *PreArchivesWorker) HandleMessage(ctx context.Context, message []byte) e
 			}
 
 			if err := w.postArchivesPublisher.Publish(ctx, dcm); err != nil {
-				w.logger.Error(err, "publishing to post-archives topic")
+				return observability.PrepareError(err, logger, span, "publishing data change message")
 			}
 		}
 	case types.WebhookDataType:
@@ -97,7 +104,7 @@ func (w *PreArchivesWorker) HandleMessage(ctx context.Context, message []byte) e
 			}
 
 			if err := w.postArchivesPublisher.Publish(ctx, dcm); err != nil {
-				w.logger.Error(err, "publishing to post-archives topic")
+				return observability.PrepareError(err, logger, span, "publishing data change message")
 			}
 		}
 	case types.UserMembershipDataType:

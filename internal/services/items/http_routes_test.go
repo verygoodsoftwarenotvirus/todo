@@ -9,13 +9,14 @@ import (
 	"strconv"
 	"testing"
 
+	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -58,7 +59,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -143,7 +144,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -620,7 +621,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		).Return(helper.exampleItem, nil)
 		helper.service.itemDataManager = itemDataManager
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -764,7 +765,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		).Return(helper.exampleItem, nil)
 		helper.service.itemDataManager = itemDataManager
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -797,7 +798,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.itemDataManager = itemDataManager
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -900,7 +901,7 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.itemDataManager = itemDataManager
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,

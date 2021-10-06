@@ -1,25 +1,25 @@
-package panicking
+package mock
 
 import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockPanicker implements Panicker for tests.
-type MockPanicker struct {
+// Panicker implements Panicker for tests.
+type Panicker struct {
 	mock.Mock
 }
 
 // NewMockPanicker produces a production-ready panicker that will actually panic when called.
-func NewMockPanicker() *MockPanicker {
-	return &MockPanicker{}
+func NewMockPanicker() *Panicker {
+	return &Panicker{}
 }
 
 // Panic satisfies our interface.
-func (p *MockPanicker) Panic(msg interface{}) {
+func (p *Panicker) Panic(msg interface{}) {
 	p.Called(msg)
 }
 
 // Panicf satisfies our interface.
-func (p *MockPanicker) Panicf(format string, args ...interface{}) {
+func (p *Panicker) Panicf(format string, args ...interface{}) {
 	p.Called(format, args)
 }

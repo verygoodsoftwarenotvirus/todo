@@ -19,6 +19,13 @@ func TestStartCustomSpan(T *testing.T) {
 
 		StartCustomSpan(ctx, "blah")
 	})
+
+	T.Run("with nil ctx", func(t *testing.T) {
+		t.Parallel()
+
+		//nolint:staticcheck // ignore SA1012 in tests
+		StartCustomSpan(nil, "blah")
+	})
 }
 
 func TestStartSpan(T *testing.T) {
@@ -30,6 +37,13 @@ func TestStartSpan(T *testing.T) {
 		ctx := context.Background()
 
 		StartSpan(ctx)
+	})
+
+	T.Run("with nil ctx", func(t *testing.T) {
+		t.Parallel()
+
+		//nolint:staticcheck // ignore SA1012 in tests
+		StartSpan(nil)
 	})
 }
 

@@ -89,8 +89,8 @@ func NewClient(u *url.URL, options ...option) (*Client, error) {
 		tracer:                tracing.NewTracer(clientName),
 		panicker:              panicking.NewProductionPanicker(),
 		encoder:               encoding.ProvideClientEncoder(l, encoding.ContentTypeJSON),
-		authedClient:          &http.Client{Transport: buildWrappedTransport(defaultTimeout), Timeout: defaultTimeout},
-		unauthenticatedClient: &http.Client{Transport: buildWrappedTransport(defaultTimeout), Timeout: defaultTimeout},
+		authedClient:          &http.Client{Transport: tracing.BuildTracedHTTPTransport(defaultTimeout), Timeout: defaultTimeout},
+		unauthenticatedClient: &http.Client{Transport: tracing.BuildTracedHTTPTransport(defaultTimeout), Timeout: defaultTimeout},
 		websocketDialer:       websocket.DefaultDialer,
 	}
 

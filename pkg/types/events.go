@@ -5,6 +5,8 @@ type (
 
 	// PreWriteMessage represents an event that asks a worker to write data to the datastore.
 	PreWriteMessage struct {
+		_ struct{}
+
 		DataType                dataType                      `json:"dataType"`
 		Item                    *ItemDatabaseCreationInput    `json:"item,omitempty"`
 		Webhook                 *WebhookDatabaseCreationInput `json:"webhook,omitempty"`
@@ -15,6 +17,8 @@ type (
 
 	// PreUpdateMessage represents an event that asks a worker to update data to the datastore.
 	PreUpdateMessage struct {
+		_ struct{}
+
 		DataType                dataType `json:"dataType"`
 		Item                    *Item    `json:"item,omitempty"`
 		AttributableToUserID    string   `json:"attributableToUserID"`
@@ -23,6 +27,8 @@ type (
 
 	// PreArchiveMessage represents an event that asks a worker to archive data to the datastore.
 	PreArchiveMessage struct {
+		_ struct{}
+
 		DataType                dataType `json:"dataType"`
 		RelevantID              string   `json:"relevantID"`
 		AttributableToUserID    string   `json:"attributableToUserID"`
@@ -31,6 +37,8 @@ type (
 
 	// DataChangeMessage represents an event that asks a worker to write data to the datastore.
 	DataChangeMessage struct {
+		_ struct{}
+
 		MessageType             string                 `json:"messageType"`
 		DataType                dataType               `json:"dataType"`
 		Item                    *Item                  `json:"item,omitempty"`

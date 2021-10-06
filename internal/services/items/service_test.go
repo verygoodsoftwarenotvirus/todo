@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"testing"
 
+	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
@@ -50,10 +51,10 @@ func TestProvideItemsService(T *testing.T) {
 			PreArchivesTopicName: "pre-archives",
 		}
 
-		pp := &publishers.MockProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
-		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&publishers.MockProducer{}, nil)
-		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return(&publishers.MockProducer{}, nil)
+		pp := &mock2.ProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mock2.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&mock2.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return(&mock2.Publisher{}, nil)
 
 		s, err := ProvideService(
 			ctx,
@@ -61,7 +62,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, *http.Client, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			rpm,
@@ -85,8 +86,8 @@ func TestProvideItemsService(T *testing.T) {
 			PreArchivesTopicName: "pre-archives",
 		}
 
-		pp := &publishers.MockProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
+		pp := &mock2.ProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return((*mock2.Publisher)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
 			ctx,
@@ -94,7 +95,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, *http.Client, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -118,9 +119,9 @@ func TestProvideItemsService(T *testing.T) {
 			PreArchivesTopicName: "pre-archives",
 		}
 
-		pp := &publishers.MockProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
-		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
+		pp := &mock2.ProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mock2.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return((*mock2.Publisher)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
 			ctx,
@@ -128,7 +129,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, *http.Client, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -152,10 +153,10 @@ func TestProvideItemsService(T *testing.T) {
 			PreArchivesTopicName: "pre-archives",
 		}
 
-		pp := &publishers.MockProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&publishers.MockProducer{}, nil)
-		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&publishers.MockProducer{}, nil)
-		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return((*publishers.MockProducer)(nil), errors.New("blah"))
+		pp := &mock2.ProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mock2.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&mock2.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return((*mock2.Publisher)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
 			ctx,
@@ -163,7 +164,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, *http.Client, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return &mocksearch.IndexManager{}, nil
 			},
 			nil,
@@ -193,7 +194,7 @@ func TestProvideItemsService(T *testing.T) {
 			&cfg,
 			&mocktypes.ItemDataManager{},
 			mockencoding.NewMockEncoderDecoder(),
-			func(context.Context, logging.Logger, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
+			func(context.Context, logging.Logger, *http.Client, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 				return nil, errors.New("blah")
 			},
 			mockrouting.NewRouteParamManager(),

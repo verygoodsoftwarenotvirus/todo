@@ -2,13 +2,31 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/stretchr/testify/assert"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
+
+func TestSQLQuerier_logQueryBuildingError(T *testing.T) {
+	T.Parallel()
+
+	T.Run("standard", func(t *testing.T) {
+		t.Parallel()
+
+		q, _ := buildTestClient(t)
+
+		ctx := context.Background()
+		_, span := tracing.StartSpan(ctx)
+		err := errors.New(t.Name())
+
+		q.logQueryBuildingError(span, err)
+	})
+}
 
 func TestPostgres_BuildListQuery(T *testing.T) {
 	T.Parallel()

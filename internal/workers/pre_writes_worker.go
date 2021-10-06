@@ -3,6 +3,7 @@ package workers
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 
@@ -29,6 +30,7 @@ type PreWritesWorker struct {
 func ProvidePreWritesWorker(
 	ctx context.Context,
 	logger logging.Logger,
+	client *http.Client,
 	dataManager database.DataManager,
 	postWritesPublisher publishers.Publisher,
 	searchIndexLocation search.IndexPath,
@@ -36,7 +38,7 @@ func ProvidePreWritesWorker(
 ) (*PreWritesWorker, error) {
 	const name = "pre_writes"
 
-	itemsIndexManager, err := searchIndexProvider(ctx, logger, searchIndexLocation, "items", "name", "description")
+	itemsIndexManager, err := searchIndexProvider(ctx, logger, client, searchIndexLocation, "items", "name", "description")
 	if err != nil {
 		return nil, fmt.Errorf("setting up items search index manager: %w", err)
 	}
@@ -59,21 +61,27 @@ func (w *PreWritesWorker) HandleMessage(ctx context.Context, message []byte) err
 	defer span.End()
 
 	var msg *types.PreWriteMessage
-
 	if err := w.encoder.Unmarshal(ctx, message, &msg); err != nil {
 		return observability.PrepareError(err, w.logger, span, "unmarshalling message")
 	}
 
 	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
+	logger := w.logger.WithValue("data_type", msg.DataType)
 
-	w.logger.WithValue("data_type", msg.DataType).Debug("message read")
+	logger.Debug("message read")
 
 	switch msg.DataType {
 	case types.ItemDataType:
 		item, err := w.dataManager.CreateItem(ctx, msg.Item)
 		if err != nil {
-			return observability.PrepareError(err, w.logger, span, "creating item")
-		} else if w.postWritesPublisher != nil {
+			return observability.PrepareError(err, logger, span, "creating item")
+		}
+
+		if err = w.itemsIndexManager.Index(ctx, item.ID, item); err != nil {
+			return observability.PrepareError(err, logger, span, "indexing the item")
+		}
+
+		if w.postWritesPublisher != nil {
 			dcm := &types.DataChangeMessage{
 				DataType:                msg.DataType,
 				Item:                    item,
@@ -82,39 +90,40 @@ func (w *PreWritesWorker) HandleMessage(ctx context.Context, message []byte) err
 			}
 
 			if err = w.postWritesPublisher.Publish(ctx, dcm); err != nil {
-				observability.AcknowledgeError(err, w.logger, span, "publishing to post-writes topic")
-			}
-
-			if err = w.itemsIndexManager.Index(ctx, item.ID, item); err != nil {
-				observability.AcknowledgeError(err, w.logger, span, "indexing the item")
+				return observability.PrepareError(err, logger, span, "publishing to post-writes topic")
 			}
 		}
 	case types.WebhookDataType:
 		webhook, err := w.dataManager.CreateWebhook(ctx, msg.Webhook)
 		if err != nil {
-			return observability.PrepareError(err, w.logger, span, "creating webhook")
-		} else if w.postWritesPublisher != nil {
+			return observability.PrepareError(err, logger, span, "creating webhook")
+		}
+
+		if w.postWritesPublisher != nil {
 			dcm := &types.DataChangeMessage{
 				DataType:                msg.DataType,
 				Webhook:                 webhook,
 				AttributableToUserID:    msg.AttributableToUserID,
 				AttributableToAccountID: msg.AttributableToAccountID,
 			}
+
 			if err = w.postWritesPublisher.Publish(ctx, dcm); err != nil {
-				w.logger.Error(err, "publishing to post-writes topic")
+				return observability.PrepareError(err, logger, span, "publishing data change message")
 			}
 		}
 	case types.UserMembershipDataType:
 		if err := w.dataManager.AddUserToAccount(ctx, msg.UserMembership); err != nil {
-			return observability.PrepareError(err, w.logger, span, "creating webhook")
-		} else if w.postWritesPublisher != nil {
+			return observability.PrepareError(err, logger, span, "creating webhook")
+		}
+
+		if w.postWritesPublisher != nil {
 			dcm := &types.DataChangeMessage{
 				DataType:                msg.DataType,
 				AttributableToUserID:    msg.AttributableToUserID,
 				AttributableToAccountID: msg.AttributableToAccountID,
 			}
-			if err = w.postWritesPublisher.Publish(ctx, dcm); err != nil {
-				w.logger.Error(err, "publishing to post-writes topic")
+			if err := w.postWritesPublisher.Publish(ctx, dcm); err != nil {
+				return observability.PrepareError(err, logger, span, "publishing data change message")
 			}
 		}
 	}

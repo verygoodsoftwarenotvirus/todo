@@ -2,12 +2,10 @@ package httpclient
 
 import (
 	"context"
-	"net"
 	"net/http"
 	"time"
 
 	"github.com/hashicorp/go-retryablehttp"
-	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
@@ -20,12 +18,6 @@ const (
 	maxRetryCount = 5
 	minRetryWait  = 100 * time.Millisecond
 	maxRetryWait  = time.Second
-
-	keepAlive             = 30 * time.Second
-	tlsHandshakeTimeout   = 10 * time.Second
-	expectContinueTimeout = 2 * defaultTimeout
-	idleConnTimeout       = 3 * defaultTimeout
-	maxIdleConns          = 100
 )
 
 type authHeaderBuilder interface {
@@ -39,7 +31,7 @@ type defaultRoundTripper struct {
 // newDefaultRoundTripper constructs a new http.RoundTripper.
 func newDefaultRoundTripper(timeout time.Duration) http.RoundTripper {
 	return &defaultRoundTripper{
-		baseRoundTripper: buildWrappedTransport(timeout),
+		baseRoundTripper: tracing.BuildTracedHTTPTransport(timeout),
 	}
 }
 
@@ -48,28 +40,6 @@ func (t *defaultRoundTripper) RoundTrip(req *http.Request) (*http.Response, erro
 	req.Header.Set(userAgentHeader, userAgent)
 
 	return t.baseRoundTripper.RoundTrip(req)
-}
-
-// buildWrappedTransport constructs a new http.Transport.
-func buildWrappedTransport(timeout time.Duration) http.RoundTripper {
-	if timeout == 0 {
-		timeout = defaultTimeout
-	}
-
-	t := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   timeout,
-			KeepAlive: keepAlive,
-		}).DialContext,
-		MaxIdleConns:          maxIdleConns,
-		MaxIdleConnsPerHost:   maxIdleConns,
-		TLSHandshakeTimeout:   tlsHandshakeTimeout,
-		ExpectContinueTimeout: expectContinueTimeout,
-		IdleConnTimeout:       idleConnTimeout,
-	}
-
-	return otelhttp.NewTransport(t, otelhttp.WithSpanNameFormatter(tracing.FormatSpan))
 }
 
 func buildRequestLogHook(logger logging.Logger) func(retryablehttp.Logger, *http.Request, int) {

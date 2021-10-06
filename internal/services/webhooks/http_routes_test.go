@@ -7,13 +7,14 @@ import (
 	"net/http"
 	"testing"
 
+	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -30,7 +31,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		helper := newTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
+		exampleCreationInput := fakes.BuildFakeWebhookDatabaseCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -38,7 +39,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -59,7 +60,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		helper.service.sessionContextDataFetcher = testutils.BrokenSessionContextDataFetcher
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
+		exampleCreationInput := fakes.BuildFakeWebhookDatabaseCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -124,7 +125,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		helper := newTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
+		exampleCreationInput := fakes.BuildFakeWebhookDatabaseCreationInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -132,7 +133,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -367,7 +368,7 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.webhookDataManager = wd
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -462,7 +463,7 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.webhookDataManager = wd
 
-		mockEventProducer := &publishers.MockProducer{}
+		mockEventProducer := &mock2.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,

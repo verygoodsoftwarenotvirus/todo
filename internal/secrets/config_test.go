@@ -37,34 +37,4 @@ func TestProvideSecretKeeper(T *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, actual)
 	})
-
-	T.Run("standard_aws", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-
-		cfg := &Config{
-			Provider: ProviderAWS,
-			Key:      buildExampleKey(ctx, t),
-		}
-
-		actual, err := ProvideSecretKeeper(ctx, cfg)
-		assert.NoError(t, err)
-		assert.NotNil(t, actual)
-	})
-
-	T.Run("standard_vault", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-
-		cfg := &Config{
-			Provider: ProviderHashicorpVault,
-			Key:      buildExampleKey(ctx, t),
-		}
-
-		actual, err := ProvideSecretKeeper(ctx, cfg)
-		assert.NoError(t, err)
-		assert.NotNil(t, actual)
-	})
 }

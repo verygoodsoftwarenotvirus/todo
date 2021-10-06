@@ -15,12 +15,16 @@ import (
 )
 
 type (
+	messagePublisher interface {
+		Publish(ctx context.Context, channel string, message interface{}) *redis.IntCmd
+	}
+
 	redisPublisher struct {
-		tracer      tracing.Tracer
-		encoder     encoding.ClientEncoder
-		logger      logging.Logger
-		redisClient *redis.Client
-		topic       string
+		tracer    tracing.Tracer
+		encoder   encoding.ClientEncoder
+		logger    logging.Logger
+		publisher messagePublisher
+		topic     string
 	}
 )
 
@@ -35,17 +39,17 @@ func (r *redisPublisher) Publish(ctx context.Context, data interface{}) error {
 		return observability.PrepareError(err, r.logger, span, "encoding topic message")
 	}
 
-	return r.redisClient.Publish(ctx, r.topic, b.Bytes()).Err()
+	return r.publisher.Publish(ctx, r.topic, b.Bytes()).Err()
 }
 
 // provideRedisPublisher provides a redis-backed Publisher.
 func provideRedisPublisher(logger logging.Logger, redisClient *redis.Client, topic string) *redisPublisher {
 	return &redisPublisher{
-		redisClient: redisClient,
-		topic:       topic,
-		encoder:     encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
-		logger:      logging.EnsureLogger(logger),
-		tracer:      tracing.NewTracer(fmt.Sprintf("%s_publisher", topic)),
+		publisher: redisClient,
+		topic:     topic,
+		encoder:   encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
+		logger:    logging.EnsureLogger(logger),
+		tracer:    tracing.NewTracer(fmt.Sprintf("%s_publisher", topic)),
 	}
 }
 

@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/elasticsearch"
 
@@ -127,12 +129,16 @@ func main() {
 
 	// pre-writes worker
 
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
 	postWritesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)
 	if err != nil {
 		logger.Fatal(err)
 	}
 
-	preWritesWorker, err := workers.ProvidePreWritesWorker(ctx, logger, dataManager, postWritesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
+	preWritesWorker, err := workers.ProvidePreWritesWorker(ctx, logger, client, dataManager, postWritesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -150,7 +156,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	preUpdatesWorker, err := workers.ProvidePreUpdatesWorker(ctx, logger, dataManager, postUpdatesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
+	preUpdatesWorker, err := workers.ProvidePreUpdatesWorker(ctx, logger, client, dataManager, postUpdatesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -169,7 +175,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	preArchivesWorker, err := workers.ProvidePreArchivesWorker(ctx, logger, dataManager, postArchivesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
+	preArchivesWorker, err := workers.ProvidePreArchivesWorker(ctx, logger, client, dataManager, postArchivesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
 	if err != nil {
 		logger.Fatal(err)
 	}

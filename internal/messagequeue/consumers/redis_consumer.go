@@ -13,13 +13,17 @@ import (
 )
 
 type (
+	channelProvider interface {
+		Channel(...redis.ChannelOption) <-chan *redis.Message
+	}
+
 	redisConsumer struct {
 		tracer       tracing.Tracer
 		encoder      encoding.ClientEncoder
 		logger       logging.Logger
 		redisClient  *redis.Client
 		handlerFunc  func(context.Context, []byte) error
-		subscription *redis.PubSub
+		subscription channelProvider
 		topic        string
 	}
 
@@ -33,13 +37,13 @@ func provideRedisConsumer(ctx context.Context, logger logging.Logger, redisClien
 	subscription := redisClient.Subscribe(ctx, topic)
 
 	return &redisConsumer{
-		redisClient:  redisClient,
 		topic:        topic,
-		subscription: subscription,
 		handlerFunc:  handlerFunc,
-		encoder:      encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
+		redisClient:  redisClient,
+		subscription: subscription,
 		logger:       logging.EnsureLogger(logger),
 		tracer:       tracing.NewTracer(fmt.Sprintf("%s_consumer", topic)),
+		encoder:      encoding.ProvideClientEncoder(logger, encoding.ContentTypeJSON),
 	}
 }
 

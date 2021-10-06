@@ -8,13 +8,14 @@ import (
 	"net/url"
 	"testing"
 
+	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking/mock"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/panicking"
 )
 
 type (
@@ -164,7 +165,7 @@ func TestBuilder_Must(T *testing.T) {
 		helper := buildTestHelper()
 		exampleErr := errors.New("blah")
 
-		mockPanicker := panicking.NewMockPanicker()
+		mockPanicker := mock2.NewMockPanicker()
 		mockPanicker.On("Panic", exampleErr).Return()
 		helper.builder.panicker = mockPanicker
 

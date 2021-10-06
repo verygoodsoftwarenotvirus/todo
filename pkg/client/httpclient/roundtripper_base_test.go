@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -48,16 +47,6 @@ func Test_defaultRoundTripper_RoundTrip(T *testing.T) {
 
 		_, err = transport.RoundTrip(req)
 		assert.NoError(t, err)
-	})
-}
-
-func Test_buildWrappedTransport(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		assert.NotNil(t, buildWrappedTransport(time.Minute))
 	})
 }
 

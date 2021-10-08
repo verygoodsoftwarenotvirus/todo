@@ -31,8 +31,8 @@ type (
 		CreatedOn        uint64   `json:"createdOn"`
 	}
 
-	// WebhookCreationInput represents what a User could set as input for creating a webhook.
-	WebhookCreationInput struct {
+	// WebhookCreationRequestInput represents what a User could set as input for creating a webhook.
+	WebhookCreationRequestInput struct {
 		_ struct{}
 
 		ID               string   `json:"-"`
@@ -88,10 +88,10 @@ type (
 	}
 )
 
-var _ validation.ValidatableWithContext = (*WebhookCreationInput)(nil)
+var _ validation.ValidatableWithContext = (*WebhookCreationRequestInput)(nil)
 
-// ValidateWithContext validates a WebhookCreationInput.
-func (w *WebhookCreationInput) ValidateWithContext(ctx context.Context) error {
+// ValidateWithContext validates a WebhookCreationRequestInput.
+func (w *WebhookCreationRequestInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(ctx, w,
 		validation.Field(&w.Name, validation.Required),
 		validation.Field(&w.URL, validation.Required, &urlValidator{}),
@@ -103,7 +103,7 @@ func (w *WebhookCreationInput) ValidateWithContext(ctx context.Context) error {
 }
 
 // WebhookDatabaseCreationInputFromWebhookCreationInput creates a DatabaseCreationInput from a CreationInput.
-func WebhookDatabaseCreationInputFromWebhookCreationInput(input *WebhookCreationInput) *WebhookDatabaseCreationInput {
+func WebhookDatabaseCreationInputFromWebhookCreationInput(input *WebhookCreationRequestInput) *WebhookDatabaseCreationInput {
 	x := &WebhookDatabaseCreationInput{}
 
 	x.Name = input.Name

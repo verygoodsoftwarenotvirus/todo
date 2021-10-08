@@ -1,5 +1,5 @@
 /*
-Package mock provides mockable implementations of every interface
+Package mockencoding provides mockable implementations of every interface
 defined in the outer encoding package.
 */
-package mock
+package mockencoding

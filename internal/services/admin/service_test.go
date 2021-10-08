@@ -4,13 +4,12 @@ import (
 	"net/http"
 	"testing"
 
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
-
 	"github.com/alexedwards/scs/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	mockauthn "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
@@ -32,7 +31,7 @@ func buildTestService(t *testing.T) *service {
 	s := ProvideService(
 		logger,
 		&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
-		&mock2.Authenticator{},
+		&mockauthn.Authenticator{},
 		&mocktypes.AdminUserDataManager{},
 		scs.New(),
 		encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON),
@@ -64,7 +63,7 @@ func TestProvideAdminService(T *testing.T) {
 		s := ProvideService(
 			logger,
 			&authservice.Config{Cookies: authservice.CookieConfig{SigningKey: "BLAHBLAHBLAHPRETENDTHISISSECRET!"}},
-			&mock2.Authenticator{},
+			&mockauthn.Authenticator{},
 			&mocktypes.AdminUserDataManager{},
 			scs.New(),
 			encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON),

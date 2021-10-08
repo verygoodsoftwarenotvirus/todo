@@ -30,14 +30,15 @@ type (
 	service struct {
 		logger                    logging.Logger
 		itemDataManager           types.ItemDataManager
-		itemIDFetcher             func(*http.Request) string
-		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		preUpdatesPublisher       publishers.Publisher
+		preArchivesPublisher      publishers.Publisher
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
 		preWritesPublisher        publishers.Publisher
-		preUpdatesPublisher       publishers.Publisher
-		preArchivesPublisher      publishers.Publisher
 		search                    SearchIndex
+		itemIDFetcher             func(*http.Request) string
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		async                     bool
 	}
 )
 
@@ -82,6 +83,7 @@ func ProvideService(
 		preUpdatesPublisher:       preUpdatesPublisher,
 		preArchivesPublisher:      preArchivesPublisher,
 		encoderDecoder:            encoder,
+		async:                     cfg.Async,
 		search:                    searchIndexManager,
 		tracer:                    tracing.NewTracer(serviceName),
 	}

@@ -228,6 +228,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		},
 		Services: config.ServicesConfigurations{
 			Accounts: accounts.Config{
+				Async:              true,
 				PreWritesTopicName: preWritesTopicName,
 			},
 			Auth: authservice.Config{
@@ -246,13 +247,17 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			Webhooks: webhooksservice.Config{
 				PreWritesTopicName:   preWritesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
-				Debug:                true,
-				Enabled:              false,
+				Async:                true,
 			},
 			Websockets: websocketsservice.Config{
-				//
+				Logging: logging.Config{
+					Name:     "webhook",
+					Level:    logging.InfoLevel,
+					Provider: logging.ProviderZerolog,
+				},
 			},
 			Items: itemsservice.Config{
+				Async:                true,
 				SearchIndexPath:      "http://elasticsearch:9200",
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
@@ -313,6 +318,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		},
 		Services: config.ServicesConfigurations{
 			Accounts: accounts.Config{
+				Async:              true,
 				PreWritesTopicName: preWritesTopicName,
 			},
 			Auth: authservice.Config{
@@ -331,13 +337,17 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			Webhooks: webhooksservice.Config{
 				PreWritesTopicName:   preWritesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
-				Debug:                true,
-				Enabled:              false,
+				Async:                true,
 			},
 			Websockets: websocketsservice.Config{
-				//
+				Logging: logging.Config{
+					Name:     "webhook",
+					Level:    logging.InfoLevel,
+					Provider: logging.ProviderZerolog,
+				},
 			},
 			Items: itemsservice.Config{
+				Async:                true,
 				SearchIndexPath:      "http://elasticsearch:9200",
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
@@ -416,6 +426,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			},
 			Services: config.ServicesConfigurations{
 				Accounts: accounts.Config{
+					Async:              true,
 					PreWritesTopicName: preWritesTopicName,
 				},
 				Auth: authservice.Config{
@@ -440,13 +451,17 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Webhooks: webhooksservice.Config{
 					PreWritesTopicName:   preWritesTopicName,
 					PreArchivesTopicName: preArchivesTopicName,
-					Debug:                true,
-					Enabled:              false,
+					Async:                true,
 				},
 				Websockets: websocketsservice.Config{
-					//
+					Logging: logging.Config{
+						Name:     "webhook",
+						Level:    logging.InfoLevel,
+						Provider: logging.ProviderZerolog,
+					},
 				},
 				Items: itemsservice.Config{
+					Async:                true,
 					SearchIndexPath:      "http://elasticsearch:9200",
 					PreWritesTopicName:   preWritesTopicName,
 					PreUpdatesTopicName:  preUpdatesTopicName,

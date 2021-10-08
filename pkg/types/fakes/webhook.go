@@ -44,21 +44,21 @@ func BuildFakeWebhookList() *types.WebhookList {
 	}
 }
 
-// BuildFakeWebhookCreationInput builds a faked WebhookCreationInput from an item.
-func BuildFakeWebhookCreationInput() *types.WebhookCreationInput {
+// BuildFakeWebhookCreationInput builds a faked WebhookCreationRequestInput from an item.
+func BuildFakeWebhookCreationInput() *types.WebhookCreationRequestInput {
 	webhook := BuildFakeWebhook()
 	return BuildFakeWebhookCreationInputFromWebhook(webhook)
 }
 
-// BuildFakeWebhookDatabaseCreationInput builds a faked WebhookCreationInput from an item.
+// BuildFakeWebhookDatabaseCreationInput builds a faked WebhookCreationRequestInput from an item.
 func BuildFakeWebhookDatabaseCreationInput() *types.WebhookDatabaseCreationInput {
 	webhook := BuildFakeWebhook()
 	return BuildFakeWebhookDatabaseCreationInputFromWebhook(webhook)
 }
 
-// BuildFakeWebhookCreationInputFromWebhook builds a faked WebhookCreationInput.
-func BuildFakeWebhookCreationInputFromWebhook(webhook *types.Webhook) *types.WebhookCreationInput {
-	return &types.WebhookCreationInput{
+// BuildFakeWebhookCreationInputFromWebhook builds a faked WebhookCreationRequestInput.
+func BuildFakeWebhookCreationInputFromWebhook(webhook *types.Webhook) *types.WebhookCreationRequestInput {
+	return &types.WebhookCreationRequestInput{
 		ID:               webhook.ID,
 		Name:             webhook.Name,
 		ContentType:      webhook.ContentType,
@@ -71,7 +71,7 @@ func BuildFakeWebhookCreationInputFromWebhook(webhook *types.Webhook) *types.Web
 	}
 }
 
-// BuildFakeWebhookDatabaseCreationInputFromWebhook builds a faked WebhookCreationInput.
+// BuildFakeWebhookDatabaseCreationInputFromWebhook builds a faked WebhookCreationRequestInput.
 func BuildFakeWebhookDatabaseCreationInputFromWebhook(webhook *types.Webhook) *types.WebhookDatabaseCreationInput {
 	return &types.WebhookDatabaseCreationInput{
 		ID:               webhook.ID,

@@ -7,20 +7,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/consumers/mock"
-
 	"github.com/stretchr/testify/mock"
-
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	mockconsumers "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/consumers/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 func buildTestService() *service {
@@ -44,10 +40,10 @@ func TestProvideService(T *testing.T) {
 		logger := logging.NewNoopLogger()
 		encoder := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
-		consumer := &mock2.Consumer{}
+		consumer := &mockconsumers.Consumer{}
 		consumer.On("Consume", chan bool(nil), chan error(nil))
 
-		consumerProvider := &mock2.ConsumerProvider{}
+		consumerProvider := &mockconsumers.ConsumerProvider{}
 		consumerProvider.On(
 			"ProviderConsumer",
 			testutils.ContextMatcher,
@@ -77,13 +73,13 @@ func TestProvideService(T *testing.T) {
 		logger := logging.NewNoopLogger()
 		encoder := encoding.ProvideServerEncoderDecoder(logger, encoding.ContentTypeJSON)
 
-		consumerProvider := &mock2.ConsumerProvider{}
+		consumerProvider := &mockconsumers.ConsumerProvider{}
 		consumerProvider.On(
 			"ProviderConsumer",
 			testutils.ContextMatcher,
 			dataChangesTopicName,
 			mock.Anything,
-		).Return(&mock2.Consumer{}, errors.New("blah"))
+		).Return(&mockconsumers.Consumer{}, errors.New("blah"))
 
 		actual, err := ProvideService(
 			ctx,

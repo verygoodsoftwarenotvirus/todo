@@ -216,7 +216,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 		t := s.T()
 
 		c, _ := buildSimpleTestClient(t)
-		exampleInput := &types.ItemCreationInput{}
+		exampleInput := &types.ItemCreationRequestInput{}
 
 		actual, err := c.CreateItem(s.ctx, exampleInput)
 		assert.Empty(t, actual)

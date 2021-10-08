@@ -87,7 +87,7 @@ func (c *Client) GetItems(ctx context.Context, filter *types.QueryFilter) (*type
 }
 
 // CreateItem creates an item.
-func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationInput) (string, error) {
+func (c *Client) CreateItem(ctx context.Context, input *types.ItemCreationRequestInput) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

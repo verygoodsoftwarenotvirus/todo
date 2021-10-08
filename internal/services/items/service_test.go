@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"testing"
 
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	mockpublishers "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	mockrouting "gitlab.com/verygoodsoftwarenotvirus/todo/internal/routing/mock"
@@ -24,6 +23,7 @@ func buildTestService() *service {
 	return &service{
 		logger:          logging.NewNoopLogger(),
 		itemDataManager: &mocktypes.ItemDataManager{},
+		async:           true,
 		itemIDFetcher:   func(req *http.Request) string { return "" },
 		encoderDecoder:  mockencoding.NewMockEncoderDecoder(),
 		search:          &mocksearch.IndexManager{},
@@ -51,10 +51,10 @@ func TestProvideItemsService(T *testing.T) {
 			PreArchivesTopicName: "pre-archives",
 		}
 
-		pp := &mock2.ProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mock2.Publisher{}, nil)
-		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&mock2.Publisher{}, nil)
-		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return(&mock2.Publisher{}, nil)
+		pp := &mockpublishers.ProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mockpublishers.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&mockpublishers.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return(&mockpublishers.Publisher{}, nil)
 
 		s, err := ProvideService(
 			ctx,
@@ -86,8 +86,8 @@ func TestProvideItemsService(T *testing.T) {
 			PreArchivesTopicName: "pre-archives",
 		}
 
-		pp := &mock2.ProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return((*mock2.Publisher)(nil), errors.New("blah"))
+		pp := &mockpublishers.ProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return((*mockpublishers.Publisher)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
 			ctx,
@@ -119,9 +119,9 @@ func TestProvideItemsService(T *testing.T) {
 			PreArchivesTopicName: "pre-archives",
 		}
 
-		pp := &mock2.ProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mock2.Publisher{}, nil)
-		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return((*mock2.Publisher)(nil), errors.New("blah"))
+		pp := &mockpublishers.ProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mockpublishers.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return((*mockpublishers.Publisher)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
 			ctx,
@@ -153,10 +153,10 @@ func TestProvideItemsService(T *testing.T) {
 			PreArchivesTopicName: "pre-archives",
 		}
 
-		pp := &mock2.ProducerProvider{}
-		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mock2.Publisher{}, nil)
-		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&mock2.Publisher{}, nil)
-		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return((*mock2.Publisher)(nil), errors.New("blah"))
+		pp := &mockpublishers.ProducerProvider{}
+		pp.On("ProviderPublisher", cfg.PreWritesTopicName).Return(&mockpublishers.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreUpdatesTopicName).Return(&mockpublishers.Publisher{}, nil)
+		pp.On("ProviderPublisher", cfg.PreArchivesTopicName).Return((*mockpublishers.Publisher)(nil), errors.New("blah"))
 
 		s, err := ProvideService(
 			ctx,

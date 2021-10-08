@@ -26,12 +26,13 @@ type (
 	service struct {
 		logger                    logging.Logger
 		webhookDataManager        types.WebhookDataManager
-		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		webhookIDFetcher          func(*http.Request) string
+		tracer                    tracing.Tracer
 		encoderDecoder            encoding.ServerEncoderDecoder
 		preWritesPublisher        publishers.Publisher
 		preArchivesPublisher      publishers.Publisher
-		tracer                    tracing.Tracer
+		webhookIDFetcher          func(*http.Request) string
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		async                     bool
 	}
 )
 
@@ -58,6 +59,7 @@ func ProvideWebhooksService(
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		webhookDataManager:        webhookDataManager,
 		encoderDecoder:            encoder,
+		async:                     cfg.Async,
 		preWritesPublisher:        preWritesPublisher,
 		preArchivesPublisher:      preArchivesPublisher,
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,

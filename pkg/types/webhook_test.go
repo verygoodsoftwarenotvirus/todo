@@ -12,8 +12,8 @@ import (
 func TestWebhookCreationInput_Validate(T *testing.T) {
 	T.Parallel()
 
-	buildValidWebhookCreationInput := func() *WebhookCreationInput {
-		return &WebhookCreationInput{
+	buildValidWebhookCreationInput := func() *WebhookCreationRequestInput {
+		return &WebhookCreationRequestInput{
 			Name:        "whatever",
 			ContentType: "application/xml",
 			URL:         "https://blah.verygoodsoftwarenotvirus.ru",

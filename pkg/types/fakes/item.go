@@ -36,34 +36,34 @@ func BuildFakeItemList() *types.ItemList {
 	}
 }
 
-// BuildFakeItemUpdateInput builds a faked ItemUpdateInput from an item.
-func BuildFakeItemUpdateInput() *types.ItemUpdateInput {
+// BuildFakeItemUpdateInput builds a faked ItemUpdateRequestInput from an item.
+func BuildFakeItemUpdateInput() *types.ItemUpdateRequestInput {
 	item := BuildFakeItem()
-	return &types.ItemUpdateInput{
+	return &types.ItemUpdateRequestInput{
 		Name:             item.Name,
 		Details:          item.Details,
 		BelongsToAccount: item.BelongsToAccount,
 	}
 }
 
-// BuildFakeItemUpdateInputFromItem builds a faked ItemUpdateInput from an item.
-func BuildFakeItemUpdateInputFromItem(item *types.Item) *types.ItemUpdateInput {
-	return &types.ItemUpdateInput{
+// BuildFakeItemUpdateInputFromItem builds a faked ItemUpdateRequestInput from an item.
+func BuildFakeItemUpdateInputFromItem(item *types.Item) *types.ItemUpdateRequestInput {
+	return &types.ItemUpdateRequestInput{
 		Name:             item.Name,
 		Details:          item.Details,
 		BelongsToAccount: item.BelongsToAccount,
 	}
 }
 
-// BuildFakeItemCreationInput builds a faked ItemCreationInput.
-func BuildFakeItemCreationInput() *types.ItemCreationInput {
+// BuildFakeItemCreationInput builds a faked ItemCreationRequestInput.
+func BuildFakeItemCreationInput() *types.ItemCreationRequestInput {
 	item := BuildFakeItem()
 	return BuildFakeItemCreationInputFromItem(item)
 }
 
-// BuildFakeItemCreationInputFromItem builds a faked ItemCreationInput from an item.
-func BuildFakeItemCreationInputFromItem(item *types.Item) *types.ItemCreationInput {
-	return &types.ItemCreationInput{
+// BuildFakeItemCreationInputFromItem builds a faked ItemCreationRequestInput from an item.
+func BuildFakeItemCreationInputFromItem(item *types.Item) *types.ItemCreationRequestInput {
+	return &types.ItemCreationRequestInput{
 		ID:               item.ID,
 		Name:             item.Name,
 		Details:          item.Details,
@@ -77,7 +77,7 @@ func BuildFakeItemDatabaseCreationInput() *types.ItemDatabaseCreationInput {
 	return BuildFakeItemDatabaseCreationInputFromItem(item)
 }
 
-// BuildFakeItemDatabaseCreationInputFromItem builds a faked ItemCreationInput from an item.
+// BuildFakeItemDatabaseCreationInputFromItem builds a faked ItemCreationRequestInput from an item.
 func BuildFakeItemDatabaseCreationInputFromItem(item *types.Item) *types.ItemDatabaseCreationInput {
 	return &types.ItemDatabaseCreationInput{
 		ID:               item.ID,

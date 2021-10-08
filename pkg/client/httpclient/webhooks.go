@@ -56,7 +56,7 @@ func (c *Client) GetWebhooks(ctx context.Context, filter *types.QueryFilter) (*t
 }
 
 // CreateWebhook creates a webhook.
-func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationInput) (string, error) {
+func (c *Client) CreateWebhook(ctx context.Context, input *types.WebhookCreationRequestInput) (string, error) {
 	ctx, span := c.tracer.StartSpan(ctx)
 	defer span.End()
 

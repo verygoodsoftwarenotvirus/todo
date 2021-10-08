@@ -49,7 +49,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check session context data for parsed input struct.
-	providedInput := new(types.ItemCreationInput)
+	providedInput := new(types.ItemCreationRequestInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, providedInput); err != nil {
 		observability.AcknowledgeError(err, logger, span, "decoding request")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
@@ -67,21 +67,41 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 	tracing.AttachItemIDToSpan(span, input.ID)
 
-	preWrite := &types.PreWriteMessage{
-		DataType:                types.ItemDataType,
-		Item:                    input,
-		AttributableToUserID:    sessionCtxData.Requester.UserID,
-		AttributableToAccountID: sessionCtxData.ActiveAccountID,
-	}
-	if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
-		observability.AcknowledgeError(err, logger, span, "publishing item write message")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
+	if s.async {
+		preWrite := &types.PreWriteMessage{
+			DataType:                types.ItemDataType,
+			Item:                    input,
+			AttributableToUserID:    sessionCtxData.Requester.UserID,
+			AttributableToAccountID: sessionCtxData.ActiveAccountID,
+		}
+		if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
+			observability.AcknowledgeError(err, logger, span, "publishing item write message")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			return
+		}
 
-	pwr := types.PreWriteResponse{ID: input.ID}
+		pwr := types.PreWriteResponse{ID: input.ID}
 
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
+		s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
+	} else {
+		// create item in database.
+		item, itemCreationErr := s.itemDataManager.CreateItem(ctx, input)
+		if itemCreationErr != nil {
+			observability.AcknowledgeError(itemCreationErr, logger, span, "creating item")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			return
+		}
+
+		tracing.AttachItemIDToSpan(span, item.ID)
+		logger = logger.WithValue(keys.ItemIDKey, item.ID)
+
+		// notify interested parties.
+		if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
+			observability.AcknowledgeError(err, logger, span, "adding item to search index")
+		}
+
+		s.encoderDecoder.EncodeResponseWithStatus(ctx, res, item, http.StatusCreated)
+	}
 }
 
 // ReadHandler returns a GET handler that returns an item.
@@ -231,7 +251,7 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	logger = sessionCtxData.AttachToLogger(logger)
 
 	// check for parsed input attached to session context data.
-	input := new(types.ItemUpdateInput)
+	input := new(types.ItemUpdateRequestInput)
 	if err = s.encoderDecoder.DecodeRequest(ctx, req, input); err != nil {
 		logger.Error(err, "error encountered decoding request body")
 		s.encoderDecoder.EncodeErrorResponse(ctx, res, "invalid request content", http.StatusBadRequest)
@@ -264,20 +284,37 @@ func (s *service) UpdateHandler(res http.ResponseWriter, req *http.Request) {
 	// update the item.
 	item.Update(input)
 
-	pum := &types.PreUpdateMessage{
-		DataType:                types.ItemDataType,
-		Item:                    item,
-		AttributableToUserID:    sessionCtxData.Requester.UserID,
-		AttributableToAccountID: sessionCtxData.ActiveAccountID,
-	}
-	if err = s.preUpdatesPublisher.Publish(ctx, pum); err != nil {
-		observability.AcknowledgeError(err, logger, span, "publishing item update message")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
+	if s.async {
+		pum := &types.PreUpdateMessage{
+			DataType:                types.ItemDataType,
+			Item:                    item,
+			AttributableToUserID:    sessionCtxData.Requester.UserID,
+			AttributableToAccountID: sessionCtxData.ActiveAccountID,
+		}
+		if err = s.preUpdatesPublisher.Publish(ctx, pum); err != nil {
+			observability.AcknowledgeError(err, logger, span, "publishing item update message")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			return
+		}
 
-	// encode our response and peace.
-	s.encoderDecoder.RespondWithData(ctx, res, item)
+		// encode our response and peace.
+		s.encoderDecoder.RespondWithData(ctx, res, item)
+	} else {
+		// update item in database.
+		if err = s.itemDataManager.UpdateItem(ctx, item); err != nil {
+			observability.AcknowledgeError(err, logger, span, "updating item")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			return
+		}
+
+		// notify interested parties.
+		if searchIndexErr := s.search.Index(ctx, item.ID, item); searchIndexErr != nil {
+			observability.AcknowledgeError(err, logger, span, "updating item in search index")
+		}
+
+		// encode our response and peace.
+		s.encoderDecoder.RespondWithData(ctx, res, item)
+	}
 }
 
 // ArchiveHandler returns a handler that archives an item.
@@ -304,28 +341,48 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachItemIDToSpan(span, itemID)
 	logger = logger.WithValue(keys.ItemIDKey, itemID)
 
-	exists, err := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		observability.AcknowledgeError(err, logger, span, "checking item existence")
-		return
-	} else if !exists || errors.Is(err, sql.ErrNoRows) {
-		s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
-		return
-	}
+	if s.async {
+		exists, existenceCheckErr := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
+		if existenceCheckErr != nil && !errors.Is(existenceCheckErr, sql.ErrNoRows) {
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			observability.AcknowledgeError(existenceCheckErr, logger, span, "checking item existence")
+			return
+		} else if !exists || errors.Is(existenceCheckErr, sql.ErrNoRows) {
+			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+			return
+		}
 
-	pam := &types.PreArchiveMessage{
-		DataType:                types.ItemDataType,
-		RelevantID:              itemID,
-		AttributableToUserID:    sessionCtxData.Requester.UserID,
-		AttributableToAccountID: sessionCtxData.ActiveAccountID,
-	}
-	if err = s.preArchivesPublisher.Publish(ctx, pam); err != nil {
-		observability.AcknowledgeError(err, logger, span, "publishing item archive message")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
+		pam := &types.PreArchiveMessage{
+			DataType:                types.ItemDataType,
+			RelevantID:              itemID,
+			AttributableToUserID:    sessionCtxData.Requester.UserID,
+			AttributableToAccountID: sessionCtxData.ActiveAccountID,
+		}
+		if err = s.preArchivesPublisher.Publish(ctx, pam); err != nil {
+			observability.AcknowledgeError(err, logger, span, "publishing item archive message")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			return
+		}
 
-	// encode our response and peace.
-	res.WriteHeader(http.StatusNoContent)
+		// encode our response and peace.
+		res.WriteHeader(http.StatusNoContent)
+	} else {
+		// archive the item in the database.
+		err = s.itemDataManager.ArchiveItem(ctx, itemID, sessionCtxData.ActiveAccountID)
+		if errors.Is(err, sql.ErrNoRows) {
+			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
+			return
+		} else if err != nil {
+			observability.AcknowledgeError(err, logger, span, "archiving item")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			return
+		}
+
+		if indexDeleteErr := s.search.Delete(ctx, itemID); indexDeleteErr != nil {
+			observability.AcknowledgeError(err, logger, span, "removing from search index")
+		}
+
+		// encode our response and peace.
+		res.WriteHeader(http.StatusNoContent)
+	}
 }

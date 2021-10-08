@@ -1,4 +1,4 @@
-package mock
+package mockrouting
 
 import (
 	"net/http"

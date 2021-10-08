@@ -157,7 +157,7 @@ func TestBuilder_BuildCreateItemRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		actual, err := helper.builder.BuildCreateItemRequest(helper.ctx, &types.ItemCreationInput{})
+		actual, err := helper.builder.BuildCreateItemRequest(helper.ctx, &types.ItemCreationRequestInput{})
 		assert.Nil(t, actual)
 		assert.Error(t, err)
 	})

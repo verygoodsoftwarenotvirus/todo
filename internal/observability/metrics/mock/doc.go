@@ -1,5 +1,5 @@
 /*
-Package mock provides mockable implementations of every interface
+Package mockmetrics provides mockable implementations of every interface
 defined in the outer metrics package.
 */
-package mock
+package mockmetrics

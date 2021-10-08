@@ -1,4 +1,4 @@
-package mock
+package mockpublishers
 
 import (
 	"context"

@@ -301,21 +301,32 @@ func (s *service) AddMemberHandler(res http.ResponseWriter, req *http.Request) {
 	tracing.AttachAccountIDToSpan(span, accountID)
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 
-	preWrite := &types.PreWriteMessage{
-		DataType:                types.UserMembershipDataType,
-		UserMembership:          input,
-		AttributableToUserID:    sessionCtxData.Requester.UserID,
-		AttributableToAccountID: accountID,
-	}
-	if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
-		observability.AcknowledgeError(err, logger, span, "publishing item write message")
-		s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
-		return
-	}
+	if s.async {
+		preWrite := &types.PreWriteMessage{
+			DataType:                types.UserMembershipDataType,
+			UserMembership:          input,
+			AttributableToUserID:    sessionCtxData.Requester.UserID,
+			AttributableToAccountID: accountID,
+		}
+		if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
+			observability.AcknowledgeError(err, logger, span, "publishing item write message")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			return
+		}
 
-	pwr := types.PreWriteResponse{ID: input.ID}
+		pwr := types.PreWriteResponse{ID: input.ID}
 
-	s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
+		s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
+	} else {
+		// create account in database.
+		if err = s.accountMembershipDataManager.AddUserToAccount(ctx, input); err != nil {
+			observability.AcknowledgeError(err, logger, span, "adding user to account")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
+			return
+		}
+
+		res.WriteHeader(http.StatusAccepted)
+	}
 }
 
 // ModifyMemberPermissionsHandler is our account creation route.

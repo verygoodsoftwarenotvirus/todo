@@ -4,11 +4,7 @@
 
 The following tools are prerequisites for development work:
 
-- [mage](https://www.magefile.org)
-    - If you don't have `mage` installed, and you do have `go` installed, you can run `go run mage.go ensureMage` to install it.
-    - If you don't have `go` installed, I can't help you.
-- [go](https://golang.org/) 1.16+
-- [node.js](https://nodejs.org/) and [pnpm](https://pnpm.js.org/)
+- [go](https://golang.org/) 1.17+
 - [docker](https://docs.docker.com/get-docker/)
 - [docker-compose](https://docs.docker.com/compose/install/)
 - [wire](https://github.com/google/wire) for dependency management

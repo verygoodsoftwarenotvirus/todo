@@ -6,14 +6,13 @@ import (
 	"testing"
 	"time"
 
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
-
 	"github.com/gorilla/securecookie"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
+	mockauthn "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
@@ -175,7 +174,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -198,7 +197,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -223,7 +222,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 
 		expectedErr := errors.New("arbitrary")
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -246,7 +245,7 @@ func TestAuthenticationService_validateLogin(T *testing.T) {
 
 		helper := buildTestHelper(t)
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,

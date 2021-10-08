@@ -575,7 +575,7 @@ func TestService_buildItemsTableView(T *testing.T) {
 	})
 }
 
-func attachItemUpdateInputToRequest(input *types.ItemUpdateInput) *http.Request {
+func attachItemUpdateInputToRequest(input *types.ItemUpdateRequestInput) *http.Request {
 	form := url.Values{
 		itemUpdateInputNameFormKey:    {anyToString(input.Name)},
 		itemUpdateInputDetailsFormKey: {anyToString(input.Details)},
@@ -625,7 +625,7 @@ func TestService_parseFormEncodedItemUpdateInput(T *testing.T) {
 
 		s := buildTestHelper(t)
 
-		exampleInput := &types.ItemUpdateInput{}
+		exampleInput := &types.ItemUpdateRequestInput{}
 
 		req := attachItemUpdateInputToRequest(exampleInput)
 
@@ -705,7 +705,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 
 		s := buildTestHelper(t)
 
-		exampleInput := &types.ItemUpdateInput{}
+		exampleInput := &types.ItemUpdateRequestInput{}
 
 		res := httptest.NewRecorder()
 		req := attachItemUpdateInputToRequest(exampleInput)

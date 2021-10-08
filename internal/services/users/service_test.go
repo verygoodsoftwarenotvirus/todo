@@ -4,11 +4,10 @@ import (
 	"net/http"
 	"testing"
 
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	mockauthn "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -40,7 +39,7 @@ func buildTestService(t *testing.T) *service {
 		logging.NewNoopLogger(),
 		&mocktypes.UserDataManager{},
 		&mocktypes.AccountDataManager{},
-		&mock2.Authenticator{},
+		&mockauthn.Authenticator{},
 		mockencoding.NewMockEncoderDecoder(),
 		func(counterName, description string) metrics.UnitCounter {
 			return uc
@@ -72,7 +71,7 @@ func TestProvideUsersService(T *testing.T) {
 			logging.NewNoopLogger(),
 			&mocktypes.UserDataManager{},
 			&mocktypes.AccountDataManager{},
-			&mock2.Authenticator{},
+			&mockauthn.Authenticator{},
 			mockencoding.NewMockEncoderDecoder(),
 			func(counterName, description string) metrics.UnitCounter {
 				return &mockmetrics.UnitCounter{}

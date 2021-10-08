@@ -147,7 +147,7 @@ func (s *webhooksTestSuite) TestClient_CreateWebhook() {
 
 		c, _ := buildSimpleTestClient(t)
 
-		actual, err := c.CreateWebhook(s.ctx, &types.WebhookCreationInput{})
+		actual, err := c.CreateWebhook(s.ctx, &types.WebhookCreationRequestInput{})
 		assert.Error(t, err)
 		assert.Empty(t, actual)
 	})

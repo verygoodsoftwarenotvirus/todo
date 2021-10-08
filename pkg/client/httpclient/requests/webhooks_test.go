@@ -116,7 +116,7 @@ func TestBuilder_BuildCreateWebhookRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 		helper.builder = buildTestRequestBuilderWithInvalidURL()
-		exampleInput := &types.WebhookCreationInput{}
+		exampleInput := &types.WebhookCreationRequestInput{}
 
 		actual, err := helper.builder.BuildCreateWebhookRequest(helper.ctx, exampleInput)
 		assert.Nil(t, actual)

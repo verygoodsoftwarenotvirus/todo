@@ -14,7 +14,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		x := &ItemCreationInput{
+		x := &ItemCreationRequestInput{
 			Name:    fake.Word(),
 			Details: fake.Word(),
 		}
@@ -26,7 +26,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 	T.Run("with invalid structure", func(t *testing.T) {
 		t.Parallel()
 
-		x := &ItemCreationInput{}
+		x := &ItemCreationRequestInput{}
 
 		actual := x.ValidateWithContext(context.Background())
 		assert.Error(t, actual)
@@ -39,7 +39,7 @@ func TestItemUpdateInput_Validate(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		x := &ItemUpdateInput{
+		x := &ItemUpdateRequestInput{
 			Name:    fake.Word(),
 			Details: fake.Word(),
 		}
@@ -51,7 +51,7 @@ func TestItemUpdateInput_Validate(T *testing.T) {
 	T.Run("with empty strings", func(t *testing.T) {
 		t.Parallel()
 
-		x := &ItemUpdateInput{}
+		x := &ItemUpdateRequestInput{}
 
 		actual := x.ValidateWithContext(context.Background())
 		assert.Error(t, actual)

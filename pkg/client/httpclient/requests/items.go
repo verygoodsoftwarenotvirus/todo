@@ -96,7 +96,7 @@ func (b *Builder) BuildGetItemsRequest(ctx context.Context, filter *types.QueryF
 }
 
 // BuildCreateItemRequest builds an HTTP request for creating an item.
-func (b *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemCreationInput) (*http.Request, error) {
+func (b *Builder) BuildCreateItemRequest(ctx context.Context, input *types.ItemCreationRequestInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

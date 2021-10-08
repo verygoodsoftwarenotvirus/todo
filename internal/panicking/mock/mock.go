@@ -1,4 +1,4 @@
-package mock
+package mockpanicking
 
 import (
 	"github.com/stretchr/testify/mock"

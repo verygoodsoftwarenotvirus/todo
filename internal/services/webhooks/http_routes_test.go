@@ -7,14 +7,13 @@ import (
 	"net/http"
 	"testing"
 
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	mockpublishers "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
@@ -39,7 +38,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &mock2.Publisher{}
+		mockEventProducer := &mockpublishers.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -51,6 +50,35 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusCreated, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
+	})
+
+	T.Run("standard without async", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
+		helper.service.async = false
+
+		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		wd := &mocktypes.WebhookDataManager{}
+		wd.On(
+			"CreateWebhook",
+			testutils.ContextMatcher,
+			mock.IsType(&types.WebhookDatabaseCreationInput{}),
+		).Return(helper.exampleWebhook, nil)
+		helper.service.webhookDataManager = wd
+
+		helper.service.CreateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusCreated, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, wd)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -83,7 +111,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 			"DecodeRequest",
 			testutils.ContextMatcher,
 			testutils.HTTPRequestMatcher,
-			mock.IsType(&types.WebhookCreationInput{}),
+			mock.IsType(&types.WebhookCreationRequestInput{}),
 		).Return(errors.New("blah"))
 
 		encoderDecoder.On(
@@ -107,7 +135,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		helper := newTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := &types.WebhookCreationInput{}
+		exampleCreationInput := &types.WebhookCreationRequestInput{}
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -133,7 +161,7 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &mock2.Publisher{}
+		mockEventProducer := &mockpublishers.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -145,6 +173,35 @@ func TestWebhooksService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
+	})
+
+	T.Run("without async and error creating webhook", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
+		helper.service.async = false
+
+		exampleCreationInput := fakes.BuildFakeWebhookCreationInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		wd := &mocktypes.WebhookDataManager{}
+		wd.On(
+			"CreateWebhook",
+			testutils.ContextMatcher,
+			mock.IsType(&types.WebhookDatabaseCreationInput{}),
+		).Return((*types.Webhook)(nil), errors.New("blah"))
+		helper.service.webhookDataManager = wd
+
+		helper.service.CreateHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, wd)
 	})
 }
 
@@ -368,13 +425,34 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.webhookDataManager = wd
 
-		mockEventProducer := &mock2.Publisher{}
+		mockEventProducer := &mockpublishers.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
 			mock.MatchedBy(testutils.PreArchiveMessageMatcher),
 		).Return(nil)
 		helper.service.preArchivesPublisher = mockEventProducer
+
+		helper.service.ArchiveHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusNoContent, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, wd)
+	})
+
+	T.Run("standard without async", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+		helper.service.async = false
+
+		wd := &mocktypes.WebhookDataManager{}
+		wd.On(
+			"ArchiveWebhook",
+			testutils.ContextMatcher,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+		).Return(nil)
+		helper.service.webhookDataManager = wd
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
@@ -463,13 +541,55 @@ func TestWebhooksService_ArchiveHandler(T *testing.T) {
 		).Return(true, nil)
 		helper.service.webhookDataManager = wd
 
-		mockEventProducer := &mock2.Publisher{}
+		mockEventProducer := &mockpublishers.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
 			mock.MatchedBy(testutils.PreArchiveMessageMatcher),
 		).Return(errors.New("blah"))
 		helper.service.preArchivesPublisher = mockEventProducer
+
+		helper.service.ArchiveHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, wd)
+	})
+
+	T.Run("without async with no rows found", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+		helper.service.async = false
+
+		wd := &mocktypes.WebhookDataManager{}
+		wd.On(
+			"ArchiveWebhook",
+			testutils.ContextMatcher,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+		).Return(sql.ErrNoRows)
+		helper.service.webhookDataManager = wd
+
+		helper.service.ArchiveHandler(helper.res, helper.req)
+		assert.Equal(t, http.StatusNotFound, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, wd)
+	})
+
+	T.Run("without async and error archiving webhook", func(t *testing.T) {
+		t.Parallel()
+
+		helper := newTestHelper(t)
+		helper.service.async = false
+
+		wd := &mocktypes.WebhookDataManager{}
+		wd.On(
+			"ArchiveWebhook",
+			testutils.ContextMatcher,
+			helper.exampleWebhook.ID,
+			helper.exampleAccount.ID,
+		).Return(errors.New("blah"))
+		helper.service.webhookDataManager = wd
 
 		helper.service.ArchiveHandler(helper.res, helper.req)
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)

@@ -22,7 +22,7 @@ type webhooksServiceHTTPRoutesTestHelper struct {
 	exampleUser          *types.User
 	exampleAccount       *types.Account
 	exampleWebhook       *types.Webhook
-	exampleCreationInput *types.WebhookCreationInput
+	exampleCreationInput *types.WebhookCreationRequestInput
 }
 
 func newTestHelper(t *testing.T) *webhooksServiceHTTPRoutesTestHelper {

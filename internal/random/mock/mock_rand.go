@@ -1,11 +1,11 @@
-package mock
+package mockrandom
 
 import (
 	"context"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 
-	mock "github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/mock"
 )
 
 var _ random.Generator = (*Generator)(nil)

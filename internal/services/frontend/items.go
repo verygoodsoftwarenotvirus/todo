@@ -93,7 +93,7 @@ const (
 	itemUpdateInputDetailsFormKey = detailsFormKey
 )
 
-// parseFormEncodedItemCreationInput checks a request for an ItemCreationInput.
+// parseFormEncodedItemCreationInput checks a request for an ItemCreationRequestInput.
 func (s *service) parseFormEncodedItemCreationInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (creationInput *types.ItemDatabaseCreationInput) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
@@ -286,8 +286,8 @@ func (s *service) buildItemsTableView(includeBaseTemplate bool) func(http.Respon
 	}
 }
 
-// parseFormEncodedItemUpdateInput checks a request for an ItemUpdateInput.
-func (s *service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (updateInput *types.ItemUpdateInput) {
+// parseFormEncodedItemUpdateInput checks a request for an ItemUpdateRequestInput.
+func (s *service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http.Request, sessionCtxData *types.SessionContextData) (updateInput *types.ItemUpdateRequestInput) {
 	ctx, span := s.tracer.StartSpan(ctx)
 	defer span.End()
 
@@ -300,7 +300,7 @@ func (s *service) parseFormEncodedItemUpdateInput(ctx context.Context, req *http
 		return nil
 	}
 
-	updateInput = &types.ItemUpdateInput{
+	updateInput = &types.ItemUpdateRequestInput{
 		Name:             form.Get(itemUpdateInputNameFormKey),
 		Details:          form.Get(itemUpdateInputDetailsFormKey),
 		BelongsToAccount: sessionCtxData.ActiveAccountID,

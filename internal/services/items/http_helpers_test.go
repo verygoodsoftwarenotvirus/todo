@@ -22,8 +22,8 @@ type itemsServiceHTTPRoutesTestHelper struct {
 	exampleUser          *types.User
 	exampleAccount       *types.Account
 	exampleItem          *types.Item
-	exampleCreationInput *types.ItemCreationInput
-	exampleUpdateInput   *types.ItemUpdateInput
+	exampleCreationInput *types.ItemCreationRequestInput
+	exampleUpdateInput   *types.ItemUpdateRequestInput
 }
 
 func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {

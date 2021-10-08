@@ -16,8 +16,8 @@ const (
 func init() {
 	gob.Register(new(Item))
 	gob.Register(new(ItemList))
-	gob.Register(new(ItemCreationInput))
-	gob.Register(new(ItemUpdateInput))
+	gob.Register(new(ItemCreationRequestInput))
+	gob.Register(new(ItemUpdateRequestInput))
 }
 
 type (
@@ -42,8 +42,8 @@ type (
 		Pagination
 	}
 
-	// ItemCreationInput represents what a user could set as input for creating items.
-	ItemCreationInput struct {
+	// ItemCreationRequestInput represents what a user could set as input for creating items.
+	ItemCreationRequestInput struct {
 		_ struct{}
 
 		ID               string `json:"-"`
@@ -62,8 +62,8 @@ type (
 		BelongsToAccount string `json:"belongsToAccount"`
 	}
 
-	// ItemUpdateInput represents what a user could set as input for updating items.
-	ItemUpdateInput struct {
+	// ItemUpdateRequestInput represents what a user could set as input for updating items.
+	ItemUpdateRequestInput struct {
 		_ struct{}
 
 		Name             string `json:"name"`
@@ -94,8 +94,8 @@ type (
 	}
 )
 
-// Update merges an ItemUpdateInput with an item.
-func (x *Item) Update(input *ItemUpdateInput) {
+// Update merges an ItemUpdateRequestInput with an item.
+func (x *Item) Update(input *ItemUpdateRequestInput) {
 	if input.Name != "" && input.Name != x.Name {
 		x.Name = input.Name
 	}
@@ -105,10 +105,10 @@ func (x *Item) Update(input *ItemUpdateInput) {
 	}
 }
 
-var _ validation.ValidatableWithContext = (*ItemCreationInput)(nil)
+var _ validation.ValidatableWithContext = (*ItemCreationRequestInput)(nil)
 
-// ValidateWithContext validates a ItemCreationInput.
-func (x *ItemCreationInput) ValidateWithContext(ctx context.Context) error {
+// ValidateWithContext validates a ItemCreationRequestInput.
+func (x *ItemCreationRequestInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(
 		ctx,
 		x,
@@ -130,7 +130,7 @@ func (x *ItemDatabaseCreationInput) ValidateWithContext(ctx context.Context) err
 }
 
 // ItemDatabaseCreationInputFromItemCreationInput creates a DatabaseCreationInput from a CreationInput.
-func ItemDatabaseCreationInputFromItemCreationInput(input *ItemCreationInput) *ItemDatabaseCreationInput {
+func ItemDatabaseCreationInputFromItemCreationInput(input *ItemCreationRequestInput) *ItemDatabaseCreationInput {
 	x := &ItemDatabaseCreationInput{}
 
 	x.Name = input.Name
@@ -139,10 +139,10 @@ func ItemDatabaseCreationInputFromItemCreationInput(input *ItemCreationInput) *I
 	return x
 }
 
-var _ validation.ValidatableWithContext = (*ItemUpdateInput)(nil)
+var _ validation.ValidatableWithContext = (*ItemUpdateRequestInput)(nil)
 
-// ValidateWithContext validates a ItemUpdateInput.
-func (x *ItemUpdateInput) ValidateWithContext(ctx context.Context) error {
+// ValidateWithContext validates a ItemUpdateRequestInput.
+func (x *ItemUpdateRequestInput) ValidateWithContext(ctx context.Context) error {
 	return validation.ValidateStructWithContext(
 		ctx,
 		x,

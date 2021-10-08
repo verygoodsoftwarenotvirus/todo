@@ -15,8 +15,6 @@ import (
 	"testing"
 	"time"
 
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
-
 	"github.com/gorilla/securecookie"
 	"github.com/o1egl/paseto"
 	"github.com/stretchr/testify/assert"
@@ -24,6 +22,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
+	mockauthn "gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authorization"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -169,7 +168,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -343,7 +342,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -383,7 +382,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -423,7 +422,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -463,7 +462,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -503,7 +502,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -551,7 +550,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -603,7 +602,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -656,7 +655,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -721,7 +720,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,
@@ -777,7 +776,7 @@ func TestAuthenticationService_LoginHandler(T *testing.T) {
 		).Return(helper.exampleUser, nil)
 		helper.service.userDataManager = userDataManager
 
-		authenticator := &mock2.Authenticator{}
+		authenticator := &mockauthn.Authenticator{}
 		authenticator.On(
 			"ValidateLogin",
 			testutils.ContextMatcher,

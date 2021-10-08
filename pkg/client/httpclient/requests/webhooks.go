@@ -54,7 +54,7 @@ func (b *Builder) BuildGetWebhooksRequest(ctx context.Context, filter *types.Que
 }
 
 // BuildCreateWebhookRequest builds an HTTP request for creating a webhook.
-func (b *Builder) BuildCreateWebhookRequest(ctx context.Context, input *types.WebhookCreationInput) (*http.Request, error) {
+func (b *Builder) BuildCreateWebhookRequest(ctx context.Context, input *types.WebhookCreationRequestInput) (*http.Request, error) {
 	ctx, span := b.tracer.StartSpan(ctx)
 	defer span.End()
 

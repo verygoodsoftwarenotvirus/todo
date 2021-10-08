@@ -9,14 +9,13 @@ import (
 	"net/url"
 	"testing"
 
-	mock2 "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	mockpublishers "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
@@ -698,7 +697,7 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &mock2.Publisher{}
+		mockEventProducer := &mockpublishers.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -711,6 +710,36 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		assert.Equal(t, http.StatusAccepted, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
+	})
+
+	T.Run("standard without async", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
+		helper.service.async = false
+
+		exampleInput := fakes.BuildFakeAddUserToAccountInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
+		accountMembershipDataManager.On(
+			"AddUserToAccount",
+			testutils.ContextMatcher,
+			mock.IsType(&types.AddUserToAccountInput{}),
+		).Return(nil)
+		helper.service.accountMembershipDataManager = accountMembershipDataManager
+
+		helper.service.AddMemberHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusAccepted, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, accountMembershipDataManager)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -783,7 +812,7 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, helper.req)
 
-		mockEventProducer := &mock2.Publisher{}
+		mockEventProducer := &mockpublishers.Publisher{}
 		mockEventProducer.On(
 			"Publish",
 			testutils.ContextMatcher,
@@ -796,6 +825,36 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
+	})
+
+	T.Run("without async and with error adding user", func(t *testing.T) {
+		t.Parallel()
+
+		helper := buildTestHelper(t)
+		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
+		helper.service.async = false
+
+		exampleInput := fakes.BuildFakeAddUserToAccountInput()
+		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
+
+		var err error
+		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
+		require.NoError(t, err)
+		require.NotNil(t, helper.req)
+
+		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
+		accountMembershipDataManager.On(
+			"AddUserToAccount",
+			testutils.ContextMatcher,
+			mock.IsType(&types.AddUserToAccountInput{}),
+		).Return(errors.New("blah"))
+		helper.service.accountMembershipDataManager = accountMembershipDataManager
+
+		helper.service.AddMemberHandler(helper.res, helper.req)
+
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
+
+		mock.AssertExpectationsForObjects(t, accountMembershipDataManager)
 	})
 }
 

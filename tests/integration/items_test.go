@@ -326,9 +326,9 @@ func (s *TestSuite) TestItems_Updating_Returns404ForNonexistentItem() {
 	})
 }
 
-// convertItemToItemUpdateInput creates an ItemUpdateInput struct from an item.
-func convertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateInput {
-	return &types.ItemUpdateInput{
+// convertItemToItemUpdateInput creates an ItemUpdateRequestInput struct from an item.
+func convertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateRequestInput {
+	return &types.ItemUpdateRequestInput{
 		Name:    x.Name,
 		Details: x.Details,
 	}

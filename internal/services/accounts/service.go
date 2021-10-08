@@ -32,13 +32,14 @@ type (
 		logger                       logging.Logger
 		accountDataManager           types.AccountDataManager
 		accountMembershipDataManager types.AccountUserMembershipDataManager
-		accountIDFetcher             func(*http.Request) string
-		userIDFetcher                func(*http.Request) string
-		sessionContextDataFetcher    func(*http.Request) (*types.SessionContextData, error)
+		tracer                       tracing.Tracer
 		accountCounter               metrics.UnitCounter
 		encoderDecoder               encoding.ServerEncoderDecoder
 		preWritesPublisher           publishers.Publisher
-		tracer                       tracing.Tracer
+		sessionContextDataFetcher    func(*http.Request) (*types.SessionContextData, error)
+		userIDFetcher                func(*http.Request) string
+		accountIDFetcher             func(*http.Request) string
+		async                        bool
 	}
 )
 
@@ -59,6 +60,7 @@ func ProvideService(
 	}
 
 	s := &service{
+		async:                        cfg.Async,
 		logger:                       logging.EnsureLogger(logger).WithName(serviceName),
 		accountIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(AccountIDURIParamKey),
 		userIDFetcher:                routeParamManager.BuildRouteParamStringIDFetcher(UserIDURIParamKey),

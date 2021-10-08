@@ -16,8 +16,7 @@ func TestConfig_Validate(T *testing.T) {
 		ctx := context.Background()
 
 		cfg := &Config{
-			Debug:   false,
-			Enabled: false,
+			Debug: false,
 		}
 
 		assert.NoError(t, cfg.ValidateWithContext(ctx))

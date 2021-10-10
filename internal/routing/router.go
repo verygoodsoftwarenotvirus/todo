@@ -6,7 +6,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
-// all interfaces HEAVILY inspired by github.com/go-chi/chi.
+// all interfaces HEAVILY inspired by github.com/go-chi/chi/v5.
 
 type (
 	// Middleware  is a type alias for a middleware handler function.

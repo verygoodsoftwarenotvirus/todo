@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	chimiddleware "github.com/go-chi/chi/middleware"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 )
 
 const (

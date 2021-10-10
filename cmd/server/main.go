@@ -8,7 +8,7 @@ import (
 	"os"
 	"strconv"
 
-	chimiddleware "github.com/go-chi/chi/middleware"
+	chimiddleware "github.com/go-chi/chi/v5/middleware"
 	flag "github.com/spf13/pflag"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/build/server"

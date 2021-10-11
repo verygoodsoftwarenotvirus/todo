@@ -191,7 +191,7 @@ func main() {
 					// create item
 					createdItemID, itemCreationErr := userClient.CreateItem(ctx, fakes.BuildFakeItemCreationInput())
 					if itemCreationErr != nil {
-						quitter.ComplainAndQuit(fmt.Errorf("creating item %d: %w", j, itemCreationErr))
+						quitter.ComplainAndQuit(fmt.Errorf("creating item #%d: %w", j, itemCreationErr))
 					}
 
 					iterationLogger.WithValue(keys.ItemIDKey, createdItemID).Debug("created item")

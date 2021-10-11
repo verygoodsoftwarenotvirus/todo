@@ -1,16 +1,12 @@
 version: "3.8"
 services:
     redis:
-        labels:
-            - "purpose=todo.integration_tests.base_infra"
         hostname: worker_queue
         image: redis:6-buster
         container_name: redis
         ports:
             - '6379:6379'
     postgres:
-        labels:
-            - "purpose=todo.integration_tests.base_infra"
         container_name: postgres
         hostname: pgdatabase
         image: postgres:13
@@ -23,8 +19,6 @@ services:
         ports:
             - '5432:5432'
     mysql:
-        labels:
-            - "purpose=todo.integration_tests.base_infra"
         container_name: mysql
         hostname: mysqldatabase
         image: "mysql:8"

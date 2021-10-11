@@ -10,7 +10,7 @@ COPY . .
 RUN go build -trimpath -o /todo -v gitlab.com/verygoodsoftwarenotvirus/todo/cmd/server
 
 # final stage
-FROM debian:bullseye
+FROM debian:stretch
 
 COPY --from=build-stage /todo /todo
 

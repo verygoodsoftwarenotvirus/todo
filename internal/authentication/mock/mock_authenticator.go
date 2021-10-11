@@ -3,9 +3,9 @@ package mockauthn
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/authentication"
 )
 
 var _ authentication.Authenticator = (*Authenticator)(nil)

@@ -22,7 +22,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/server"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
+	accountsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/accounts"
 	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 	frontendservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/frontend"
 	itemsservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/items"
@@ -52,7 +52,6 @@ const (
 	// test user stuff.
 	defaultPassword = "password"
 
-	// search index paths.
 	localElasticsearchLocation = "http://elasticsearch:9200"
 
 	// message provider topics
@@ -64,9 +63,8 @@ const (
 	maxAttempts           = 50
 	defaultPASETOLifetime = 1 * time.Minute
 
-	contentTypeJSON = "application/json"
-
-	eventsServerAddress = "worker_queue:6379"
+	contentTypeJSON    = "application/json"
+	workerQueueAddress = "worker_queue:6379"
 )
 
 var (
@@ -184,7 +182,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		Events: msgconfig.Config{
 			Provider: msgconfig.ProviderRedis,
 			RedisConfig: msgconfig.RedisConfig{
-				QueueAddress: eventsServerAddress,
+				QueueAddress: workerQueueAddress,
 			},
 		},
 		Server: localServer,
@@ -227,7 +225,7 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			Provider: search.ElasticsearchProvider,
 		},
 		Services: config.ServicesConfigurations{
-			Accounts: accounts.Config{
+			Accounts: accountsservice.Config{
 				Async:              true,
 				PreWritesTopicName: preWritesTopicName,
 			},
@@ -245,9 +243,9 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
 			Webhooks: webhooksservice.Config{
+				Async:                true,
 				PreWritesTopicName:   preWritesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
-				Async:                true,
 			},
 			Websockets: websocketsservice.Config{
 				Logging: logging.Config{
@@ -257,8 +255,8 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 				},
 			},
 			Items: itemsservice.Config{
+				SearchIndexPath:      localElasticsearchLocation,
 				Async:                true,
-				SearchIndexPath:      "http://elasticsearch:9200",
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
@@ -286,7 +284,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		Events: msgconfig.Config{
 			Provider: msgconfig.ProviderRedis,
 			RedisConfig: msgconfig.RedisConfig{
-				QueueAddress: eventsServerAddress,
+				QueueAddress: workerQueueAddress,
 			},
 		},
 		Server: localServer,
@@ -317,7 +315,7 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			Provider: search.ElasticsearchProvider,
 		},
 		Services: config.ServicesConfigurations{
-			Accounts: accounts.Config{
+			Accounts: accountsservice.Config{
 				Async:              true,
 				PreWritesTopicName: preWritesTopicName,
 			},
@@ -335,9 +333,9 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
 			Webhooks: webhooksservice.Config{
+				Async:                true,
 				PreWritesTopicName:   preWritesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
-				Async:                true,
 			},
 			Websockets: websocketsservice.Config{
 				Logging: logging.Config{
@@ -347,8 +345,8 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 				},
 			},
 			Items: itemsservice.Config{
+				SearchIndexPath:      localElasticsearchLocation,
 				Async:                true,
-				SearchIndexPath:      "http://elasticsearch:9200",
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
@@ -379,7 +377,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			Events: msgconfig.Config{
 				Provider: msgconfig.ProviderRedis,
 				RedisConfig: msgconfig.RedisConfig{
-					QueueAddress: eventsServerAddress,
+					QueueAddress: workerQueueAddress,
 				},
 			},
 			Encoding: encoding.Config{
@@ -425,7 +423,7 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				Provider: search.ElasticsearchProvider,
 			},
 			Services: config.ServicesConfigurations{
-				Accounts: accounts.Config{
+				Accounts: accountsservice.Config{
 					Async:              true,
 					PreWritesTopicName: preWritesTopicName,
 				},
@@ -449,9 +447,9 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 				Frontend: buildLocalFrontendServiceConfig(),
 				Webhooks: webhooksservice.Config{
+					Async:                true,
 					PreWritesTopicName:   preWritesTopicName,
 					PreArchivesTopicName: preArchivesTopicName,
-					Async:                true,
 				},
 				Websockets: websocketsservice.Config{
 					Logging: logging.Config{
@@ -461,8 +459,8 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 					},
 				},
 				Items: itemsservice.Config{
+					SearchIndexPath:      localElasticsearchLocation,
 					Async:                true,
-					SearchIndexPath:      "http://elasticsearch:9200",
 					PreWritesTopicName:   preWritesTopicName,
 					PreUpdatesTopicName:  preUpdatesTopicName,
 					PreArchivesTopicName: preArchivesTopicName,

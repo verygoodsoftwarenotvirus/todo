@@ -9,15 +9,13 @@ import (
 	"syscall"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/elasticsearch"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/config"
 	msgconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/consumers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/elasticsearch"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/secrets"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/workers"
 )
 
 const (
@@ -25,6 +23,9 @@ const (
 	dataChangesTopicName = "data_changes"
 	preUpdatesTopicName  = "pre_updates"
 	preArchivesTopicName = "pre_archives"
+
+	configFilepathEnvVar = "CONFIGURATION_FILEPATH"
+	configStoreEnvVarKey = "TODO_WORKERS_LOCAL_CONFIG_STORE_KEY"
 )
 
 func initializeLocalSecretManager(ctx context.Context, envVarKey string) secrets.SecretManager {
@@ -47,11 +48,6 @@ func initializeLocalSecretManager(ctx context.Context, envVarKey string) secrets
 
 	return sm
 }
-
-const (
-	configFilepathEnvVar = "CONFIGURATION_FILEPATH"
-	configStoreEnvVarKey = "TODO_WORKERS_LOCAL_CONFIG_STORE_KEY"
-)
 
 func main() {
 	const (
@@ -149,6 +145,7 @@ func main() {
 	}
 
 	go preWritesConsumer.Consume(nil, nil)
+
 	// pre-updates worker
 
 	postUpdatesPublisher, err := publisherProvider.ProviderPublisher(dataChangesTopicName)

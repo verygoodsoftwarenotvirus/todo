@@ -3,9 +3,9 @@ package mockrandom
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 )
 
 var _ random.Generator = (*Generator)(nil)

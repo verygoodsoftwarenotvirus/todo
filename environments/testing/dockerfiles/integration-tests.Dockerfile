@@ -10,4 +10,3 @@ COPY . .
 # ENTRYPOINT [ "go", "test", "-parallel", "1", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration", "-run", "TestIntegration/TestSomething" ]
 
 ENTRYPOINT [ "go", "test", "-v", "-failfast", "gitlab.com/verygoodsoftwarenotvirus/todo/tests/integration" ]
-

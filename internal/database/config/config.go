@@ -24,12 +24,12 @@ type (
 	Config struct {
 		_ struct{}
 
-		CreateTestUser    *types.TestUserCreationConfig `json:"create_test_user" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
+		CreateTestUser    *types.TestUserCreationConfig `json:"createTestUser" mapstructure:"create_test_user" toml:"create_test_user,omitempty"`
 		Provider          string                        `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
-		ConnectionDetails database.ConnectionDetails    `json:"connection_details" mapstructure:"connection_details" toml:"connection_details,omitempty"`
+		ConnectionDetails database.ConnectionDetails    `json:"connectionDetails" mapstructure:"connection_details" toml:"connection_details,omitempty"`
 		Debug             bool                          `json:"debug" mapstructure:"debug" toml:"debug,omitempty"`
-		RunMigrations     bool                          `json:"run_migrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
-		MaxPingAttempts   uint8                         `json:"max_ping_attempts" mapstructure:"max_ping_attempts" toml:"max_ping_attempts,omitempty"`
+		RunMigrations     bool                          `json:"runMigrations" mapstructure:"run_migrations" toml:"run_migrations,omitempty"`
+		MaxPingAttempts   uint8                         `json:"maxPingAttempts" mapstructure:"max_ping_attempts" toml:"max_ping_attempts,omitempty"`
 	}
 )
 
@@ -37,7 +37,9 @@ var _ validation.ValidatableWithContext = (*Config)(nil)
 
 // ValidateWithContext validates an DatabaseSettings struct.
 func (cfg *Config) ValidateWithContext(ctx context.Context) error {
-	return validation.ValidateStructWithContext(ctx, cfg,
+	return validation.ValidateStructWithContext(
+		ctx,
+		cfg,
 		validation.Field(&cfg.ConnectionDetails, validation.Required),
 		validation.Field(&cfg.Provider, validation.In(PostgresProvider, MySQLProvider)),
 		validation.Field(&cfg.CreateTestUser, validation.When(cfg.CreateTestUser != nil, validation.Required).Else(validation.Nil)),

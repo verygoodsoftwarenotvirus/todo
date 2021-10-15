@@ -6,12 +6,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/mock"
-
 	"github.com/go-redis/redis/v8"
-	"github.com/stretchr/testify/require"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )

@@ -189,14 +189,14 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 	s.Run("standard", func() {
 		t := s.T()
 
-		exampleInput := fakes.BuildFakeItemCreationInput()
+		exampleInput := fakes.BuildFakeItemCreationRequestInput()
 		exampleInput.BelongsToAccount = ""
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 		c, _ := buildTestClientWithJSONResponse(t, spec, &types.PreWriteResponse{ID: s.exampleItem.ID})
 
 		actual, err := c.CreateItem(s.ctx, exampleInput)
-		require.NotNil(t, actual)
+		require.NotEmpty(t, actual)
 		assert.NoError(t, err)
 
 		assert.Equal(t, s.exampleItem.ID, actual)
@@ -226,7 +226,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 	s.Run("with error building request", func() {
 		t := s.T()
 
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationRequestInputFromItem(s.exampleItem)
 
 		c := buildTestClientWithInvalidURL(t)
 
@@ -238,7 +238,7 @@ func (s *itemsTestSuite) TestClient_CreateItem() {
 	s.Run("with error executing request", func() {
 		t := s.T()
 
-		exampleInput := fakes.BuildFakeItemCreationInputFromItem(s.exampleItem)
+		exampleInput := fakes.BuildFakeItemCreationRequestInputFromItem(s.exampleItem)
 		c, _ := buildTestClientThatWaitsTooLong(t)
 
 		actual, err := c.CreateItem(s.ctx, exampleInput)

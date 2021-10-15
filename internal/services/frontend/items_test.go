@@ -598,7 +598,7 @@ func TestService_parseFormEncodedItemUpdateInput(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		expected := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
+		expected := fakes.BuildFakeItemUpdateRequestInputFromItem(exampleItem)
 
 		req := attachItemUpdateInputToRequest(expected)
 
@@ -648,7 +648,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemUpdateRequestInputFromItem(exampleItem)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -686,7 +686,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemUpdateRequestInputFromItem(exampleItem)
 
 		s.service.sessionContextDataFetcher = func(req *http.Request) (*types.SessionContextData, error) {
 			return nil, errors.New("blah")
@@ -726,7 +726,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemUpdateRequestInputFromItem(exampleItem)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(
@@ -758,7 +758,7 @@ func TestService_handleItemUpdateRequest(T *testing.T) {
 			return exampleItem.ID
 		}
 
-		exampleInput := fakes.BuildFakeItemUpdateInputFromItem(exampleItem)
+		exampleInput := fakes.BuildFakeItemUpdateRequestInputFromItem(exampleItem)
 
 		mockDB := database.BuildMockDatabase()
 		mockDB.ItemDataManager.On(

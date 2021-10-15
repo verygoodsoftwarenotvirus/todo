@@ -36,8 +36,8 @@ func BuildFakeItemList() *types.ItemList {
 	}
 }
 
-// BuildFakeItemUpdateInput builds a faked ItemUpdateRequestInput from an item.
-func BuildFakeItemUpdateInput() *types.ItemUpdateRequestInput {
+// BuildFakeItemUpdateRequestInput builds a faked ItemUpdateRequestInput from an item.
+func BuildFakeItemUpdateRequestInput() *types.ItemUpdateRequestInput {
 	item := BuildFakeItem()
 	return &types.ItemUpdateRequestInput{
 		Name:             item.Name,
@@ -46,8 +46,8 @@ func BuildFakeItemUpdateInput() *types.ItemUpdateRequestInput {
 	}
 }
 
-// BuildFakeItemUpdateInputFromItem builds a faked ItemUpdateRequestInput from an item.
-func BuildFakeItemUpdateInputFromItem(item *types.Item) *types.ItemUpdateRequestInput {
+// BuildFakeItemUpdateRequestInputFromItem builds a faked ItemUpdateRequestInput from an item.
+func BuildFakeItemUpdateRequestInputFromItem(item *types.Item) *types.ItemUpdateRequestInput {
 	return &types.ItemUpdateRequestInput{
 		Name:             item.Name,
 		Details:          item.Details,
@@ -55,14 +55,14 @@ func BuildFakeItemUpdateInputFromItem(item *types.Item) *types.ItemUpdateRequest
 	}
 }
 
-// BuildFakeItemCreationInput builds a faked ItemCreationRequestInput.
-func BuildFakeItemCreationInput() *types.ItemCreationRequestInput {
+// BuildFakeItemCreationRequestInput builds a faked ItemCreationRequestInput.
+func BuildFakeItemCreationRequestInput() *types.ItemCreationRequestInput {
 	item := BuildFakeItem()
-	return BuildFakeItemCreationInputFromItem(item)
+	return BuildFakeItemCreationRequestInputFromItem(item)
 }
 
-// BuildFakeItemCreationInputFromItem builds a faked ItemCreationRequestInput from an item.
-func BuildFakeItemCreationInputFromItem(item *types.Item) *types.ItemCreationRequestInput {
+// BuildFakeItemCreationRequestInputFromItem builds a faked ItemCreationRequestInput from an item.
+func BuildFakeItemCreationRequestInputFromItem(item *types.Item) *types.ItemCreationRequestInput {
 	return &types.ItemCreationRequestInput{
 		ID:               item.ID,
 		Name:             item.Name,
@@ -77,7 +77,7 @@ func BuildFakeItemDatabaseCreationInput() *types.ItemDatabaseCreationInput {
 	return BuildFakeItemDatabaseCreationInputFromItem(item)
 }
 
-// BuildFakeItemDatabaseCreationInputFromItem builds a faked ItemCreationRequestInput from an item.
+// BuildFakeItemDatabaseCreationInputFromItem builds a faked ItemDatabaseCreationInput from an item.
 func BuildFakeItemDatabaseCreationInputFromItem(item *types.Item) *types.ItemDatabaseCreationInput {
 	return &types.ItemDatabaseCreationInput{
 		ID:               item.ID,

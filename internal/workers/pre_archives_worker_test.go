@@ -134,7 +134,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		dbManager.ItemDataManager.On(
 			"ArchiveItem",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.ItemID,
 			body.AttributableToAccountID,
 		).Return(nil)
 
@@ -149,7 +149,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		searchIndexManager.On(
 			"Delete",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.ItemID,
 		).Return(nil)
 
 		searchIndexLocation := search.IndexPath(t.Name())
@@ -191,7 +191,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		dbManager.ItemDataManager.On(
 			"ArchiveItem",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.ItemID,
 			body.AttributableToAccountID,
 		).Return(errors.New("blah"))
 
@@ -235,7 +235,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		dbManager.ItemDataManager.On(
 			"ArchiveItem",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.ItemID,
 			body.AttributableToAccountID,
 		).Return(nil)
 
@@ -243,7 +243,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		searchIndexManager.On(
 			"Delete",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.ItemID,
 		).Return(errors.New("blah"))
 
 		postArchivesPublisher := &mockpublishers.Publisher{}
@@ -287,7 +287,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		dbManager.ItemDataManager.On(
 			"ArchiveItem",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.ItemID,
 			body.AttributableToAccountID,
 		).Return(nil)
 
@@ -302,7 +302,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		searchIndexManager.On(
 			"Delete",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.ItemID,
 		).Return(nil)
 
 		searchIndexLocation := search.IndexPath(t.Name())
@@ -344,7 +344,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		dbManager.WebhookDataManager.On(
 			"ArchiveWebhook",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.WebhookID,
 			body.AttributableToAccountID,
 		).Return(nil)
 
@@ -393,7 +393,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		dbManager.WebhookDataManager.On(
 			"ArchiveWebhook",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.WebhookID,
 			body.AttributableToAccountID,
 		).Return(errors.New("blah"))
 
@@ -439,7 +439,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		dbManager.WebhookDataManager.On(
 			"ArchiveWebhook",
 			testutils.ContextMatcher,
-			body.RelevantID,
+			body.WebhookID,
 			body.AttributableToAccountID,
 		).Return(nil)
 

@@ -83,14 +83,14 @@ func (s *service) buildItemCreatorView(includeBaseTemplate bool) func(http.Respo
 }
 
 const (
-	nameFormKey    = "name"
-	detailsFormKey = "details"
+	itemNameFormKey    = "name"
+	itemDetailsFormKey = "details"
 
-	itemCreationInputNameFormKey    = nameFormKey
-	itemCreationInputDetailsFormKey = detailsFormKey
+	itemCreationInputNameFormKey    = itemNameFormKey
+	itemCreationInputDetailsFormKey = itemDetailsFormKey
 
-	itemUpdateInputNameFormKey    = nameFormKey
-	itemUpdateInputDetailsFormKey = detailsFormKey
+	itemUpdateInputNameFormKey    = itemNameFormKey
+	itemUpdateInputDetailsFormKey = itemDetailsFormKey
 )
 
 // parseFormEncodedItemCreationInput checks a request for an ItemCreationRequestInput.

@@ -3,9 +3,9 @@ package mockconsumers
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/consumers"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/consumers"
 )
 
 var _ consumers.ConsumerProvider = (*ConsumerProvider)(nil)

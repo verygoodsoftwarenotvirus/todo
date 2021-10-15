@@ -18,7 +18,7 @@ It's a good idea to run `mage quicktest lintegrationTests` before commits. You w
 ## running the server
 
 1. clone this repository
-2. run `mage run`
+2. run `make run`
 3. [http://localhost:8888/](http://localhost:8888/)
 
 ## working on the frontend

@@ -148,9 +148,9 @@ func (s *HTTPServer) setupRouter(ctx context.Context, router routing.Router, met
 			})
 		})
 
-		// Notifications
-		v1Router.Route("/websockets", func(notificationsRouter routing.Router) {
-			notificationsRouter.Get("/data_changes", s.websocketsService.SubscribeHandler)
+		// Websockets
+		v1Router.Route("/websockets", func(websocketsRouter routing.Router) {
+			websocketsRouter.Get("/data_changes", s.websocketsService.SubscribeHandler)
 		})
 
 		// Webhooks

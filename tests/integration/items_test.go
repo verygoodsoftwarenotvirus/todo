@@ -42,7 +42,7 @@ func (s *TestSuite) TestItems_CompleteLifecycle() {
 
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 			require.NoError(t, err)
 
@@ -71,7 +71,7 @@ func (s *TestSuite) TestItems_CompleteLifecycle() {
 
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 			require.NoError(t, err)
 
@@ -109,7 +109,7 @@ func (s *TestSuite) TestItems_Listing() {
 			for i := 0; i < 5; i++ {
 				// Create item.
 				exampleItem := fakes.BuildFakeItem()
-				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+				exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 				createdItemID, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
 				require.NoError(t, itemCreationErr)
 
@@ -153,7 +153,7 @@ func (s *TestSuite) TestItems_Listing() {
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
 				exampleItem := fakes.BuildFakeItem()
-				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+				exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 
 				createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 				require.NoError(t, err)
@@ -209,7 +209,7 @@ func (s *TestSuite) TestItems_Searching() {
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
 				// Create item.
-				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+				exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
 				createdItemID, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
 				require.NoError(t, itemCreationErr)
@@ -257,7 +257,7 @@ func (s *TestSuite) TestItems_Searching() {
 			exampleItem := fakes.BuildFakeItem()
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
-				exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+				exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
 
 				createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
@@ -349,7 +349,7 @@ func (s *TestSuite) TestItems_Updating() {
 
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 			require.NoError(t, err)
 
@@ -389,7 +389,7 @@ func (s *TestSuite) TestItems_Updating() {
 
 			// create item.
 			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationInputFromItem(exampleItem)
+			exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 			require.NoError(t, err)
 

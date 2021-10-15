@@ -3,9 +3,9 @@ package mockpublishers
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
-
 	"github.com/stretchr/testify/mock"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 )
 
 var _ publishers.Publisher = (*Publisher)(nil)

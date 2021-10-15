@@ -237,7 +237,6 @@ linters:
     - gosec            # Inspects source code for security problems
     - ifshort          # Checks that your code uses short syntax for if-statements whenever possible
     - importas         # Enforces consistent import aliases
-    - lll              # Reports long lines
     - makezero         # Finds slice declarations with non-zero initial length
     - misspell         # Finds commonly misspelled English words in comments
     - nakedret         # Finds naked returns in functions greater than a specified function length
@@ -275,6 +274,7 @@ linters:
     - funlen           # Tool for detection of long functions
     - gofumpt          # Gofumpt checks whether code was gofumpt-ed.
     - gomnd            # An analyzer to detect magic numbers.
+    - lll              # Reports long lines
     - nlreturn         # nlreturn checks for a new line before return and branch statements to increase code clarity
     - rowserrcheck     # checks whether Err of rows is checked successfully; lots of false positives
     - tagliatelle      # Checks the struct tags.

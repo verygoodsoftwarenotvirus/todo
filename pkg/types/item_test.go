@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestItemCreationInput_Validate(T *testing.T) {
+func TestItemCreationRequestInput_Validate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {
@@ -33,7 +33,7 @@ func TestItemCreationInput_Validate(T *testing.T) {
 	})
 }
 
-func TestItemUpdateInput_Validate(T *testing.T) {
+func TestItemUpdateRequestInput_Validate(T *testing.T) {
 	T.Parallel()
 
 	T.Run("standard", func(t *testing.T) {

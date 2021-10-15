@@ -5,11 +5,10 @@ import (
 	"errors"
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
-
 	"github.com/Masterminds/squirrel"
 	"github.com/stretchr/testify/assert"
 
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 

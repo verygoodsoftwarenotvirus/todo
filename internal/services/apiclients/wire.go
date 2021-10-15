@@ -1,9 +1,9 @@
 package apiclients
 
 import (
-	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
-
 	"github.com/google/wire"
+
+	authservice "gitlab.com/verygoodsoftwarenotvirus/todo/internal/services/authentication"
 )
 
 var (

@@ -38,8 +38,8 @@ func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
 	helper.exampleAccount.BelongsToUser = helper.exampleUser.ID
 	helper.exampleItem = fakes.BuildFakeItem()
 	helper.exampleItem.BelongsToAccount = helper.exampleAccount.ID
-	helper.exampleCreationInput = fakes.BuildFakeItemCreationInputFromItem(helper.exampleItem)
-	helper.exampleUpdateInput = fakes.BuildFakeItemUpdateInputFromItem(helper.exampleItem)
+	helper.exampleCreationInput = fakes.BuildFakeItemCreationRequestInputFromItem(helper.exampleItem)
+	helper.exampleUpdateInput = fakes.BuildFakeItemUpdateRequestInputFromItem(helper.exampleItem)
 
 	helper.service.itemIDFetcher = func(*http.Request) string {
 		return helper.exampleItem.ID
@@ -57,11 +57,11 @@ func buildTestHelper(t *testing.T) *itemsServiceHTTPRoutesTestHelper {
 			helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AccountMemberRole.String()),
 		},
 	}
+
+	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 	helper.service.sessionContextDataFetcher = func(*http.Request) (*types.SessionContextData, error) {
 		return sessionCtxData, nil
 	}
-
-	helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
 	req := testutils.BuildTestRequest(t)
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/alexedwards/scs/v2/memstore"
+	memstore "github.com/alexedwards/scs/v2/memstore"
 	"github.com/stretchr/testify/assert"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
@@ -34,9 +34,9 @@ func TestProvideSessionManager(T *testing.T) {
 		t.Parallel()
 
 		cookieConfig := authservice.CookieConfig{}
-		mdm := &database.MockDatabase{}
 		store := memstore.New()
 
+		mdm := &database.MockDatabase{}
 		mdm.On("ProvideSessionStore").Return(store)
 
 		sessionManager, err := ProvideSessionManager(cookieConfig, mdm)

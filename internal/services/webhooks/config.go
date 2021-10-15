@@ -3,9 +3,9 @@ package webhooks
 import (
 	"context"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	validation "github.com/go-ozzo/ozzo-validation/v4"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 // Config represents our database configuration.

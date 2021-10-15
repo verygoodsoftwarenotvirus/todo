@@ -67,6 +67,7 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 	input.BelongsToAccount = sessionCtxData.ActiveAccountID
 	tracing.AttachItemIDToSpan(span, input.ID)
 
+	// create item in database.
 	if s.async {
 		preWrite := &types.PreWriteMessage{
 			DataType:                types.ItemDataType,
@@ -84,7 +85,6 @@ func (s *service) CreateHandler(res http.ResponseWriter, req *http.Request) {
 
 		s.encoderDecoder.EncodeResponseWithStatus(ctx, res, pwr, http.StatusAccepted)
 	} else {
-		// create item in database.
 		item, itemCreationErr := s.itemDataManager.CreateItem(ctx, input)
 		if itemCreationErr != nil {
 			observability.AcknowledgeError(itemCreationErr, logger, span, "creating item")
@@ -344,8 +344,8 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 	if s.async {
 		exists, existenceCheckErr := s.itemDataManager.ItemExists(ctx, itemID, sessionCtxData.ActiveAccountID)
 		if existenceCheckErr != nil && !errors.Is(existenceCheckErr, sql.ErrNoRows) {
-			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			observability.AcknowledgeError(existenceCheckErr, logger, span, "checking item existence")
+			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			return
 		} else if !exists || errors.Is(existenceCheckErr, sql.ErrNoRows) {
 			s.encoderDecoder.EncodeNotFoundResponse(ctx, res)
@@ -354,7 +354,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 		pam := &types.PreArchiveMessage{
 			DataType:                types.ItemDataType,
-			RelevantID:              itemID,
+			ItemID:                  itemID,
 			AttributableToUserID:    sessionCtxData.Requester.UserID,
 			AttributableToAccountID: sessionCtxData.ActiveAccountID,
 		}

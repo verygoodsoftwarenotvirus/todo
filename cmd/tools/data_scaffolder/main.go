@@ -189,7 +189,7 @@ func main() {
 					iterationLogger := userLogger.WithValue("creating", "items").WithValue("iteration", j)
 
 					// create item
-					createdItemID, itemCreationErr := userClient.CreateItem(ctx, fakes.BuildFakeItemCreationInput())
+					createdItemID, itemCreationErr := userClient.CreateItem(ctx, fakes.BuildFakeItemCreationRequestInput())
 					if itemCreationErr != nil {
 						quitter.ComplainAndQuit(fmt.Errorf("creating item #%d: %w", j, itemCreationErr))
 					}

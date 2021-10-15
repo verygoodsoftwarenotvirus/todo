@@ -209,7 +209,7 @@ func (s *service) ArchiveHandler(res http.ResponseWriter, req *http.Request) {
 
 		pam := &types.PreArchiveMessage{
 			DataType:                types.WebhookDataType,
-			RelevantID:              webhookID,
+			WebhookID:               webhookID,
 			AttributableToUserID:    sessionCtxData.Requester.UserID,
 			AttributableToAccountID: sessionCtxData.ActiveAccountID,
 		}

@@ -10,10 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 var exampleInvalidForm io.Reader = strings.NewReader("a=|%%%=%%%%%%")

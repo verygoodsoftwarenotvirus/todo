@@ -299,4 +299,3 @@ tree:
 .PHONY: cloc
 cloc: ensure_scc_installed
 	@scc --include-ext go --exclude-dir vendor
-

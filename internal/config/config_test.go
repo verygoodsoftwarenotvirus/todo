@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
+	dbconfig "gitlab.com/verygoodsoftwarenotvirus/todo/internal/database/config"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
@@ -62,7 +62,7 @@ func TestServerConfig_EncodeToFile(T *testing.T) {
 					SearchIndexPath: "/items_index_path",
 				},
 			},
-			Database: config.Config{
+			Database: dbconfig.Config{
 				Provider:          "postgres",
 				Debug:             true,
 				RunMigrations:     true,
@@ -101,7 +101,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 
 		for _, provider := range []string{"postgres", "mysql"} {
 			cfg := &InstanceConfig{
-				Database: config.Config{
+				Database: dbconfig.Config{
 					Provider: provider,
 				},
 			}
@@ -119,7 +119,7 @@ func TestServerConfig_ProvideDatabaseClient(T *testing.T) {
 		logger := logging.NewNoopLogger()
 
 		cfg := &InstanceConfig{
-			Database: config.Config{
+			Database: dbconfig.Config{
 				Provider: "provider",
 			},
 		}

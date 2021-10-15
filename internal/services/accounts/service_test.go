@@ -5,12 +5,11 @@ import (
 	"net/http"
 	"testing"
 
-	mockpublishers "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
 	mockencoding "gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding/mock"
+	mockpublishers "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics"
 	mockmetrics "gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/metrics/mock"

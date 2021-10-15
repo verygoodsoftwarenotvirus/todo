@@ -72,11 +72,11 @@ func (w *PreArchivesWorker) HandleMessage(ctx context.Context, message []byte) e
 
 	switch msg.DataType {
 	case types.ItemDataType:
-		if err := w.dataManager.ArchiveItem(ctx, msg.RelevantID, msg.AttributableToAccountID); err != nil {
+		if err := w.dataManager.ArchiveItem(ctx, msg.ItemID, msg.AttributableToAccountID); err != nil {
 			return observability.PrepareError(err, w.logger, span, "archiving item")
 		}
 
-		if err := w.itemsIndexManager.Delete(ctx, msg.RelevantID); err != nil {
+		if err := w.itemsIndexManager.Delete(ctx, msg.ItemID); err != nil {
 			return observability.PrepareError(err, w.logger, span, "removing item from index")
 		}
 
@@ -92,7 +92,7 @@ func (w *PreArchivesWorker) HandleMessage(ctx context.Context, message []byte) e
 			}
 		}
 	case types.WebhookDataType:
-		if err := w.dataManager.ArchiveWebhook(ctx, msg.RelevantID, msg.AttributableToAccountID); err != nil {
+		if err := w.dataManager.ArchiveWebhook(ctx, msg.WebhookID, msg.AttributableToAccountID); err != nil {
 			return observability.PrepareError(err, w.logger, span, "creating item")
 		}
 

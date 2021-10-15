@@ -3,9 +3,9 @@ package config
 import (
 	"testing"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
-
 	"github.com/stretchr/testify/assert"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 )
 
 func Test_cleanString(T *testing.T) {

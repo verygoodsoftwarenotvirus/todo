@@ -80,7 +80,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 		helper.service.async = false
 
-		exampleCreationInput := fakes.BuildFakeItemCreationInput()
+		exampleCreationInput := fakes.BuildFakeItemCreationRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -204,7 +204,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 		helper.service.async = false
 
-		exampleCreationInput := fakes.BuildFakeItemCreationInput()
+		exampleCreationInput := fakes.BuildFakeItemCreationRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -237,7 +237,7 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 		helper.service.async = false
 
-		exampleCreationInput := fakes.BuildFakeItemCreationInput()
+		exampleCreationInput := fakes.BuildFakeItemCreationRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -714,7 +714,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
+		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -753,7 +753,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 		helper.service.async = false
 
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
+		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -844,7 +844,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
+		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -874,7 +874,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
+		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -905,7 +905,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 		helper.service.async = false
 
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
+		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -933,7 +933,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		helper.service.UpdateHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
 	})
@@ -944,7 +944,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		helper := buildTestHelper(t)
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
+		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error
@@ -971,7 +971,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		helper.service.UpdateHandler(helper.res, helper.req)
 
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
+		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
 	})
@@ -983,7 +983,7 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
 		helper.service.async = false
 
-		exampleCreationInput := fakes.BuildFakeItemUpdateInput()
+		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
 		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
 
 		var err error

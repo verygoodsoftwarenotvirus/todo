@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	random "gitlab.com/verygoodsoftwarenotvirus/todo/internal/random"
 )
 
 func TestConfig_Validate(T *testing.T) {

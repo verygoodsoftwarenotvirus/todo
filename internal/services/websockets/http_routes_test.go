@@ -9,12 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/stretchr/testify/assert"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 type nopWriter struct{}

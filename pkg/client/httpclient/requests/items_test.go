@@ -132,7 +132,7 @@ func TestBuilder_BuildCreateItemRequest(T *testing.T) {
 
 		helper := buildTestHelper()
 
-		exampleInput := fakes.BuildFakeItemCreationInput()
+		exampleInput := fakes.BuildFakeItemCreationRequestInput()
 
 		spec := newRequestSpec(false, http.MethodPost, "", expectedPath)
 
@@ -168,7 +168,7 @@ func TestBuilder_BuildCreateItemRequest(T *testing.T) {
 		helper := buildTestHelper()
 		helper.builder = buildTestRequestBuilderWithInvalidURL()
 
-		exampleInput := fakes.BuildFakeItemCreationInput()
+		exampleInput := fakes.BuildFakeItemCreationRequestInput()
 
 		actual, err := helper.builder.BuildCreateItemRequest(helper.ctx, exampleInput)
 		assert.Nil(t, actual)

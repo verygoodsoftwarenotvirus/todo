@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	// ItemDataType indicates an event is item-related.
+	// ItemDataType indicates an event is related to an item.
 	ItemDataType dataType = "item"
 )
 
@@ -23,21 +23,19 @@ func init() {
 type (
 	// Item represents an item.
 	Item struct {
-		_ struct{}
-
-		ArchivedOn       *uint64 `json:"archivedOn"`
+		_                struct{}
 		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
+		ArchivedOn       *uint64 `json:"archivedOn"`
+		ID               string  `json:"id"`
 		Name             string  `json:"name"`
 		Details          string  `json:"details"`
-		ID               string  `json:"id"`
 		BelongsToAccount string  `json:"belongsToAccount"`
 		CreatedOn        uint64  `json:"createdOn"`
 	}
 
 	// ItemList represents a list of items.
 	ItemList struct {
-		_ struct{}
-
+		_     struct{}
 		Items []*Item `json:"items"`
 		Pagination
 	}
@@ -113,6 +111,7 @@ func (x *ItemCreationRequestInput) ValidateWithContext(ctx context.Context) erro
 		ctx,
 		x,
 		validation.Field(&x.Name, validation.Required),
+		validation.Field(&x.Details, validation.Required),
 	)
 }
 
@@ -125,6 +124,7 @@ func (x *ItemDatabaseCreationInput) ValidateWithContext(ctx context.Context) err
 		x,
 		validation.Field(&x.ID, validation.Required),
 		validation.Field(&x.Name, validation.Required),
+		validation.Field(&x.Details, validation.Required),
 		validation.Field(&x.BelongsToAccount, validation.Required),
 	)
 }
@@ -147,5 +147,6 @@ func (x *ItemUpdateRequestInput) ValidateWithContext(ctx context.Context) error 
 		ctx,
 		x,
 		validation.Field(&x.Name, validation.Required),
+		validation.Field(&x.Details, validation.Required),
 	)
 }

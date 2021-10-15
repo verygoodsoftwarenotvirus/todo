@@ -3,9 +3,9 @@ package frontend
 import (
 	"testing"
 
-	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
-
 	"github.com/stretchr/testify/assert"
+
+	mocktypes "gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/mock"
 )
 
 func TestProvideAuthService(T *testing.T) {

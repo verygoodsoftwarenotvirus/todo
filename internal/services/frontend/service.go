@@ -44,12 +44,12 @@ type (
 	}
 
 	service struct {
+		dataStore                 database.DataManager
 		usersService              UsersService
 		logger                    logging.Logger
 		tracer                    tracing.Tracer
 		panicker                  panicking.Panicker
 		authService               AuthService
-		dataStore                 database.DataManager
 		itemIDFetcher             func(*http.Request) string
 		localizer                 *i18n.Localizer
 		templateFuncMap           template.FuncMap

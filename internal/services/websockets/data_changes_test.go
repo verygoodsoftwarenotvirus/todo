@@ -7,14 +7,12 @@ import (
 	"testing"
 	"time"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/stretchr/testify/mock"
-
 	"github.com/gorilla/websocket"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
 type mockWebsocketConnection struct {
@@ -229,6 +227,8 @@ func Test_pingConnections(T *testing.T) {
 
 		<-time.After(time.Second)
 
+		s.service.connectionsHat.RLock()
 		assert.Empty(t, s.service.connections)
+		s.service.connectionsHat.RUnlock()
 	})
 }

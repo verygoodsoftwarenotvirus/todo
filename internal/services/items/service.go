@@ -30,14 +30,14 @@ type (
 	service struct {
 		logger                    logging.Logger
 		itemDataManager           types.ItemDataManager
+		itemIDFetcher             func(*http.Request) string
+		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
+		preWritesPublisher        publishers.Publisher
 		preUpdatesPublisher       publishers.Publisher
 		preArchivesPublisher      publishers.Publisher
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
-		preWritesPublisher        publishers.Publisher
 		search                    SearchIndex
-		itemIDFetcher             func(*http.Request) string
-		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		async                     bool
 	}
 )
@@ -54,24 +54,24 @@ func ProvideService(
 	publisherProvider publishers.PublisherProvider,
 ) (types.ItemDataService, error) {
 	client := &http.Client{Transport: tracing.BuildTracedHTTPTransport(time.Second)}
-	searchIndexManager, err := searchIndexProvider(ctx, logger, client, search.IndexPath(cfg.SearchIndexPath), "items", "name", "description")
+	searchIndexManager, err := searchIndexProvider(ctx, logger, client, search.IndexPath(cfg.SearchIndexPath), "items", "name", "details")
 	if err != nil {
 		return nil, fmt.Errorf("setting up search index: %w", err)
 	}
 
 	preWritesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreWritesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up event publisher: %w", err)
+		return nil, fmt.Errorf("setting up queue provider: %w", err)
 	}
 
 	preUpdatesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreUpdatesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up event publisher: %w", err)
+		return nil, fmt.Errorf("setting up queue provider: %w", err)
 	}
 
 	preArchivesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreArchivesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up event publisher: %w", err)
+		return nil, fmt.Errorf("setting up queue provider: %w", err)
 	}
 
 	svc := &service{

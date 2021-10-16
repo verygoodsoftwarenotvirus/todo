@@ -88,7 +88,6 @@ func TestQuerier_Migrate(T *testing.T) {
 			WillReturnResult(newArbitraryDatabaseResult(exampleAccount.ID))
 
 		// create account user membership for created user
-
 		createAccountMembershipForNewUserArgs := []interface{}{
 			&idMatcher{},
 			&idMatcher{},

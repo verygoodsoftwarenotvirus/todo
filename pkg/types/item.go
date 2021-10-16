@@ -23,21 +23,23 @@ func init() {
 type (
 	// Item represents an item.
 	Item struct {
-		_                struct{}
-		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
-		ArchivedOn       *uint64 `json:"archivedOn"`
+		_ struct{}
+
 		ID               string  `json:"id"`
 		Name             string  `json:"name"`
 		Details          string  `json:"details"`
-		BelongsToAccount string  `json:"belongsToAccount"`
 		CreatedOn        uint64  `json:"createdOn"`
+		LastUpdatedOn    *uint64 `json:"lastUpdatedOn"`
+		ArchivedOn       *uint64 `json:"archivedOn"`
+		BelongsToAccount string  `json:"belongsToAccount"`
 	}
 
 	// ItemList represents a list of items.
 	ItemList struct {
-		_     struct{}
-		Items []*Item `json:"items"`
+		_ struct{}
+
 		Pagination
+		Items []*Item `json:"items"`
 	}
 
 	// ItemCreationRequestInput represents what a user could set as input for creating items.

@@ -10,7 +10,7 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
-// DataChangesWorker writes data from the pending writes topic to the database.
+// DataChangesWorker observes data changes in the database.
 type DataChangesWorker struct {
 	logger  logging.Logger
 	tracer  tracing.Tracer
@@ -40,7 +40,6 @@ func (w *DataChangesWorker) HandleMessage(ctx context.Context, message []byte) e
 	}
 
 	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
-
 	w.logger.WithValue("message", message).Info("message received")
 
 	return nil

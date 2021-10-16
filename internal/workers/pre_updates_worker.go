@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
-
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/encoding"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/tracing"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
 )
 
@@ -65,7 +64,6 @@ func (w *PreUpdatesWorker) HandleMessage(ctx context.Context, message []byte) er
 	if err := w.encoder.Unmarshal(ctx, message, &msg); err != nil {
 		return observability.PrepareError(err, w.logger, span, "unmarshalling message")
 	}
-
 	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
 	logger := w.logger.WithValue("data_type", msg.DataType)
 

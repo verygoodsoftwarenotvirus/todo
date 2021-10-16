@@ -7,21 +7,17 @@ import (
 	"net/http"
 	"testing"
 
-	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
-
-	"github.com/stretchr/testify/mock"
-
-	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
-
-	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
-
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	mockpublishers "gitlab.com/verygoodsoftwarenotvirus/todo/internal/messagequeue/publishers/mock"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/logging"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/search"
+	mocksearch "gitlab.com/verygoodsoftwarenotvirus/todo/internal/search/mock"
+	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types"
+	testutils "gitlab.com/verygoodsoftwarenotvirus/todo/tests/utils"
 )
 
 func TestProvidePreArchivesWorker(T *testing.T) {
@@ -359,6 +355,7 @@ func TestPreArchivesWorker_HandleMessage(T *testing.T) {
 		searchIndexProvider := func(context.Context, logging.Logger, *http.Client, search.IndexPath, search.IndexName, ...string) (search.IndexManager, error) {
 			return nil, nil
 		}
+
 		worker, err := ProvidePreArchivesWorker(
 			ctx,
 			logger,

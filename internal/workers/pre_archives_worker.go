@@ -64,7 +64,6 @@ func (w *PreArchivesWorker) HandleMessage(ctx context.Context, message []byte) e
 	if err := w.encoder.Unmarshal(ctx, message, &msg); err != nil {
 		return observability.PrepareError(err, w.logger, span, "unmarshalling message")
 	}
-
 	tracing.AttachUserIDToSpan(span, msg.AttributableToUserID)
 	logger := w.logger.WithValue("data_type", msg.DataType)
 

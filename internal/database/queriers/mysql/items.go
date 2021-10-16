@@ -233,15 +233,13 @@ func (q *SQLQuerier) buildGetItemsWithIDsQuery(ctx context.Context, accountID st
 		"items.belongs_to_account": accountID,
 	}
 
-	subqueryBuilder := q.sqlBuilder.Select(itemsTableColumns...).
-		From("items").
-		Join("unnest('{%s}'::text[])").
-		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
+	findInSetClause := fmt.Sprintf("FIND_IN_SET(id, '%s')", joinIDs(ids))
 
 	query, args, err := q.sqlBuilder.Select(itemsTableColumns...).
-		FromSelect(subqueryBuilder, "items").
-		Where(withIDsWhere).ToSql()
-	query = fmt.Sprintf(query, joinIDs(ids))
+		From("items").
+		Where(withIDsWhere).
+		OrderByClause(squirrel.Expr(findInSetClause)).
+		ToSql()
 
 	q.logQueryBuildingError(span, err)
 

@@ -225,8 +225,6 @@ func (s *TestSuite) TestItems_Listing() {
 }
 
 func (s *TestSuite) TestItems_Searching() {
-	s.T().SkipNow()
-
 	s.runForCookieClient("should be able to be search for items", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
@@ -251,8 +249,8 @@ func (s *TestSuite) TestItems_Searching() {
 
 				n := <-notificationsChan
 				assert.Equal(t, n.DataType, types.ItemDataType)
+				assert.Equal(t, n.Item.ID, createdItemID)
 				require.NotNil(t, n.Item)
-				checkItemEquality(t, exampleItem, n.Item)
 
 				createdItem, itemCreationErr := testClients.main.GetItem(ctx, createdItemID)
 				requireNotNilAndNoProblems(t, createdItem, itemCreationErr)

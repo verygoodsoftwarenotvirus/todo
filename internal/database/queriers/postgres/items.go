@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Masterminds/squirrel"
+
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/database"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability"
 	"gitlab.com/verygoodsoftwarenotvirus/todo/internal/observability/keys"
@@ -123,20 +125,7 @@ func (q *SQLQuerier) ItemExists(ctx context.Context, itemID, accountID string) (
 	return result, nil
 }
 
-const getItemQuery = `
-SELECT
-	items.id,
-	items.name,
-	items.details,
-	items.created_on,
-	items.last_updated_on,
-	items.archived_on,
-	items.belongs_to_account
-FROM items
-WHERE items.archived_on IS NULL
-AND items.belongs_to_account = $1
-AND items.id = $2
-`
+const getItemQuery = "SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = $1 AND items.id = $2"
 
 // GetItem fetches an item from the database.
 func (q *SQLQuerier) GetItem(ctx context.Context, itemID, accountID string) (*types.Item, error) {
@@ -172,7 +161,7 @@ func (q *SQLQuerier) GetItem(ctx context.Context, itemID, accountID string) (*ty
 	return item, nil
 }
 
-const getAllItemsCountQuery = "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
+const getTotalItemsCountQuery = "SELECT COUNT(items.id) FROM items WHERE items.archived_on IS NULL"
 
 // GetTotalItemCount fetches the count of items from the database that meet a particular filter.
 func (q *SQLQuerier) GetTotalItemCount(ctx context.Context) (uint64, error) {
@@ -181,7 +170,7 @@ func (q *SQLQuerier) GetTotalItemCount(ctx context.Context) (uint64, error) {
 
 	logger := q.logger
 
-	count, err := q.performCountQuery(ctx, q.db, getAllItemsCountQuery, "fetching count of items")
+	count, err := q.performCountQuery(ctx, q.db, getTotalItemsCountQuery, "fetching count of items")
 	if err != nil {
 		return 0, observability.PrepareError(err, logger, span, "querying for count of items")
 	}
@@ -234,26 +223,30 @@ func (q *SQLQuerier) GetItems(ctx context.Context, accountID string, filter *typ
 	return x, nil
 }
 
-const getItemsWithIDsQuery = `
-SELECT 
-	items.id,
-	items.name,
-	items.details,
-	items.created_on,
-	items.last_updated_on,
-	items.archived_on,
-	items.belongs_to_account FROM (SELECT items.id,
-	items.name,
-	items.details,
-	items.created_on,
-	items.last_updated_on,
-	items.archived_on,
-	items.belongs_to_account
-FROM items JOIN unnest('{%s}'::text[]) WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT 20) AS items 
-WHERE items.archived_on IS NULL 
-AND items.belongs_to_account = $1 
-AND items.id IN ($2,$3,$4)
-`
+func (q *SQLQuerier) buildGetItemsWithIDsQuery(ctx context.Context, accountID string, limit uint8, ids []string) (query string, args []interface{}) {
+	_, span := q.tracer.StartSpan(ctx)
+	defer span.End()
+
+	withIDsWhere := squirrel.Eq{
+		"items.id":                 ids,
+		"items.archived_on":        nil,
+		"items.belongs_to_account": accountID,
+	}
+
+	subqueryBuilder := q.sqlBuilder.Select(itemsTableColumns...).
+		From("items").
+		Join("unnest('{%s}'::text[])").
+		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
+
+	query, args, err := q.sqlBuilder.Select(itemsTableColumns...).
+		FromSelect(subqueryBuilder, "items").
+		Where(withIDsWhere).ToSql()
+	query = fmt.Sprintf(query, joinIDs(ids))
+
+	q.logQueryBuildingError(span, err)
+
+	return query, args
+}
 
 // GetItemsWithIDs fetches items from the database within a given set of IDs.
 func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limit uint8, ids []string) ([]*types.Item, error) {
@@ -268,6 +261,10 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 	logger = logger.WithValue(keys.AccountIDKey, accountID)
 	tracing.AttachAccountIDToSpan(span, accountID)
 
+	if ids == nil {
+		return nil, ErrNilInputProvided
+	}
+
 	if limit == 0 {
 		limit = uint8(types.DefaultLimit)
 	}
@@ -277,12 +274,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 		"id_count": len(ids),
 	})
 
-	query := fmt.Sprintf(getItemsWithIDsQuery, joinIDs(ids))
-
-	args := []interface{}{accountID}
-	for _, id := range ids {
-		args = append(args, id)
-	}
+	query, args := q.buildGetItemsWithIDsQuery(ctx, accountID, limit, ids)
 
 	rows, err := q.performReadQuery(ctx, q.db, "items with IDs", query, args)
 	if err != nil {
@@ -297,9 +289,7 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 	return items, nil
 }
 
-const itemCreationQuery = `
-	INSERT INTO items (id,name,details,belongs_to_account) VALUES ($1,$2,$3,$4)
-`
+const itemCreationQuery = "INSERT INTO items (id,name,details,belongs_to_account) VALUES ($1,$2,$3,$4)"
 
 // CreateItem creates an item in the database.
 func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCreationInput) (*types.Item, error) {
@@ -338,11 +328,9 @@ func (q *SQLQuerier) CreateItem(ctx context.Context, input *types.ItemDatabaseCr
 	return x, nil
 }
 
-const updateItemQuery = `
-	UPDATE items SET name = $1, details = $2, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = $3 AND id = $4
-`
+const updateItemQuery = "UPDATE items SET name = $1, details = $2, last_updated_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = $3 AND id = $4"
 
-// UpdateItem updates a particular item. Note that UpdateItem expects the provided input to have a valid ID.
+// UpdateItem updates a particular item.
 func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item) error {
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
@@ -371,9 +359,7 @@ func (q *SQLQuerier) UpdateItem(ctx context.Context, updated *types.Item) error 
 	return nil
 }
 
-const archiveItemQuery = `
-	UPDATE items SET last_updated_on = extract(epoch FROM NOW()), archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = $1 AND id = $2
-`
+const archiveItemQuery = "UPDATE items SET archived_on = extract(epoch FROM NOW()) WHERE archived_on IS NULL AND belongs_to_account = $1 AND id = $2"
 
 // ArchiveItem archives an item from the database by its ID.
 func (q *SQLQuerier) ArchiveItem(ctx context.Context, itemID, accountID string) error {

@@ -188,7 +188,8 @@ wipe_docker:
 	@docker stop $(shell docker ps -aq) && docker rm $(shell docker ps -aq)
 
 .PHONY: docker_wipe
-docker_wipe: wipe_docker
+docker_wipe:
+	@docker stop $(shell docker ps -aq) && docker rm $(shell docker ps -aq)
 
 .PHONY: ensure_mysql_is_up
 ensure_mysql_is_up:

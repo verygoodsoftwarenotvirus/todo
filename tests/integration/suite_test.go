@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -17,6 +18,9 @@ import (
 const (
 	cookieAuthType = "cookie"
 	pasetoAuthType = "PASETO"
+
+	creationTimeout = 10 * time.Second
+	waitPeriod      = 100 * time.Millisecond
 )
 
 var (

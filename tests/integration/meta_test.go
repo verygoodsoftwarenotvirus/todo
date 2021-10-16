@@ -20,7 +20,7 @@ func TestHoldOnForever(T *testing.T) {
 var _ suite.WithStats = (*TestSuite)(nil)
 
 func (s *TestSuite) HandleStats(_ string, stats *suite.SuiteInformation) {
-	const totalExpectedTestCount = 48
+	const totalExpectedTestCount = 47
 
 	if stats.Passed() {
 		s.Equal(totalExpectedTestCount, len(stats.TestStats), "expected total number of tests run to equal %d, but it was %d", totalExpectedTestCount, len(stats.TestStats))

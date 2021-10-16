@@ -37,7 +37,7 @@ func ProvidePreUpdatesWorker(
 ) (*PreUpdatesWorker, error) {
 	const name = "pre_updates"
 
-	itemsIndexManager, err := searchIndexProvider(ctx, logger, client, searchIndexLocation, "items", "name", "description")
+	itemsIndexManager, err := searchIndexProvider(ctx, logger, client, searchIndexLocation, "items", "name", "details")
 	if err != nil {
 		return nil, fmt.Errorf("setting up items search index manager: %w", err)
 	}

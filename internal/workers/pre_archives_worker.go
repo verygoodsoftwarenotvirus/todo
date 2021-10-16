@@ -92,7 +92,7 @@ func (w *PreArchivesWorker) HandleMessage(ctx context.Context, message []byte) e
 		}
 	case types.WebhookDataType:
 		if err := w.dataManager.ArchiveWebhook(ctx, msg.WebhookID, msg.AttributableToAccountID); err != nil {
-			return observability.PrepareError(err, w.logger, span, "creating item")
+			return observability.PrepareError(err, w.logger, span, "creating webhook")
 		}
 
 		if w.postArchivesPublisher != nil {

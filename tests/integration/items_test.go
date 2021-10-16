@@ -13,22 +13,25 @@ import (
 	"gitlab.com/verygoodsoftwarenotvirus/todo/pkg/types/fakes"
 )
 
-const (
-	creationTimeout = 10 * time.Second
-	waitPeriod      = 100 * time.Millisecond
-)
-
 func checkItemEquality(t *testing.T, expected, actual *types.Item) {
 	t.Helper()
 
 	assert.NotZero(t, actual.ID)
-	assert.Equal(t, expected.Name, actual.Name, "expected Name for item %s to be %v, but it was %v ", expected.ID, expected.Name, actual.Name)
-	assert.Equal(t, expected.Details, actual.Details, "expected Details for item %s to be %v, but it was %v ", expected.ID, expected.Details, actual.Details)
+	assert.Equal(t, expected.Name, actual.Name, "expected Name for item %s to be %v, but it was %v", expected.ID, expected.Name, actual.Name)
+	assert.Equal(t, expected.Details, actual.Details, "expected Details for item %s to be %v, but it was %v", expected.ID, expected.Details, actual.Details)
 	assert.NotZero(t, actual.CreatedOn)
 }
 
+// convertItemToItemUpdateInput creates an ItemUpdateRequestInput struct from an item.
+func convertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateRequestInput {
+	return &types.ItemUpdateRequestInput{
+		Name:    x.Name,
+		Details: x.Details,
+	}
+}
+
 func (s *TestSuite) TestItems_CompleteLifecycle() {
-	s.runForCookieClient("should be creatable and readable and deletable", func(testClients *testClientWrapper) func() {
+	s.runForCookieClient("should be creatable and readable and updatable and deletable", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -57,12 +60,26 @@ func (s *TestSuite) TestItems_CompleteLifecycle() {
 			// assert item equality
 			checkItemEquality(t, exampleItem, createdItem)
 
+			// change item
+			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
+			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
+
+			n = <-notificationsChan
+			assert.Equal(t, n.DataType, types.ItemDataType)
+
+			actual, err := testClients.main.GetItem(ctx, createdItemID)
+			requireNotNilAndNoProblems(t, actual, err)
+
+			// assert item equality
+			checkItemEquality(t, exampleItem, actual)
+			assert.NotNil(t, actual.LastUpdatedOn)
+
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 		}
 	})
 
-	s.runForPASETOClient("should be creatable", func(testClients *testClientWrapper) func() {
+	s.runForPASETOClient("should be creatable and readable and updatable and deletable", func(testClients *testClientWrapper) func() {
 		return func() {
 			t := s.T()
 
@@ -84,6 +101,24 @@ func (s *TestSuite) TestItems_CompleteLifecycle() {
 
 			// assert item equality
 			checkItemEquality(t, exampleItem, createdItem)
+
+			// change item
+			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
+			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
+
+			// retrieve updated item
+			var actual *types.Item
+			checkFunc = func() bool {
+				actual, err = testClients.main.GetItem(ctx, createdItemID)
+				return assert.NotNil(t, createdItem) && assert.NoError(t, err)
+			}
+			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
+
+			requireNotNilAndNoProblems(t, actual, err)
+
+			// assert item equality
+			checkItemEquality(t, exampleItem, actual)
+			assert.NotNil(t, actual.LastUpdatedOn)
 
 			// Clean up item.
 			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
@@ -322,104 +357,6 @@ func (s *TestSuite) TestItems_Updating_Returns404ForNonexistentItem() {
 			exampleItem.ID = nonexistentID
 
 			assert.Error(t, testClients.main.UpdateItem(ctx, exampleItem))
-		}
-	})
-}
-
-// convertItemToItemUpdateInput creates an ItemUpdateRequestInput struct from an item.
-func convertItemToItemUpdateInput(x *types.Item) *types.ItemUpdateRequestInput {
-	return &types.ItemUpdateRequestInput{
-		Name:    x.Name,
-		Details: x.Details,
-	}
-}
-
-func (s *TestSuite) TestItems_Updating() {
-	s.runForCookieClient("it should be possible to update an item", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			stopChan := make(chan bool, 1)
-			notificationsChan, err := testClients.main.SubscribeToDataChangeNotifications(ctx, stopChan)
-			require.NotNil(t, notificationsChan)
-			require.NoError(t, err)
-
-			// Create item.
-			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
-			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			require.NoError(t, err)
-
-			n := <-notificationsChan
-			assert.Equal(t, n.DataType, types.ItemDataType)
-			require.NotNil(t, n.Item)
-			checkItemEquality(t, exampleItem, n.Item)
-
-			createdItem, err := testClients.main.GetItem(ctx, createdItemID)
-			requireNotNilAndNoProblems(t, createdItem, err)
-
-			// change item
-			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
-			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
-
-			n = <-notificationsChan
-			assert.Equal(t, n.DataType, types.ItemDataType)
-
-			actual, err := testClients.main.GetItem(ctx, createdItemID)
-			requireNotNilAndNoProblems(t, actual, err)
-
-			// assert item equality
-			checkItemEquality(t, exampleItem, actual)
-			assert.NotNil(t, actual.LastUpdatedOn)
-
-			// clean up item
-			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
-		}
-	})
-
-	s.runForPASETOClient("it should be possible to update an item", func(testClients *testClientWrapper) func() {
-		return func() {
-			t := s.T()
-
-			ctx, span := tracing.StartCustomSpan(s.ctx, t.Name())
-			defer span.End()
-
-			// create item.
-			exampleItem := fakes.BuildFakeItem()
-			exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
-			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
-			require.NoError(t, err)
-
-			var createdItem *types.Item
-			checkFunc := func() bool {
-				createdItem, err = testClients.main.GetItem(ctx, createdItemID)
-				return assert.NotNil(t, createdItem) && assert.NoError(t, err)
-			}
-			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
-
-			// change item
-			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
-			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
-
-			// retrieve updated item
-			var actual *types.Item
-			checkFunc = func() bool {
-				actual, err = testClients.main.GetItem(ctx, createdItemID)
-				return assert.NotNil(t, createdItem) && assert.NoError(t, err)
-			}
-			assert.Eventually(t, checkFunc, creationTimeout, waitPeriod)
-
-			requireNotNilAndNoProblems(t, actual, err)
-
-			// assert item equality
-			checkItemEquality(t, exampleItem, actual)
-			assert.NotNil(t, actual.LastUpdatedOn)
-
-			// clean up item
-			assert.NoError(t, testClients.main.ArchiveItem(ctx, createdItem.ID))
 		}
 	})
 }

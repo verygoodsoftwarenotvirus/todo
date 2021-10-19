@@ -52,6 +52,8 @@ func TestNewIndexManager(T *testing.T) {
 	})
 }
 
+const exampleIndexName = "example"
+
 func Test_indexManager_ensureIndices(T *testing.T) {
 	T.Parallel()
 
@@ -74,17 +76,17 @@ func Test_indexManager_ensureIndices(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, client)
 
-		indicesExistsService := elastic.NewIndicesExistsService(client).Index([]string{itemsIndexName})
+		indicesExistsService := elastic.NewIndicesExistsService(client).Index([]string{exampleIndexName})
 
 		esc := &mockESClient{}
-		esc.On("IndexExists", []string{itemsIndexName}).Return(indicesExistsService)
+		esc.On("IndexExists", []string{exampleIndexName}).Return(indicesExistsService)
 
 		im := &indexManager{
 			esclient: esc,
 			tracer:   tracing.NewTracer(t.Name()),
 			logger:   logger,
 		}
-		assert.NoError(t, im.ensureIndices(ctx))
+		assert.NoError(t, im.ensureIndices(ctx, exampleIndexName))
 
 		mock.AssertExpectationsForObjects(t, esc)
 	})
@@ -116,19 +118,19 @@ func Test_indexManager_ensureIndices(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, client)
 
-		indicesExistsService := elastic.NewIndicesExistsService(client).Index([]string{itemsIndexName})
-		indicesCreateService := elastic.NewIndicesCreateService(client).Index(itemsIndexName)
+		indicesExistsService := elastic.NewIndicesExistsService(client).Index([]string{exampleIndexName})
+		indicesCreateService := elastic.NewIndicesCreateService(client).Index(exampleIndexName)
 
 		esc := &mockESClient{}
-		esc.On("IndexExists", []string{itemsIndexName}).Return(indicesExistsService)
-		esc.On("CreateIndex", itemsIndexName).Return(indicesCreateService)
+		esc.On("IndexExists", []string{exampleIndexName}).Return(indicesExistsService)
+		esc.On("CreateIndex", exampleIndexName).Return(indicesCreateService)
 
 		im := &indexManager{
 			esclient: esc,
 			tracer:   tracing.NewTracer(t.Name()),
 			logger:   logger,
 		}
-		assert.NoError(t, im.ensureIndices(ctx))
+		assert.NoError(t, im.ensureIndices(ctx, exampleIndexName))
 
 		mock.AssertExpectationsForObjects(t, esc)
 	})
@@ -152,17 +154,17 @@ func Test_indexManager_ensureIndices(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, client)
 
-		indicesExistsService := elastic.NewIndicesExistsService(client).Index([]string{itemsIndexName})
+		indicesExistsService := elastic.NewIndicesExistsService(client).Index([]string{exampleIndexName})
 
 		esc := &mockESClient{}
-		esc.On("IndexExists", []string{itemsIndexName}).Return(indicesExistsService)
+		esc.On("IndexExists", []string{exampleIndexName}).Return(indicesExistsService)
 
 		im := &indexManager{
 			esclient: esc,
 			tracer:   tracing.NewTracer(t.Name()),
 			logger:   logger,
 		}
-		assert.Error(t, im.ensureIndices(ctx))
+		assert.Error(t, im.ensureIndices(ctx, exampleIndexName))
 
 		mock.AssertExpectationsForObjects(t, esc)
 	})
@@ -191,19 +193,19 @@ func Test_indexManager_ensureIndices(T *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, client)
 
-		indicesExistsService := elastic.NewIndicesExistsService(client).Index([]string{itemsIndexName})
-		indicesCreateService := elastic.NewIndicesCreateService(client).Index(itemsIndexName)
+		indicesExistsService := elastic.NewIndicesExistsService(client).Index([]string{exampleIndexName})
+		indicesCreateService := elastic.NewIndicesCreateService(client).Index(exampleIndexName)
 
 		esc := &mockESClient{}
-		esc.On("IndexExists", []string{itemsIndexName}).Return(indicesExistsService)
-		esc.On("CreateIndex", itemsIndexName).Return(indicesCreateService)
+		esc.On("IndexExists", []string{exampleIndexName}).Return(indicesExistsService)
+		esc.On("CreateIndex", exampleIndexName).Return(indicesCreateService)
 
 		im := &indexManager{
 			esclient: esc,
 			tracer:   tracing.NewTracer(t.Name()),
 			logger:   logger,
 		}
-		assert.Error(t, im.ensureIndices(ctx))
+		assert.Error(t, im.ensureIndices(ctx, exampleIndexName))
 
 		mock.AssertExpectationsForObjects(t, esc)
 	})

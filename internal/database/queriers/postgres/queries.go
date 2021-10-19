@@ -174,6 +174,7 @@ func (q *SQLQuerier) buildListQuery(
 	}
 
 	builder = builder.GroupBy(fmt.Sprintf("%s.%s", tableName, "id"))
+	builder = builder.OrderBy(fmt.Sprintf("%s.%s", tableName, "id"))
 
 	if filter != nil {
 		builder = applyFilterToQueryBuilder(filter, tableName, builder)

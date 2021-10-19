@@ -43,13 +43,15 @@ func (s *TestSuite) TestItems_CompleteLifecycle() {
 			require.NotNil(t, notificationsChan)
 			require.NoError(t, err)
 
+			var n *types.DataChangeMessage
+
 			// Create item.
 			exampleItem := fakes.BuildFakeItem()
 			exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 			createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
 			require.NoError(t, err)
 
-			n := <-notificationsChan
+			n = <-notificationsChan
 			assert.Equal(t, n.DataType, types.ItemDataType)
 			require.NotNil(t, n.Item)
 			checkItemEquality(t, exampleItem, n.Item)
@@ -67,6 +69,7 @@ func (s *TestSuite) TestItems_CompleteLifecycle() {
 			n = <-notificationsChan
 			assert.Equal(t, n.DataType, types.ItemDataType)
 
+			// retrieve changed item
 			actual, err := testClients.main.GetItem(ctx, createdItemID)
 			requireNotNilAndNoProblems(t, actual, err)
 
@@ -106,7 +109,7 @@ func (s *TestSuite) TestItems_CompleteLifecycle() {
 			createdItem.Update(convertItemToItemUpdateInput(exampleItem))
 			assert.NoError(t, testClients.main.UpdateItem(ctx, createdItem))
 
-			// retrieve updated item
+			// retrieve changed item
 			var actual *types.Item
 			checkFunc = func() bool {
 				actual, err = testClients.main.GetItem(ctx, createdItemID)
@@ -139,16 +142,17 @@ func (s *TestSuite) TestItems_Listing() {
 			require.NotNil(t, notificationsChan)
 			require.NoError(t, err)
 
+			var n *types.DataChangeMessage
+
 			// create items
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
-				// Create item.
 				exampleItem := fakes.BuildFakeItem()
 				exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 				createdItemID, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
 				require.NoError(t, itemCreationErr)
 
-				n := <-notificationsChan
+				n = <-notificationsChan
 				assert.Equal(t, n.DataType, types.ItemDataType)
 				require.NotNil(t, n.Item)
 				checkItemEquality(t, exampleItem, n.Item)
@@ -189,11 +193,13 @@ func (s *TestSuite) TestItems_Listing() {
 			for i := 0; i < 5; i++ {
 				exampleItem := fakes.BuildFakeItem()
 				exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
+				createdItemID, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
+				require.NoError(t, itemCreationErr)
 
-				createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
-				require.NoError(t, err)
-
-				var createdItem *types.Item
+				var (
+					createdItem *types.Item
+					err         error
+				)
 				checkFunc := func() bool {
 					createdItem, err = testClients.main.GetItem(ctx, createdItemID)
 					return assert.NotNil(t, createdItem) && assert.NoError(t, err)
@@ -237,20 +243,22 @@ func (s *TestSuite) TestItems_Searching() {
 			require.NotNil(t, notificationsChan)
 			require.NoError(t, err)
 
+			var n *types.DataChangeMessage
+
 			// create items
 			exampleItem := fakes.BuildFakeItem()
 			var expected []*types.Item
 			for i := 0; i < 5; i++ {
-				// Create item.
 				exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
+
 				createdItemID, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
 				require.NoError(t, itemCreationErr)
 
-				n := <-notificationsChan
+				n = <-notificationsChan
 				assert.Equal(t, n.DataType, types.ItemDataType)
-				assert.Equal(t, n.Item.ID, createdItemID)
 				require.NotNil(t, n.Item)
+				assert.Equal(t, n.Item.ID, createdItemID)
 
 				createdItem, itemCreationErr := testClients.main.GetItem(ctx, createdItemID)
 				requireNotNilAndNoProblems(t, createdItem, itemCreationErr)
@@ -293,10 +301,13 @@ func (s *TestSuite) TestItems_Searching() {
 				exampleItemInput := fakes.BuildFakeItemCreationRequestInputFromItem(exampleItem)
 				exampleItemInput.Name = fmt.Sprintf("%s %d", exampleItemInput.Name, i)
 
-				createdItemID, err := testClients.main.CreateItem(ctx, exampleItemInput)
-				require.NoError(t, err)
+				createdItemID, itemCreationErr := testClients.main.CreateItem(ctx, exampleItemInput)
+				require.NoError(t, itemCreationErr)
 
-				var createdItem *types.Item
+				var (
+					createdItem *types.Item
+					err         error
+				)
 				checkFunc := func() bool {
 					createdItem, err = testClients.main.GetItem(ctx, createdItemID)
 					return assert.NotNil(t, createdItem) && assert.NoError(t, err)

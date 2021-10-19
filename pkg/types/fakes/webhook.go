@@ -44,13 +44,13 @@ func BuildFakeWebhookList() *types.WebhookList {
 	}
 }
 
-// BuildFakeWebhookCreationInput builds a faked WebhookCreationRequestInput from an item.
+// BuildFakeWebhookCreationInput builds a faked WebhookCreationRequestInput from a webhook.
 func BuildFakeWebhookCreationInput() *types.WebhookCreationRequestInput {
 	webhook := BuildFakeWebhook()
 	return BuildFakeWebhookCreationInputFromWebhook(webhook)
 }
 
-// BuildFakeWebhookDatabaseCreationInput builds a faked WebhookCreationRequestInput from an item.
+// BuildFakeWebhookDatabaseCreationInput builds a faked WebhookCreationRequestInput from a webhook.
 func BuildFakeWebhookDatabaseCreationInput() *types.WebhookDatabaseCreationInput {
 	webhook := BuildFakeWebhook()
 	return BuildFakeWebhookDatabaseCreationInputFromWebhook(webhook)

@@ -504,11 +504,11 @@ func TestAuthenticationService_PermissionFilterMiddleware(T *testing.T) {
 				UserID:                helper.exampleUser.ID,
 				Reputation:            helper.exampleUser.ServiceAccountStatus,
 				ReputationExplanation: helper.exampleUser.ReputationExplanation,
-				ServicePermissions:    authorization.NewServiceRolePermissionChecker(authorization.ReadItemsPermission.ID()),
+				ServicePermissions:    authorization.NewServiceRolePermissionChecker(authorization.AddMemberAccountPermission.ID()),
 			},
 			ActiveAccountID: helper.exampleAccount.ID,
 			AccountPermissions: map[string]authorization.AccountRolePermissionsChecker{
-				helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.ReadItemsPermission.ID()),
+				helper.exampleAccount.ID: authorization.NewAccountRolePermissionChecker(authorization.AddMemberAccountPermission.ID()),
 			},
 		}
 
@@ -517,7 +517,7 @@ func TestAuthenticationService_PermissionFilterMiddleware(T *testing.T) {
 			return sessionCtxData, nil
 		}
 
-		helper.service.PermissionFilterMiddleware(authorization.AddMemberAccountPermission)(nil).ServeHTTP(helper.res, helper.req)
+		helper.service.PermissionFilterMiddleware(authorization.ArchiveAccountPermission)(nil).ServeHTTP(helper.res, helper.req)
 
 		assert.Equal(t, http.StatusUnauthorized, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
 	})

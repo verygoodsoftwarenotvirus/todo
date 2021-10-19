@@ -5,8 +5,6 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
-	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -452,34 +450,6 @@ func TestQuerier_GetItems(T *testing.T) {
 	})
 }
 
-func TestQuerier_buildGetItemsWithIDsQuery(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard", func(t *testing.T) {
-		t.Parallel()
-
-		exampleAccountID := fakes.BuildFakeID()
-		exampleItemList := fakes.BuildFakeItemList()
-
-		exampleIDs := []string{}
-		argPlaceholders := []string{}
-		for _, x := range exampleItemList.Items {
-			exampleIDs = append(exampleIDs, x.ID)
-			argPlaceholders = append(argPlaceholders, "?")
-		}
-
-		ctx := context.Background()
-		c, _ := buildTestClient(t)
-
-		expectedQuery := fmt.Sprintf("SELECT items.id, items.name, items.details, items.created_on, items.last_updated_on, items.archived_on, items.belongs_to_account FROM items WHERE items.archived_on IS NULL AND items.belongs_to_account = ? AND items.id IN (%s) ORDER BY FIND_IN_SET(id, '%s')", strings.Join(argPlaceholders, ","), joinIDs(exampleIDs))
-		actualQuery, actualArgs := c.buildGetItemsWithIDsQuery(ctx, exampleAccountID, defaultLimit, exampleIDs)
-
-		assert.Equal(t, expectedQuery, actualQuery)
-		assert.NotNil(t, actualArgs)
-		assert.Len(t, actualArgs, len(exampleIDs)+1)
-	})
-}
-
 func TestQuerier_GetItemsWithIDs(T *testing.T) {
 	T.Parallel()
 
@@ -699,17 +669,6 @@ func TestQuerier_UpdateItem(T *testing.T) {
 		c, _ := buildTestClient(t)
 
 		assert.Error(t, c.UpdateItem(ctx, nil))
-	})
-
-	T.Run("with invalid actor ID", func(t *testing.T) {
-		t.Parallel()
-
-		exampleItem := fakes.BuildFakeItem()
-
-		ctx := context.Background()
-		c, _ := buildTestClient(t)
-
-		assert.Error(t, c.UpdateItem(ctx, exampleItem))
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {

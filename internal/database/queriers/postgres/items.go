@@ -228,9 +228,12 @@ func (q *SQLQuerier) buildGetItemsWithIDsQuery(ctx context.Context, accountID st
 	defer span.End()
 
 	withIDsWhere := squirrel.Eq{
-		"items.id":                 ids,
-		"items.archived_on":        nil,
-		"items.belongs_to_account": accountID,
+		"items.id":          ids,
+		"items.archived_on": nil,
+	}
+
+	if accountID != "" {
+		withIDsWhere["items.belongs_to_account"] = accountID
 	}
 
 	subqueryBuilder := q.sqlBuilder.Select(itemsTableColumns...).
@@ -254,12 +257,6 @@ func (q *SQLQuerier) GetItemsWithIDs(ctx context.Context, accountID string, limi
 	defer span.End()
 
 	logger := q.logger
-
-	if accountID == "" {
-		return nil, ErrInvalidIDProvided
-	}
-	logger = logger.WithValue(keys.AccountIDKey, accountID)
-	tracing.AttachAccountIDToSpan(span, accountID)
 
 	if ids == nil {
 		return nil, ErrNilInputProvided

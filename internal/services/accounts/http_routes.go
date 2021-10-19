@@ -309,7 +309,7 @@ func (s *service) AddMemberHandler(res http.ResponseWriter, req *http.Request) {
 			AttributableToAccountID: accountID,
 		}
 		if err = s.preWritesPublisher.Publish(ctx, preWrite); err != nil {
-			observability.AcknowledgeError(err, logger, span, "publishing item write message")
+			observability.AcknowledgeError(err, logger, span, "publishing account write message")
 			s.encoderDecoder.EncodeUnspecifiedInternalServerErrorResponse(ctx, res)
 			return
 		}

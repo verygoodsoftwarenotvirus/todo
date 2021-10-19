@@ -67,30 +67,28 @@ func NewIndexManager(
 		tracer:       tracing.NewTracer("search"),
 	}
 
-	if indexErr := im.ensureIndices(ctx); indexErr != nil {
+	if indexErr := im.ensureIndices(ctx, name); indexErr != nil {
 		return nil, indexErr
 	}
 
 	return im, nil
 }
 
-const (
-	itemsIndexName = "items"
-)
-
-func (sm *indexManager) ensureIndices(ctx context.Context) error {
+func (sm *indexManager) ensureIndices(ctx context.Context, indices ...search.IndexName) error {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
-	indexExists, err := sm.esclient.IndexExists(itemsIndexName).Do(ctx)
-	if err != nil {
-		return err
-	}
-
-	if !indexExists {
-		_, err = sm.esclient.CreateIndex(itemsIndexName).Do(ctx)
+	for _, index := range indices {
+		indexExists, err := sm.esclient.IndexExists(string(index)).Do(ctx)
 		if err != nil {
 			return err
+		}
+
+		if !indexExists {
+			_, err = sm.esclient.CreateIndex(string(index)).Do(ctx)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -152,16 +150,16 @@ func (sm *indexManager) search(
 		return nil, observability.PrepareError(err, logger, span, "querying elasticsearch")
 	}
 
-	returnedItems := []string{}
+	resultIDs := []string{}
 	for _, hit := range results.Hits.Hits {
 		var i *idContainer
 		if unmarshalErr := json.Unmarshal(hit.Source, &i); unmarshalErr != nil {
 			return nil, observability.PrepareError(err, logger, span, "unmarshalling search result")
 		}
-		returnedItems = append(returnedItems, i.ID)
+		resultIDs = append(resultIDs, i.ID)
 	}
 
-	return returnedItems, nil
+	return resultIDs, nil
 }
 
 // Search implements our IndexManager interface.

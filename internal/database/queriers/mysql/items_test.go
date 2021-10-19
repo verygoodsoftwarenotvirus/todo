@@ -88,19 +88,19 @@ func TestQuerier_ItemExists(T *testing.T) {
 		ctx := context.Background()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItemID := fakes.BuildFakeID()
+		exampleItem := fakes.BuildFakeItem()
 
 		c, db := buildTestClient(t)
 		args := []interface{}{
 			exampleAccountID,
-			exampleItemID,
+			exampleItem.ID,
 		}
 
 		db.ExpectQuery(formatQueryForSQLMock(itemExistenceQuery)).
 			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnRows(sqlmock.NewRows([]string{"exists"}).AddRow(true))
 
-		actual, err := c.ItemExists(ctx, exampleItemID, exampleAccountID)
+		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
 		assert.NoError(t, err)
 		assert.True(t, actual)
 
@@ -111,7 +111,9 @@ func TestQuerier_ItemExists(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
+
 		exampleAccountID := fakes.BuildFakeID()
+
 		c, _ := buildTestClient(t)
 
 		actual, err := c.ItemExists(ctx, "", exampleAccountID)
@@ -123,11 +125,12 @@ func TestQuerier_ItemExists(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
-		exampleItemID := fakes.BuildFakeID()
+
+		exampleItem := fakes.BuildFakeItem()
 
 		c, db := buildTestClient(t)
 
-		actual, err := c.ItemExists(ctx, exampleItemID, "")
+		actual, err := c.ItemExists(ctx, exampleItem.ID, "")
 		assert.Error(t, err)
 		assert.False(t, actual)
 
@@ -138,20 +141,21 @@ func TestQuerier_ItemExists(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
+
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItemID := fakes.BuildFakeID()
+		exampleItem := fakes.BuildFakeItem()
 
 		c, db := buildTestClient(t)
 		args := []interface{}{
 			exampleAccountID,
-			exampleItemID,
+			exampleItem.ID,
 		}
 
 		db.ExpectQuery(formatQueryForSQLMock(itemExistenceQuery)).
 			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(sql.ErrNoRows)
 
-		actual, err := c.ItemExists(ctx, exampleItemID, exampleAccountID)
+		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
 		assert.NoError(t, err)
 		assert.False(t, actual)
 
@@ -162,20 +166,21 @@ func TestQuerier_ItemExists(T *testing.T) {
 		t.Parallel()
 
 		ctx := context.Background()
+
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItemID := fakes.BuildFakeID()
+		exampleItem := fakes.BuildFakeItem()
 
 		c, db := buildTestClient(t)
 		args := []interface{}{
 			exampleAccountID,
-			exampleItemID,
+			exampleItem.ID,
 		}
 
 		db.ExpectQuery(formatQueryForSQLMock(itemExistenceQuery)).
 			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(errors.New("blah"))
 
-		actual, err := c.ItemExists(ctx, exampleItemID, exampleAccountID)
+		actual, err := c.ItemExists(ctx, exampleItem.ID, exampleAccountID)
 		assert.Error(t, err)
 		assert.False(t, actual)
 
@@ -273,6 +278,7 @@ func TestQuerier_GetTotalItemCount(T *testing.T) {
 		exampleCount := uint64(123)
 
 		c, db := buildTestClient(t)
+
 		db.ExpectQuery(formatQueryForSQLMock(getTotalItemsCountQuery)).
 			WithArgs().
 			WillReturnRows(newCountDBRowResponse(uint64(123)))
@@ -290,6 +296,7 @@ func TestQuerier_GetTotalItemCount(T *testing.T) {
 		ctx := context.Background()
 
 		c, db := buildTestClient(t)
+
 		db.ExpectQuery(formatQueryForSQLMock(getTotalItemsCountQuery)).
 			WithArgs().
 			WillReturnError(errors.New("blah"))
@@ -311,9 +318,10 @@ func TestQuerier_GetItems(T *testing.T) {
 		filter := types.DefaultQueryFilter()
 		exampleAccountID := fakes.BuildFakeID()
 		exampleItemList := fakes.BuildFakeItemList()
-		ctx := context.Background()
 
+		ctx := context.Background()
 		c, db := buildTestClient(t)
+
 		query, args := c.buildListQuery(
 			ctx,
 			"items",
@@ -479,21 +487,11 @@ func TestQuerier_GetItemsWithIDs(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, db)
 	})
 
-	T.Run("with invalid account ID", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		c, _ := buildTestClient(t)
-
-		actual, err := c.GetItemsWithIDs(ctx, "", defaultLimit, nil)
-		assert.Error(t, err)
-		assert.Empty(t, actual)
-	})
-
 	T.Run("with invalid IDs", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccountID := fakes.BuildFakeID()
+
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
@@ -703,21 +701,21 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 		t.Parallel()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItemID := fakes.BuildFakeID()
+		exampleItem := fakes.BuildFakeItem()
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		args := []interface{}{
 			exampleAccountID,
-			exampleItemID,
+			exampleItem.ID,
 		}
 
 		db.ExpectExec(formatQueryForSQLMock(archiveItemQuery)).
 			WithArgs(interfaceToDriverValue(args)...).
-			WillReturnResult(newArbitraryDatabaseResult(exampleItemID))
+			WillReturnResult(newArbitraryDatabaseResult(exampleItem.ID))
 
-		assert.NoError(t, c.ArchiveItem(ctx, exampleItemID, exampleAccountID))
+		assert.NoError(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID))
 
 		mock.AssertExpectationsForObjects(t, db)
 	})
@@ -736,33 +734,33 @@ func TestQuerier_ArchiveItem(T *testing.T) {
 	T.Run("with invalid account ID", func(t *testing.T) {
 		t.Parallel()
 
-		exampleItemID := fakes.BuildFakeID()
+		exampleItem := fakes.BuildFakeItem()
 
 		ctx := context.Background()
 		c, _ := buildTestClient(t)
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItemID, ""))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, ""))
 	})
 
 	T.Run("with error writing to database", func(t *testing.T) {
 		t.Parallel()
 
 		exampleAccountID := fakes.BuildFakeID()
-		exampleItemID := fakes.BuildFakeID()
+		exampleItem := fakes.BuildFakeItem()
 
 		ctx := context.Background()
 		c, db := buildTestClient(t)
 
 		args := []interface{}{
 			exampleAccountID,
-			exampleItemID,
+			exampleItem.ID,
 		}
 
 		db.ExpectExec(formatQueryForSQLMock(archiveItemQuery)).
 			WithArgs(interfaceToDriverValue(args)...).
 			WillReturnError(errors.New("blah"))
 
-		assert.Error(t, c.ArchiveItem(ctx, exampleItemID, exampleAccountID))
+		assert.Error(t, c.ArchiveItem(ctx, exampleItem.ID, exampleAccountID))
 
 		mock.AssertExpectationsForObjects(t, db)
 	})

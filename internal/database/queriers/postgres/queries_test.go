@@ -45,8 +45,8 @@ func TestPostgres_BuildListQuery(T *testing.T) {
 	T.Run("standard", func(t *testing.T) {
 		t.Parallel()
 
-		q, _ := buildTestClient(t)
 		ctx := context.Background()
+		q, _ := buildTestClient(t)
 
 		exampleUser := fakes.BuildFakeUser()
 		filter := fakes.BuildFleshedOutQueryFilter()

@@ -73,45 +73,6 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})
 
-	T.Run("standard without async", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-		helper.service.async = false
-
-		exampleCreationInput := fakes.BuildFakeItemCreationRequestInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"CreateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.ItemDatabaseCreationInput{}),
-		).Return(helper.exampleItem, nil)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Index",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleItem,
-		).Return(nil)
-		helper.service.search = indexManager
-
-		helper.service.CreateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusCreated, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
-	})
-
 	T.Run("without input attached", func(t *testing.T) {
 		t.Parallel()
 
@@ -195,78 +156,6 @@ func TestItemsService_CreateHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
-	})
-
-	T.Run("without async and error creating item", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-		helper.service.async = false
-
-		exampleCreationInput := fakes.BuildFakeItemCreationRequestInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"CreateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.ItemDatabaseCreationInput{}),
-		).Return((*types.Item)(nil), errors.New("blah"))
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		helper.service.search = indexManager
-
-		helper.service.CreateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
-	})
-
-	T.Run("without async and error indexing item", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-		helper.service.async = false
-
-		exampleCreationInput := fakes.BuildFakeItemCreationRequestInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"CreateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.ItemDatabaseCreationInput{}),
-		).Return(helper.exampleItem, nil)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Index",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleItem,
-		).Return(errors.New("blah"))
-		helper.service.search = indexManager
-
-		helper.service.CreateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusCreated, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
 	})
 }
 
@@ -746,52 +635,6 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
 	})
 
-	T.Run("standard without async", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-		helper.service.async = false
-
-		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(helper.exampleItem, nil)
-
-		itemDataManager.On(
-			"UpdateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.Item{}),
-		).Return(nil)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Index",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleItem,
-		).Return(nil)
-		helper.service.search = indexManager
-
-		helper.service.UpdateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
-	})
-
 	T.Run("with invalid input", func(t *testing.T) {
 		t.Parallel()
 
@@ -898,46 +741,6 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, itemDataManager)
 	})
 
-	T.Run("without async and with issue fetching item", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-		helper.service.async = false
-
-		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(helper.exampleItem, nil)
-
-		itemDataManager.On(
-			"UpdateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.Item{}),
-		).Return(errors.New("blah"))
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		helper.service.search = indexManager
-
-		helper.service.UpdateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
-	})
-
 	T.Run("with error publishing to message queue", func(t *testing.T) {
 		t.Parallel()
 
@@ -975,52 +778,6 @@ func TestItemsService_UpdateHandler(T *testing.T) {
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
 	})
-
-	T.Run("without async and error indexing for search", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-		helper.service.async = false
-
-		exampleCreationInput := fakes.BuildFakeItemUpdateRequestInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleCreationInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"GetItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(helper.exampleItem, nil)
-
-		itemDataManager.On(
-			"UpdateItem",
-			testutils.ContextMatcher,
-			mock.IsType(&types.Item{}),
-		).Return(nil)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Index",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleItem,
-		).Return(errors.New("blah"))
-		helper.service.search = indexManager
-
-		helper.service.UpdateHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusOK, helper.res.Code, "expected %d in status response, got %d", http.StatusOK, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
-	})
 }
 
 func TestItemsService_ArchiveHandler(T *testing.T) {
@@ -1053,36 +810,6 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		assert.Equal(t, http.StatusNoContent, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
-	})
-
-	T.Run("standard without async", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.async = false
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"ArchiveItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(nil)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Delete",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-		).Return(nil)
-		helper.service.search = indexManager
-
-		helper.service.ArchiveHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusNoContent, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
 	})
 
 	T.Run("with error retrieving session context data", func(t *testing.T) {
@@ -1186,85 +913,5 @@ func TestItemsService_ArchiveHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, itemDataManager, mockEventProducer)
-	})
-
-	T.Run("without async and no rows returned", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.async = false
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"ArchiveItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(sql.ErrNoRows)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		helper.service.search = indexManager
-
-		helper.service.ArchiveHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusNotFound, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
-	})
-
-	T.Run("without async and with error archiving item", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.async = false
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"ArchiveItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(errors.New("blah"))
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		helper.service.search = indexManager
-
-		helper.service.ArchiveHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
-	})
-
-	T.Run("without async and issue deleting from search", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.async = false
-
-		itemDataManager := &mocktypes.ItemDataManager{}
-		itemDataManager.On(
-			"ArchiveItem",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-			helper.exampleAccount.ID,
-		).Return(nil)
-		helper.service.itemDataManager = itemDataManager
-
-		indexManager := &mocksearch.IndexManager{}
-		indexManager.On(
-			"Delete",
-			testutils.ContextMatcher,
-			helper.exampleItem.ID,
-		).Return(errors.New("blah"))
-		helper.service.search = indexManager
-
-		helper.service.ArchiveHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusNoContent, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, itemDataManager, indexManager)
 	})
 }

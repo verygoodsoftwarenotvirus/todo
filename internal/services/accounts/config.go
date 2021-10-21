@@ -13,7 +13,6 @@ type Config struct {
 	_                  struct{}
 	Logging            logging.Config `json:"logging" mapstructure:"logging" toml:"logging,omitempty"`
 	PreWritesTopicName string         `json:"pre_writes_topic_name" mapstructure:"pre_writes_topic_name" toml:"pre_writes_topic_name,omitempty"`
-	Async              bool           `json:"async" mapstructure:"async" toml:"async,omitempty"`
 }
 
 var _ validation.ValidatableWithContext = (*Config)(nil)

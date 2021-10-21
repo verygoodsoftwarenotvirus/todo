@@ -3,6 +3,8 @@ services:
     worker_queue:
         image: redis:6-buster
         container_name: worker_queue
+        logging:
+          driver: none
     postgres:
         hostname: pgdatabase
         container_name: database
@@ -22,6 +24,8 @@ services:
         - '9300:9300'
       environment:
         discovery.type: 'single-node'
+      logging:
+        driver: none
     tracing-server:
         image: jaegertracing/all-in-one:1.22.0
         logging:

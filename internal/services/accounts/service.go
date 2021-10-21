@@ -39,7 +39,6 @@ type (
 		sessionContextDataFetcher    func(*http.Request) (*types.SessionContextData, error)
 		userIDFetcher                func(*http.Request) string
 		accountIDFetcher             func(*http.Request) string
-		async                        bool
 	}
 )
 
@@ -60,7 +59,6 @@ func ProvideService(
 	}
 
 	s := &service{
-		async:                        cfg.Async,
 		logger:                       logging.EnsureLogger(logger).WithName(serviceName),
 		accountIDFetcher:             routeParamManager.BuildRouteParamStringIDFetcher(AccountIDURIParamKey),
 		userIDFetcher:                routeParamManager.BuildRouteParamStringIDFetcher(UserIDURIParamKey),

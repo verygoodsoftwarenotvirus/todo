@@ -344,67 +344,6 @@ func Test_indexManager_search(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, esc)
 	})
 
-	T.Run("standard for admin", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		logger := logging.NewZerologLogger()
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				results := &elastic.SearchResult{
-					Hits: &elastic.SearchHits{
-						Hits: []*elastic.SearchHit{
-							{
-								Source: []byte(fmt.Sprintf(`{"id": %q}`, t.Name())),
-							},
-						},
-					},
-				}
-				output, err := json.Marshal(results)
-				require.NoError(t, err)
-
-				_, err = res.Write(output)
-				require.NoError(t, err)
-
-				res.WriteHeader(http.StatusOK)
-			},
-		))
-
-		client, err := elastic.NewSimpleClient(
-			elastic.SetHttpClient(ts.Client()),
-			elastic.SetURL(ts.URL),
-		)
-		require.NoError(t, err)
-		require.NotNil(t, client)
-
-		searchService := elastic.NewSearchService(client).Index(t.Name())
-
-		esc := &mockESClient{}
-		esc.On("Search", []string(nil)).Return(searchService)
-
-		im := &indexManager{
-			esclient:  esc,
-			indexName: t.Name(),
-			tracer:    tracing.NewTracer(t.Name()),
-			logger:    logger,
-		}
-
-		results, err := im.search(ctx, t.Name(), "")
-		assert.NotNil(t, results)
-		assert.NoError(t, err)
-
-		results, err = im.Search(ctx, t.Name(), "")
-		assert.NotNil(t, results)
-		assert.NoError(t, err)
-
-		results, err = im.SearchForAdmin(ctx, t.Name())
-		assert.NotNil(t, results)
-		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, esc)
-	})
-
 	T.Run("with invalid query", func(t *testing.T) {
 		t.Parallel()
 
@@ -570,63 +509,6 @@ func Test_indexManager_Search(T *testing.T) {
 		}
 
 		results, err := im.Search(ctx, t.Name(), t.Name())
-		assert.NotNil(t, results)
-		assert.NoError(t, err)
-
-		mock.AssertExpectationsForObjects(t, esc)
-	})
-}
-
-func Test_indexManager_SearchForAdmin(T *testing.T) {
-	T.Parallel()
-
-	T.Run("standard for admin", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := context.Background()
-		logger := logging.NewZerologLogger()
-
-		ts := httptest.NewTLSServer(http.HandlerFunc(
-			func(res http.ResponseWriter, req *http.Request) {
-				results := &elastic.SearchResult{
-					Hits: &elastic.SearchHits{
-						Hits: []*elastic.SearchHit{
-							{
-								Source: []byte(fmt.Sprintf(`{"id": %q}`, t.Name())),
-							},
-						},
-					},
-				}
-				output, err := json.Marshal(results)
-				require.NoError(t, err)
-
-				_, err = res.Write(output)
-				require.NoError(t, err)
-
-				res.WriteHeader(http.StatusOK)
-			},
-		))
-
-		client, err := elastic.NewSimpleClient(
-			elastic.SetHttpClient(ts.Client()),
-			elastic.SetURL(ts.URL),
-		)
-		require.NoError(t, err)
-		require.NotNil(t, client)
-
-		searchService := elastic.NewSearchService(client).Index(t.Name())
-
-		esc := &mockESClient{}
-		esc.On("Search", []string(nil)).Return(searchService)
-
-		im := &indexManager{
-			esclient:  esc,
-			indexName: t.Name(),
-			tracer:    tracing.NewTracer(t.Name()),
-			logger:    logger,
-		}
-
-		results, err := im.SearchForAdmin(ctx, t.Name())
 		assert.NotNil(t, results)
 		assert.NoError(t, err)
 

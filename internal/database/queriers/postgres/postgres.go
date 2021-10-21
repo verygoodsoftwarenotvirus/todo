@@ -25,7 +25,6 @@ import (
 
 const (
 	name        = "db_client"
-	loggerName  = name
 	tracingName = name
 )
 
@@ -80,7 +79,7 @@ func ProvideDatabaseClient(
 		config:     cfg,
 		tracer:     tracer,
 		timeFunc:   defaultTimeFunc,
-		logger:     logging.EnsureLogger(logger).WithValue("conn_deets", cfg.ConnectionDetails).WithName(loggerName),
+		logger:     logging.EnsureLogger(logger),
 		sqlBuilder: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
 	}
 
@@ -217,11 +216,13 @@ func (q *SQLQuerier) performCountQuery(ctx context.Context, querier database.SQL
 	ctx, span := q.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := q.logger.WithValue("query", query)
+
 	tracing.AttachDatabaseQueryToSpan(span, fmt.Sprintf("%s count query", queryDesc), query, nil)
 
 	var count uint64
 	if err := q.getOneRow(ctx, querier, queryDesc, query, []interface{}{}).Scan(&count); err != nil {
-		return 0, observability.PrepareError(err, q.logger, span, "executing count query")
+		return 0, observability.PrepareError(err, logger, span, "executing count query")
 	}
 
 	return count, nil
@@ -233,7 +234,7 @@ func (q *SQLQuerier) performBooleanQuery(ctx context.Context, querier database.S
 
 	var exists bool
 
-	logger := q.logger.WithValue(keys.DatabaseQueryKey, query)
+	logger := q.logger.WithValue(keys.DatabaseQueryKey, query).WithValue("args", args)
 	tracing.AttachDatabaseQueryToSpan(span, "boolean query", query, args)
 
 	err := querier.QueryRowContext(ctx, query, args...).Scan(&exists)

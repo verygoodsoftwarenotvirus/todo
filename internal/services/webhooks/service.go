@@ -32,7 +32,6 @@ type (
 		preArchivesPublisher      publishers.Publisher
 		webhookIDFetcher          func(*http.Request) string
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
-		async                     bool
 	}
 )
 
@@ -59,7 +58,6 @@ func ProvideWebhooksService(
 		logger:                    logging.EnsureLogger(logger).WithName(serviceName),
 		webhookDataManager:        webhookDataManager,
 		encoderDecoder:            encoder,
-		async:                     cfg.Async,
 		preWritesPublisher:        preWritesPublisher,
 		preArchivesPublisher:      preArchivesPublisher,
 		sessionContextDataFetcher: authservice.FetchContextFromRequest,

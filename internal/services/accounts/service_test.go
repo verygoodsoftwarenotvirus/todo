@@ -20,7 +20,6 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		async:                        true,
 		logger:                       logging.NewNoopLogger(),
 		accountCounter:               &mockmetrics.UnitCounter{},
 		accountDataManager:           &mocktypes.AccountDataManager{},

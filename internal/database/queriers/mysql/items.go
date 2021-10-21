@@ -241,6 +241,7 @@ func (q *SQLQuerier) buildGetItemsWithIDsQuery(ctx context.Context, accountID st
 	query, args, err := q.sqlBuilder.Select(itemsTableColumns...).
 		From("items").
 		Where(withIDsWhere).
+		Limit(uint64(limit)).
 		OrderByClause(squirrel.Expr(findInSetClause)).
 		ToSql()
 

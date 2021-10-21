@@ -238,13 +238,12 @@ func (q *SQLQuerier) buildGetItemsWithIDsQuery(ctx context.Context, accountID st
 
 	subqueryBuilder := q.sqlBuilder.Select(itemsTableColumns...).
 		From("items").
-		Join("unnest('{%s}'::text[])").
+		Join(fmt.Sprintf("unnest('{%s}'::text[])", joinIDs(ids))).
 		Suffix(fmt.Sprintf("WITH ORDINALITY t(id, ord) USING (id) ORDER BY t.ord LIMIT %d", limit))
 
 	query, args, err := q.sqlBuilder.Select(itemsTableColumns...).
 		FromSelect(subqueryBuilder, "items").
 		Where(withIDsWhere).ToSql()
-	query = fmt.Sprintf(query, joinIDs(ids))
 
 	q.logQueryBuildingError(span, err)
 

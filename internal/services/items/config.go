@@ -16,7 +16,6 @@ type Config struct {
 	PreUpdatesTopicName  string         `json:"preUpdatesTopicName" mapstructure:"pre_updates_topic_name" toml:"pre_updates_topic_name,omitempty"`
 	PreArchivesTopicName string         `json:"preArchivesTopicName" mapstructure:"pre_archives_topic_name" toml:"pre_archives_topic_name,omitempty"`
 	SearchIndexPath      string         `json:"searchIndexPath" mapstructure:"search_index_path" toml:"search_index_path,omitempty"`
-	Async                bool           `json:"async" mapstructure:"async" toml:"async,omitempty"`
 }
 
 var _ validation.ValidatableWithContext = (*Config)(nil)

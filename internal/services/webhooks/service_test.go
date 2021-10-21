@@ -18,7 +18,6 @@ import (
 
 func buildTestService() *service {
 	return &service{
-		async:              true,
 		logger:             logging.NewNoopLogger(),
 		webhookDataManager: &mocktypes.WebhookDataManager{},
 		webhookIDFetcher:   func(req *http.Request) string { return "" },

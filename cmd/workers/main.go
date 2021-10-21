@@ -50,10 +50,6 @@ func initializeLocalSecretManager(ctx context.Context, envVarKey string) secrets
 }
 
 func main() {
-	const (
-		addr = "worker_queue:6379"
-	)
-
 	ctx := context.Background()
 
 	logger := logging.ProvideLogger(logging.Config{
@@ -99,16 +95,9 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	pcfg := &msgconfig.Config{
-		Provider: msgconfig.ProviderRedis,
-		RedisConfig: msgconfig.RedisConfig{
-			QueueAddress: addr,
-		},
-	}
+	consumerProvider := consumers.ProvideRedisConsumerProvider(logger, string(cfg.Events.RedisConfig.QueueAddress))
 
-	consumerProvider := consumers.ProvideRedisConsumerProvider(logger, addr)
-
-	publisherProvider, err := msgconfig.ProvidePublisherProvider(logger, pcfg)
+	publisherProvider, err := msgconfig.ProvidePublisherProvider(logger, &cfg.Events)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -134,7 +123,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	preWritesWorker, err := workers.ProvidePreWritesWorker(ctx, logger, client, dataManager, postWritesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
+	preWritesWorker, err := workers.ProvidePreWritesWorker(ctx, logger, client, dataManager, postWritesPublisher, cfg.Search.Address, elasticsearch.NewIndexManager)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -153,7 +142,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	preUpdatesWorker, err := workers.ProvidePreUpdatesWorker(ctx, logger, client, dataManager, postUpdatesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
+	preUpdatesWorker, err := workers.ProvidePreUpdatesWorker(ctx, logger, client, dataManager, postUpdatesPublisher, cfg.Search.Address, elasticsearch.NewIndexManager)
 	if err != nil {
 		logger.Fatal(err)
 	}
@@ -172,7 +161,7 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	preArchivesWorker, err := workers.ProvidePreArchivesWorker(ctx, logger, client, dataManager, postArchivesPublisher, "http://elasticsearch:9200", elasticsearch.NewIndexManager)
+	preArchivesWorker, err := workers.ProvidePreArchivesWorker(ctx, logger, client, dataManager, postArchivesPublisher, cfg.Search.Address, elasticsearch.NewIndexManager)
 	if err != nil {
 		logger.Fatal(err)
 	}

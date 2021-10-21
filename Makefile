@@ -6,7 +6,8 @@ SEARCH_INDICES_DIR            := $(ARTIFACTS_DIR)/search_indices
 GO                            := docker run --interactive --tty --volume $(PWD):$(PWD) --workdir $(PWD) --user $(shell id -u):$(shell id -g) golang:1.17-stretch go
 GO_FORMAT                     := gofmt -s -w
 THIS                          := gitlab.com/verygoodsoftwarenotvirus/todo
-PACKAGE_LIST                  := `go list $(THIS)/... | grep -Ev '(cmd|tests|testutil|mock|fake)'`
+TOTAL_PACKAGE_LIST            := `go list $(THIS)/...`
+TESTABLE_PACKAGE_LIST         := `go list $(THIS)/... | grep -Ev '(cmd|tests|testutil|mock|fake)'`
 ENVIRONMENTS_DIR              := environments
 TEST_ENVIRONMENT_DIR          := $(ENVIRONMENTS_DIR)/testing
 TEST_DOCKER_COMPOSE_FILES_DIR := $(TEST_ENVIRONMENT_DIR)/compose_files
@@ -163,12 +164,13 @@ clean_coverage:
 
 .PHONY: coverage
 coverage: clean_coverage $(ARTIFACTS_DIR)
-	@go test -coverprofile=$(COVERAGE_OUT) -shuffle=on -covermode=atomic -race $(PACKAGE_LIST) > /dev/null
+	@go test -coverprofile=$(COVERAGE_OUT) -shuffle=on -covermode=atomic -race $(TESTABLE_PACKAGE_LIST) > /dev/null
 	@go tool cover -func=$(ARTIFACTS_DIR)/coverage.out | grep 'total:' | xargs | awk '{ print "COVERAGE: " $$3 }'
 
 .PHONY: quicktest # basically only running once instead of with -count 5 or whatever
 quicktest: $(ARTIFACTS_DIR) vendor clear
-	go test -cover -shuffle=on -race -failfast $(PACKAGE_LIST)
+	go build $(TOTAL_PACKAGE_LIST)
+	go test -cover -shuffle=on -race -failfast $(TESTABLE_PACKAGE_LIST)
 
 .PHONY: frontend_tests
 frontend_tests:
@@ -230,47 +232,22 @@ deploy_base_infra:
 	--always-recreate-deps \
 	--detach
 
-.PHONY: deploy_integration_test_base_infra
-deploy_integration_test_base_infra:
-	docker-compose \
-	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-base.yaml up \
-	--quiet-pull \
-	--no-recreate \
-	--always-recreate-deps \
-	--detach
-
-.PHONY: deploy-integration-tests-services-
-deploy-integration-tests-services-%:
-	docker-compose \
-	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-$*.yaml up \
-	--quiet-pull \
-	--build \
-	--force-recreate \
-	--renew-anon-volumes \
-	--detach
-
-.PHONY: run_integration_tests
-run_integration_tests:
-	docker build --file $(TEST_ENVIRONMENT_DIR)/dockerfiles/integration-tests.Dockerfile --tag integration-tests:latest .
-	docker run --interactive --tty --rm \
-		--volume $(PWD):$(PWD) \
-    	--workdir=$(PWD) \
-    	--network=host \
-    	--name=integration_tests \
-    	--env TARGET_ADDRESS='http://localhost:8888' \
-    	integration-tests:latest
-
-.PHONY: integration_tests_mysql
-integration_tests_mysql: deploy_integration_test_base_infra ensure_mysql_is_up wipe_local_mysql ensure_elasticsearch_is_up wipe_local_elasticsearch deploy-integration-tests-services-mysql run_integration_tests
-
-.PHONY: integration_tests_postgres
-integration_tests_postgres: deploy_integration_test_base_infra ensure_postgres_is_up wipe_local_postgres ensure_elasticsearch_is_up wipe_local_elasticsearch deploy-integration-tests-services-postgres run_integration_tests
-
-.PHONY: integration_tests
-integration_tests: integration_tests_mysql integration_tests_postgres
-
 .PHONY: lintegration_tests # this is just a handy lil' helper I use sometimes
 lintegration_tests: lint clear integration_tests
+
+.PHONY: integration_tests
+integration_tests: integration-tests-postgres integration-tests-mysql
+
+.PHONY: integration-tests-
+integration-tests-%:
+	docker-compose \
+	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-base.yaml \
+	--file $(TEST_DOCKER_COMPOSE_FILES_DIR)/integration_tests/integration-tests-$*.yaml up \
+	--build \
+	--force-recreate \
+	--remove-orphans \
+	--renew-anon-volumes \
+	--always-recreate-deps $(if $(filter y Y yes YES true TRUE plz sure yup YUP,$(LET_HANG)),, --abort-on-container-exit)
 
 ## Running
 

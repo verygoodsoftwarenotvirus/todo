@@ -27,12 +27,6 @@ func (m *IndexManager) Search(ctx context.Context, query, accountID string) (ids
 	return args.Get(0).([]string), args.Error(1)
 }
 
-// SearchForAdmin implements our interface.
-func (m *IndexManager) SearchForAdmin(ctx context.Context, query string) (ids []string, err error) {
-	args := m.Called(ctx, query)
-	return args.Get(0).([]string), args.Error(1)
-}
-
 // Delete implements our interface.
 func (m *IndexManager) Delete(ctx context.Context, id string) error {
 	args := m.Called(ctx, id)

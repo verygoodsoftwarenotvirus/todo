@@ -1,0 +1,15 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="server (postgres)" type="GoApplicationRunConfiguration" factoryName="Go Application">
+    <module name="todo" />
+    <working_directory value="$PROJECT_DIR$" />
+    <envs>
+      <env name="CONFIGURATION_FILEPATH" value="./environments/testing/config_files/integration-tests-postgres.config" />
+      <env name="TODO_SERVER_LOCAL_CONFIG_STORE_KEY" value="SUFNQVdBUkVUSEFUVEhJU1NFQ1JFVElTVU5TRUNVUkU=" />
+    </envs>
+    <kind value="FILE" />
+    <package value="gitlab.com/verygoodsoftwarenotvirus/todo" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/cmd/server/main.go" />
+    <method v="2" />
+  </configuration>
+</component>

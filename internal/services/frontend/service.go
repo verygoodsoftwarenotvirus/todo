@@ -44,20 +44,20 @@ type (
 	}
 
 	service struct {
-		useFakeData               bool
-		templateFuncMap           template.FuncMap
+		dataStore                 database.DataManager
+		usersService              UsersService
 		logger                    logging.Logger
 		tracer                    tracing.Tracer
 		panicker                  panicking.Panicker
-		localizer                 *i18n.Localizer
-		dataStore                 database.DataManager
 		authService               AuthService
-		usersService              UsersService
+		itemIDFetcher             func(*http.Request) string
+		localizer                 *i18n.Localizer
+		templateFuncMap           template.FuncMap
 		sessionContextDataFetcher func(*http.Request) (*types.SessionContextData, error)
 		accountIDFetcher          func(*http.Request) string
 		apiClientIDFetcher        func(*http.Request) string
 		webhookIDFetcher          func(*http.Request) string
-		itemIDFetcher             func(*http.Request) string
+		useFakeData               bool
 	}
 )
 

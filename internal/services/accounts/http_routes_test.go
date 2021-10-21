@@ -712,36 +712,6 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
 	})
 
-	T.Run("standard without async", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-		helper.service.async = false
-
-		exampleInput := fakes.BuildFakeAddUserToAccountInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
-		accountMembershipDataManager.On(
-			"AddUserToAccount",
-			testutils.ContextMatcher,
-			mock.IsType(&types.AddUserToAccountInput{}),
-		).Return(nil)
-		helper.service.accountMembershipDataManager = accountMembershipDataManager
-
-		helper.service.AddMemberHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusAccepted, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountMembershipDataManager)
-	})
-
 	T.Run("with error retrieving session context data", func(t *testing.T) {
 		t.Parallel()
 
@@ -825,36 +795,6 @@ func TestAccountsService_AddMemberHandler(T *testing.T) {
 		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
 
 		mock.AssertExpectationsForObjects(t, mockEventProducer)
-	})
-
-	T.Run("without async and with error adding user", func(t *testing.T) {
-		t.Parallel()
-
-		helper := buildTestHelper(t)
-		helper.service.encoderDecoder = encoding.ProvideServerEncoderDecoder(logging.NewNoopLogger(), encoding.ContentTypeJSON)
-		helper.service.async = false
-
-		exampleInput := fakes.BuildFakeAddUserToAccountInput()
-		jsonBytes := helper.service.encoderDecoder.MustEncode(helper.ctx, exampleInput)
-
-		var err error
-		helper.req, err = http.NewRequestWithContext(helper.ctx, http.MethodPost, "https://todo.verygoodsoftwarenotvirus.ru", bytes.NewReader(jsonBytes))
-		require.NoError(t, err)
-		require.NotNil(t, helper.req)
-
-		accountMembershipDataManager := &mocktypes.AccountUserMembershipDataManager{}
-		accountMembershipDataManager.On(
-			"AddUserToAccount",
-			testutils.ContextMatcher,
-			mock.IsType(&types.AddUserToAccountInput{}),
-		).Return(errors.New("blah"))
-		helper.service.accountMembershipDataManager = accountMembershipDataManager
-
-		helper.service.AddMemberHandler(helper.res, helper.req)
-
-		assert.Equal(t, http.StatusInternalServerError, helper.res.Code)
-
-		mock.AssertExpectationsForObjects(t, accountMembershipDataManager)
 	})
 }
 

@@ -38,7 +38,6 @@ type (
 		encoderDecoder            encoding.ServerEncoderDecoder
 		tracer                    tracing.Tracer
 		search                    SearchIndex
-		async                     bool
 	}
 )
 
@@ -54,24 +53,25 @@ func ProvideService(
 	publisherProvider publishers.PublisherProvider,
 ) (types.ItemDataService, error) {
 	client := &http.Client{Transport: tracing.BuildTracedHTTPTransport(time.Second)}
+
 	searchIndexManager, err := searchIndexProvider(ctx, logger, client, search.IndexPath(cfg.SearchIndexPath), "items", "name", "details")
 	if err != nil {
-		return nil, fmt.Errorf("setting up search index: %w", err)
+		return nil, fmt.Errorf("setting up item search index: %w", err)
 	}
 
 	preWritesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreWritesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up queue provider: %w", err)
+		return nil, fmt.Errorf("setting up item queue pre-writes publisher: %w", err)
 	}
 
 	preUpdatesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreUpdatesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up queue provider: %w", err)
+		return nil, fmt.Errorf("setting up item queue pre-updates publisher: %w", err)
 	}
 
 	preArchivesPublisher, err := publisherProvider.ProviderPublisher(cfg.PreArchivesTopicName)
 	if err != nil {
-		return nil, fmt.Errorf("setting up queue provider: %w", err)
+		return nil, fmt.Errorf("setting up item queue pre-archives publisher: %w", err)
 	}
 
 	svc := &service{
@@ -83,7 +83,6 @@ func ProvideService(
 		preUpdatesPublisher:       preUpdatesPublisher,
 		preArchivesPublisher:      preArchivesPublisher,
 		encoderDecoder:            encoder,
-		async:                     cfg.Async,
 		search:                    searchIndexManager,
 		tracer:                    tracing.NewTracer(serviceName),
 	}

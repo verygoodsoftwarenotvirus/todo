@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/olivere/elastic/v7"
 
@@ -46,17 +49,17 @@ func NewIndexManager(
 ) (search.IndexManager, error) {
 	l := logger.WithName("search")
 
+	if !elasticsearchIsReady(client, path, logger, 50) {
+		return nil, errors.New("elasticsearch isn't ready")
+	}
+
 	c, err := elastic.NewClient(
 		elastic.SetURL(string(path)),
 		elastic.SetHttpClient(client),
+		elastic.SetHealthcheck(false),
 	)
 	if err != nil {
-		return nil, err
-	}
-
-	_, _, err = c.Ping(string(path)).Do(ctx)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("initializing client: %w", err)
 	}
 
 	im := &indexManager{
@@ -74,20 +77,56 @@ func NewIndexManager(
 	return im, nil
 }
 
+func elasticsearchIsReady(
+	client *http.Client,
+	path search.IndexPath,
+	l logging.Logger,
+	maxAttempts uint8,
+) (ready bool) {
+	attemptCount := 0
+
+	logger := l.WithValues(map[string]interface{}{
+		"interval":     time.Second.String(),
+		"max_attempts": maxAttempts,
+	})
+
+	for !ready {
+		_, err := elastic.NewClient(
+			elastic.SetURL(string(path)),
+			elastic.SetHttpClient(client),
+		)
+		if err != nil {
+			logger.WithValue("attempt_count", attemptCount).Debug("ping failed, waiting for elasticsearch")
+			time.Sleep(time.Second)
+
+			attemptCount++
+			if attemptCount >= int(maxAttempts) {
+				break
+			}
+		} else {
+			ready = true
+			return ready
+		}
+	}
+
+	return false
+}
+
 func (sm *indexManager) ensureIndices(ctx context.Context, indices ...search.IndexName) error {
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
+	logger := sm.logger.WithValue("indices", indices)
+
 	for _, index := range indices {
-		indexExists, err := sm.esclient.IndexExists(string(index)).Do(ctx)
+		indexExists, err := sm.esclient.IndexExists(strings.ToLower(string(index))).Do(ctx)
 		if err != nil {
-			return err
+			return observability.PrepareError(err, logger, span, "checking index existence")
 		}
 
 		if !indexExists {
-			_, err = sm.esclient.CreateIndex(string(index)).Do(ctx)
-			if err != nil {
-				return err
+			if _, err = sm.esclient.CreateIndex(strings.ToLower(string(index))).Do(ctx); err != nil && !strings.Contains(elastic.ErrorReason(err), "already exists") {
+				return observability.PrepareError(err, logger, span, elastic.ErrorReason(err))
 			}
 		}
 	}
@@ -100,11 +139,11 @@ func (sm *indexManager) Index(ctx context.Context, id string, value interface{})
 	_, span := sm.tracer.StartSpan(ctx)
 	defer span.End()
 
-	sm.logger.WithValue("id", id).Debug("adding to index")
+	logger := sm.logger.WithValue("id", id).WithValue("value", value)
+	logger.Debug("adding to index")
 
-	_, err := sm.esclient.Index().Index(sm.indexName).Id(id).BodyJson(value).Do(ctx)
-	if err != nil {
-		return err
+	if _, err := sm.esclient.Index().Index(sm.indexName).Id(id).BodyJson(value).Do(ctx); err != nil {
+		return observability.PrepareError(err, logger, span, "indexing value")
 	}
 
 	return nil
@@ -165,11 +204,6 @@ func (sm *indexManager) search(
 // Search implements our IndexManager interface.
 func (sm *indexManager) Search(ctx context.Context, query, accountID string) (ids []string, err error) {
 	return sm.search(ctx, query, accountID)
-}
-
-// SearchForAdmin implements our IndexManager interface.
-func (sm *indexManager) SearchForAdmin(ctx context.Context, query string) (ids []string, err error) {
-	return sm.search(ctx, query, "")
 }
 
 // Delete implements our IndexManager interface.

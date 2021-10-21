@@ -23,7 +23,6 @@ func buildTestService() *service {
 	return &service{
 		logger:          logging.NewNoopLogger(),
 		itemDataManager: &mocktypes.ItemDataManager{},
-		async:           true,
 		itemIDFetcher:   func(req *http.Request) string { return "" },
 		encoderDecoder:  mockencoding.NewMockEncoderDecoder(),
 		search:          &mocksearch.IndexManager{},

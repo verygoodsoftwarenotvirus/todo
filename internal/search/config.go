@@ -15,7 +15,8 @@ const (
 type Config struct {
 	_ struct{}
 
-	Provider string `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
+	Provider string    `json:"provider" mapstructure:"provider" toml:"provider,omitempty"`
+	Address  IndexPath `json:"address" mapstructure:"address" toml:"address,omitempty"`
 }
 
 var _ validation.ValidatableWithContext = (*Config)(nil)

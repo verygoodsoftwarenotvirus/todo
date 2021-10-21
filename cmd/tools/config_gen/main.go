@@ -71,8 +71,7 @@ var (
 	examplePASETOKey = generatePASETOKey()
 
 	noopTracingConfig = tracing.Config{
-		Provider:                  "",
-		SpanCollectionProbability: 1,
+		SpanCollectionProbability: 0,
 	}
 
 	localServer = server.Config{
@@ -145,9 +144,7 @@ var files = map[string]configFunc{
 }
 
 func buildLocalFrontendServiceConfig() frontendservice.Config {
-	return frontendservice.Config{
-		UseFakeData: false,
-	}
+	return frontendservice.Config{}
 }
 
 func mustHashPass(password string) string {
@@ -223,10 +220,10 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 		},
 		Search: search.Config{
 			Provider: search.ElasticsearchProvider,
+			Address:  localElasticsearchLocation,
 		},
 		Services: config.ServicesConfigurations{
 			Accounts: accountsservice.Config{
-				Async:              true,
 				PreWritesTopicName: preWritesTopicName,
 			},
 			Auth: authservice.Config{
@@ -243,7 +240,6 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
 			Webhooks: webhooksservice.Config{
-				Async:                true,
 				PreWritesTopicName:   preWritesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
 			},
@@ -256,7 +252,6 @@ func localDevelopmentConfig(ctx context.Context, filePath string) error {
 			},
 			Items: itemsservice.Config{
 				SearchIndexPath:      localElasticsearchLocation,
-				Async:                true,
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
@@ -313,10 +308,10 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 		},
 		Search: search.Config{
 			Provider: search.ElasticsearchProvider,
+			Address:  localElasticsearchLocation,
 		},
 		Services: config.ServicesConfigurations{
 			Accounts: accountsservice.Config{
-				Async:              true,
 				PreWritesTopicName: preWritesTopicName,
 			},
 			Auth: authservice.Config{
@@ -333,7 +328,6 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 			Frontend: buildLocalFrontendServiceConfig(),
 			Webhooks: webhooksservice.Config{
-				Async:                true,
 				PreWritesTopicName:   preWritesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
 			},
@@ -346,7 +340,6 @@ func frontendTestsConfig(ctx context.Context, filePath string) error {
 			},
 			Items: itemsservice.Config{
 				SearchIndexPath:      localElasticsearchLocation,
-				Async:                true,
 				PreWritesTopicName:   preWritesTopicName,
 				PreUpdatesTopicName:  preUpdatesTopicName,
 				PreArchivesTopicName: preArchivesTopicName,
@@ -421,10 +414,10 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 			},
 			Search: search.Config{
 				Provider: search.ElasticsearchProvider,
+				Address:  localElasticsearchLocation,
 			},
 			Services: config.ServicesConfigurations{
 				Accounts: accountsservice.Config{
-					Async:              true,
 					PreWritesTopicName: preWritesTopicName,
 				},
 				Auth: authservice.Config{
@@ -447,7 +440,6 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 				Frontend: buildLocalFrontendServiceConfig(),
 				Webhooks: webhooksservice.Config{
-					Async:                true,
 					PreWritesTopicName:   preWritesTopicName,
 					PreArchivesTopicName: preArchivesTopicName,
 				},
@@ -460,7 +452,6 @@ func buildIntegrationTestForDBImplementation(dbVendor, dbDetails string) configF
 				},
 				Items: itemsservice.Config{
 					SearchIndexPath:      localElasticsearchLocation,
-					Async:                true,
 					PreWritesTopicName:   preWritesTopicName,
 					PreUpdatesTopicName:  preUpdatesTopicName,
 					PreArchivesTopicName: preArchivesTopicName,
